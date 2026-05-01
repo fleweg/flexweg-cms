@@ -163,7 +163,8 @@
     "enabled": "Activé",
     "disabled": "Désactivé",
     "enable": "Activer",
-    "disable": "Désactiver"
+    "disable": "Désactiver",
+    "configure": "Configurer"
   },
   "menus": {
     "title": "Menus",
@@ -177,6 +178,9 @@
   },
   "settings": {
     "title": "Réglages",
+    "tabs": {
+      "general": "Général"
+    },
     "site": {
       "title": "Site",
       "siteTitle": "Titre du site",

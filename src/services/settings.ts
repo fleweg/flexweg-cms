@@ -12,10 +12,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   language: "en",
   baseUrl: "",
   activeThemeId: "default",
-  enabledPlugins: { "core-seo": true },
+  enabledPlugins: { "core-seo": true, "flexweg-sitemaps": true },
   homeMode: "latest-posts",
   postsPerPage: 10,
   menus: { header: [], footer: [] },
+  pluginConfigs: {},
 };
 
 export function subscribeToSettings(
@@ -48,4 +49,16 @@ export async function updateSettings(patch: Partial<SiteSettings>): Promise<void
     sanitized[key] = value === undefined ? deleteField() : value;
   }
   await setDoc(siteSettingsRef(), sanitized, { merge: true });
+}
+
+// Writes a plugin's config blob. Uses Firestore's nested-map merge so other
+// plugins' configs aren't touched. The plugin's own config is replaced
+// wholesale by the value passed in — plugins that want to do partial
+// updates should read the current value first and merge themselves.
+export async function updatePluginConfig<T>(pluginId: string, config: T): Promise<void> {
+  await setDoc(
+    siteSettingsRef(),
+    { pluginConfigs: { [pluginId]: config } },
+    { merge: true },
+  );
 }

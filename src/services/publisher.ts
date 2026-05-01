@@ -33,7 +33,10 @@ export interface PublishLogEntry {
 
 export type PublishLogger = (entry: PublishLogEntry) => void;
 
-interface PublishContext {
+// Exported so plugins receiving action-hook callbacks (publish.complete,
+// post.unpublished, post.deleted) can type their handlers without
+// re-declaring the shape.
+export interface PublishContext {
   posts: Post[]; // all posts
   pages: Post[]; // all static pages
   terms: Term[]; // all terms (categories + tags)
@@ -324,8 +327,8 @@ export async function publishPost(
   await republishMenu(ctx, log);
 
   log({ level: "success", message: `Published to /${newPath}` });
-  await doAction("publish.after", post);
-  await doAction("publish.complete", post);
+  await doAction("publish.after", post, ctx);
+  await doAction("publish.complete", post, ctx);
 }
 
 export async function unpublishPost(
@@ -355,6 +358,7 @@ export async function unpublishPost(
   await regenerateListings(ctx, log);
   await republishMenu(ctx, log);
   log({ level: "success", message: "Unpublished." });
+  await doAction("post.unpublished", post, ctx);
 }
 
 // Regenerates the home page and every category archive. Doesn't touch
@@ -446,4 +450,5 @@ export async function deletePostAndUnpublish(
     await regenerateListings(ctx, log);
     await republishMenu(ctx, log);
   }
+  await doAction("post.deleted", post, ctx);
 }

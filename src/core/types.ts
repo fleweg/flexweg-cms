@@ -172,6 +172,11 @@ export interface SiteSettings {
     header: MenuItem[];
     footer: MenuItem[];
   };
+  // Per-plugin configuration blobs, keyed by plugin id. Plugins are free
+  // to define their own shape; the registry only enforces that values are
+  // JSON-serializable so Firestore can store them. Stored alongside the
+  // global site settings so a single subscription keeps everything live.
+  pluginConfigs?: Record<string, unknown>;
 }
 
 export type AdminTheme = "dark" | "light";

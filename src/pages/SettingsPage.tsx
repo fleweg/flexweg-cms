@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { PageHeader } from "../components/layout/PageHeader";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
 import { setActiveLocale, SUPPORTED_LOCALES } from "../i18n";
@@ -15,6 +14,9 @@ import { updateSettings } from "../services/settings";
 import { setUserPreferences } from "../services/users";
 import type { AdminLocale } from "../core/types";
 
+// Renders the "General" tab inside <SettingsLayout />. Outer page chrome
+// (title + tab strip) lives in the layout, so this component is just the
+// content sections.
 export function SettingsPage() {
   const { t } = useTranslation();
   const { user, record } = useAuth();
@@ -91,9 +93,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <PageHeader title={t("settings.title")} />
-
+    <div className="space-y-6">
       <section className="card p-4 space-y-3">
         <h2 className="font-semibold">{t("settings.profile.title")}</h2>
         <div>

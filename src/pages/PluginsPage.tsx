@@ -1,3 +1,5 @@
+import { Settings as SettingsIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCmsData } from "../context/CmsDataContext";
@@ -21,6 +23,7 @@ export function PluginsPage() {
       <ul className="space-y-3">
         {plugins.map((plugin) => {
           const enabled = settings.enabledPlugins[plugin.id] !== false;
+          const hasSettings = !!plugin.settings;
           return (
             <li key={plugin.id} className="card p-4 flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -34,13 +37,24 @@ export function PluginsPage() {
                   </p>
                 )}
               </div>
-              <button
-                type="button"
-                className={enabled ? "btn-secondary" : "btn-primary"}
-                onClick={() => toggle(plugin.id, enabled)}
-              >
-                {enabled ? t("plugins.disable") : t("plugins.enable")}
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {hasSettings && enabled && (
+                  <Link
+                    to={`/settings/plugin/${plugin.id}`}
+                    className="btn-ghost"
+                  >
+                    <SettingsIcon className="h-4 w-4" />
+                    {t("plugins.configure")}
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  className={enabled ? "btn-secondary" : "btn-primary"}
+                  onClick={() => toggle(plugin.id, enabled)}
+                >
+                  {enabled ? t("plugins.disable") : t("plugins.enable")}
+                </button>
+              </div>
             </li>
           );
         })}

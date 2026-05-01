@@ -47,7 +47,8 @@ flexweg-cms/
 │   ├── themes/          Public-site themes (one folder per theme)
 │   │   └── default/     Default theme — base/home/single/category/author/404 + components + SCSS
 │   ├── plugins/         WordPress-style plugins, registered via filters/actions
-│   │   └── core-seo/    Built-in SEO plugin
+│   │   ├── core-seo/         Built-in SEO plugin (Twitter cards + generator hint)
+│   │   └── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
 │   ├── i18n/            Admin UI translations (en + fr)
 │   └── lib/             Small utilities (date format, hashing, classnames)
 ├── scripts/
@@ -419,7 +420,7 @@ The active theme is selected per-site in **Themes**. Switching activates a "Rege
 
 ## Creating a plugin
 
-Plugins are bundled into the admin and toggled on/off per site in **Plugins**. Each plugin exports a manifest with a `register(api)` function that hooks into the registry:
+Plugins are bundled into the admin and toggled on/off per site in **Plugins**. Each plugin exports a manifest with a `register(api)` function that hooks into the registry. Optionally, a plugin can also ship its own settings page and translations.
 
 ```ts
 // src/plugins/my-plugin/manifest.ts
@@ -432,8 +433,8 @@ export const manifest: PluginManifest = {
   description: "What it does.",
   register(api) {
     api.addFilter<string>("page.head.extra", (head) => head + "<meta name=\"x\" />");
-    api.addAction("publish.complete", (post) => {
-      console.log("published", post);
+    api.addAction("publish.complete", (post, ctx) => {
+      console.log("published", post, "site has", ctx.posts.length, "posts");
     });
   },
 };
@@ -449,9 +450,97 @@ Then add it to `PLUGINS` in `src/plugins/index.ts`.
 | `post.html.body` | filter | `(html, post)` — modify rendered post HTML. |
 | `post.template.props` | filter | `(props, post)` — modify the props passed to the active template. |
 | `page.head.extra` | filter (sync) | `(html, baseProps)` — inject extra `<head>` markup. |
-| `publish.before` | action | `(post)` |
-| `publish.after` | action | `(post)` |
-| `publish.complete` | action | `(post)` |
+| `publish.before` | action | `(post, ctx)` |
+| `publish.after` | action | `(post, ctx)` |
+| `publish.complete` | action | `(post, ctx)` — fires after the post is uploaded and listings refreshed. |
+| `post.unpublished` | action | `(post, ctx)` — fires after `unpublishPost` wipes the post's files. |
+| `post.deleted` | action | `(post, ctx)` — fires after `deletePostAndUnpublish` removes the post. |
+
+`ctx` is a `PublishContext` (exported from `src/services/publisher.ts`) containing the up-to-date `posts`, `pages`, `terms`, `media`, and `settings` snapshots — already patched to reflect the just-completed transition. Plugins can read it to recompute derived files (sitemaps, search indexes, RSS feeds, …).
+
+### Plugin settings pages
+
+A plugin can expose a config page reachable at `/admin/#/settings/plugin/<plugin-id>`. The plugins list shows a **Configure** link on the matching card, and a tab is added to the Settings layout's tab strip for every enabled plugin that declares one.
+
+```ts
+import type { PluginManifest, PluginSettingsPageProps } from "../index";
+
+interface MyConfig {
+  greeting: string;
+}
+
+const DEFAULT_CONFIG: MyConfig = { greeting: "hello" };
+
+function MySettingsPage({ config, save }: PluginSettingsPageProps<MyConfig>) {
+  // `config` is already merged with `defaultConfig` — every field is set.
+  // `save(next)` writes the whole blob to settings/site.pluginConfigs.<id>.
+  return (
+    <input
+      value={config.greeting}
+      onChange={(e) => save({ ...config, greeting: e.target.value })}
+    />
+  );
+}
+
+export const manifest: PluginManifest<MyConfig> = {
+  id: "my-plugin",
+  // …
+  settings: {
+    navLabelKey: "title",   // i18n key in the plugin's namespace
+    defaultConfig: DEFAULT_CONFIG,
+    component: MySettingsPage,
+  },
+};
+```
+
+The config blob is stored under `settings/site.pluginConfigs.<plugin-id>` in Firestore, so the same real-time subscription that drives the rest of the admin reaches plugin settings — no extra listeners. Inside an action-hook handler, read the live config from `ctx.settings.pluginConfigs?.[<plugin-id>]`.
+
+### Plugin translations
+
+Plugins ship their own translations as a manifest field. They land in a dedicated i18next namespace named after the plugin id, so plugin UI uses `useTranslation('<plugin-id>')` without colliding with admin keys:
+
+```ts
+// src/plugins/my-plugin/manifest.ts
+export const manifest: PluginManifest = {
+  // …
+  i18n: {
+    en: { title: "My plugin", help: "Does something useful." },
+    fr: { title: "Mon plugin", help: "Fait quelque chose d'utile." },
+  },
+};
+
+// inside the settings page component
+const { t } = useTranslation("my-plugin");
+return <h2>{t("title")}</h2>;
+```
+
+Bundles are loaded once at module import and persist regardless of plugin enable state — translations are cheap and orthogonal to the runtime hook registration.
+
+## Built-in plugins
+
+### `core-seo`
+
+Adds Twitter Card meta tags and a `<meta name="generator">` hint to every published page. Hooks into `page.head.extra`. No settings — toggle it off in **Plugins** if you don't want the extra markup.
+
+### `flexweg-sitemaps`
+
+Generates and maintains the public site's sitemaps and `robots.txt`. Configure under **Settings → Sitemaps** (tab visible only when the plugin is enabled).
+
+Files produced on the public site (relative to your `baseUrl`):
+
+- `sitemap-<year>.xml` — one per year that has at least one online post (and page, when configured). Built from `createdAt`; `<lastmod>` reflects `updatedAt`.
+- `sitemap-index.xml` — index referencing every yearly sitemap that's currently populated, plus the News sitemap when enabled.
+- `sitemap-news.xml` — Google News urlset of articles modified within the configured window (default 2 days, range 1–30). Optional.
+- `robots.txt` — user-supplied; defaults to `User-agent: *` + `Allow: /` + a `Sitemap:` line per generated sitemap.
+
+Configuration options:
+
+- **Content types** — sitemaps include posts only, or posts and pages.
+- **Generate sitemap-news.xml** — toggle. When enabled, sets the News window in days.
+- **robots.txt content** — full editable textarea. **Insert default** repopulates with the auto-generated body. **Save & regenerate robots.txt** persists the config and re-uploads `robots.txt` in one click.
+- **Force regenerate sitemaps** — re-derives every yearly sitemap, the index, the News sitemap, and `robots.txt` from the current corpus. Use after toggling content types or after a bulk import.
+
+Incremental regeneration is automatic: every `publish.complete`, `post.unpublished`, and `post.deleted` rebuilds the year sitemap that contains the touched post, plus the index, plus News. Years that empty out have their sitemap deleted from the public site so the index never points to a stale file.
 
 ## Tests
 
