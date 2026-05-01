@@ -11,7 +11,12 @@ export default defineConfig({
     open: true,
   },
   build: {
-    outDir: "dist",
+    // Output directly under dist/admin/ so the folder maps 1:1 to the
+    // /admin/ path on Flexweg static hosting. Uploading dist/admin/ as-is
+    // (zip-and-drop or via the Files API) makes the admin reachable at
+    // monsite.com/admin/.
+    outDir: "dist/admin",
+    emptyOutDir: true,
     sourcemap: false,
   },
   test: {

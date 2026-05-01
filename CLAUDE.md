@@ -10,7 +10,7 @@ npm run typecheck    # tsc --noEmit (runs automatically before `build`)
 npm test             # Vitest, single run
 npm run test:watch   # Vitest, watch mode
 npx vitest run src/core/slug.test.ts    # Run a single test file
-npm run build        # Vite build → dist/, then compiles each theme's SCSS into dist/theme-assets/<id>.css
+npm run build        # Vite build → dist/admin/, then compiles each theme's SCSS into dist/theme-assets/<id>.css
 ```
 
 `.env` is required (copy `.env.example`); without `VITE_FIREBASE_*` and `VITE_ADMIN_EMAIL` the admin renders a configuration error screen instead of mounting.
@@ -56,7 +56,12 @@ These worlds share `src/core/` (types, slug, markdown, render, plugin registry).
 
 Each theme exports a `manifest.ts` with `id`, `version`, `scssEntry`, and a `templates` map (`base | home | single | category | author | notFound`). Themes are registered statically in `src/themes/index.ts` so they're all bundled into the admin (enables instant preview switching).
 
-The SCSS pipeline is **separate from Vite**: `scripts/build-themes.mjs` compiles each theme's SCSS to `dist/theme-assets/<id>.css` after `vite build`. The admin doesn't import theme SCSS at all. To push a theme's CSS to the public site, the user clicks **Themes → Sync theme assets**, which fetches `/admin/theme-assets/<id>.css` and re-uploads it to the public Flexweg path `theme-assets/<id>.css`. This means the admin must already be deployed at `/admin/` before sync works.
+The SCSS pipeline is split deliberately:
+
+- **Inside the admin bundle**: each theme manifest imports its SCSS via Vite's `?inline` suffix (e.g. `import cssText from "./theme.scss?inline"`). Vite compiles the SCSS at build time and exposes the resulting CSS as a string on `manifest.cssText`. This is what the **Themes → Sync theme assets** button uploads to Flexweg via the Files API — so the admin always pushes the CSS that was built alongside its current code, regardless of what's currently sitting in `/theme-assets/` on the public site.
+- **Standalone files**: `scripts/build-themes.mjs` runs after `vite build` and writes the same compiled CSS into `dist/theme-assets/<id>.css`. This folder is intended for the *first* deployment (drop it onto Flexweg's site root once), or for environments where the user wants to bypass the admin's sync button.
+
+Vite outputs the admin into `dist/admin/` (set via `build.outDir` in `vite.config.ts`). Public theme CSS lives at `dist/theme-assets/`, which mirrors its target Flexweg path `/theme-assets/<id>.css` — exactly where every published page's `<link rel="stylesheet">` points. **Never** put theme CSS under `/admin/...` on the public site: published pages do not reference that path.
 
 #### The head-extra sentinel
 

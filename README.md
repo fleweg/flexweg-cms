@@ -217,12 +217,22 @@ If you want only admins to manage themes/plugins/menus, change `allow write: if 
 npm run build
 ```
 
-This produces `dist/` containing:
+This produces two folders inside `dist/`, each mapping 1:1 to a Flexweg path:
 
-- `index.html` + admin SPA assets (deploy to `/admin/` on your Flexweg site).
-- `theme-assets/<theme-id>.css` per theme (one file per theme directory).
+```
+dist/
+├── admin/                  → upload to /admin/ on Flexweg
+│   ├── index.html
+│   └── assets/
+└── theme-assets/           → upload to /theme-assets/ on Flexweg (site root)
+    └── <theme-id>.css      one CSS file per theme directory
+```
 
-Deploy `dist/` to `/admin/` on your Flexweg site (zip it and upload via the Flexweg dashboard, or use the Files API). Then, from the admin, open **Themes → Sync theme assets** to push the CSS bundles to your public site.
+The split mirrors the public site layout: every published page contains a `<link rel="stylesheet" href="/theme-assets/<id>.css">` pointing to the site root, **never** to `/admin/...`. Keeping `theme-assets/` at the top level of `dist/` makes the deployment story obvious: drop each folder where its name says it belongs.
+
+**First deploy** — upload both folders to your Flexweg site (zip and drop via the dashboard, or use the Files API).
+
+**Subsequent deploys** — re-upload `dist/admin/` whenever you ship admin code changes, then open **Themes → Sync theme assets** to push the new theme CSS to the public root. The CSS is embedded inside the admin bundle (Vite `?inline`), so the sync button always uploads the version that shipped with the current admin — no need to manually re-upload `dist/theme-assets/`.
 
 After that, every publish action from the admin uploads HTML/asset files directly to your public Flexweg site — no further deploys required for content updates.
 

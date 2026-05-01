@@ -89,6 +89,12 @@ export interface ThemeManifest {
   // Path of the SCSS entrypoint, relative to the theme directory. The build
   // script reads this to know what to compile.
   scssEntry: string;
+  // Compiled CSS embedded in the admin bundle (via a Vite `?inline` import
+  // in the manifest file). The "Sync theme assets" button uploads this
+  // string to Flexweg, so the admin always pushes the CSS that was built
+  // alongside it — no chicken-and-egg with /theme-assets/ being uploaded
+  // first.
+  cssText: string;
   templates: {
     base: ComponentType<BaseLayoutProps>;
     home: ComponentType<HomeTemplateProps & { site: SiteContext }>;

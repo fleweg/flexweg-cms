@@ -17,6 +17,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = resolve(__dirname, "..");
 const themesDir = join(root, "src", "themes");
+// Public theme CSS lives at the top level of dist/ — it maps 1:1 to the
+// /theme-assets/ path on the public site root, exactly where every
+// generated page's <link rel="stylesheet"> points. Upload `dist/theme-assets/`
+// alongside `dist/admin/` on Flexweg, OR rely on the admin's "Sync theme
+// assets" button which re-uploads the same content via the Files API
+// (the SCSS is also embedded in the admin bundle via Vite `?inline` imports).
 const outDir = join(root, "dist", "theme-assets");
 
 async function findScssEntry(themeDir) {

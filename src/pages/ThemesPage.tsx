@@ -21,30 +21,24 @@ export function ThemesPage() {
     await updateSettings({ activeThemeId: themeId });
   }
 
-  // Pushes the theme's compiled CSS (built locally to dist/theme-assets/...)
-  // up to Flexweg. The CSS for the active theme is fetched from the admin's
-  // own deployed assets — relies on the admin SPA being deployed with the
-  // theme bundles next to it.
+  // Pushes every theme's compiled CSS to Flexweg's public root at
+  // /theme-assets/<id>.css. The CSS bytes come from the manifest's `cssText`
+  // (embedded at build time via Vite `?inline`), so this always uploads the
+  // version that was built alongside the currently deployed admin SPA — no
+  // dependency on the public /theme-assets/ folder being uploaded first.
   async function handleSyncAssets() {
     setBusy(true);
     setLogEntries([]);
     const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
     try {
       for (const theme of themes) {
-        const cssPath = `theme-assets/${theme.id}.css`;
-        const adminAssetUrl = `/admin/${cssPath}`;
-        log({ level: "info", message: `Fetching ${adminAssetUrl}…` });
-        const res = await fetch(adminAssetUrl);
-        if (!res.ok) {
-          log({
-            level: "warn",
-            message: `Could not fetch ${adminAssetUrl} — run \`npm run build\` and deploy /admin first.`,
-          });
+        if (!theme.cssText) {
+          log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
           continue;
         }
-        const css = await res.text();
+        const cssPath = `theme-assets/${theme.id}.css`;
         log({ level: "info", message: `Uploading ${cssPath}…` });
-        await uploadFile({ path: cssPath, content: css });
+        await uploadFile({ path: cssPath, content: theme.cssText });
       }
       log({ level: "success", message: "Theme assets synced." });
     } catch (err) {
