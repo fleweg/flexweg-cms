@@ -214,6 +214,28 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL is missing in .env. Set it to the email of the bootstrap administrator.",
     "consoleHint": "Check the browser console and your .env configuration. See the README for setup instructions."
   },
+  "flexweg": {
+    "actions": {
+      "upload": "Uploading file",
+      "delete": "Deleting file",
+      "rename": "Renaming file",
+      "get": "Reading file",
+      "list": "Listing files",
+      "createFolder": "Creating folder",
+      "renameFolder": "Renaming folder",
+      "deleteFolder": "Deleting folder"
+    },
+    "errors": {
+      "configMissing": "Flexweg API key is not configured. Set it in admin Settings before publishing.",
+      "network": "{{action}}: network error or CORS blocked. Check your connection.",
+      "auth": "{{action}}: authentication failed. Check your Flexweg API key in Settings.",
+      "notFound": "{{action}}: target not found on Flexweg.",
+      "tooLarge": "{{action}}: file too large for your Flexweg plan.",
+      "rateLimited": "{{action}}: too many requests, please retry in a moment.",
+      "serverError": "{{action}}: Flexweg server error ({{status}}). Please retry.",
+      "generic": "{{action}} failed ({{status}}){{detail}}."
+    }
+  },
   "publish": {
     "log": {
       "rendering": "Rendering page…",

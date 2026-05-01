@@ -214,6 +214,28 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL est manquant dans .env. Renseignez l'email de l'administrateur initial.",
     "consoleHint": "Consultez la console du navigateur et votre .env. Voir le README pour la configuration."
   },
+  "flexweg": {
+    "actions": {
+      "upload": "Upload du fichier",
+      "delete": "Suppression du fichier",
+      "rename": "Renommage du fichier",
+      "get": "Lecture du fichier",
+      "list": "Listing des fichiers",
+      "createFolder": "Création du dossier",
+      "renameFolder": "Renommage du dossier",
+      "deleteFolder": "Suppression du dossier"
+    },
+    "errors": {
+      "configMissing": "La clé API Flexweg n'est pas configurée. Renseignez-la dans les Réglages avant de publier.",
+      "network": "{{action}} : erreur réseau ou CORS bloqué. Vérifiez votre connexion.",
+      "auth": "{{action}} : authentification échouée. Vérifiez votre clé API Flexweg dans les Réglages.",
+      "notFound": "{{action}} : la cible est introuvable sur Flexweg.",
+      "tooLarge": "{{action}} : fichier trop volumineux pour votre plan Flexweg.",
+      "rateLimited": "{{action}} : trop de requêtes, veuillez réessayer dans un instant.",
+      "serverError": "{{action}} : erreur serveur Flexweg ({{status}}). Veuillez réessayer.",
+      "generic": "{{action}} a échoué ({{status}}){{detail}}."
+    }
+  },
   "publish": {
     "log": {
       "rendering": "Rendu de la page…",

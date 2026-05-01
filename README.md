@@ -253,6 +253,33 @@ The site language for the public output is configured separately in **Settings �
 
 Tags do not appear in URLs. All slugs are lower-case ASCII, dash-separated.
 
+## Error handling & toasts
+
+Every Flexweg API call goes through a single error funnel that surfaces failures both as thrown `FlexwegApiError`s (so calling code can react locally — e.g. retry buttons on the upload card) **and** as flash toasts in the top-right corner of the admin. Toasts include translated, status-aware messages:
+
+| Status | Toast message |
+|---|---|
+| 401 / 403 | "Authentication failed. Check your Flexweg API key in Settings." |
+| 404 | "Target not found on Flexweg." (suppressed for delete calls — 404 is treated as success) |
+| 413 | "File too large for your Flexweg plan." |
+| 429 | "Too many requests, please retry in a moment." |
+| 5xx | "Flexweg server error ({{status}}). Please retry." |
+| Network / CORS | "Network error or CORS blocked. Check your connection." |
+| Other | Generic message including the status and any error payload returned by Flexweg. |
+
+To emit a toast from anywhere in the codebase:
+
+```ts
+import { toast } from "../lib/toast";
+
+toast.success("Saved.");
+toast.error("Something broke.");
+toast.warn("Heads up.");
+toast.info("FYI.");
+```
+
+Toasts auto-dismiss after 3.5 s (info / success), 5 s (warn) or 6 s (error). Pass a custom `durationMs` (or `0` for sticky) when needed: `showToast({ level: "error", message, durationMs: 0 })`.
+
 ## Image handling
 
 When a user uploads an image, the admin runs the file entirely through a browser-side pipeline (no server, no original kept):

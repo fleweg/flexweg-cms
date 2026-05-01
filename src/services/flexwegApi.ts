@@ -1,9 +1,16 @@
+import i18n from "../i18n";
+import { toast } from "../lib/toast";
 import { getFlexwegConfig, type FlexwegConfig } from "./flexwegConfig";
 
 // Thin client over the Flexweg Files API. Every call resolves the config
-// lazily so callers don't have to thread it through. Methods that mutate the
-// site (upload/delete/rename/folders) all hit `/api/v1/files/*` and require
-// an X-API-Key header.
+// lazily so callers don't have to thread it through. Methods that mutate
+// the site (upload/delete/rename/folders) all hit `/api/v1/files/*` and
+// require an X-API-Key header.
+//
+// Error UX: every failure (HTTP non-2xx OR network/CORS) is surfaced via
+// the global toast system in addition to throwing — so calling code can
+// still react locally (inline error states, retry buttons) while the user
+// gets an immediate visible alert.
 
 export class FlexwegApiError extends Error {
   constructor(
@@ -16,12 +23,28 @@ export class FlexwegApiError extends Error {
   }
 }
 
+// Translatable label key suffix for each Flexweg action. Used to render
+// "Uploading file: …" / "Suppression du fichier : …" in toasts.
+type FlexwegAction =
+  | "upload"
+  | "delete"
+  | "rename"
+  | "get"
+  | "list"
+  | "createFolder"
+  | "renameFolder"
+  | "deleteFolder";
+
+function actionLabel(action: FlexwegAction): string {
+  return i18n.t(`flexweg.actions.${action}`);
+}
+
 async function requireConfig(): Promise<FlexwegConfig> {
   const config = await getFlexwegConfig();
   if (!config) {
-    throw new Error(
-      "Flexweg API key is not configured. Set it in admin Settings before publishing.",
-    );
+    const message = i18n.t("flexweg.errors.configMissing");
+    toast.error(message);
+    throw new Error(message);
   }
   return config;
 }
@@ -33,14 +56,81 @@ function authHeaders(config: FlexwegConfig): HeadersInit {
   };
 }
 
-async function ensureOk(res: Response, action: string): Promise<void> {
-  if (res.ok) return;
-  const detail = await res.text().catch(() => "");
-  throw new FlexwegApiError(
-    `Flexweg ${action} failed (${res.status}): ${detail || res.statusText}`,
-    res.status,
-    detail,
-  );
+// Tries to extract a human-readable message from a Flexweg error body
+// (some endpoints return JSON `{ "error": "..." }`, others plain text).
+// Truncates so a giant HTML 500 page doesn't blow up the toast.
+function extractDetail(body: string | undefined): string {
+  if (!body) return "";
+  let text = body.trim();
+  try {
+    const parsed = JSON.parse(text) as { error?: string; message?: string };
+    text = parsed.error ?? parsed.message ?? text;
+  } catch {
+    // Not JSON — keep the raw body.
+  }
+  if (text.length > 240) text = text.slice(0, 240) + "…";
+  return text;
+}
+
+// Maps an HTTP failure to the most descriptive translated message we can
+// produce. Used both for the toast UX and as the FlexwegApiError message.
+function buildErrorMessage(
+  action: FlexwegAction,
+  status: number,
+  body: string | undefined,
+): string {
+  const label = actionLabel(action);
+  const detail = extractDetail(body);
+  switch (status) {
+    case 401:
+    case 403:
+      return i18n.t("flexweg.errors.auth", { action: label });
+    case 404:
+      return i18n.t("flexweg.errors.notFound", { action: label });
+    case 413:
+      return i18n.t("flexweg.errors.tooLarge", { action: label });
+    case 429:
+      return i18n.t("flexweg.errors.rateLimited", { action: label });
+    case 500:
+    case 502:
+    case 503:
+    case 504:
+      return i18n.t("flexweg.errors.serverError", { action: label, status });
+    default:
+      return i18n.t("flexweg.errors.generic", {
+        action: label,
+        status,
+        detail: detail ? `: ${detail}` : "",
+      });
+  }
+}
+
+// Wraps a fetch call so that:
+//   - HTTP non-2xx → toast + FlexwegApiError thrown.
+//   - Thrown fetch (network down, CORS, abort) → toast + rethrow as-is so
+//     callers can still detect AbortError specifically.
+// Returns the raw Response on success.
+async function performRequest(
+  action: FlexwegAction,
+  fetcher: () => Promise<Response>,
+): Promise<Response> {
+  let res: Response;
+  try {
+    res = await fetcher();
+  } catch (err) {
+    // AbortError is an explicit user-initiated cancel — never toast it.
+    if ((err as { name?: string })?.name === "AbortError") throw err;
+    toast.error(i18n.t("flexweg.errors.network", { action: actionLabel(action) }));
+    throw err;
+  }
+  if (res.ok) return res;
+  const body = await res.text().catch(() => "");
+  // 404 on delete is a "desired state already met" sentinel — callers
+  // suppress it. Skip the toast there.
+  const isSilenced = (action === "delete" || action === "deleteFolder") && res.status === 404;
+  const message = buildErrorMessage(action, res.status, body);
+  if (!isSilenced) toast.error(message);
+  throw new FlexwegApiError(message, res.status, body);
 }
 
 export interface UploadFileOptions {
@@ -61,13 +151,14 @@ export async function uploadFile(opts: UploadFileOptions): Promise<void> {
   // explicitly is harmless and clarifies intent.
   if (opts.encoding) body.encoding = opts.encoding;
 
-  const res = await fetch(`${config.apiBaseUrl}/files/upload`, {
-    method: "POST",
-    headers: authHeaders(config),
-    body: JSON.stringify(body),
-    signal: opts.signal,
-  });
-  await ensureOk(res, "upload");
+  await performRequest("upload", () =>
+    fetch(`${config.apiBaseUrl}/files/upload`, {
+      method: "POST",
+      headers: authHeaders(config),
+      body: JSON.stringify(body),
+      signal: opts.signal,
+    }),
+  );
 }
 
 // Reads bytes from a File and returns a base64 string (without the data: prefix).
@@ -92,34 +183,41 @@ export function fileToBase64(file: File): Promise<string> {
 export async function deleteFile(path: string, signal?: AbortSignal): Promise<void> {
   const config = await requireConfig();
   const url = `${config.apiBaseUrl}/files/delete?${new URLSearchParams({ path })}`;
-  const res = await fetch(url, {
-    method: "DELETE",
-    headers: { "X-API-Key": config.apiKey },
-    signal,
-  });
-  // Treat 404 as success: the file was already gone, the desired state is reached.
-  if (res.status === 404) return;
-  await ensureOk(res, "delete");
+  try {
+    await performRequest("delete", () =>
+      fetch(url, {
+        method: "DELETE",
+        headers: { "X-API-Key": config.apiKey },
+        signal,
+      }),
+    );
+  } catch (err) {
+    // Treat 404 as success: the file was already gone, the desired state is reached.
+    if (err instanceof FlexwegApiError && err.status === 404) return;
+    throw err;
+  }
 }
 
 export async function renameFile(oldPath: string, newPath: string): Promise<void> {
   const config = await requireConfig();
-  const res = await fetch(`${config.apiBaseUrl}/files/rename`, {
-    method: "POST",
-    headers: authHeaders(config),
-    body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
-  });
-  await ensureOk(res, "rename");
+  await performRequest("rename", () =>
+    fetch(`${config.apiBaseUrl}/files/rename`, {
+      method: "POST",
+      headers: authHeaders(config),
+      body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
+    }),
+  );
 }
 
 export async function getFile(path: string): Promise<string> {
   const config = await requireConfig();
   const url = `${config.apiBaseUrl}/files/get?${new URLSearchParams({ path })}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-API-Key": config.apiKey },
-  });
-  await ensureOk(res, "get");
+  const res = await performRequest("get", () =>
+    fetch(url, {
+      method: "GET",
+      headers: { "X-API-Key": config.apiKey },
+    }),
+  );
   return res.text();
 }
 
@@ -144,43 +242,51 @@ export async function listFiles(page = 1, perPage = 100): Promise<ListResponse> 
     page: String(page),
     per_page: String(perPage),
   })}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "X-API-Key": config.apiKey },
-  });
-  await ensureOk(res, "list");
+  const res = await performRequest("list", () =>
+    fetch(url, {
+      method: "GET",
+      headers: { "X-API-Key": config.apiKey },
+    }),
+  );
   return (await res.json()) as ListResponse;
 }
 
 export async function createFolder(path: string): Promise<void> {
   const config = await requireConfig();
-  const res = await fetch(`${config.apiBaseUrl}/files/create-folder`, {
-    method: "POST",
-    headers: authHeaders(config),
-    body: JSON.stringify({ path }),
-  });
-  await ensureOk(res, "create-folder");
+  await performRequest("createFolder", () =>
+    fetch(`${config.apiBaseUrl}/files/create-folder`, {
+      method: "POST",
+      headers: authHeaders(config),
+      body: JSON.stringify({ path }),
+    }),
+  );
 }
 
 export async function renameFolder(oldPath: string, newPath: string): Promise<void> {
   const config = await requireConfig();
-  const res = await fetch(`${config.apiBaseUrl}/files/rename-folder`, {
-    method: "POST",
-    headers: authHeaders(config),
-    body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
-  });
-  await ensureOk(res, "rename-folder");
+  await performRequest("renameFolder", () =>
+    fetch(`${config.apiBaseUrl}/files/rename-folder`, {
+      method: "POST",
+      headers: authHeaders(config),
+      body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
+    }),
+  );
 }
 
 export async function deleteFolder(path: string): Promise<void> {
   const config = await requireConfig();
   const url = `${config.apiBaseUrl}/files/delete-folder?${new URLSearchParams({ path })}`;
-  const res = await fetch(url, {
-    method: "DELETE",
-    headers: { "X-API-Key": config.apiKey },
-  });
-  if (res.status === 404) return;
-  await ensureOk(res, "delete-folder");
+  try {
+    await performRequest("deleteFolder", () =>
+      fetch(url, {
+        method: "DELETE",
+        headers: { "X-API-Key": config.apiKey },
+      }),
+    );
+  } catch (err) {
+    if (err instanceof FlexwegApiError && err.status === 404) return;
+    throw err;
+  }
 }
 
 // Convenience: build the public URL for a path stored on Flexweg.

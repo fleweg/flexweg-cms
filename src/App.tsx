@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorScreen } from "./components/ErrorScreen";
+import { ToastContainer } from "./components/ui/ToastContainer";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PostsListPage } from "./pages/PostsListPage";
@@ -199,6 +200,11 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <AuthenticatedShell />
+          {/* Toasts are mounted outside the routed shell so navigation
+              never unmounts an in-flight notification. They're inside the
+              error boundary too so toast emissions during a transient DOM
+              error still surface once the boundary auto-recovers. */}
+          <ToastContainer />
         </AuthProvider>
       </ThemeProvider>
     </AppErrorBoundary>
