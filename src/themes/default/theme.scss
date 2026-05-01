@@ -78,7 +78,99 @@ img {
   a {
     color: $color-fg;
     font-size: 0.95rem;
+    &[aria-current="page"] {
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
   }
+  // Hide an empty container so it doesn't reserve layout space when the
+  // menu loader hasn't (yet) populated it. The loader also flips the
+  // `hidden` attribute on if there are no items.
+  &:not(.burger-menu) ul:empty {
+    display: none;
+  }
+}
+
+// Burger toggle is visible at every breakpoint — this theme uses the
+// burger as the only menu UI, no horizontal desktop nav.
+.burger-toggle {
+  display: inline-flex;
+  background: transparent;
+  border: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+
+  .burger-icon,
+  .burger-icon::before,
+  .burger-icon::after {
+    display: block;
+    width: 1.25rem;
+    height: 2px;
+    background: $color-fg;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  .burger-icon {
+    position: relative;
+    &::before, &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+    }
+    &::before { top: -6px; }
+    &::after  { top: 6px; }
+  }
+
+  &[aria-expanded="true"] .burger-icon {
+    background: transparent;
+    &::before { transform: translateY(6px) rotate(45deg); }
+    &::after  { transform: translateY(-6px) rotate(-45deg); }
+  }
+}
+
+// Sliding off-canvas menu, available at every breakpoint. The transform
+// keeps it off-screen until `is-open` is added by the loader on click.
+.burger-menu {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(80vw, 360px);
+  background: #ffffff;
+  border-left: 1px solid $color-border;
+  padding: 4rem 1.5rem 2rem;
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+  z-index: 50;
+  overflow-y: auto;
+
+  &.is-open {
+    transform: translateX(0);
+  }
+
+  ul {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  a {
+    display: block;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid $color-border;
+    font-size: 1rem;
+  }
+  .menu-children {
+    padding-left: 1rem;
+    border-left: 2px solid $color-border;
+    margin-top: 0.25rem;
+  }
+}
+
+body.burger-open {
+  // Prevent background scroll while the off-canvas overlay is open.
+  overflow: hidden;
 }
 
 .site-footer {

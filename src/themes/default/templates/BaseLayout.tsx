@@ -16,6 +16,12 @@ export function BaseLayout({
   children,
 }: BaseLayoutProps) {
   const cssHref = `/${site.themeCssPath}`;
+  // Sibling JS file shipped by the theme. Same naming convention as the
+  // CSS: theme-assets/<theme-id>-menu.js. Loaded with `defer` so it runs
+  // after the document parsed but before DOMContentLoaded — the loader
+  // listens for that event itself if it happens to land later.
+  const themeId = site.themeCssPath.replace(/^theme-assets\//, "").replace(/\.css$/, "");
+  const jsHref = `/theme-assets/${themeId}-menu.js`;
   const canonical =
     site.settings.baseUrl && currentPath
       ? `${site.settings.baseUrl.replace(/\/+$/, "")}/${currentPath.replace(/^\/+/, "")}`
@@ -45,6 +51,7 @@ export function BaseLayout({
         <Header site={site} />
         <main className="site-main">{children}</main>
         <Footer site={site} />
+        <script src={jsHref} defer />
       </body>
     </html>
   );

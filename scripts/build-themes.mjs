@@ -44,6 +44,18 @@ async function findScssEntry(themeDir) {
   }
 }
 
+async function findMenuLoader(themeDir) {
+  // Convention: themes that ship a runtime menu loader put it next to the
+  // manifest at ./menu-loader.js. We don't enforce a particular variable
+  // name here — we just copy the file verbatim if it exists.
+  try {
+    await stat(join(themeDir, "menu-loader.js"));
+    return "menu-loader.js";
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const entries = await readdir(themesDir, { withFileTypes: true }).catch(() => []);
   await mkdir(outDir, { recursive: true });
@@ -65,6 +77,16 @@ async function main() {
     });
     await writeFile(outputPath, result.css, "utf8");
     console.log(`[themes] ${id}.css written (${result.css.length} bytes)`);
+
+    // Optional companion JS — copied verbatim. Naming pattern matches what
+    // `BaseLayout.tsx` and `ThemesPage.handleSyncAssets` expect.
+    const jsEntry = await findMenuLoader(themeDir);
+    if (jsEntry) {
+      const jsRaw = await readFile(join(themeDir, jsEntry), "utf8");
+      const jsOut = join(outDir, `${id}-menu.js`);
+      await writeFile(jsOut, jsRaw, "utf8");
+      console.log(`[themes] ${id}-menu.js written (${jsRaw.length} bytes)`);
+    }
   }
 }
 

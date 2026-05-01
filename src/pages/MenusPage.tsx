@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCmsData } from "../context/CmsDataContext";
 import { updateSettings } from "../services/settings";
-import type { MenuItem } from "../core/types";
+import { publishMenuJson } from "../services/menuPublisher";
+import type { MenuItem, SiteSettings } from "../core/types";
 
 type MenuKey = "header" | "footer";
 
@@ -28,9 +29,21 @@ function MenuEditor({ menuKey, labelKey }: { menuKey: MenuKey; labelKey: string 
   async function update(next: MenuItem[]) {
     setBusy(true);
     try {
-      await updateSettings({
-        menus: { ...settings.menus, [menuKey]: next },
-      });
+      const nextMenus = { ...settings.menus, [menuKey]: next };
+      await updateSettings({ menus: nextMenus });
+      // Build the patched settings locally so we don't have to wait for
+      // the Firestore subscription to round-trip before re-publishing the
+      // dynamic menu blob — the public-side loader picks up the new
+      // values on the next page load without a full site regeneration.
+      const patched: SiteSettings = { ...settings, menus: nextMenus };
+      try {
+        await publishMenuJson(patched, posts, pages, terms);
+      } catch (err) {
+        // The Firestore write succeeded; the JSON publish is a
+        // best-effort follow-up. The flexwegApi already toasted the
+        // exact error, so we just log here for diagnostics.
+        console.warn("Menu JSON publish failed:", err);
+      }
     } finally {
       setBusy(false);
     }

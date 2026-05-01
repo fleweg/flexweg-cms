@@ -1,5 +1,9 @@
 import type { ComponentType, ReactNode } from "react";
 import type { ImageFormatConfig, Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
+import type { ResolvedMenuItem } from "../core/menuResolver";
+
+// Re-export so theme components can keep importing from "../types".
+export type { ResolvedMenuItem };
 
 // Author metadata exposed to themes. Keep this minimal — theme code runs
 // at publish time inside the admin browser, but the rendered HTML is then
@@ -35,13 +39,6 @@ export interface SiteContext {
   };
   // Path on Flexweg of the active theme's CSS, e.g. "theme-assets/default.css".
   themeCssPath: string;
-}
-
-export interface ResolvedMenuItem {
-  id: string;
-  label: string;
-  href: string;
-  children?: ResolvedMenuItem[];
 }
 
 export interface BaseLayoutProps {
@@ -107,6 +104,13 @@ export interface ThemeManifest {
   // alongside it — no chicken-and-egg with /theme-assets/ being uploaded
   // first.
   cssText: string;
+  // Optional companion JS shipped with the theme. Embedded the same way
+  // as cssText (Vite `?raw` import in the manifest). Currently used by
+  // the default theme's `menu-loader.js` which fetches /menu.json and
+  // populates `[data-cms-menu]` containers in the layout — but any theme
+  // can supply its own runtime behavior here. Uploaded as
+  // `theme-assets/<id>-menu.js` and referenced by BaseLayout's <script>.
+  jsText?: string;
   templates: {
     base: ComponentType<BaseLayoutProps>;
     home: ComponentType<HomeTemplateProps & { site: SiteContext }>;

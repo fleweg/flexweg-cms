@@ -34,11 +34,18 @@ export function ThemesPage() {
       for (const theme of themes) {
         if (!theme.cssText) {
           log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
-          continue;
+        } else {
+          const cssPath = `theme-assets/${theme.id}.css`;
+          log({ level: "info", message: `Uploading ${cssPath}…` });
+          await uploadFile({ path: cssPath, content: theme.cssText });
         }
-        const cssPath = `theme-assets/${theme.id}.css`;
-        log({ level: "info", message: `Uploading ${cssPath}…` });
-        await uploadFile({ path: cssPath, content: theme.cssText });
+        // Optional companion JS — themes that opted in get their loader
+        // pushed alongside the CSS at the same /theme-assets/ root.
+        if (theme.jsText) {
+          const jsPath = `theme-assets/${theme.id}-menu.js`;
+          log({ level: "info", message: `Uploading ${jsPath}…` });
+          await uploadFile({ path: jsPath, content: theme.jsText });
+        }
       }
       log({ level: "success", message: "Theme assets synced." });
     } catch (err) {

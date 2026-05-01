@@ -312,6 +312,31 @@ toast.info("FYI.");
 
 Toasts auto-dismiss after 3.5 s (info / success), 5 s (warn) or 6 s (error). Pass a custom `durationMs` (or `0` for sticky) when needed: `showToast({ level: "error", message, durationMs: 0 })`.
 
+## Dynamic menus
+
+The header / footer menus configured under **Menus** in the admin are loaded **at runtime** by every published page, not baked into the HTML. This means changing a menu item, adding a new page to the menu, or moving a category around does **not** require regenerating every page on the site — the change becomes visible on the next page load anywhere.
+
+### How it works
+
+1. Saving in `MenusPage` (or any publish/unpublish that may have moved a referenced post / term) triggers `publishMenuJson`, which writes a small `/menu.json` file to the public site root with the resolved menu structure.
+2. The active theme's `BaseLayout` ships a `<script src="/theme-assets/<id>-menu.js" defer>`. That loader fetches `/menu.json` on `DOMContentLoaded` and populates every `[data-cms-menu="header|footer"]` container present on the page.
+3. The default theme's loader also wires the burger toggle (`aria-expanded` flip + class toggle for the off-canvas overlay) and sets `aria-current="page"` on the link whose href matches the current URL (so themes can style the active item via CSS).
+
+### DOM contract for new themes
+
+Any theme that wants dynamic menus exposes empty containers and a companion JS file (declared via `jsText` on the manifest):
+
+```html
+<nav class="…" data-cms-menu="header"><ul></ul></nav>
+<nav class="…" data-cms-menu="footer"><ul></ul></nav>
+```
+
+The loader fills the inner `<ul>`. If `/menu.json` is unreachable, the containers stay empty and the loader hides them via the `hidden` attribute — no error UI, no empty space.
+
+### Failure mode
+
+A failed menu.json publish toasts an error (the same Flexweg error funnel as everything else) but **does not** abort the surrounding action (post publish / save). The Firestore state remains the source of truth; the next successful publish retries the menu upload.
+
 ## Image handling
 
 When a user uploads an image, the admin runs the file entirely through a browser-side pipeline (no server, no original kept):

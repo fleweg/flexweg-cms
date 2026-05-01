@@ -9,6 +9,7 @@ import {
 } from "../core/slug";
 import { sha256Hex } from "../lib/utils";
 import { mediaToView, pickFormat } from "../core/media";
+import { resolveMenuItems } from "../core/menuResolver";
 import { getActiveTheme } from "../themes";
 import type {
   AuthorView,
@@ -16,13 +17,13 @@ import type {
   CategoryTemplateProps,
   HomeTemplateProps,
   MediaView,
-  ResolvedMenuItem,
   SingleTemplateProps,
   SiteContext,
 } from "../themes/types";
-import type { Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
+import type { Media, Post, SiteSettings, Term } from "../core/types";
 import { deleteFile, uploadFile } from "./flexwegApi";
 import { listAllMedia } from "./media";
+import { publishMenuJson } from "./menuPublisher";
 import { markPostDraft, markPostOnline } from "./posts";
 
 export interface PublishLogEntry {
@@ -55,42 +56,15 @@ function resolveMedia(id: string | undefined, media: Map<string, Media>): MediaV
   return mediaToView(media.get(id));
 }
 
-function resolveMenu(items: MenuItem[], ctx: PublishContext): ResolvedMenuItem[] {
-  return items.map((item) => {
-    const href = resolveMenuHref(item, ctx);
-    return {
-      id: item.id,
-      label: item.label,
-      href,
-      children: item.children ? resolveMenu(item.children, ctx) : undefined,
-    };
-  });
-}
-
-function resolveMenuHref(item: MenuItem, ctx: PublishContext): string {
-  if (item.externalUrl) return item.externalUrl;
-  if (!item.ref) return "#";
-  if (item.ref.kind === "home") return "/index.html";
-  if (item.ref.kind === "post") {
-    const post = [...ctx.posts, ...ctx.pages].find((p) => p.id === item.ref?.id);
-    if (!post) return "#";
-    const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
-    return `/${buildPostUrl({ post, primaryTerm: term })}`;
-  }
-  if (item.ref.kind === "term") {
-    const term = ctx.terms.find((t) => t.id === item.ref?.id);
-    if (!term || term.type !== "category") return "#";
-    return `/${buildTermUrl(term)}`;
-  }
-  return "#";
-}
-
 function buildSiteContext(ctx: PublishContext): SiteContext {
+  // Menus are also resolved by the dynamic menu.json publisher; the shared
+  // helper in core/menuResolver.ts is the single source of truth so static
+  // header rendering and the runtime JSON stay in lockstep.
   return {
     settings: ctx.settings,
     resolvedMenus: {
-      header: resolveMenu(ctx.settings.menus.header ?? [], ctx),
-      footer: resolveMenu(ctx.settings.menus.footer ?? [], ctx),
+      header: resolveMenuItems(ctx.settings.menus.header ?? [], ctx),
+      footer: resolveMenuItems(ctx.settings.menus.footer ?? [], ctx),
     },
     themeCssPath: themeCssPath(ctx.settings.activeThemeId),
   };
@@ -347,6 +321,7 @@ export async function publishPost(
 
   log({ level: "info", message: "Regenerating listings…" });
   await regenerateListings(ctx, log);
+  await republishMenu(ctx, log);
 
   log({ level: "success", message: `Published to /${newPath}` });
   await doAction("publish.after", post);
@@ -378,6 +353,7 @@ export async function unpublishPost(
     lastPublishedHash: undefined,
   });
   await regenerateListings(ctx, log);
+  await republishMenu(ctx, log);
   log({ level: "success", message: "Unpublished." });
 }
 
@@ -391,6 +367,19 @@ export async function regenerateListings(ctx: PublishContext, log: PublishLogger
   for (const term of ctx.terms.filter((t) => t.type === "category")) {
     const html = await renderCategory(term, ctx);
     await uploadIfChanged(buildTermUrl(term), html, undefined, log);
+  }
+}
+
+// Re-publish the dynamic /menu.json blob the public-side burger loader
+// reads. Called as a tail-step of every publish/unpublish/delete so menu
+// items stay in sync with post slugs / category slugs even though we
+// don't re-render every HTML page. Best-effort: a failure here gets
+// logged + already-toasted by flexwegApi but never aborts the publish.
+async function republishMenu(ctx: PublishContext, log: PublishLogger): Promise<void> {
+  try {
+    await publishMenuJson(ctx.settings, ctx.posts, ctx.pages, ctx.terms);
+  } catch (err) {
+    log({ level: "warn", message: `Menu JSON republish failed: ${(err as Error).message}` });
   }
 }
 
@@ -427,6 +416,7 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
 
   const notFoundHtml = await renderNotFound(ctx);
   await uploadIfChanged(NOT_FOUND_PATH, notFoundHtml, undefined, log);
+  await republishMenu(ctx, log);
 
   log({ level: "success", message: "Regeneration complete." });
 }
@@ -454,5 +444,6 @@ export async function deletePostAndUnpublish(
   if (post.status === "online") {
     log({ level: "info", message: "Regenerating listings…" });
     await regenerateListings(ctx, log);
+    await republishMenu(ctx, log);
   }
 }
