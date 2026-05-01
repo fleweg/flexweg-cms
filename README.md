@@ -253,6 +253,38 @@ The site language for the public output is configured separately in **Settings �
 
 Tags do not appear in URLs. All slugs are lower-case ASCII, dash-separated.
 
+## Slug uniqueness
+
+Two posts / pages / categories must never share the same public URL — Flexweg paths are case-sensitive and a duplicate would silently overwrite the other on the next publish.
+
+- **Auto-generated slugs (new entities)**: when the title produces a slug already in use, the admin appends `-2`, `-3`, … until the resulting path is free. You never think about it for the common case.
+- **User-edited slugs**: validated live against existing entities. If you type a slug that collides, an inline error appears under the field naming the conflicting entity, and the **Save** button is disabled.
+
+Collision is computed against the **final URL path**, not just the raw slug:
+
+| Entity A | Entity B | Same slug? | Same path? | Collision? |
+|---|---|---|---|---|
+| Post `news` (no category) | Page `news` | yes | both `/news.html` | **yes** |
+| Post `2026` in `news` | Post `2026` in `events` | yes | `/news/2026.html` vs `/events/2026.html` | no |
+| Post `news` (no category) | Category `news` | yes | `/news.html` vs `/news/index.html` | no |
+| Tag `news` | Category `news` | yes | tag has no public URL | no |
+
+Helpers live in [src/core/slug.ts](src/core/slug.ts): `findAvailableSlug`, `detectPathCollision`, `detectTermSlugCollision`.
+
+## Stale path cleanup
+
+Each `Post` carries two fields used by the publisher to keep the public site free of orphaned files:
+
+- `lastPublishedPath` — the path the post is currently live at on Flexweg.
+- `previousPublishedPaths[]` — paths the publisher tried but **failed** to delete during a previous publish (e.g. a transient API error).
+
+On every publish, before uploading the new file, the publisher attempts to delete every entry in `[lastPublishedPath, ...previousPublishedPaths]` that isn't the new path. Failed deletions (non-404) are persisted back into `previousPublishedPaths` and retried on the next publish.
+
+This guarantees:
+- Changing a post's slug or primary category never leaves the old URL accessible.
+- A transient Flexweg API hiccup is recovered automatically next publish.
+- Unpublishing wipes every known historical path, not just the most recent one.
+
 ## Error handling & toasts
 
 Every Flexweg API call goes through a single error funnel that surfaces failures both as thrown `FlexwegApiError`s (so calling code can react locally — e.g. retry buttons on the upload card) **and** as flash toasts in the top-right corner of the admin. Toasts include translated, status-aware messages:

@@ -82,6 +82,116 @@ export function pathToPublicUrl(baseUrl: string, path: string): string {
   return `${cleanBase}/${cleanPath}`;
 }
 
+// Returns the lowest available slug given a base and a predicate. We try
+// the base verbatim first; if taken we increment a numeric suffix until
+// `isUsed` returns false. Used by the auto-slug code path on new posts /
+// pages / terms so duplicate titles don't silently overwrite each other.
+//
+// `isUsed("hello-world")` returning true on the very first call means the
+// caller should also try `hello-world-2`, `hello-world-3`, … We cap at
+// 1000 attempts purely as a safety net — collisions of that magnitude
+// signal something else is wrong.
+export function findAvailableSlug(base: string, isUsed: (slug: string) => boolean): string {
+  if (!base) base = "untitled";
+  if (!isUsed(base)) return base;
+  for (let i = 2; i < 1000; i++) {
+    const candidate = `${base}-${i}`;
+    if (!isUsed(candidate)) return candidate;
+  }
+  return `${base}-${Date.now()}`;
+}
+
+// Anything that owns a public path on Flexweg. Used by detectPathCollision
+// to compare candidate paths across post / page / term collections.
+export interface PathOwner {
+  kind: "post" | "page" | "category";
+  id: string;
+  // Human-readable label so collision messages can name the conflicting
+  // entity ("This URL is already used by post: Hello world").
+  label: string;
+  path: string;
+}
+
+// Detects whether `candidatePath` is already taken by another post, page
+// or category. Returns the conflicting owner or `null` when the path is
+// free. `ignoreId` lets the caller exclude the entity being edited (so a
+// post doesn't collide with itself).
+//
+// Comparison is case-sensitive and trailing-slash-naive — Flexweg URLs
+// are case-sensitive so two paths only collide when their string form is
+// identical.
+export function detectPathCollision(
+  candidatePath: string,
+  posts: Array<Pick<Post, "id" | "type" | "title" | "slug" | "primaryTermId">>,
+  pages: Array<Pick<Post, "id" | "type" | "title" | "slug">>,
+  terms: Array<Pick<Term, "id" | "type" | "name" | "slug">>,
+  ignoreId?: string,
+): PathOwner | null {
+  for (const post of posts) {
+    if (post.id === ignoreId) continue;
+    const term = post.primaryTermId
+      ? terms.find((t) => t.id === post.primaryTermId)
+      : undefined;
+    let p: string;
+    try {
+      p = buildPostUrl({ post, primaryTerm: term });
+    } catch {
+      continue;
+    }
+    if (p === candidatePath) {
+      return { kind: "post", id: post.id, label: post.title || post.slug, path: p };
+    }
+  }
+  for (const page of pages) {
+    if (page.id === ignoreId) continue;
+    let p: string;
+    try {
+      p = buildPostUrl({ post: page });
+    } catch {
+      continue;
+    }
+    if (p === candidatePath) {
+      return { kind: "page", id: page.id, label: page.title || page.slug, path: p };
+    }
+  }
+  for (const term of terms) {
+    if (term.id === ignoreId) continue;
+    if (term.type !== "category") continue;
+    let p: string;
+    try {
+      p = buildTermUrl(term);
+    } catch {
+      continue;
+    }
+    if (p === candidatePath) {
+      return { kind: "category", id: term.id, label: term.name || term.slug, path: p };
+    }
+  }
+  return null;
+}
+
+// Detects whether two terms of the same type would share a slug. Term
+// uniqueness is per-type (a tag and a category named "news" can co-exist
+// — only the category produces a /news/ archive URL).
+export function detectTermSlugCollision(
+  candidate: Pick<Term, "type" | "slug">,
+  terms: Array<Pick<Term, "id" | "type" | "name" | "slug">>,
+  ignoreId?: string,
+): PathOwner | null {
+  for (const term of terms) {
+    if (term.id === ignoreId) continue;
+    if (term.type !== candidate.type) continue;
+    if (term.slug !== candidate.slug) continue;
+    return {
+      kind: "category",
+      id: term.id,
+      label: term.name || term.slug,
+      path: term.slug,
+    };
+  }
+  return null;
+}
+
 // Normalizes a media filename into a path-safe slug, then appends a short
 // random hex suffix to guarantee uniqueness. Uniqueness matters because we
 // store every asset in its own folder (`media/yyyy/mm/<slug>/`) and a

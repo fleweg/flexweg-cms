@@ -119,16 +119,23 @@ export async function updatePost(id: string, patch: UpdatePostInput): Promise<vo
 
 // Used by the publisher to record where the page was uploaded and the hash
 // of its rendered HTML. Status transitions are also done here so all
-// publish-related fields are written together.
+// publish-related fields are written together. `previousPublishedPaths`
+// carries historical paths whose deletion failed during this publish —
+// they get retried on the next publish.
 export async function markPostOnline(
   id: string,
-  fields: { lastPublishedPath: string; lastPublishedHash: string },
+  fields: {
+    lastPublishedPath: string;
+    lastPublishedHash: string;
+    previousPublishedPaths?: string[];
+  },
 ): Promise<void> {
   await updateDoc(postDoc(id), {
     status: "online",
     publishedAt: serverTimestamp(),
     lastPublishedPath: fields.lastPublishedPath,
     lastPublishedHash: fields.lastPublishedHash,
+    previousPublishedPaths: fields.previousPublishedPaths ?? [],
     updatedAt: serverTimestamp(),
   });
 }
@@ -138,6 +145,7 @@ export async function markPostDraft(id: string): Promise<void> {
     status: "draft",
     lastPublishedPath: null,
     lastPublishedHash: null,
+    previousPublishedPaths: [],
     updatedAt: serverTimestamp(),
   });
 }

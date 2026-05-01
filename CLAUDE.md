@@ -47,10 +47,20 @@ These worlds share `src/core/` (types, slug, markdown, render, plugin registry).
 - Renders Markdown via `core/markdown.ts` (DOMPurify-sanitized `marked` output).
 - Wraps the rendered body in the theme template via `core/render.tsx`.
 - Hashes the result (`sha256Hex`); skips upload if `lastPublishedHash` already matches.
-- On slug/category change, deletes the old Flexweg path before uploading the new one.
+- On slug/category change, deletes every known stale path before uploading the new one (see Stale path cleanup below).
 - Cascades: every publish/unpublish also re-renders the home page and every category archive (so listings stay in sync). `regenerateAll` adds throttling (75 ms between uploads) to avoid hammering the API.
 
-`Post.lastPublishedPath` and `Post.lastPublishedHash` are the source of truth for "where is this post live right now?" and "did anything change since last publish?". The publisher reads/writes them through `markPostOnline` / `markPostDraft`.
+`Post.lastPublishedPath` and `Post.lastPublishedHash` are the source of truth for "where is this post live right now?" and "did anything change since last publish?". `Post.previousPublishedPaths[]` holds paths whose deletion failed on a previous publish — they get retried automatically. All three are written through `markPostOnline` / `markPostDraft`.
+
+### Slug uniqueness & stale path cleanup
+
+Two pieces work in concert to keep the public site coherent under edits:
+
+1. **Slug uniqueness** — `core/slug.ts` exposes `detectPathCollision` (cross-checks a candidate path against every post / page / category) and `findAvailableSlug` (appends `-2`, `-3`, … until free). Auto-slug for new entities deduplicates silently; user-edited slugs surface an inline error and disable the Save button. Always compare on the **final URL path**, never the raw slug — two slugs may match without colliding (a post slug and a category slug can be identical because their URLs differ).
+
+2. **Stale path cleanup** (`cleanupStalePaths` in `publisher.ts`) — before uploading the new file, the publisher iterates `[lastPublishedPath, ...previousPublishedPaths]`, attempts `deleteFile` on each that isn't the new path (404 silent), and persists any non-404 failures back into `previousPublishedPaths` so the next publish retries them. `unpublishPost` uses the same helper with `keepPath: ""` to wipe everything.
+
+When adding a new code path that moves a post's URL, route through `publishPost` rather than calling the upload primitives directly — `publishPost` ensures the cleanup pass runs.
 
 ### Toast notifications
 

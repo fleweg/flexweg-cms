@@ -270,9 +270,38 @@ function applyPostStatusInCtx(ctx: PublishContext, postId: string, patch: Partia
   ctx.pages = update(ctx.pages);
 }
 
-// Publish a single post: renders, uploads, deletes the previous path on
-// move, then refreshes home + the category archive that owns it. Keeps
-// going on partial failure so the user can retry.
+// Removes every stale historical path attached to a post (lastPublishedPath
+// + previousPublishedPaths) except for `keepPath`. Returns the list of
+// paths whose deletion *failed* with a non-404 error so the caller can
+// re-persist them for retry on the next publish. 404 is silent — the file
+// was already gone.
+async function cleanupStalePaths(
+  paths: Iterable<string>,
+  keepPath: string,
+  log: PublishLogger,
+): Promise<string[]> {
+  const stale = new Set<string>();
+  for (const p of paths) {
+    if (p && p !== keepPath) stale.add(p);
+  }
+  const failed: string[] = [];
+  for (const path of stale) {
+    log({ level: "info", message: `Deleting ${path}…` });
+    try {
+      await deleteFile(path);
+    } catch (err) {
+      log({ level: "warn", message: `Could not delete ${path}: ${(err as Error).message}` });
+      failed.push(path);
+    }
+  }
+  return failed;
+}
+
+// Publish a single post: renders, uploads, deletes every known stale path
+// (current `lastPublishedPath` + any `previousPublishedPaths` left over
+// from a partially-failed previous publish), then refreshes home + the
+// category archive that owns it. Failed deletions are persisted back into
+// `previousPublishedPaths` so the next publish retries them.
 export async function publishPost(
   postId: string,
   ctx: PublishContext,
@@ -289,18 +318,23 @@ export async function publishPost(
   log({ level: "info", message: "Rendering page…" });
   const html = await renderSingle(post, ctx);
 
-  // If the post moved (slug or category changed), drop the old file first.
-  if (post.lastPublishedPath && post.lastPublishedPath !== newPath) {
-    log({ level: "info", message: `Deleting ${post.lastPublishedPath}…` });
-    try {
-      await deleteFile(post.lastPublishedPath);
-    } catch (err) {
-      log({ level: "warn", message: `Could not delete old path: ${(err as Error).message}` });
-    }
-  }
+  // Wipe every known stale path before re-uploading. If a previous publish
+  // failed to clean a path, it lives in previousPublishedPaths and is
+  // retried here. Deletion happens BEFORE upload so a same-path republish
+  // only ever transitions the file (delete-then-upload), and a path-change
+  // never leaves the old file orphaned.
+  const failedDeletions = await cleanupStalePaths(
+    [post.lastPublishedPath ?? "", ...(post.previousPublishedPaths ?? [])],
+    newPath,
+    log,
+  );
 
   const { hash } = await uploadIfChanged(newPath, html, post.lastPublishedHash, log);
-  await markPostOnline(post.id, { lastPublishedPath: newPath, lastPublishedHash: hash });
+  await markPostOnline(post.id, {
+    lastPublishedPath: newPath,
+    lastPublishedHash: hash,
+    previousPublishedPaths: failedDeletions,
+  });
   // Reflect the transition locally so the listings regenerated below
   // include this post. Without this, renderHome would still see status
   // "draft" and silently skip it until the next publish action.
@@ -308,6 +342,7 @@ export async function publishPost(
     status: "online",
     lastPublishedPath: newPath,
     lastPublishedHash: hash,
+    previousPublishedPaths: failedDeletions,
   });
 
   log({ level: "info", message: "Regenerating listings…" });
@@ -325,14 +360,15 @@ export async function unpublishPost(
 ): Promise<void> {
   const post = ctx.posts.find((p) => p.id === postId) ?? ctx.pages.find((p) => p.id === postId);
   if (!post) throw new Error(`Post ${postId} not found.`);
-  if (post.lastPublishedPath) {
-    log({ level: "info", message: `Deleting ${post.lastPublishedPath}…` });
-    try {
-      await deleteFile(post.lastPublishedPath);
-    } catch (err) {
-      log({ level: "warn", message: `Delete failed: ${(err as Error).message}` });
-    }
-  }
+  // Wipe every known historical path so unpublishing never leaves a
+  // visible file on the public site. `keepPath: ""` makes cleanupStalePaths
+  // attempt every path it sees (the empty string is filtered out by the
+  // truthy check inside).
+  await cleanupStalePaths(
+    [post.lastPublishedPath ?? "", ...(post.previousPublishedPaths ?? [])],
+    "",
+    log,
+  );
   await markPostDraft(post.id);
   // Mirror of the publish path: drop the post from the in-memory online set
   // so renderHome / renderCategory exclude it on the very next regeneration.
@@ -369,8 +405,20 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
     const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
     const path = buildPostUrl({ post, primaryTerm: term });
     const html = await renderSingle(post, ctx);
+    // Same multi-path cleanup as a single publish — keeps the public site
+    // in a consistent state if regenerateAll is invoked after a series of
+    // path changes that left orphans.
+    const failedDeletions = await cleanupStalePaths(
+      [post.lastPublishedPath ?? "", ...(post.previousPublishedPaths ?? [])],
+      path,
+      log,
+    );
     const { hash } = await uploadIfChanged(path, html, undefined, log);
-    await markPostOnline(post.id, { lastPublishedPath: path, lastPublishedHash: hash });
+    await markPostOnline(post.id, {
+      lastPublishedPath: path,
+      lastPublishedHash: hash,
+      previousPublishedPaths: failedDeletions,
+    });
     // Soft throttle: avoid bursting the API with hundreds of uploads in a tight loop.
     await new Promise((r) => setTimeout(r, 75));
   }
@@ -390,14 +438,14 @@ export async function deletePostAndUnpublish(
 ): Promise<void> {
   const post = ctx.posts.find((p) => p.id === postId) ?? ctx.pages.find((p) => p.id === postId);
   if (!post) return;
-  if (post.lastPublishedPath) {
-    try {
-      await deleteFile(post.lastPublishedPath);
-      log({ level: "info", message: `Deleted ${post.lastPublishedPath}` });
-    } catch (err) {
-      log({ level: "warn", message: `Delete failed: ${(err as Error).message}` });
-    }
-  }
+  // Wipe every recorded historical path. The Firestore doc is about to
+  // be removed by the caller, so even paths whose deletion still fails
+  // become unrecoverable orphans — best-effort is the right policy here.
+  await cleanupStalePaths(
+    [post.lastPublishedPath ?? "", ...(post.previousPublishedPaths ?? [])],
+    "",
+    log,
+  );
   // Drop the post from the in-memory listings so the regeneration below
   // doesn't keep referencing it. Caller still handles Firestore deletion
   // afterwards (services/posts.ts).

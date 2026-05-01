@@ -10,16 +10,24 @@ import { MediaPicker } from "../components/editor/MediaPicker";
 import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
 import { PublishLog } from "../components/publishing/PublishLog";
-import { isValidSlug, slugify } from "../core/slug";
+import {
+  buildPostUrl,
+  detectPathCollision,
+  findAvailableSlug,
+  isValidSlug,
+  slugify,
+} from "../core/slug";
 import { pickMediaUrl } from "../core/media";
 import { ADMIN_PREVIEW_KEY } from "../services/imageFormats";
 import { createPost, deletePost, updatePost } from "../services/posts";
 import {
   buildPublishContext,
   deletePostAndUnpublish,
+  publishPost,
   type PublishLogEntry,
 } from "../services/publisher";
-import type { Media, Post } from "../core/types";
+import { toast } from "../lib/toast";
+import type { Media, Post, SeoMeta } from "../core/types";
 
 export function PostEditPage() {
   return <PostOrPageEditPage type="post" />;
@@ -77,25 +85,88 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing?.id]);
 
-  // Keep the slug in sync with the title until the user types into it.
+  // Keep the slug in sync with the title for new posts, until the user
+  // types into the slug field. For existing posts the slug is hydrated
+  // from Firestore and must not be clobbered: this effect would otherwise
+  // run on the same first commit as the hydration effect, capture the
+  // stale `slugDirty=false` from the initial render, and schedule a
+  // setSlug(slugify("")) that wins over hydration's setSlug — leaving the
+  // form with an empty (invalid) slug and a permanently-disabled Save
+  // button.
+  //
+  // The auto-generated slug is also deduplicated against existing posts /
+  // pages / categories: when the title produces a path that's already
+  // taken, we append `-2`, `-3`, … until we land on a free path. This
+  // mirrors WordPress's "post-2", "post-3" suffixes and prevents two
+  // entries from silently overwriting each other on Flexweg.
   useEffect(() => {
+    if (!isNew) return;
     if (slugDirty) return;
-    setSlug(slugify(title));
-  }, [title, slugDirty]);
+    const base = slugify(title);
+    if (!base) {
+      setSlug("");
+      return;
+    }
+    const primaryTerm = primaryTermId
+      ? categories.find((c) => c.id === primaryTermId)
+      : undefined;
+    const isUsed = (candidate: string): boolean => {
+      const path = buildPostUrl({
+        post: { type, slug: candidate },
+        primaryTerm,
+      });
+      return detectPathCollision(path, posts, pages, [...categories, ...tags]) !== null;
+    };
+    setSlug(findAvailableSlug(base, isUsed));
+  }, [title, slugDirty, isNew, primaryTermId, type, posts, pages, categories, tags]);
 
   const slugValid = isValidSlug(slug);
   const heroMedia = heroMediaId ? media.find((m) => m.id === heroMediaId) : undefined;
+
+  // Detects whether the current draft would collide with another post,
+  // page or category on its public URL. Computed live so the inline
+  // validation message and the disabled state of the Save button stay in
+  // sync with the form. Excludes the entity being edited via `id`.
+  const collision = useMemo(() => {
+    if (!slugValid) return null;
+    const primaryTerm = primaryTermId
+      ? categories.find((c) => c.id === primaryTermId)
+      : undefined;
+    let candidatePath: string;
+    try {
+      candidatePath = buildPostUrl({ post: { type, slug }, primaryTerm });
+    } catch {
+      return null;
+    }
+    return detectPathCollision(
+      candidatePath,
+      posts,
+      pages,
+      [...categories, ...tags],
+      existing?.id,
+    );
+  }, [slugValid, slug, primaryTermId, type, posts, pages, categories, tags, existing?.id]);
+
+  // Builds a SeoMeta object that never contains `undefined` values. The
+  // top-level updatePost filter only skips `undefined` at the patch level,
+  // so a nested `{ title: "x", description: undefined }` would otherwise
+  // sneak through and Firestore rejects it with a silent payload error.
+  function buildSeoPayload(): SeoMeta | undefined {
+    const out: SeoMeta = {};
+    if (seoTitle.trim()) out.title = seoTitle.trim();
+    if (seoDescription.trim()) out.description = seoDescription.trim();
+    return Object.keys(out).length > 0 ? out : undefined;
+  }
 
   async function handleSave() {
     if (!user) return;
     if (!title.trim()) return;
     if (!slugValid) return;
     setSaving(true);
+    setShowLog(false);
     try {
       const termIds = primaryTermId ? [primaryTermId, ...tagIds] : [...tagIds];
-      const seo = seoTitle || seoDescription
-        ? { title: seoTitle || undefined, description: seoDescription || undefined }
-        : undefined;
+      const seo = buildSeoPayload();
       if (isNew) {
         const newId = await createPost({
           type,
@@ -109,19 +180,67 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
           heroMediaId,
           seo,
         });
+        toast.success(t("posts.edit.draftSaved"));
         navigate(`/${type === "post" ? "posts" : "pages"}/${newId}`, { replace: true });
-      } else if (existing) {
-        await updatePost(existing.id, {
+        return;
+      }
+
+      if (!existing) return;
+
+      const heroFinal = heroMediaId ?? null;
+      const primaryFinal = primaryTermId || null;
+      await updatePost(existing.id, {
+        title,
+        slug,
+        contentMarkdown,
+        excerpt: excerpt || null,
+        termIds,
+        primaryTermId: primaryFinal,
+        heroMediaId: heroFinal,
+        // updatePost's top-level loop drops keys whose value is undefined,
+        // so omitting `seo` when empty leaves the field untouched in
+        // Firestore. To explicitly clear it, we'd need a deleteField()
+        // sentinel — handled later if a UI affordance is added.
+        seo: seo ?? undefined,
+      });
+
+      // If the post is already live, regenerate its static HTML right away
+      // so the public site stays in sync with the edits. Without this,
+      // saving an online post used to leave the published file untouched
+      // until the user manually toggled Unpublish + Publish.
+      if (existing.status === "online") {
+        // The CmsDataContext snapshot in `posts`/`pages` doesn't yet
+        // include the values we just wrote (Firestore subscription
+        // hasn't propagated). Patch the publish context locally so
+        // `publishPost` renders with the new title/slug/hero/etc.
+        const patchedExisting: Post = {
+          ...existing,
           title,
           slug,
           contentMarkdown,
-          excerpt: excerpt || null,
+          excerpt: excerpt || undefined,
           termIds,
-          primaryTermId: primaryTermId || null,
-          heroMediaId: heroMediaId ?? null,
-          seo: seo ?? undefined,
+          primaryTermId: primaryTermId || undefined,
+          heroMediaId: heroMediaId ?? undefined,
+          seo,
+        };
+        const ctx = await buildPublishContext({
+          posts: posts.map((p) => (p.id === existing.id ? patchedExisting : p)),
+          pages: pages.map((p) => (p.id === existing.id ? patchedExisting : p)),
+          terms: [...categories, ...tags],
+          settings,
+          authorLookup: () => undefined,
         });
+        setShowLog(true);
+        setLogEntries([]);
+        await publishPost(existing.id, ctx, appendLog);
+        toast.success(t("posts.edit.savedAndRepublished"));
+      } else {
+        toast.success(t("posts.edit.saved"));
       }
+    } catch (err) {
+      const message = (err as Error).message;
+      toast.error(message || t("posts.edit.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -190,9 +309,18 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
               {t("common.back")}
             </button>
             {existing && <StatusBadge status={existing.status} />}
-            <button type="button" className="btn-secondary" onClick={handleSave} disabled={saving || !slugValid}>
+            <button
+              type="button"
+              className={existing?.status === "online" ? "btn-primary" : "btn-secondary"}
+              onClick={handleSave}
+              disabled={saving || !slugValid || !!collision}
+            >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? t("common.saving") : t("common.save")}
+              {saving
+                ? t("common.saving")
+                : existing?.status === "online"
+                  ? t("posts.edit.saveAndRepublish")
+                  : t("common.save")}
             </button>
             {existing && <PublishButton post={existing as Post} onLog={appendLog} />}
             {existing && (
@@ -228,6 +356,11 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
             />
             {!slugValid && slug && (
               <p className="text-xs text-red-600 mt-1">Lower-case, ASCII, dash-separated only.</p>
+            )}
+            {slugValid && collision && (
+              <p className="text-xs text-red-600 mt-1">
+                {t(`posts.edit.slugCollision.${collision.kind}`, { label: collision.label })}
+              </p>
             )}
           </div>
 

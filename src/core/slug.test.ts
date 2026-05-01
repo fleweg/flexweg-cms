@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildPostUrl,
   buildTermUrl,
+  detectPathCollision,
+  detectTermSlugCollision,
+  findAvailableSlug,
   HOME_PATH,
   isValidSlug,
   normalizeMediaSlug,
@@ -119,5 +122,76 @@ describe("pathToPublicUrl", () => {
     expect(pathToPublicUrl("https://site.flexweg.com", HOME_PATH)).toBe(
       "https://site.flexweg.com/index.html",
     );
+  });
+});
+
+describe("findAvailableSlug", () => {
+  it("returns the base when not used", () => {
+    expect(findAvailableSlug("hello", () => false)).toBe("hello");
+  });
+  it("appends -2 when the base is taken", () => {
+    const used = new Set(["hello"]);
+    expect(findAvailableSlug("hello", (s) => used.has(s))).toBe("hello-2");
+  });
+  it("skips taken indexes and returns the lowest free", () => {
+    const used = new Set(["hello", "hello-2", "hello-3"]);
+    expect(findAvailableSlug("hello", (s) => used.has(s))).toBe("hello-4");
+  });
+  it("falls back to 'untitled' when the base is empty", () => {
+    expect(findAvailableSlug("", () => false)).toBe("untitled");
+  });
+});
+
+describe("detectPathCollision", () => {
+  const posts = [
+    { id: "p1", type: "post" as const, title: "Hello", slug: "hello", primaryTermId: undefined },
+    { id: "p2", type: "post" as const, title: "Recap", slug: "recap", primaryTermId: "cat-news" },
+  ];
+  const pages = [{ id: "pg1", type: "page" as const, title: "About", slug: "about" }];
+  const terms = [
+    { id: "cat-news", type: "category" as const, name: "News", slug: "news" },
+    { id: "tag-feat", type: "tag" as const, name: "Featured", slug: "featured" },
+  ];
+
+  it("detects a top-level post path collision", () => {
+    const hit = detectPathCollision("hello.html", posts, pages, terms);
+    expect(hit?.kind).toBe("post");
+    expect(hit?.id).toBe("p1");
+  });
+  it("detects a category-prefixed post path collision", () => {
+    const hit = detectPathCollision("news/recap.html", posts, pages, terms);
+    expect(hit?.kind).toBe("post");
+    expect(hit?.id).toBe("p2");
+  });
+  it("detects a page path collision", () => {
+    const hit = detectPathCollision("about.html", posts, pages, terms);
+    expect(hit?.kind).toBe("page");
+  });
+  it("detects a category archive path collision", () => {
+    const hit = detectPathCollision("news/index.html", posts, pages, terms);
+    expect(hit?.kind).toBe("category");
+  });
+  it("returns null when the path is free", () => {
+    expect(detectPathCollision("brand-new.html", posts, pages, terms)).toBeNull();
+  });
+  it("excludes the entity being edited via ignoreId", () => {
+    expect(detectPathCollision("hello.html", posts, pages, terms, "p1")).toBeNull();
+  });
+});
+
+describe("detectTermSlugCollision", () => {
+  const terms = [
+    { id: "cat-news", type: "category" as const, name: "News", slug: "news" },
+    { id: "tag-news", type: "tag" as const, name: "News", slug: "news" },
+  ];
+  it("detects a same-type collision", () => {
+    expect(
+      detectTermSlugCollision({ type: "category", slug: "news" }, terms)?.id,
+    ).toBe("cat-news");
+  });
+  it("does not flag cross-type matches", () => {
+    expect(
+      detectTermSlugCollision({ type: "tag", slug: "news" }, terms, "tag-news"),
+    ).toBeNull();
   });
 });

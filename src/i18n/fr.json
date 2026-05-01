@@ -101,7 +101,16 @@
     "edit": {
       "newTitle": "Nouvel article",
       "editTitle": "Modifier l'article",
-      "draftSaved": "Brouillon enregistré",
+      "saved": "Enregistré.",
+      "savedAndRepublished": "Enregistré et republié.",
+      "saveFailed": "Échec de l'enregistrement.",
+      "saveAndRepublish": "Enregistrer & republier",
+      "draftSaved": "Brouillon enregistré.",
+      "slugCollision": {
+        "post": "Cette URL est déjà utilisée par l'article : « {{label}} ».",
+        "page": "Cette URL est déjà utilisée par la page : « {{label}} ».",
+        "category": "Cette URL est déjà utilisée par la catégorie : « {{label}} »."
+      },
       "publish": "Publier",
       "unpublish": "Dépublier",
       "publishing": "Publication…",
@@ -124,7 +133,8 @@
     "newCategory": "Nouvelle catégorie",
     "newTag": "Nouveau tag",
     "noCategories": "Aucune catégorie.",
-    "noTags": "Aucun tag."
+    "noTags": "Aucun tag.",
+    "slugCollision": "Ce slug est déjà utilisé par « {{label}} »."
   },
   "media": {
     "title": "Médiathèque",

@@ -1,9 +1,14 @@
-import { useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCmsData } from "../context/CmsDataContext";
-import { isValidSlug, slugify } from "../core/slug";
+import {
+  detectTermSlugCollision,
+  findAvailableSlug,
+  isValidSlug,
+  slugify,
+} from "../core/slug";
 import { createTerm, deleteTerm, updateTerm } from "../services/taxonomies";
 import type { Term, TermType } from "../core/types";
 
@@ -45,9 +50,24 @@ function TermSection({
   const [slug, setSlug] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Auto-deduplicate the new term's slug at submit time. If the user typed
+  // an explicit slug we keep it as-is and let the collision check below
+  // surface a friendly error (this matches the post-edit UX where manual
+  // slugs aren't silently rewritten).
   async function handleAdd() {
-    const finalSlug = slug || slugify(name);
-    if (!name.trim() || !isValidSlug(finalSlug)) return;
+    if (!name.trim()) return;
+    const userSlug = slug.trim();
+    let finalSlug: string;
+    if (userSlug) {
+      if (!isValidSlug(userSlug)) return;
+      if (detectTermSlugCollision({ type, slug: userSlug }, terms)) return;
+      finalSlug = userSlug;
+    } else {
+      const base = slugify(name) || "term";
+      finalSlug = findAvailableSlug(base, (s) =>
+        Boolean(detectTermSlugCollision({ type, slug: s }, terms)),
+      );
+    }
     setBusy(true);
     try {
       await createTerm({ type, name: name.trim(), slug: finalSlug });
@@ -57,6 +77,15 @@ function TermSection({
       setBusy(false);
     }
   }
+
+  // Live collision check on the manual slug input. Shown beneath the slug
+  // field and used to disable the Add button.
+  const newSlugCollision = useMemo(() => {
+    const userSlug = slug.trim();
+    if (!userSlug) return null;
+    if (!isValidSlug(userSlug)) return null;
+    return detectTermSlugCollision({ type, slug: userSlug }, terms);
+  }, [slug, type, terms]);
 
   return (
     <section className="card p-4 space-y-3">
@@ -76,17 +105,27 @@ function TermSection({
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
         />
-        <button type="button" className="btn-primary" onClick={handleAdd} disabled={busy}>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleAdd}
+          disabled={busy || !!newSlugCollision}
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           {type === "category" ? t("taxonomies.newCategory") : t("taxonomies.newTag")}
         </button>
       </div>
+      {newSlugCollision && (
+        <p className="text-xs text-red-600 mt-1">
+          {t("taxonomies.slugCollision", { label: newSlugCollision.label })}
+        </p>
+      )}
       {terms.length === 0 ? (
         <p className="text-sm text-surface-500 italic dark:text-surface-400">{t(emptyKey)}</p>
       ) : (
         <ul className="divide-y divide-surface-200 dark:divide-surface-800">
           {terms.map((term) => (
-            <TermRow key={term.id} term={term} />
+            <TermRow key={term.id} term={term} terms={terms} />
           ))}
         </ul>
       )}
@@ -94,13 +133,19 @@ function TermSection({
   );
 }
 
-function TermRow({ term }: { term: Term }) {
+function TermRow({ term, terms }: { term: Term; terms: Term[] }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(term.name);
   const [slug, setSlug] = useState(term.slug);
   const dirty = name !== term.name || slug !== term.slug;
+  const collision = useMemo(() => {
+    if (!isValidSlug(slug)) return null;
+    return detectTermSlugCollision({ type: term.type, slug }, terms, term.id);
+  }, [slug, term.type, term.id, terms]);
 
   async function handleSave() {
     if (!isValidSlug(slug)) return;
+    if (collision) return;
     await updateTerm(term.id, { name, slug });
   }
 
@@ -110,25 +155,38 @@ function TermRow({ term }: { term: Term }) {
   }
 
   return (
-    <li className="flex flex-wrap items-center gap-2 py-2">
-      <input
-        type="text"
-        className="input flex-1 min-w-[160px]"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        type="text"
-        className="input flex-1 min-w-[160px]"
-        value={slug}
-        onChange={(e) => setSlug(e.target.value)}
-      />
-      <button type="button" className="btn-secondary" onClick={handleSave} disabled={!dirty}>
-        Save
-      </button>
-      <button type="button" className="btn-ghost" onClick={handleDelete}>
-        <Trash2 className="h-4 w-4" />
-      </button>
+    <li className="py-2 space-y-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          className="input flex-1 min-w-[160px]"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          type="text"
+          className="input flex-1 min-w-[160px]"
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+        />
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={handleSave}
+          disabled={!dirty || !!collision}
+        >
+          Save
+        </button>
+        <button type="button" className="btn-ghost" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+      {collision && (
+        <p className="text-xs text-red-600 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
+          {t("taxonomies.slugCollision", { label: collision.label })}
+        </p>
+      )}
     </li>
   );
 }

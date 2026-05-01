@@ -101,7 +101,16 @@
     "edit": {
       "newTitle": "New post",
       "editTitle": "Edit post",
-      "draftSaved": "Draft saved",
+      "saved": "Saved.",
+      "savedAndRepublished": "Saved and republished.",
+      "saveFailed": "Save failed.",
+      "saveAndRepublish": "Save & republish",
+      "draftSaved": "Draft saved.",
+      "slugCollision": {
+        "post": "This URL is already used by post: \"{{label}}\".",
+        "page": "This URL is already used by page: \"{{label}}\".",
+        "category": "This URL is already used by category: \"{{label}}\"."
+      },
       "publish": "Publish",
       "unpublish": "Unpublish",
       "publishing": "Publishing…",
@@ -124,7 +133,8 @@
     "newCategory": "New category",
     "newTag": "New tag",
     "noCategories": "No categories yet.",
-    "noTags": "No tags yet."
+    "noTags": "No tags yet.",
+    "slugCollision": "This slug is already used by \"{{label}}\"."
   },
   "media": {
     "title": "Media library",

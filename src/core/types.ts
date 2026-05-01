@@ -54,6 +54,12 @@ export interface Post {
   // The Flexweg path the post is currently live at. Lets the publisher
   // delete the old file when the slug or category changes.
   lastPublishedPath?: string;
+  // Paths that *should* have been deleted on a previous publish but
+  // weren't (e.g. transient API failure). The publisher retries cleaning
+  // them on every subsequent publish, so a one-off API hiccup doesn't
+  // leave permanent orphans on the public site. Cleared once the cleanup
+  // succeeds.
+  previousPublishedPaths?: string[];
   // Hash of the rendered HTML — skip re-upload when nothing changed.
   lastPublishedHash?: string;
 }
