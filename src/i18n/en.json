@@ -1,0 +1,225 @@
+{
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading…",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "all": "All",
+    "none": "None",
+    "actions": "Actions",
+    "name": "Name",
+    "slug": "Slug",
+    "description": "Description",
+    "status": "Status",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "publishedAt": "Published",
+    "language": "Language",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "signOut": "Sign out",
+    "administrator": "Administrator",
+    "editor": "Editor",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@company.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "resetEmailSent": "Password reset email sent to {{email}}.",
+    "enterEmailFirst": "Enter your email above first, then click reset.",
+    "emailPasswordRequired": "Email and password are required.",
+    "signInSubtitle": "Use your work email and password.",
+    "footer": "Account requests go through your administrator.",
+    "errors": {
+      "invalidEmail": "Invalid email address.",
+      "invalidCredentials": "Invalid email or password.",
+      "tooManyRequests": "Too many attempts. Try again later or reset your password.",
+      "userDisabled": "This account has been disabled.",
+      "networkFailed": "Network error. Check your connection.",
+      "generic": "Authentication failed."
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "posts": "Posts",
+    "pages": "Pages",
+    "taxonomies": "Categories & Tags",
+    "media": "Media",
+    "themes": "Themes",
+    "plugins": "Plugins",
+    "menus": "Menus",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {{email}}.",
+    "stats": {
+      "totalPosts": "Posts",
+      "totalPages": "Pages",
+      "online": "Online",
+      "drafts": "Drafts"
+    }
+  },
+  "posts": {
+    "title": "Posts",
+    "newPost": "New post",
+    "noPosts": "No posts yet. Create your first one to get started.",
+    "filters": {
+      "all": "All",
+      "draft": "Draft",
+      "online": "Online"
+    },
+    "fields": {
+      "title": "Title",
+      "slug": "Slug",
+      "excerpt": "Excerpt",
+      "content": "Content",
+      "category": "Category",
+      "tags": "Tags",
+      "heroImage": "Hero image",
+      "seoTitle": "SEO title",
+      "seoDescription": "SEO description"
+    },
+    "edit": {
+      "newTitle": "New post",
+      "editTitle": "Edit post",
+      "draftSaved": "Draft saved",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "publishing": "Publishing…",
+      "unpublishing": "Unpublishing…"
+    },
+    "status": {
+      "draft": "Draft",
+      "online": "Online"
+    }
+  },
+  "pages": {
+    "title": "Pages",
+    "newPage": "New page",
+    "noPages": "No pages yet."
+  },
+  "taxonomies": {
+    "title": "Categories & Tags",
+    "categories": "Categories",
+    "tags": "Tags",
+    "newCategory": "New category",
+    "newTag": "New tag",
+    "noCategories": "No categories yet.",
+    "noTags": "No tags yet."
+  },
+  "media": {
+    "title": "Media library",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "noMedia": "No media yet.",
+    "alt": "Alt text",
+    "caption": "Caption",
+    "filename": "Filename",
+    "size": "Size",
+    "type": "Type"
+  },
+  "themes": {
+    "title": "Themes",
+    "active": "Active",
+    "activate": "Activate",
+    "syncAssets": "Sync theme assets",
+    "regenerateSite": "Regenerate site",
+    "regenerating": "Regenerating…"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "enable": "Enable",
+    "disable": "Disable"
+  },
+  "menus": {
+    "title": "Menus",
+    "header": "Header menu",
+    "footer": "Footer menu"
+  },
+  "settings": {
+    "title": "Settings",
+    "site": {
+      "title": "Site",
+      "siteTitle": "Site title",
+      "siteDescription": "Site description",
+      "siteLanguage": "Site language",
+      "siteLanguageHelp": "BCP-47 language tag injected into <html lang=\"…\"> on every published page.",
+      "baseUrl": "Public site URL",
+      "postsPerPage": "Posts per page",
+      "homeMode": "Home content",
+      "homeLatest": "Latest posts",
+      "homeStatic": "Static page",
+      "homePage": "Home page"
+    },
+    "flexweg": {
+      "title": "Flexweg API",
+      "apiKey": "API key",
+      "apiKeyHelp": "Generated from your Flexweg account → API. Stored in Firestore.",
+      "siteUrl": "Site URL",
+      "siteUrlHelp": "Public URL of your Flexweg site without trailing slash.",
+      "apiBaseUrl": "API base URL"
+    },
+    "profile": {
+      "title": "Profile",
+      "adminLocale": "Admin language",
+      "adminLocaleHelp": "Language used by the admin interface. Saved to your profile."
+    }
+  },
+  "users": {
+    "title": "Users",
+    "noUsers": "No users yet.",
+    "role": "Role",
+    "disabled": "Disabled",
+    "actions": {
+      "promote": "Promote to admin",
+      "demote": "Demote to editor",
+      "disable": "Disable",
+      "enable": "Enable",
+      "delete": "Delete record"
+    }
+  },
+  "errors": {
+    "appError": "Application error",
+    "loadAccountFailed": "Could not load your account",
+    "loadAccountHint": "If the problem persists, sign out and try again.",
+    "accountDisabled": "Account disabled",
+    "accountDisabledMessage": "Your access to this CMS has been disabled. Contact your administrator.",
+    "firebaseNotConfigured": "Firebase is not configured",
+    "firebaseEnvMissing": "The following env variables are missing:\n{{vars}}\n\nCopy .env.example to .env, fill in your Firebase project credentials, and restart the dev server.",
+    "adminEmailNotConfigured": "Admin email is not configured",
+    "adminEmailMessage": "VITE_ADMIN_EMAIL is missing in .env. Set it to the email of the bootstrap administrator.",
+    "consoleHint": "Check the browser console and your .env configuration. See the README for setup instructions."
+  },
+  "publish": {
+    "log": {
+      "rendering": "Rendering page…",
+      "uploading": "Uploading {{path}}…",
+      "deleting": "Deleting {{path}}…",
+      "regenerating": "Regenerating listings…",
+      "skipped": "Skipped {{path}} (no changes)",
+      "done": "Published to {{url}}",
+      "failed": "Failed: {{error}}"
+    }
+  }
+}

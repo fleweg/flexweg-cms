@@ -1,0 +1,44 @@
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { collections, getDb, settingsDocs } from "./firebase";
+import type { SiteSettings } from "../core/types";
+
+const siteSettingsRef = () => doc(getDb(), collections.settings, settingsDocs.site);
+
+// Defaults applied on first read. Stored back to Firestore as soon as an
+// admin opens the Settings page so the settings doc exists for rules.
+export const DEFAULT_SITE_SETTINGS: SiteSettings = {
+  title: "My site",
+  description: "",
+  language: "en",
+  baseUrl: "",
+  activeThemeId: "default",
+  enabledPlugins: { "core-seo": true },
+  homeMode: "latest-posts",
+  postsPerPage: 10,
+  menus: { header: [], footer: [] },
+};
+
+export function subscribeToSettings(
+  onChange: (settings: SiteSettings) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  return onSnapshot(
+    siteSettingsRef(),
+    (snap) => {
+      const data = snap.data() as Partial<SiteSettings> | undefined;
+      onChange({ ...DEFAULT_SITE_SETTINGS, ...(data ?? {}) });
+    },
+    onError,
+  );
+}
+
+export async function getSettings(): Promise<SiteSettings> {
+  const snap = await getDoc(siteSettingsRef());
+  const data = snap.exists() ? (snap.data() as Partial<SiteSettings>) : {};
+  return { ...DEFAULT_SITE_SETTINGS, ...data };
+}
+
+export async function updateSettings(patch: Partial<SiteSettings>): Promise<void> {
+  // setDoc with merge so first-time writes succeed without a prior get.
+  await setDoc(siteSettingsRef(), patch, { merge: true });
+}

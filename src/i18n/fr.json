@@ -1,0 +1,225 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "loading": "Chargement…",
+    "yes": "Oui",
+    "no": "Non",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer",
+    "all": "Tous",
+    "none": "Aucun",
+    "actions": "Actions",
+    "name": "Nom",
+    "slug": "Slug",
+    "description": "Description",
+    "status": "Statut",
+    "createdAt": "Créé le",
+    "updatedAt": "Mis à jour",
+    "publishedAt": "Publié le",
+    "language": "Langue",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair",
+    "signOut": "Déconnexion",
+    "administrator": "Administrateur",
+    "editor": "Éditeur",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "Connexion",
+    "signingIn": "Connexion…",
+    "email": "Email",
+    "password": "Mot de passe",
+    "emailPlaceholder": "vous@entreprise.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetEmailSent": "Email de réinitialisation envoyé à {{email}}.",
+    "enterEmailFirst": "Saisissez d'abord votre email, puis cliquez sur réinitialiser.",
+    "emailPasswordRequired": "Email et mot de passe requis.",
+    "signInSubtitle": "Utilisez votre email professionnel et votre mot de passe.",
+    "footer": "Les demandes de compte passent par votre administrateur.",
+    "errors": {
+      "invalidEmail": "Adresse email invalide.",
+      "invalidCredentials": "Email ou mot de passe invalide.",
+      "tooManyRequests": "Trop de tentatives. Réessayez plus tard ou réinitialisez votre mot de passe.",
+      "userDisabled": "Ce compte a été désactivé.",
+      "networkFailed": "Erreur réseau. Vérifiez votre connexion.",
+      "generic": "Échec de l'authentification."
+    }
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "posts": "Articles",
+    "pages": "Pages",
+    "taxonomies": "Catégories & Tags",
+    "media": "Médias",
+    "themes": "Thèmes",
+    "plugins": "Plugins",
+    "menus": "Menus",
+    "users": "Utilisateurs",
+    "settings": "Réglages"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue, {{email}}.",
+    "stats": {
+      "totalPosts": "Articles",
+      "totalPages": "Pages",
+      "online": "En ligne",
+      "drafts": "Brouillons"
+    }
+  },
+  "posts": {
+    "title": "Articles",
+    "newPost": "Nouvel article",
+    "noPosts": "Aucun article. Créez le premier pour commencer.",
+    "filters": {
+      "all": "Tous",
+      "draft": "Brouillon",
+      "online": "En ligne"
+    },
+    "fields": {
+      "title": "Titre",
+      "slug": "Slug",
+      "excerpt": "Extrait",
+      "content": "Contenu",
+      "category": "Catégorie",
+      "tags": "Tags",
+      "heroImage": "Image d'en-tête",
+      "seoTitle": "Titre SEO",
+      "seoDescription": "Description SEO"
+    },
+    "edit": {
+      "newTitle": "Nouvel article",
+      "editTitle": "Modifier l'article",
+      "draftSaved": "Brouillon enregistré",
+      "publish": "Publier",
+      "unpublish": "Dépublier",
+      "publishing": "Publication…",
+      "unpublishing": "Dépublication…"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "online": "En ligne"
+    }
+  },
+  "pages": {
+    "title": "Pages",
+    "newPage": "Nouvelle page",
+    "noPages": "Aucune page."
+  },
+  "taxonomies": {
+    "title": "Catégories & Tags",
+    "categories": "Catégories",
+    "tags": "Tags",
+    "newCategory": "Nouvelle catégorie",
+    "newTag": "Nouveau tag",
+    "noCategories": "Aucune catégorie.",
+    "noTags": "Aucun tag."
+  },
+  "media": {
+    "title": "Médiathèque",
+    "upload": "Téléverser",
+    "uploading": "Téléversement…",
+    "noMedia": "Aucun média.",
+    "alt": "Texte alternatif",
+    "caption": "Légende",
+    "filename": "Nom du fichier",
+    "size": "Taille",
+    "type": "Type"
+  },
+  "themes": {
+    "title": "Thèmes",
+    "active": "Actif",
+    "activate": "Activer",
+    "syncAssets": "Synchroniser le thème",
+    "regenerateSite": "Régénérer le site",
+    "regenerating": "Régénération…"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "enable": "Activer",
+    "disable": "Désactiver"
+  },
+  "menus": {
+    "title": "Menus",
+    "header": "Menu d'en-tête",
+    "footer": "Menu de pied de page"
+  },
+  "settings": {
+    "title": "Réglages",
+    "site": {
+      "title": "Site",
+      "siteTitle": "Titre du site",
+      "siteDescription": "Description du site",
+      "siteLanguage": "Langue du site",
+      "siteLanguageHelp": "Code de langue BCP-47 injecté dans <html lang=\"…\"> de chaque page publiée.",
+      "baseUrl": "URL publique du site",
+      "postsPerPage": "Articles par page",
+      "homeMode": "Contenu de la page d'accueil",
+      "homeLatest": "Derniers articles",
+      "homeStatic": "Page statique",
+      "homePage": "Page d'accueil"
+    },
+    "flexweg": {
+      "title": "API Flexweg",
+      "apiKey": "Clé API",
+      "apiKeyHelp": "Générée depuis votre compte Flexweg → API. Stockée dans Firestore.",
+      "siteUrl": "URL du site",
+      "siteUrlHelp": "URL publique de votre site Flexweg sans slash final.",
+      "apiBaseUrl": "URL de base de l'API"
+    },
+    "profile": {
+      "title": "Profil",
+      "adminLocale": "Langue de l'administration",
+      "adminLocaleHelp": "Langue utilisée par l'interface d'administration. Sauvegardée dans votre profil."
+    }
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "noUsers": "Aucun utilisateur.",
+    "role": "Rôle",
+    "disabled": "Désactivé",
+    "actions": {
+      "promote": "Promouvoir admin",
+      "demote": "Rétrograder éditeur",
+      "disable": "Désactiver",
+      "enable": "Activer",
+      "delete": "Supprimer"
+    }
+  },
+  "errors": {
+    "appError": "Erreur applicative",
+    "loadAccountFailed": "Impossible de charger votre compte",
+    "loadAccountHint": "Si le problème persiste, déconnectez-vous puis réessayez.",
+    "accountDisabled": "Compte désactivé",
+    "accountDisabledMessage": "Votre accès au CMS a été désactivé. Contactez votre administrateur.",
+    "firebaseNotConfigured": "Firebase n'est pas configuré",
+    "firebaseEnvMissing": "Les variables d'environnement suivantes sont manquantes :\n{{vars}}\n\nCopiez .env.example vers .env, renseignez vos identifiants Firebase, puis relancez le serveur de dev.",
+    "adminEmailNotConfigured": "Email administrateur non configuré",
+    "adminEmailMessage": "VITE_ADMIN_EMAIL est manquant dans .env. Renseignez l'email de l'administrateur initial.",
+    "consoleHint": "Consultez la console du navigateur et votre .env. Voir le README pour la configuration."
+  },
+  "publish": {
+    "log": {
+      "rendering": "Rendu de la page…",
+      "uploading": "Upload de {{path}}…",
+      "deleting": "Suppression de {{path}}…",
+      "regenerating": "Régénération des listings…",
+      "skipped": "{{path}} ignoré (aucun changement)",
+      "done": "Publié sur {{url}}",
+      "failed": "Échec : {{error}}"
+    }
+  }
+}

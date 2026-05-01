@@ -1,0 +1,49 @@
+{
+  "name": "flexweg-cms",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Static WordPress-like CMS that publishes pages to Flexweg via API. Admin SPA built with React + TypeScript + Firebase.",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prebuild": "npm run typecheck",
+    "build": "vite build && node scripts/build-themes.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tiptap/extension-image": "^2.27.2",
+    "@tiptap/extension-link": "^2.27.2",
+    "@tiptap/extension-placeholder": "^2.27.2",
+    "@tiptap/react": "^2.27.2",
+    "@tiptap/starter-kit": "^2.27.2",
+    "clsx": "^2.1.1",
+    "dompurify": "^3.2.3",
+    "firebase": "^11.0.2",
+    "i18next": "^23.16.8",
+    "i18next-browser-languagedetector": "^8.0.2",
+    "lucide-react": "^0.460.0",
+    "marked": "^15.0.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^15.2.0",
+    "react-router-dom": "^6.28.0",
+    "tiptap-markdown": "^0.8.10"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.2.0",
+    "@types/node": "^25.6.0",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "sass": "^1.83.1",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^6.0.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.8"
+  }
+}

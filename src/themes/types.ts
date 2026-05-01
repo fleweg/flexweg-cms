@@ -1,0 +1,103 @@
+import type { ComponentType, ReactNode } from "react";
+import type { Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
+
+// Author metadata exposed to themes. Keep this minimal — theme code runs
+// at publish time inside the admin browser, but the rendered HTML is then
+// served statically, so we shouldn't reach back into Firestore from here.
+export interface AuthorView {
+  id: string;
+  displayName: string;
+  email?: string;
+}
+
+// Resolved media reference for theme consumption. The publisher resolves
+// `heroMediaId` to this shape so templates don't need to do any lookups.
+export interface MediaView {
+  url: string;
+  alt?: string;
+  caption?: string;
+}
+
+export interface SiteContext {
+  // Site-wide settings, including the language used in <html lang="...">.
+  settings: SiteSettings;
+  // Resolved menus with hrefs already filled in (no raw post/term refs).
+  resolvedMenus: {
+    header: ResolvedMenuItem[];
+    footer: ResolvedMenuItem[];
+  };
+  // Path on Flexweg of the active theme's CSS, e.g. "theme-assets/default.css".
+  themeCssPath: string;
+}
+
+export interface ResolvedMenuItem {
+  id: string;
+  label: string;
+  href: string;
+  children?: ResolvedMenuItem[];
+}
+
+export interface BaseLayoutProps {
+  site: SiteContext;
+  // Page-specific <title> and <meta description> for the head.
+  pageTitle: string;
+  pageDescription?: string;
+  ogImage?: string;
+  // Path the page is being rendered at (e.g. "news/article.html"). Used by
+  // themes to compute canonical URLs and active nav state.
+  currentPath: string;
+  // Plugins can inject additional <head> markup here via filters.
+  extraHead?: string;
+  children: ReactNode;
+}
+
+export interface SingleTemplateProps {
+  post: Post;
+  // Post body already rendered to safe HTML by core/markdown.ts.
+  bodyHtml: string;
+  author?: AuthorView;
+  hero?: MediaView;
+  primaryTerm?: Term;
+  tags: Term[];
+}
+
+export interface HomeTemplateProps {
+  // List of posts to display on the home page (already paginated).
+  posts: Array<Post & { url: string; hero?: MediaView }>;
+  staticPage?: { post: Post; bodyHtml: string };
+}
+
+export interface CategoryTemplateProps {
+  term: Term;
+  posts: Array<Post & { url: string; hero?: MediaView }>;
+}
+
+export interface AuthorTemplateProps {
+  author: AuthorView;
+  posts: Array<Post & { url: string; hero?: MediaView }>;
+}
+
+export interface NotFoundTemplateProps {
+  message?: string;
+}
+
+export interface ThemeManifest {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  // Path of the SCSS entrypoint, relative to the theme directory. The build
+  // script reads this to know what to compile.
+  scssEntry: string;
+  templates: {
+    base: ComponentType<BaseLayoutProps>;
+    home: ComponentType<HomeTemplateProps & { site: SiteContext }>;
+    single: ComponentType<SingleTemplateProps & { site: SiteContext }>;
+    category: ComponentType<CategoryTemplateProps & { site: SiteContext }>;
+    author: ComponentType<AuthorTemplateProps & { site: SiteContext }>;
+    notFound: ComponentType<NotFoundTemplateProps & { site: SiteContext }>;
+  };
+}
+
+// Re-exported so theme code only needs one import statement.
+export type { Media, Post, Term, MenuItem, SiteSettings };
