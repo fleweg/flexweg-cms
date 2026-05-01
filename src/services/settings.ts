@@ -1,4 +1,4 @@
-import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { deleteField, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { collections, getDb, settingsDocs } from "./firebase";
 import type { SiteSettings } from "../core/types";
 
@@ -39,6 +39,13 @@ export async function getSettings(): Promise<SiteSettings> {
 }
 
 export async function updateSettings(patch: Partial<SiteSettings>): Promise<void> {
-  // setDoc with merge so first-time writes succeed without a prior get.
-  await setDoc(siteSettingsRef(), patch, { merge: true });
+  // Firestore rejects `undefined` values. Callers commonly pass an
+  // optional field set to `undefined` to mean "clear this field" — translate
+  // that into deleteField() so setDoc({ merge: true }) actually removes the
+  // key instead of throwing.
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(patch)) {
+    sanitized[key] = value === undefined ? deleteField() : value;
+  }
+  await setDoc(siteSettingsRef(), sanitized, { merge: true });
 }
