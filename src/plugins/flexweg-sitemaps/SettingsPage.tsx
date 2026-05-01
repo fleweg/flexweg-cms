@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, RefreshCw, Save } from "lucide-react";
+import { FileCode2, Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCmsData } from "../../context/CmsDataContext";
 import { toast } from "../../lib/toast";
@@ -7,6 +7,7 @@ import {
   defaultRobotsTxt,
   regenerateRobotsTxt,
   regenerateSitemaps,
+  regenerateStylesheets,
   type SitemapsConfig,
 } from "./generator";
 import type { PluginSettingsPageProps } from "../index";
@@ -26,6 +27,7 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
   const [savingSettings, setSavingSettings] = useState(false);
   const [savingRobots, setSavingRobots] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [uploadingXsl, setUploadingXsl] = useState(false);
 
   function patch(p: Partial<SitemapsConfig>) {
     setDraft((d) => ({ ...d, ...p }));
@@ -64,6 +66,9 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
     setRegenerating(true);
     try {
       await save(draft);
+      // Stylesheets first so any newly uploaded sitemap immediately
+      // resolves its xml-stylesheet PI to a fresh XSL on the public site.
+      const xslResult = await regenerateStylesheets({ settings, config: draft });
       const result = await regenerateSitemaps({
         posts,
         pages,
@@ -74,7 +79,9 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
       // robots.txt is regenerated alongside on this button — the user
       // expectation per the plugin spec is "force regenerate everything".
       await regenerateRobotsTxt({ config: draft, baseUrl: settings.baseUrl });
-      toast.success(t("uploaded", { count: result.uploaded.length + 1 }));
+      toast.success(
+        t("uploaded", { count: xslResult.uploaded.length + result.uploaded.length + 1 }),
+      );
     } catch (err) {
       // flexwegApi already toasted the underlying HTTP error; we add a
       // plugin-level summary so the user sees a clear "regeneration failed"
@@ -83,6 +90,26 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
       toast.error(t("regenerateFailed"));
     } finally {
       setRegenerating(false);
+    }
+  }
+
+  async function uploadStylesheets() {
+    if (!settings.baseUrl) {
+      toast.error(t("baseUrlMissing"));
+      return;
+    }
+    setUploadingXsl(true);
+    try {
+      // Save the draft first so toggling News + clicking this button in one
+      // shot still reflects the user's intent (news XSL uploaded vs deleted).
+      await save(draft);
+      const result = await regenerateStylesheets({ settings, config: draft });
+      toast.success(t("xsl.uploaded", { count: result.uploaded.length }));
+    } catch (err) {
+      console.error("[flexweg-sitemaps] xsl upload failed:", err);
+      toast.error(t("xsl.failed"));
+    } finally {
+      setUploadingXsl(false);
     }
   }
 
@@ -182,19 +209,37 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
 
       <section className="card p-4 space-y-3">
         <h2 className="font-semibold">{t("sections.actions")}</h2>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={forceRegenerate}
-          disabled={regenerating}
-        >
-          {regenerating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          {regenerating ? t("forceRegenerating") : t("forceRegenerate")}
-        </button>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("xsl.help")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={uploadStylesheets}
+            disabled={uploadingXsl}
+          >
+            {uploadingXsl ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileCode2 className="h-4 w-4" />
+            )}
+            {uploadingXsl ? t("xsl.uploading") : t("xsl.upload")}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={forceRegenerate}
+            disabled={regenerating}
+          >
+            {regenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {regenerating ? t("forceRegenerating") : t("forceRegenerate")}
+          </button>
+        </div>
       </section>
     </div>
   );

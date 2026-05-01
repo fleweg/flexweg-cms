@@ -12,6 +12,14 @@ export const en = {
     robots: "robots.txt",
     actions: "Regeneration",
   },
+  xsl: {
+    help:
+      "XSL stylesheets style the sitemaps when opened in a browser. Re-upload after changing the public site language.",
+    upload: "Upload stylesheets",
+    uploading: "Uploading…",
+    uploaded: "Uploaded {{count}} stylesheet(s).",
+    failed: "Stylesheet upload failed.",
+  },
   contentTypes: {
     label: "Content types in sitemaps",
     posts: "Posts only",
@@ -52,6 +60,14 @@ export const fr: typeof en = {
     general: "Général",
     robots: "robots.txt",
     actions: "Régénération",
+  },
+  xsl: {
+    help:
+      "Les feuilles de style XSL habillent les sitemaps quand on les ouvre dans un navigateur. À ré-envoyer après un changement de langue du site public.",
+    upload: "Envoyer les feuilles de style",
+    uploading: "Envoi…",
+    uploaded: "{{count}} feuille(s) de style envoyée(s).",
+    failed: "Échec de l'envoi des feuilles de style.",
   },
   contentTypes: {
     label: "Types de contenu dans les sitemaps",

@@ -15,6 +15,12 @@
 import { buildPostUrl, pathToPublicUrl } from "../../core/slug";
 import { deleteFile, uploadFile } from "../../services/flexwegApi";
 import type { Post, SiteSettings, Term } from "../../core/types";
+import {
+  buildNewsSitemapXsl,
+  buildSitemapXsl,
+  SITEMAP_NEWS_XSL_PATH,
+  SITEMAP_XSL_PATH,
+} from "./xsl";
 
 export interface SitemapsConfig {
   // Whether sitemap-news.xml is generated and linked from the index.
@@ -135,9 +141,24 @@ function isoDateOnly(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
-function buildYearSitemap(entities: SitemapEntity[], baseUrl: string): string {
-  const lines = [
+// Standard XML preamble + xml-stylesheet PI. The PI tells browsers to
+// transform the XML through our XSL when navigating to the file —
+// produces a styled HTML table instead of raw XML. Crawlers ignore the
+// PI entirely, so SEO is unaffected.
+function preamble(xslHref: string): string {
+  return [
     '<?xml version="1.0" encoding="UTF-8"?>',
+    `<?xml-stylesheet type="text/xsl" href="${escapeXml(xslHref)}"?>`,
+  ].join("\n");
+}
+
+function buildYearSitemap(
+  entities: SitemapEntity[],
+  baseUrl: string,
+  xslHref: string,
+): string {
+  const lines = [
+    preamble(xslHref),
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   ];
   for (const e of entities) {
@@ -155,9 +176,10 @@ function buildSitemapIndex(
   includeNews: boolean,
   baseUrl: string,
   lastmodMs: number,
+  xslHref: string,
 ): string {
   const lines = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
+    preamble(xslHref),
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   ];
   const date = isoDateOnly(lastmodMs);
@@ -183,13 +205,14 @@ function buildNewsSitemap(
   siteLanguage: string,
   baseUrl: string,
   windowDays: number,
+  xslHref: string,
 ): string {
   const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const recent = entities
     .filter((e) => e.updatedAtMs >= cutoff)
     .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
   const lines = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
+    preamble(xslHref),
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     '        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">',
   ];
@@ -246,6 +269,13 @@ export async function regenerateSitemaps(args: {
   const uploaded: string[] = [];
   const deleted: string[] = [];
 
+  // Stylesheet hrefs are absolute (baseUrl-rooted) so the rendered HTML
+  // works the same way crawlers and humans see the file. Both yearly
+  // sitemaps and the index reference the same generic XSL — the XSL's
+  // xsl:choose handles either root.
+  const xslHref = pathToPublicUrl(baseUrl, SITEMAP_XSL_PATH);
+  const newsXslHref = pathToPublicUrl(baseUrl, SITEMAP_NEWS_XSL_PATH);
+
   // Per-year sitemaps. A year that has zero online entities (because every
   // post in that year was unpublished/deleted) gets its file deleted so we
   // don't leave a stale sitemap pointing at nothing.
@@ -262,7 +292,7 @@ export async function regenerateSitemaps(args: {
       }
       continue;
     }
-    const xml = buildYearSitemap(list, baseUrl);
+    const xml = buildYearSitemap(list, baseUrl, xslHref);
     await uploadFile({ path, content: xml });
     uploaded.push(path);
   }
@@ -274,7 +304,13 @@ export async function regenerateSitemaps(args: {
     const livingYears = [...yearMap.entries()]
       .filter(([, list]) => list.length > 0)
       .map(([year]) => year);
-    const xml = buildSitemapIndex(livingYears, config.newsEnabled, baseUrl, Date.now());
+    const xml = buildSitemapIndex(
+      livingYears,
+      config.newsEnabled,
+      baseUrl,
+      Date.now(),
+      xslHref,
+    );
     await uploadFile({ path: SITEMAP_INDEX_PATH, content: xml });
     uploaded.push(SITEMAP_INDEX_PATH);
   }
@@ -287,6 +323,7 @@ export async function regenerateSitemaps(args: {
         settings.language,
         baseUrl,
         config.newsWindowDays,
+        newsXslHref,
       );
       await uploadFile({ path: SITEMAP_NEWS_PATH, content: xml });
       uploaded.push(SITEMAP_NEWS_PATH);
@@ -314,6 +351,47 @@ export async function regenerateRobotsTxt(args: {
       ? args.config.robotsTxt
       : defaultRobotsTxt(baseUrl, args.config.newsEnabled);
   await uploadFile({ path: ROBOTS_PATH, content });
+}
+
+// Uploads the XSL stylesheets referenced by every sitemap file's
+// xml-stylesheet PI. Labels are localized using settings.language. Called
+// from the plugin's "Upload stylesheets" button and from "Force regenerate"
+// — never from the lifecycle hooks (XSL changes rarely; saving 2 uploads
+// on every publish/unpublish is worth requiring an explicit refresh).
+//
+// When News is disabled the news XSL is best-effort deleted so we don't
+// leave a stale stylesheet referenced by nothing.
+export async function regenerateStylesheets(args: {
+  settings: SiteSettings;
+  config: SitemapsConfig;
+}): Promise<RegenerateResult> {
+  const uploaded: string[] = [];
+  const deleted: string[] = [];
+
+  await uploadFile({
+    path: SITEMAP_XSL_PATH,
+    content: buildSitemapXsl(args.settings.language),
+  });
+  uploaded.push(SITEMAP_XSL_PATH);
+
+  if (args.config.newsEnabled) {
+    await uploadFile({
+      path: SITEMAP_NEWS_XSL_PATH,
+      content: buildNewsSitemapXsl(args.settings.language),
+    });
+    uploaded.push(SITEMAP_NEWS_XSL_PATH);
+  } else {
+    try {
+      await deleteFile(SITEMAP_NEWS_XSL_PATH);
+      deleted.push(SITEMAP_NEWS_XSL_PATH);
+    } catch {
+      // 404 fine; deleteFile already swallows it but the catch covers any
+      // non-404 error too — losing the stylesheet on news-disable isn't
+      // worth surfacing a hard failure.
+    }
+  }
+
+  return { uploaded, deleted };
 }
 
 // Convenience used by the action-hook callbacks. Computes the year the

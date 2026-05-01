@@ -532,15 +532,19 @@ Files produced on the public site (relative to your `baseUrl`):
 - `sitemap-index.xml` — index referencing every yearly sitemap that's currently populated, plus the News sitemap when enabled.
 - `sitemap-news.xml` — Google News urlset of articles modified within the configured window (default 2 days, range 1–30). Optional.
 - `robots.txt` — user-supplied; defaults to `User-agent: *` + `Allow: /` + a `Sitemap:` line per generated sitemap.
+- `sitemap.xsl` and `sitemap-news.xsl` — XSL stylesheets referenced by every sitemap file via an `<?xml-stylesheet?>` processing instruction. When a browser opens a sitemap URL, these transform the raw XML into a styled HTML table for human inspection. Crawlers ignore the PI entirely. Labels honor `settings.language` (English / French baked in).
 
 Configuration options:
 
 - **Content types** — sitemaps include posts only, or posts and pages.
 - **Generate sitemap-news.xml** — toggle. When enabled, sets the News window in days.
 - **robots.txt content** — full editable textarea. **Insert default** repopulates with the auto-generated body. **Save & regenerate robots.txt** persists the config and re-uploads `robots.txt` in one click.
-- **Force regenerate sitemaps** — re-derives every yearly sitemap, the index, the News sitemap, and `robots.txt` from the current corpus. Use after toggling content types or after a bulk import.
+- **Upload stylesheets** — uploads `sitemap.xsl` (and `sitemap-news.xsl` when News is enabled) to the public site root. Run this once after installing the plugin, and again whenever the public site language changes.
+- **Force regenerate sitemaps** — re-derives every yearly sitemap, the index, the News sitemap, the XSL stylesheets, and `robots.txt` from the current corpus. Use after toggling content types or after a bulk import.
 
 Incremental regeneration is automatic: every `publish.complete`, `post.unpublished`, and `post.deleted` rebuilds the year sitemap that contains the touched post, plus the index, plus News. Years that empty out have their sitemap deleted from the public site so the index never points to a stale file.
+
+The lifecycle hooks **do not** re-upload the XSL stylesheets — those change rarely. After installing the plugin or changing `settings.language`, click **Upload stylesheets** (or **Force regenerate**) once to refresh them; subsequent content publishes don't pay that cost.
 
 ## Tests
 
