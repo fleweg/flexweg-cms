@@ -39,12 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const rec = await ensureSelfUserRecord(fbUser);
         setRecord(rec);
-        // Apply the user's saved admin locale if present. We don't await on
-        // the language change to avoid blocking auth resolution — i18next
-        // emits a re-render once the change lands.
-        if (rec.preferences?.adminLocale) {
-          void setActiveLocale(rec.preferences.adminLocale);
-        }
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -53,6 +47,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, []);
+
+  // Apply the user's saved admin locale only once the record is committed.
+  // Calling setActiveLocale inside the auth callback above would emit an
+  // i18next language-change event mid-render, racing with React's commit
+  // phase and producing "Node.insertBefore" DOM errors on login.
+  useEffect(() => {
+    if (record?.preferences?.adminLocale) {
+      void setActiveLocale(record.preferences.adminLocale);
+    }
+  }, [record?.preferences?.adminLocale]);
 
   const value = useMemo<AuthValue>(() => {
     const email = (user?.email ?? "").toLowerCase();

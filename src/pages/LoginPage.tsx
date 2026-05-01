@@ -46,8 +46,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-full flex items-center justify-center p-6 bg-surface-50 dark:bg-surface-950">
-      <div className="absolute top-4 right-4">
+    <div className="relative min-h-full flex items-center justify-center p-6 bg-surface-50 dark:bg-surface-950">
+      <div className="absolute top-4 right-4 z-10">
         <LocaleSwitcher />
       </div>
       <div className="w-full max-w-sm">

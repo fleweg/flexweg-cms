@@ -54,6 +54,10 @@ void i18n
     fallbackLng: DEFAULT_LOCALE,
     interpolation: { escapeValue: false },
     returnNull: false,
+    // Disable Suspense — resources are loaded synchronously from static
+    // imports, so suspending makes no sense and can race with React's
+    // reconciler if a parent boundary catches the thrown promise.
+    react: { useSuspense: false },
   });
 
 export async function setActiveLocale(locale: AdminLocale): Promise<void> {
