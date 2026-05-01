@@ -82,10 +82,134 @@ flexweg-cms/
 
    The admin runs on `http://localhost:5173`.
 
-4. Sign in with the bootstrap admin email/password (created in Firebase Auth), open **Settings**, fill in:
+4. Configure Firestore security rules (see [Firestore security rules](#firestore-security-rules) below).
+
+5. Sign in with the bootstrap admin email/password (created in Firebase Auth), open **Settings**, fill in:
 
    - Site title, language (BCP-47, e.g. `en` or `fr-FR`), public site URL.
    - Flexweg API key + site URL. The API key is stored in `config/flexweg` in Firestore.
+
+## Firestore security rules
+
+Paste the following into **Firebase Console → Firestore → Rules** and replace `you@example.com` with the same value you set in `VITE_ADMIN_EMAIL` (rules cannot read env vars, the email must be duplicated):
+
+```
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────────────────
+    // Bootstrap admin: email pinned here. MUST match VITE_ADMIN_EMAIL in .env.
+    function bootstrapAdminEmail() {
+      return "you@example.com";
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrapAdmin() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == bootstrapAdminEmail();
+    }
+
+    // Reads /users/{uid} for the caller. Returns null if no record yet.
+    function selfRecord() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : null;
+    }
+
+    function isDisabled() {
+      let rec = selfRecord();
+      return !isBootstrapAdmin() && rec != null && rec.disabled == true;
+    }
+
+    function isAdmin() {
+      let rec = selfRecord();
+      return isBootstrapAdmin() || (rec != null && rec.role == "admin" && rec.disabled != true);
+    }
+
+    function isEditor() {
+      let rec = selfRecord();
+      return isBootstrapAdmin()
+        || (rec != null && (rec.role == "admin" || rec.role == "editor") && rec.disabled != true);
+    }
+
+    // ─── users/{uid} ──────────────────────────────────────────────────────
+    // - Any signed-in editor can read the list (Users page + author lookup).
+    // - First login: self-create allowed if uid matches and role is "editor".
+    // - Self update: only `preferences.adminLocale` may change.
+    // - Role/disabled changes: admin only.
+    match /users/{uid} {
+      allow read: if isEditor();
+
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.role == "editor"
+        && request.resource.data.disabled == false;
+
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && request.auth.uid == uid
+          && !isDisabled()
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(["preferences"])
+          && request.resource.data.preferences.adminLocale in ["en", "fr"]
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── posts/{id} (posts + pages) ───────────────────────────────────────
+    match /posts/{id} {
+      allow read, write: if isEditor();
+    }
+
+    // ─── terms/{id} (categories + tags) ───────────────────────────────────
+    match /terms/{id} {
+      allow read, write: if isEditor();
+    }
+
+    // ─── media/{id} ───────────────────────────────────────────────────────
+    match /media/{id} {
+      allow read, write: if isEditor();
+    }
+
+    // ─── settings/site ────────────────────────────────────────────────────
+    match /settings/{docId} {
+      allow read: if isEditor();
+      allow write: if isEditor();
+    }
+
+    // ─── config/flexweg ───────────────────────────────────────────────────
+    // API key — read by every editor (publisher needs it), write admin-only.
+    match /config/{docId} {
+      allow read: if isEditor();
+      allow write: if isAdmin();
+    }
+
+    // ─── Default deny ─────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+### How the rules work
+
+- **Bootstrap admin**: a user whose email matches `bootstrapAdminEmail()` is treated as admin even without a `users/{uid}` document. This solves the chicken-and-egg problem of the first login (no record exists yet to grant the admin role).
+- **Self-create on first login**: any signed-in user can create their own `users/{uid}` document, but only with `role: "editor"` and `disabled: false` — this prevents privilege escalation. The admin promotes editors via the Users page afterwards.
+- **Self update is restricted to language preference**: a regular user can change `preferences.adminLocale` (used by the in-admin language switcher) but cannot touch their own role or disabled flag. Admins can update any field.
+- **`config/flexweg` requires admin to write**: editors can read the API key (the publisher needs it), but only admins can rotate it.
+- **Each rule call performs one extra read** via `selfRecord()`. Acceptable for an internal tool; if you need to optimize later, switch to [Firebase Auth custom claims](https://firebase.google.com/docs/auth/admin/custom-claims) (requires an admin SDK backend to set them).
+
+If you want only admins to manage themes/plugins/menus, change `allow write: if isEditor();` to `allow write: if isAdmin();` on `match /settings/{docId}`.
 
 ## Building & deploying
 
