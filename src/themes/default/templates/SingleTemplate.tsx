@@ -2,6 +2,7 @@ import type { SingleTemplateProps, SiteContext } from "../../types";
 import { AuthorBio } from "../components/AuthorBio";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { buildTermUrl } from "../../../core/slug";
+import { pickFormat } from "../../../core/media";
 
 export function SingleTemplate({
   post,
@@ -29,7 +30,10 @@ export function SingleTemplate({
       </header>
       {hero && (
         <figure className="page-single__hero">
-          <img src={hero.url} alt={hero.alt ?? ""} />
+          {/* The single page is the most prominent surface for a hero
+              image — request the largest variant the theme declares.
+              pickFormat handles fallbacks if "large" doesn't exist. */}
+          <img src={pickFormat(hero, "large")} alt={hero.alt ?? ""} />
           {hero.caption && <figcaption>{hero.caption}</figcaption>}
         </figure>
       )}

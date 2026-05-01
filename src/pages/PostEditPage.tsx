@@ -11,6 +11,8 @@ import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
 import { PublishLog } from "../components/publishing/PublishLog";
 import { isValidSlug, slugify } from "../core/slug";
+import { pickMediaUrl } from "../core/media";
+import { ADMIN_PREVIEW_KEY } from "../services/imageFormats";
 import { createPost, deletePost, updatePost } from "../services/posts";
 import {
   buildPublishContext,
@@ -157,7 +159,10 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       inlinePickerResolveRef.current = (m) => {
         setShowInlinePicker(false);
         inlinePickerResolveRef.current = null;
-        resolve(m ? { url: m.url, alt: m.alt } : null);
+        // Inline images inserted into post bodies use the default format
+        // (typically "medium"). Editors can later swap formats per-image
+        // by adding a custom Tiptap node — out of scope for the MVP.
+        resolve(m ? { url: pickMediaUrl(m), alt: m.alt } : null);
       };
     });
   }
@@ -254,7 +259,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
               {heroMedia ? (
                 <div className="space-y-2">
                   <img
-                    src={heroMedia.url}
+                    src={pickMediaUrl(heroMedia, ADMIN_PREVIEW_KEY)}
                     alt={heroMedia.alt ?? ""}
                     className="w-full h-32 object-cover rounded-lg"
                   />

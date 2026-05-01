@@ -253,6 +253,76 @@ The site language for the public output is configured separately in **Settings �
 
 Tags do not appear in URLs. All slugs are lower-case ASCII, dash-separated.
 
+## Image handling
+
+When a user uploads an image, the admin runs the file entirely through a browser-side pipeline (no server, no original kept):
+
+1. Validates the extension against the active theme's `inputFormats`.
+2. Decodes the file via `createImageBitmap`.
+3. For each variant declared by the active theme **plus** two admin-only formats (`admin-thumb`, `admin-preview`), renders a resized canvas and re-encodes it as WebP (or whatever `outputFormat` the theme picked).
+4. Uploads each variant to Flexweg under `media/<yyyy>/<mm>/<slug>-<hex>/<variant>.webp`.
+5. Persists a single `media/{id}` Firestore document referencing every variant by name.
+
+The original file is **never stored** — disk and bandwidth are saved at the cost of being unable to regenerate a perfect copy after a theme switch.
+
+### Declaring image formats in a theme
+
+Themes export an `imageFormats` field on their manifest:
+
+```ts
+// src/themes/<id>/manifest.ts
+export const manifest: ThemeManifest = {
+  id: "my-theme",
+  // …
+  imageFormats: {
+    inputFormats: [".jpg", ".jpeg", ".png", ".webp"],
+    outputFormat: "webp",
+    quality: 80,
+    formats: {
+      small:  { width: 480,  height: 480, fit: "cover" },
+      medium: { width: 800,  height: 800, fit: "cover" },
+      large:  { width: 1600, height: 900, fit: "cover" },
+    },
+    defaultFormat: "medium",
+  },
+};
+```
+
+`fit: "cover"` crops the source to fill the box; `fit: "contain"` shrinks the source to fit inside without cropping (no upscaling).
+
+### Using formats in templates
+
+Theme code receives `MediaView` objects from the publisher. Pick a format with the helper:
+
+```tsx
+import { pickFormat } from "../../../core/media";
+
+<img src={pickFormat(hero, "large")} alt={hero.alt ?? ""} />
+<img src={pickFormat(hero)} />          // uses defaultFormat (e.g. "medium")
+```
+
+`pickFormat` falls back through a chain: requested format → `defaultFormat` → largest available → empty string. This means switching to a theme that asks for a format an old upload doesn't have still renders the image at the next-best size, never broken.
+
+### Storage layout & cleanup
+
+```
+media/
+  2026/
+    05/
+      photo-de-vacances-a3f7b2/
+        admin-thumb.webp
+        admin-preview.webp
+        small.webp
+        medium.webp
+        large.webp
+```
+
+Filenames are normalised (lower-case ASCII, dash-separated) and suffixed with a 6-character random hex string to guarantee uniqueness across uploads. Deleting a media item triggers a single `DELETE /files/delete-folder` call that wipes the whole asset folder atomically.
+
+### Backward compatibility
+
+Media uploaded before the multi-variant pipeline keeps its original `{ url, storagePath }` shape. The helpers (`pickFormat`, `pickMediaUrl`, `mediaToView`) read either shape transparently — no migration step required.
+
 ## Creating a new theme
 
 1. Copy `src/themes/default/` to `src/themes/<your-theme-id>/`.

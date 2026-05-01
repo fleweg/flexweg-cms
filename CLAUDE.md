@@ -52,6 +52,18 @@ These worlds share `src/core/` (types, slug, markdown, render, plugin registry).
 
 `Post.lastPublishedPath` and `Post.lastPublishedHash` are the source of truth for "where is this post live right now?" and "did anything change since last publish?". The publisher reads/writes them through `markPostOnline` / `markPostDraft`.
 
+### Image pipeline
+
+Uploads go through a browser-only multi-variant pipeline (`services/imageProcessing.ts` + `services/media.ts`). Per asset, the canvas API resizes to every format declared by the active theme **plus** two admin-only formats (`admin-thumb`, `admin-preview` from `services/imageFormats.ts`). All variants are encoded as WebP (or whatever `outputFormat` the theme chose), uploaded under `media/<yyyy>/<mm>/<slug>-<hex>/<variant>.<ext>`, and recorded under a single `media/{id}` Firestore doc with a `formats` map.
+
+The original file is never stored. Implications:
+
+- Switching to a theme that asks for a larger format than was generated cannot regenerate from the original. The `pickFormat(view, name)` helper in `core/media.ts` falls back through requested → default → largest available → empty string, so templates stay safe.
+- The slug normaliser (`normalizeMediaSlug` in `core/slug.ts`) appends a 6-char random hex suffix to every upload — collisions are impossible by construction, so we never overwrite another asset's variant folder.
+- Deletion uses `DELETE /files/delete-folder` (the whole asset folder) instead of per-file calls.
+
+Old media uploaded before this pipeline existed keeps the legacy `{ url, storagePath }` shape. `mediaToView` and `pickMediaUrl` synthesise a `legacy` format on the fly so admin UI and theme code never branch on the shape — they just call the helpers.
+
 ### Theme system
 
 Each theme exports a `manifest.ts` with `id`, `version`, `scssEntry`, and a `templates` map (`base | home | single | category | author | notFound`). Themes are registered statically in `src/themes/index.ts` so they're all bundled into the admin (enables instant preview switching).

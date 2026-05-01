@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCmsData } from "../../context/CmsDataContext";
+import { ADMIN_THUMB_KEY } from "../../services/imageFormats";
+import { pickMediaUrl } from "../../core/media";
 import type { Media } from "../../core/types";
 
 interface MediaPickerProps {
@@ -40,22 +42,25 @@ export function MediaPicker({ onPick, onClose }: MediaPickerProps) {
             </p>
           ) : (
             <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-              {filtered.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => onPick(m)}
-                  className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-surface-200 hover:ring-blue-500 transition-all dark:ring-surface-700"
-                >
-                  {m.contentType.startsWith("image/") ? (
-                    <img src={m.url} alt={m.alt ?? m.name} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="absolute inset-0 flex items-center justify-center text-xs text-surface-500 bg-surface-100 dark:bg-surface-800">
-                      {m.name}
-                    </span>
-                  )}
-                </button>
-              ))}
+              {filtered.map((m) => {
+                const thumbUrl = pickMediaUrl(m, ADMIN_THUMB_KEY);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => onPick(m)}
+                    className="relative aspect-square overflow-hidden rounded-lg ring-1 ring-surface-200 hover:ring-blue-500 transition-all dark:ring-surface-700"
+                  >
+                    {m.contentType.startsWith("image/") && thumbUrl ? (
+                      <img src={thumbUrl} alt={m.alt ?? m.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center text-xs text-surface-500 bg-surface-100 dark:bg-surface-800">
+                        {m.name}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

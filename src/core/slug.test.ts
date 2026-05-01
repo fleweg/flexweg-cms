@@ -4,6 +4,7 @@ import {
   buildTermUrl,
   HOME_PATH,
   isValidSlug,
+  normalizeMediaSlug,
   pathToPublicUrl,
   slugify,
 } from "./slug";
@@ -78,6 +79,30 @@ describe("buildTermUrl", () => {
   });
   it("rejects tags", () => {
     expect(() => buildTermUrl({ type: "tag", slug: "x" })).toThrow();
+  });
+});
+
+describe("normalizeMediaSlug", () => {
+  it("strips the extension and slugifies the stem", () => {
+    const slug = normalizeMediaSlug("Photo Été 2026.JPG");
+    expect(slug).toMatch(/^photo-ete-2026-[0-9a-f]{6}$/);
+  });
+  it("appends a random suffix even on already-clean names", () => {
+    const a = normalizeMediaSlug("photo.jpg");
+    const b = normalizeMediaSlug("photo.jpg");
+    expect(a).toMatch(/^photo-[0-9a-f]{6}$/);
+    expect(b).toMatch(/^photo-[0-9a-f]{6}$/);
+    // Two consecutive calls almost certainly produce different suffixes.
+    // Probability of collision = 1/16^6 ≈ 6e-8 — negligible for a test.
+    expect(a).not.toBe(b);
+  });
+  it("falls back to 'media' when the stem is unslugifiable", () => {
+    const slug = normalizeMediaSlug("!!!.png");
+    expect(slug).toMatch(/^media-[0-9a-f]{6}$/);
+  });
+  it("handles names without an extension", () => {
+    const slug = normalizeMediaSlug("hello world");
+    expect(slug).toMatch(/^hello-world-[0-9a-f]{6}$/);
   });
 });
 

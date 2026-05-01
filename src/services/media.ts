@@ -10,22 +10,26 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { collections, getDb } from "./firebase";
-import { deleteFile, fileToBase64, publicUrlFor, uploadFile } from "./flexwegApi";
-import type { Media } from "../core/types";
+import { deleteFile, deleteFolder, publicUrlFor, uploadFile } from "./flexwegApi";
+import { ADMIN_FORMATS } from "./imageFormats";
+import {
+  blobToBase64,
+  extensionForMime,
+  mergeFormats,
+  processImage,
+  validateInputExtension,
+} from "./imageProcessing";
+import { getActiveTheme } from "../themes";
+import { normalizeMediaSlug } from "../core/slug";
+import type { ImageFormatConfig, Media, MediaVariant, SiteSettings } from "../core/types";
 
-export const MAX_MEDIA_SIZE_BYTES = 10 * 1024 * 1024;
+export const MAX_MEDIA_SIZE_BYTES = 25 * 1024 * 1024;
 
-// Same allowlist as the kanban project — what Flexweg's Files API accepts.
-const ALLOWED_EXTENSIONS = new Set([
-  "jpg",
-  "jpeg",
-  "png",
-  "gif",
-  "svg",
-  "webp",
-  "ico",
-  "pdf",
-]);
+// Default input allow-list when the active theme didn't declare one. Kept
+// loose enough to cover the common photo formats; the real safety check
+// happens in the canvas decode (`createImageBitmap` will reject anything
+// the browser can't read).
+const DEFAULT_INPUT_FORMATS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
 const mediaCollection = () => collection(getDb(), collections.media);
 const mediaDoc = (id: string) => doc(getDb(), collections.media, id);
@@ -33,10 +37,6 @@ const mediaDoc = (id: string) => doc(getDb(), collections.media, id);
 function newId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function sanitizeForPath(name: string): string {
-  return name.replace(/[^\w.\-+@()]/g, "_").slice(0, 200);
 }
 
 export interface ValidationOk {
@@ -47,17 +47,18 @@ export interface ValidationFail {
   reason: string;
 }
 
-export function validateMediaFile(file: File): ValidationOk | ValidationFail {
+export function validateMediaFile(
+  file: File,
+  inputFormats: string[] = DEFAULT_INPUT_FORMATS,
+): ValidationOk | ValidationFail {
   if (file.size > MAX_MEDIA_SIZE_BYTES) {
     return {
       ok: false,
-      reason: `"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)} MB > 10 MB).`,
+      reason: `"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)} MB > ${(MAX_MEDIA_SIZE_BYTES / 1024 / 1024).toFixed(0)} MB).`,
     };
   }
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
-    return { ok: false, reason: `"${file.name}" has an unsupported type.` };
-  }
+  const reason = validateInputExtension(file.name, inputFormats);
+  if (reason) return { ok: false, reason };
   return { ok: true };
 }
 
@@ -78,30 +79,86 @@ export async function listAllMedia(): Promise<Media[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Media);
 }
 
-// Uploads a file to Flexweg and persists the metadata in Firestore. Path
-// shape is "media/<yyyy>/<mm>/<id>-<filename>" so the media library survives
-// being browsed via Flexweg's file explorer too.
-export async function uploadMedia(file: File, uploadedBy: string): Promise<Media> {
-  const validation = validateMediaFile(file);
-  if (!validation.ok) throw new Error(validation.reason);
-
-  const id = newId();
+// Builds the storage prefix for a new asset. Year/month organisation
+// keeps the file explorer manageable; the random hex suffix on the slug
+// guarantees uniqueness even if two users upload "photo.jpg" in the same
+// month.
+function buildStorageBase(filename: string): string {
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const path = `media/${yyyy}/${mm}/${id}-${sanitizeForPath(file.name)}`;
-  const content = await fileToBase64(file);
+  const slug = normalizeMediaSlug(filename);
+  return `media/${yyyy}/${mm}/${slug}`;
+}
 
-  await uploadFile({ path, content, encoding: "base64" });
-  const url = await publicUrlFor(path);
+// Active-theme image format catalog, with sensible fallbacks for sites
+// that haven't activated a theme yet. Resolved synchronously so the
+// upload UI can show progress before the first byte is sent.
+function resolveImageFormatConfig(settings: SiteSettings | undefined): ImageFormatConfig | undefined {
+  try {
+    const theme = getActiveTheme(settings?.activeThemeId ?? "default");
+    return theme.imageFormats;
+  } catch {
+    return undefined;
+  }
+}
+
+// Uploads a single image and produces every variant the active theme + the
+// admin both want. The original file is intentionally never stored.
+//
+// Pipeline:
+//   1. Validate extension against the theme's inputFormats (or a default).
+//   2. Decode + resize on the client into N blobs (one per variant).
+//   3. POST each variant to Flexweg under media/yyyy/mm/<slug>/<name>.<ext>.
+//   4. Persist the metadata in Firestore.
+//
+// Caller passes the SiteSettings so we can pick the active theme without
+// reaching into a React context. The settings argument also covers the
+// case where uploads happen during onboarding before settings are stable.
+export async function uploadMedia(
+  file: File,
+  uploadedBy: string,
+  settings?: SiteSettings,
+): Promise<Media> {
+  const themeConfig = resolveImageFormatConfig(settings);
+  const validation = validateMediaFile(file, themeConfig?.inputFormats ?? DEFAULT_INPUT_FORMATS);
+  if (!validation.ok) throw new Error(validation.reason);
+
+  const merged = mergeFormats(ADMIN_FORMATS, themeConfig);
+  const variants = await processImage(file, {
+    formats: merged.formats,
+    outputMime: merged.outputMime,
+    quality: merged.quality,
+  });
+  const ext = extensionForMime(merged.outputMime);
+
+  const storageBase = buildStorageBase(file.name);
+  const id = newId();
+  const formats: Record<string, MediaVariant> = {};
+  let totalBytes = 0;
+
+  for (const variant of variants) {
+    const path = `${storageBase}/${variant.name}.${ext}`;
+    const content = await blobToBase64(variant.blob);
+    await uploadFile({ path, content, encoding: "base64" });
+    const url = await publicUrlFor(path);
+    formats[variant.name] = {
+      url,
+      width: variant.width,
+      height: variant.height,
+      bytes: variant.bytes,
+    };
+    totalBytes += variant.bytes;
+  }
 
   const media: Media = {
     id,
     name: file.name,
-    contentType: file.type || "application/octet-stream",
-    size: file.size,
-    storagePath: path,
-    url,
+    contentType: merged.outputMime,
+    size: totalBytes,
+    storageBase,
+    formats,
+    defaultFormat: merged.defaultFormat,
     uploadedAt: Date.now(),
     uploadedBy,
   };
@@ -120,12 +177,19 @@ export async function updateMedia(
   await updateDoc(mediaDoc(id), update);
 }
 
-// Remove from Flexweg first (best-effort), then drop the Firestore doc. A
-// 404 on Flexweg is treated as success inside `deleteFile`, so re-running
-// after a partial failure is safe.
+// Tries to wipe every Flexweg artifact tied to this asset, then drops the
+// Firestore doc. Order matters: even if the public-side cleanup fails, we
+// only want to leave the source-of-truth alive. A 404 on the delete call
+// is treated as success inside flexwegApi (already-gone == desired state).
 export async function deleteMedia(media: Media): Promise<void> {
   try {
-    await deleteFile(media.storagePath);
+    if (media.storageBase) {
+      // New-shape media: one folder holds every variant — single API call.
+      await deleteFolder(media.storageBase);
+    } else if (media.storagePath) {
+      // Legacy media: a single file at a flat path.
+      await deleteFile(media.storagePath);
+    }
   } catch (err) {
     console.warn("Flexweg media delete failed (continuing):", err);
   }

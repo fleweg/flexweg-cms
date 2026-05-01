@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
-import type { Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
+import type { ImageFormatConfig, Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
 
 // Author metadata exposed to themes. Keep this minimal — theme code runs
 // at publish time inside the admin browser, but the rendered HTML is then
@@ -12,10 +12,17 @@ export interface AuthorView {
 
 // Resolved media reference for theme consumption. The publisher resolves
 // `heroMediaId` to this shape so templates don't need to do any lookups.
+//
+// `formats` carries every available variant; `default` is the fallback
+// format name. Templates pick a specific size with `pickFormat(view, "large")`
+// (see `core/media.ts`) which gracefully falls back to the closest variant
+// when the requested size isn't available — important for old media that
+// predates the active theme's size catalog.
 export interface MediaView {
-  url: string;
   alt?: string;
   caption?: string;
+  default: string;
+  formats: Record<string, { url: string; width: number; height: number }>;
 }
 
 export interface SiteContext {
@@ -86,6 +93,11 @@ export interface ThemeManifest {
   name: string;
   version: string;
   description?: string;
+  // Image catalog the theme expects. Used by the media upload pipeline to
+  // decide which variants to generate, and by templates when calling
+  // pickFormat(view, "large"). Optional — themes that opt out get only the
+  // ADMIN_FORMATS variants for media library display.
+  imageFormats?: ImageFormatConfig;
   // Path of the SCSS entrypoint, relative to the theme directory. The build
   // script reads this to know what to compile.
   scssEntry: string;

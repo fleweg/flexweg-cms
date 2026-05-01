@@ -8,6 +8,7 @@ import {
   NOT_FOUND_PATH,
 } from "../core/slug";
 import { sha256Hex } from "../lib/utils";
+import { mediaToView, pickFormat } from "../core/media";
 import { getActiveTheme } from "../themes";
 import type {
   AuthorView,
@@ -51,9 +52,7 @@ function themeCssPath(themeId: string): string {
 
 function resolveMedia(id: string | undefined, media: Map<string, Media>): MediaView | undefined {
   if (!id) return undefined;
-  const m = media.get(id);
-  if (!m) return undefined;
-  return { url: m.url, alt: m.alt, caption: m.caption };
+  return mediaToView(media.get(id));
 }
 
 function resolveMenu(items: MenuItem[], ctx: PublishContext): ResolvedMenuItem[] {
@@ -126,7 +125,7 @@ async function renderSingle(post: Post, ctx: PublishContext): Promise<string> {
     site,
     pageTitle: post.seo?.title ?? post.title,
     pageDescription: description || undefined,
-    ogImage: post.seo?.ogImage ?? hero?.url,
+    ogImage: post.seo?.ogImage ?? pickFormat(hero, "large"),
     currentPath,
   };
   const templateProps: SingleTemplateProps & { site: SiteContext } = {

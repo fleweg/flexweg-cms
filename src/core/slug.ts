@@ -81,3 +81,31 @@ export function pathToPublicUrl(baseUrl: string, path: string): string {
   const cleanPath = path.replace(/^\/+/, "");
   return `${cleanBase}/${cleanPath}`;
 }
+
+// Normalizes a media filename into a path-safe slug, then appends a short
+// random hex suffix to guarantee uniqueness. Uniqueness matters because we
+// store every asset in its own folder (`media/yyyy/mm/<slug>/`) and a
+// duplicate slug would silently overwrite another asset's variants.
+//
+// Strips the file extension before slugifying, since the variant filenames
+// are produced by the image pipeline (e.g. `medium.webp`) — the original
+// extension only mattered for input validation.
+export function normalizeMediaSlug(filename: string): string {
+  const lastDot = filename.lastIndexOf(".");
+  const stem = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+  const base = slugify(stem) || "media";
+  return `${base}-${randomHexSuffix(6)}`;
+}
+
+function randomHexSuffix(length: number): string {
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(Math.ceil(length / 2));
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, length);
+  }
+  // Fallback for environments without WebCrypto (test envs without jsdom).
+  return Math.random().toString(16).slice(2, 2 + length);
+}

@@ -24,21 +24,80 @@ import { getAdminEmail, getMissingFirebaseEnvVars } from "./services/firebase";
 
 interface BoundaryState {
   error: Error | null;
+  // True while we're waiting on the auto-reset timer to clear a transient
+  // DOM error. During that window the boundary renders an empty placeholder
+  // instead of the full error screen so the user doesn't see a red flash.
+  recovering: boolean;
+  // Number of resets the boundary has performed within the current burst.
+  // Resets to 0 when more than RESET_WINDOW_MS pass without a fresh error.
+  resetCount: number;
+  lastErrorAt: number;
+}
+
+// React 18's reconciler can throw transient "Node.insertBefore" /
+// "removeChild" / "appendChild" errors when concurrent renders overlap
+// imperative DOM mutations (browser extensions, contentEditable widgets,
+// async state churn). The DOM is recoverable — re-rendering the whole tree
+// from scratch fixes it. We auto-reset the boundary for those cases so the
+// user doesn't get bounced to a global error screen for what is really a
+// momentary glitch.
+const TRANSIENT_DOM_PATTERNS = [
+  /Node\.insertBefore/i,
+  /Node\.removeChild/i,
+  /Node\.appendChild/i,
+  /failed to execute 'insertBefore'/i,
+  /failed to execute 'removeChild'/i,
+];
+const MAX_AUTO_RESETS = 3;
+const RESET_WINDOW_MS = 5_000;
+const RESET_DELAY_MS = 80;
+
+function isTransientDomError(err: Error | null | undefined): boolean {
+  if (!err?.message) return false;
+  return TRANSIENT_DOM_PATTERNS.some((re) => re.test(err.message));
 }
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, BoundaryState> {
+  private resetTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: { children: ReactNode }) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, recovering: false, resetCount: 0, lastErrorAt: 0 };
   }
-  static getDerivedStateFromError(error: Error): BoundaryState {
-    return { error };
+  static getDerivedStateFromError(error: Error): Partial<BoundaryState> {
+    return { error, lastErrorAt: Date.now() };
   }
   override componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("App error:", error, info);
+    if (!isTransientDomError(error)) return;
+
+    const now = Date.now();
+    const inBurst = now - this.state.lastErrorAt < RESET_WINDOW_MS;
+    const nextCount = inBurst ? this.state.resetCount + 1 : 1;
+    if (nextCount > MAX_AUTO_RESETS) {
+      // Bail out of auto-recovery: error keeps firing, must be a real bug.
+      console.warn(`[AppErrorBoundary] giving up after ${MAX_AUTO_RESETS} retries`);
+      return;
+    }
+    // Mark this as "recovering" so render() returns an invisible
+    // placeholder instead of the full error screen — keeps the layout
+    // calm while React rebuilds the DOM after the reset timer fires.
+    this.setState({ resetCount: nextCount, recovering: true });
+    this.resetTimer = setTimeout(() => {
+      this.setState({ error: null, recovering: false });
+    }, RESET_DELAY_MS);
+  }
+  override componentWillUnmount() {
+    if (this.resetTimer) clearTimeout(this.resetTimer);
   }
   override render() {
     if (this.state.error) {
+      // Transient DOM glitches (recovering === true) just hide the tree
+      // for a frame; everything else is a real crash that surfaces the
+      // full error screen so the user sees something actionable.
+      if (this.state.recovering) {
+        return <div className="min-h-full bg-surface-50 dark:bg-surface-950" aria-hidden />;
+      }
       return <ErrorScreen message={this.state.error.message} />;
     }
     return this.props.children;
