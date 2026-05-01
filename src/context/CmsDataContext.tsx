@@ -44,6 +44,15 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
   });
   const [error, setError] = useState<Error | null>(null);
 
+  // Wrap setError so Firestore listener errors are also logged. Otherwise a
+  // missing index / rules-denied / network failure surfaces silently — a
+  // listener just stops emitting, the UI stays empty, and there's no clue
+  // in the console.
+  function reportError(err: Error) {
+    console.error("[CmsData] Firestore listener error:", err);
+    setError(err);
+  }
+
   useEffect(() => {
     const unsubs = [
       subscribeToPosts(
@@ -52,7 +61,7 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
           setPosts(items);
           setLoadingFlags((s) => ({ ...s, posts: false }));
         },
-        setError,
+        reportError,
       ),
       subscribeToPosts(
         { type: "page" },
@@ -60,21 +69,21 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
           setPages(items);
           setLoadingFlags((s) => ({ ...s, pages: false }));
         },
-        setError,
+        reportError,
       ),
       subscribeToTerms(
         (items) => {
           setTerms(items);
           setLoadingFlags((s) => ({ ...s, terms: false }));
         },
-        setError,
+        reportError,
       ),
       subscribeToMedia(
         (items) => {
           setMedia(items);
           setLoadingFlags((s) => ({ ...s, media: false }));
         },
-        setError,
+        reportError,
       ),
       subscribeToSettings(
         (s) => {
@@ -84,10 +93,11 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
           // because the registry just rebuilds against in-memory manifests.
           applyPluginRegistration(s.enabledPlugins ?? {});
         },
-        setError,
+        reportError,
       ),
     ];
     return () => unsubs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = useMemo<CmsDataValue>(() => {

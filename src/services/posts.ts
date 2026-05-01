@@ -3,7 +3,6 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
-  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -27,9 +26,13 @@ export interface PostFilter {
   status?: PostStatus;
 }
 
-// Subscribes to all posts/pages matching a filter, ordered by updatedAt desc.
-// We pass through the matching filter as Firestore `where(...)` so the index
-// is hit (composite index on type + updatedAt is required for production).
+// Subscribes to all posts/pages matching a filter, sorted client-side by
+// `updatedAt` descending. We deliberately avoid an `orderBy(updatedAt)` in
+// the query because combining it with the equality filter on `type` would
+// require a composite Firestore index — the query would silently fail with
+// FAILED_PRECONDITION if the index isn't deployed. Sorting in JS keeps the
+// MVP setup zero-config; revisit once a single site holds thousands of
+// posts.
 export function subscribeToPosts(
   filter: PostFilter,
   onChange: (posts: Post[]) => void,
@@ -42,12 +45,20 @@ export function subscribeToPosts(
   const q = query(
     postsCollection(),
     ...constraints.map(([field, op, value]) => where(field, op, value)),
-    orderBy("updatedAt", "desc"),
   );
 
   return onSnapshot(
     q,
-    (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post)),
+    (snap) => {
+      const posts = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as Post)
+        .sort((a, b) => {
+          const ta = a.updatedAt?.toMillis?.() ?? 0;
+          const tb = b.updatedAt?.toMillis?.() ?? 0;
+          return tb - ta;
+        });
+      onChange(posts);
+    },
     onError,
   );
 }
