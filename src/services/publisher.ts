@@ -258,6 +258,19 @@ export async function buildPublishContext(args: {
   return { ...args, media };
 }
 
+// Patches the post inside the publish context's `posts`/`pages` arrays. The
+// Firestore subscription in CmsDataContext is the eventual source of truth,
+// but it lands on a future render — too late for `regenerateListings(ctx)`
+// running synchronously after `markPostOnline`/`markPostDraft`. Without this
+// patch, the home/category listings would render the pre-transition state
+// and miss (or stubbornly include) the post we just toggled.
+function applyPostStatusInCtx(ctx: PublishContext, postId: string, patch: Partial<Post>): void {
+  const update = (list: Post[]): Post[] =>
+    list.map((p) => (p.id === postId ? { ...p, ...patch } : p));
+  ctx.posts = update(ctx.posts);
+  ctx.pages = update(ctx.pages);
+}
+
 // Publish a single post: renders, uploads, deletes the previous path on
 // move, then refreshes home + the category archive that owns it. Keeps
 // going on partial failure so the user can retry.
@@ -289,6 +302,14 @@ export async function publishPost(
 
   const { hash } = await uploadIfChanged(newPath, html, post.lastPublishedHash, log);
   await markPostOnline(post.id, { lastPublishedPath: newPath, lastPublishedHash: hash });
+  // Reflect the transition locally so the listings regenerated below
+  // include this post. Without this, renderHome would still see status
+  // "draft" and silently skip it until the next publish action.
+  applyPostStatusInCtx(ctx, post.id, {
+    status: "online",
+    lastPublishedPath: newPath,
+    lastPublishedHash: hash,
+  });
 
   log({ level: "info", message: "Regenerating listings…" });
   await regenerateListings(ctx, log);
@@ -314,6 +335,13 @@ export async function unpublishPost(
     }
   }
   await markPostDraft(post.id);
+  // Mirror of the publish path: drop the post from the in-memory online set
+  // so renderHome / renderCategory exclude it on the very next regeneration.
+  applyPostStatusInCtx(ctx, post.id, {
+    status: "draft",
+    lastPublishedPath: undefined,
+    lastPublishedHash: undefined,
+  });
   await regenerateListings(ctx, log);
   log({ level: "success", message: "Unpublished." });
 }
@@ -371,7 +399,13 @@ export async function deletePostAndUnpublish(
       log({ level: "warn", message: `Delete failed: ${(err as Error).message}` });
     }
   }
-  // Caller is responsible for the Firestore deletion (services/posts.ts);
-  // this function only handles the public-side cleanup so it can be reused
-  // before destroying the source-of-truth doc.
+  // Drop the post from the in-memory listings so the regeneration below
+  // doesn't keep referencing it. Caller still handles Firestore deletion
+  // afterwards (services/posts.ts).
+  ctx.posts = ctx.posts.filter((p) => p.id !== postId);
+  ctx.pages = ctx.pages.filter((p) => p.id !== postId);
+  if (post.status === "online") {
+    log({ level: "info", message: "Regenerating listings…" });
+    await regenerateListings(ctx, log);
+  }
 }
