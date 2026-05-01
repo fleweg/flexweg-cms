@@ -132,6 +132,24 @@ img {
   }
 }
 
+// Semi-transparent backdrop behind the overlay. Click on it = close.
+// Injected by the menu loader rather than rendered in the static HTML so
+// the close affordance can evolve without a full site republish.
+.burger-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+  z-index: 40;
+
+  &.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 // Sliding off-canvas menu, available at every breakpoint. The transform
 // keeps it off-screen until `is-open` is added by the loader on click.
 .burger-menu {
@@ -140,7 +158,7 @@ img {
   width: min(80vw, 360px);
   background: #ffffff;
   border-left: 1px solid $color-border;
-  padding: 4rem 1.5rem 2rem;
+  padding: 1rem 1.5rem 2rem;
   transform: translateX(100%);
   transition: transform 0.22s ease;
   z-index: 50;
@@ -154,6 +172,7 @@ img {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
+    margin-top: 1rem;
   }
   a {
     display: block;
@@ -165,6 +184,24 @@ img {
     padding-left: 1rem;
     border-left: 2px solid $color-border;
     margin-top: 0.25rem;
+  }
+}
+
+// Close (×) button injected by the loader at the top of the overlay.
+.burger-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: transparent;
+  border: 0;
+  padding: 0.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  color: $color-fg;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
   }
 }
 

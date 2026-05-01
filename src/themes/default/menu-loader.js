@@ -9,6 +9,9 @@
  *     time menus, posts or terms change) and fills in the lists.
  *   - The burger toggle button is wired up to flip `aria-expanded` and
  *     show / hide the `#burger-menu` overlay via a `.is-open` class.
+ *   - The script ALSO injects a close button into `#burger-menu` and
+ *     wires an outside-click handler — neither requires HTML changes
+ *     so adding them doesn't force a full site republish.
  *
  * Failure mode is silent on purpose: if the fetch fails (network down,
  * 404 because Flexweg hasn't received the first publish yet), the
@@ -88,25 +91,78 @@
     });
   }
 
+  // Injects a close button (×) into the burger overlay if it isn't already
+  // there. We add it via JS so themes can ship the close affordance
+  // without having to bake it into the static HTML — saves a full site
+  // republish whenever the close UI changes.
+  function ensureCloseButton(menu) {
+    if (menu.querySelector(".burger-close")) return menu.querySelector(".burger-close");
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "burger-close";
+    close.setAttribute("aria-label", "Close menu");
+    close.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    menu.insertBefore(close, menu.firstChild);
+    return close;
+  }
+
+  // Inserts a transparent backdrop behind the overlay; clicking it
+  // closes the menu. Adding it via JS keeps the static HTML minimal and
+  // means the backdrop only exists while the burger feature is active.
+  function ensureBackdrop() {
+    var existing = document.querySelector(".burger-backdrop");
+    if (existing) return existing;
+    var backdrop = document.createElement("div");
+    backdrop.className = "burger-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.appendChild(backdrop);
+    return backdrop;
+  }
+
   function wireBurger() {
     var toggle = document.querySelector(".burger-toggle");
     var menu = document.getElementById("burger-menu");
     if (!toggle || !menu) return;
+
+    var close = ensureCloseButton(menu);
+    var backdrop = ensureBackdrop();
+
     function setOpen(open) {
       toggle.setAttribute("aria-expanded", open ? "true" : "false");
       menu.classList.toggle("is-open", open);
+      backdrop.classList.toggle("is-open", open);
       document.body.classList.toggle("burger-open", open);
     }
+
     toggle.addEventListener("click", function () {
       var isOpen = toggle.getAttribute("aria-expanded") === "true";
       setOpen(!isOpen);
     });
-    // Close on Escape and on link click — convenient on mobile.
+    close.addEventListener("click", function () {
+      setOpen(false);
+    });
+    backdrop.addEventListener("click", function () {
+      setOpen(false);
+    });
+    // Close on Escape and on link-tap inside the menu (handy for SPA-feel
+    // navigation between pages on mobile).
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") setOpen(false);
     });
     menu.addEventListener("click", function (e) {
       if (e.target.tagName === "A") setOpen(false);
+    });
+    // Click-outside detector: when the menu is open and the click lands
+    // anywhere that's not the menu itself or the toggle, close it.
+    // Using `pointerdown` rather than `click` so the close happens before
+    // any `click` handler on the underlying element fires (e.g. a link
+    // visible behind the overlay).
+    document.addEventListener("pointerdown", function (e) {
+      if (toggle.getAttribute("aria-expanded") !== "true") return;
+      if (menu.contains(e.target)) return;
+      if (toggle.contains(e.target)) return;
+      setOpen(false);
     });
   }
 

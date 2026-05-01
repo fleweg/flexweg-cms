@@ -168,7 +168,12 @@
   "menus": {
     "title": "Menus",
     "header": "Menu d'en-tête",
-    "footer": "Menu de pied de page"
+    "footer": "Menu de pied de page",
+    "saveAndPublish": "Enregistrer & générer",
+    "discard": "Annuler",
+    "saved": "Menus enregistrés et publiés.",
+    "saveFailed": "Impossible d'enregistrer les menus.",
+    "unsavedChanges": "Modifications non enregistrées."
   },
   "settings": {
     "title": "Réglages",
