@@ -1,3 +1,4 @@
+import { applyFilters } from "../core/pluginRegistry";
 import { resolveMenuItems, type ResolvedMenuItem } from "../core/menuResolver";
 import type { Post, SiteSettings, Term } from "../core/types";
 import { uploadFile } from "./flexwegApi";
@@ -10,6 +11,16 @@ export const MENU_JSON_PATH = "menu.json";
 export interface MenuJson {
   header: ResolvedMenuItem[];
   footer: ResolvedMenuItem[];
+}
+
+// Context handed to plugins via the `menu.json.resolved` filter hook.
+// Lets handlers compute additional menu items from arbitrary site data
+// (e.g. flexweg-rss appends one footer entry per enabled RSS feed).
+export interface MenuFilterContext {
+  settings: SiteSettings;
+  posts: Post[];
+  pages: Post[];
+  terms: Term[];
 }
 
 // Builds the JSON shape uploaded to Flexweg. Pure function — no API
@@ -35,6 +46,9 @@ export function buildMenuJson(
 // HTML page that embeds the menu, and the public-side loader picks up
 // the change on the next page load.
 //
+// Before upload, the resolved shape passes through the `menu.json.resolved`
+// filter so plugins can append their own entries (e.g. RSS feed links).
+//
 // We deliberately don't track a "lastPublishedHash" here: the file is
 // tiny (~1-5 KB) and the Flexweg upload deduplicates server-side, so the
 // extra round-trip on a no-op write isn't worth the bookkeeping. If perf
@@ -47,9 +61,11 @@ export async function publishMenuJson(
   terms: Term[],
 ): Promise<void> {
   const menu = buildMenuJson(settings, posts, pages, terms);
+  const filterCtx: MenuFilterContext = { settings, posts, pages, terms };
+  const final = await applyFilters<MenuJson>("menu.json.resolved", menu, filterCtx);
   await uploadFile({
     path: MENU_JSON_PATH,
-    content: JSON.stringify(menu),
+    content: JSON.stringify(final),
     encoding: "utf-8",
   });
 }

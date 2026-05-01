@@ -48,7 +48,8 @@ flexweg-cms/
 │   │   └── default/     Default theme — base/home/single/category/author/404 + components + SCSS
 │   ├── plugins/         WordPress-style plugins, registered via filters/actions
 │   │   ├── core-seo/         Built-in SEO plugin (Twitter cards + generator hint)
-│   │   └── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
+│   │   ├── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
+│   │   └── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
 │   ├── i18n/            Admin UI translations (en + fr)
 │   └── lib/             Small utilities (date format, hashing, classnames)
 ├── scripts/
@@ -450,6 +451,7 @@ Then add it to `PLUGINS` in `src/plugins/index.ts`.
 | `post.html.body` | filter | `(html, post)` — modify rendered post HTML. |
 | `post.template.props` | filter | `(props, post)` — modify the props passed to the active template. |
 | `page.head.extra` | filter (sync) | `(html, baseProps)` — inject extra `<head>` markup. |
+| `menu.json.resolved` | filter | `(menu, ctx)` — mutate the resolved `{ header, footer }` shape just before `/menu.json` is uploaded. `ctx` exposes `settings`, `posts`, `pages`, `terms`. |
 | `publish.before` | action | `(post, ctx)` |
 | `publish.after` | action | `(post, ctx)` |
 | `publish.complete` | action | `(post, ctx)` — fires after the post is uploaded and listings refreshed. |
@@ -545,6 +547,32 @@ Configuration options:
 Incremental regeneration is automatic: every `publish.complete`, `post.unpublished`, and `post.deleted` rebuilds the year sitemap that contains the touched post, plus the index, plus News. Years that empty out have their sitemap deleted from the public site so the index never points to a stale file.
 
 The lifecycle hooks **do not** re-upload the XSL stylesheets — those change rarely. After installing the plugin or changing `settings.language`, click **Upload stylesheets** (or **Force regenerate**) once to refresh them; subsequent content publishes don't pay that cost.
+
+### `flexweg-rss`
+
+Generates RSS 2.0 feeds for the site and optionally per category. Configure under **Settings → RSS feeds**.
+
+Files produced on the public site (relative to your `baseUrl`):
+
+- `rss.xml` — site-wide feed of the latest online posts (count configurable, default 20). Categories can be excluded individually.
+- `<category-slug>/<category-slug>.xml` — one per category feed enabled via the settings page. Slugs match the category archive folder so a reader can guess the URL from `/<category>/`.
+- `rss.xsl` — shared stylesheet referenced by every feed file via an `<?xml-stylesheet?>` PI. Renders feeds as a styled HTML table when a human opens the URL in a browser; RSS readers ignore the PI and parse XML directly.
+
+Configuration options:
+
+- **Site feed** — toggle on/off, item count (1–100), excluded categories (multi-select), "Show in footer" checkbox.
+- **Category feeds** — pick a category from an autocomplete combobox to add a new feed; per-feed item count + footer toggle. Removing a feed deletes its file on the next save.
+- **Save settings** — persists the config, deletes files for disabled or removed feeds, and re-publishes `/menu.json` so the footer toggles take effect immediately.
+- **Upload stylesheet** — uploads `rss.xsl` only. Run after a public-language change.
+- **Force regenerate all feeds** — saves config + uploads XSL + regenerates every enabled feed + re-publishes the menu.
+
+Incremental regeneration is automatic on every `publish.complete`, `post.unpublished`, and `post.deleted`: only the impacted feeds are rebuilt — the site feed (when the post's category isn't excluded) and the matching category feed (when one exists for `post.primaryTermId`). The plugin persists `lastPublishedPath` after each upload so a later category-slug rename can clean up the old file. The XSL is **not** re-uploaded by lifecycle hooks; refresh it via **Upload stylesheet** or **Force regenerate**.
+
+Item descriptions use `post.excerpt` when set, otherwise the first ~300 characters of the markdown rendered to plaintext. Sort order is `publishedAt DESC` (with `updatedAt` / `createdAt` fallbacks).
+
+Cover images: when a post has a `heroMediaId`, the item gets an RSS 2.0 `<enclosure url="..." length="..." type="..."/>` element. Most modern readers (Feedly, Inoreader, NetNewsWire, Reeder) display this as the article thumbnail. Variant selection prefers `large`, falls back to the asset's `defaultFormat`, then any available variant — same chain as the publisher's `og:image`. Legacy single-URL media is supported transparently. `length` is the variant's stored byte count (`0` when unknown, which readers tolerate); `type` is the asset's `contentType` or guessed from the URL extension.
+
+Footer items injected by this plugin appear at the **end** of the resolved footer in `/menu.json`. Labels are auto-generated: `RSS` for the site feed, `RSS — <category name>` for per-category feeds. To control placement or labels manually, leave the addToFooter checkboxes off and add custom items via **Menus** with the feed URL as an external link.
 
 ## Tests
 
