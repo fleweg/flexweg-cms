@@ -74,6 +74,18 @@ function buildSiteContext(ctx: PublishContext): SiteContext {
   // Menus are also resolved by the dynamic menu.json publisher; the shared
   // helper in core/menuResolver.ts is the single source of truth so static
   // header rendering and the runtime JSON stay in lockstep.
+  const theme = getActiveTheme(ctx.settings.activeThemeId);
+  // Resolve the active theme's settings the same way PluginSettingsRoute
+  // does — defaults merged with whatever the user saved. Themes without
+  // a settings page get `undefined`.
+  let themeConfig: unknown = undefined;
+  if (theme.settings) {
+    const stored = (ctx.settings.themeConfigs as Record<string, unknown> | undefined)?.[theme.id];
+    themeConfig = {
+      ...(theme.settings.defaultConfig as object),
+      ...((stored as object) ?? {}),
+    };
+  }
   return {
     settings: ctx.settings,
     resolvedMenus: {
@@ -81,6 +93,7 @@ function buildSiteContext(ctx: PublishContext): SiteContext {
       footer: resolveMenuItems(ctx.settings.menus.footer ?? [], ctx),
     },
     themeCssPath: themeCssPath(ctx.settings.activeThemeId),
+    themeConfig,
   };
 }
 

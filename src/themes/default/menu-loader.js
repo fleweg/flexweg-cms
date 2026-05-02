@@ -91,6 +91,27 @@
         host.removeAttribute("hidden");
       }
     });
+    paintBranding(menu);
+  }
+
+  // Replaces the inner of every `[data-cms-brand]` host with an <img>
+  // when the active theme has a logo configured (resolved by the
+  // publisher into menu.branding.logoUrl). The static markup keeps
+  // the site title as a text fallback — visible when JS is off, when
+  // /data/menu.json is unreachable, or when no logo is configured.
+  function paintBranding(menu) {
+    var branding = menu && menu.branding;
+    var logoUrl = branding && branding.logoUrl;
+    if (!logoUrl) return;
+    document.querySelectorAll("[data-cms-brand]").forEach(function (host) {
+      var alt = host.textContent || "";
+      var img = document.createElement("img");
+      img.src = logoUrl;
+      img.alt = alt;
+      img.className = "site-brand__logo";
+      host.innerHTML = "";
+      host.appendChild(img);
+    });
   }
 
   // Injects a close button (×) into the burger overlay if it isn't already

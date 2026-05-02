@@ -422,6 +422,62 @@ Media uploaded before the multi-variant pipeline keeps its original `{ url, stor
 
 The active theme is selected per-site in **Themes**. Switching activates a "Regenerate site" workflow that re-publishes every online post.
 
+### Theme settings page
+
+Each theme can ship its own configuration page reachable at `/admin/#/theme-settings`. The sidebar entry **Theme settings** appears automatically when the active theme declares one — switch themes and the entry follows.
+
+```ts
+import type { ThemeManifest, ThemeSettingsPageProps } from "../types";
+
+interface MyThemeConfig {
+  accentColor: string;
+}
+
+const DEFAULT_CONFIG: MyThemeConfig = { accentColor: "#476558" };
+
+function MyThemeSettingsPage({ config, save }: ThemeSettingsPageProps<MyThemeConfig>) {
+  // `config` is already merged with defaultConfig.
+  // `save(next)` writes the whole blob to settings/site.themeConfigs.<id>.
+  return (
+    <input
+      value={config.accentColor}
+      onChange={(e) => save({ ...config, accentColor: e.target.value })}
+    />
+  );
+}
+
+export const manifest: ThemeManifest<MyThemeConfig> = {
+  id: "my-theme",
+  // …
+  settings: {
+    navLabelKey: "title",        // i18n key in the theme's namespace
+    defaultConfig: DEFAULT_CONFIG,
+    component: MyThemeSettingsPage,
+  },
+  i18n: {
+    en: { title: "My theme settings", colorLabel: "Accent color" },
+    fr: { title: "Réglages du thème", colorLabel: "Couleur d'accent" },
+  },
+};
+```
+
+Storage lives at `settings/site.themeConfigs.<theme-id>` in Firestore — same real-time subscription as the rest of the admin. Inside theme components rendered at publish time, the resolved config is exposed as `site.themeConfig` on `SiteContext`.
+
+Translations are loaded into a dedicated i18next namespace named `theme-<id>` so settings pages call `useTranslation("theme-<id>")` without colliding with admin keys.
+
+Tabs inside the settings page are a theme concern — render a tab strip in your component the way the default theme does (single `useState` for the active tab + conditional sections).
+
+### Default theme — Logo upload
+
+The default theme exposes a **General** tab with a logo upload. Workflow:
+
+1. Admin opens **Theme settings → General** and uploads a JPG / PNG / WebP image.
+2. The image is resized client-side (canvas, no server) into a 480 × 144 WebP and pushed to `theme-assets/default-logo.webp` on Flexweg.
+3. The theme config saves `{ logoEnabled: true, logoUpdatedAt: <ms> }` and the admin re-publishes `data/menu.json` with a new `branding.logoUrl` (the URL is cache-busted via `?v=<logoUpdatedAt>`).
+4. The runtime `menu-loader.js` already loaded on every published page picks up the branding block on the next page load and replaces the text wordmark inside `[data-cms-brand]` with an `<img>`.
+
+So a logo change pushes only **one** small JSON file (`menu.json`) plus the logo binary — no need to re-publish every post HTML. Removing the logo runs the same flow with `logoEnabled: false` and best-effort deletes the WebP file.
+
 ## Creating a plugin
 
 Plugins are bundled into the admin and toggled on/off per site in **Plugins**. Each plugin exports a manifest with a `register(api)` function that hooks into the registry. Optionally, a plugin can also ship its own settings page and translations.

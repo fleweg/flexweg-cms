@@ -9,6 +9,7 @@ import {
   Menu as MenuIcon,
   Moon,
   Palette,
+  Paintbrush,
   Plug,
   Settings,
   Sun,
@@ -18,7 +19,9 @@ import {
 import { useTranslation } from "react-i18next";
 import { cn } from "../../lib/utils";
 import { useAuth } from "../../context/AuthContext";
+import { useCmsData } from "../../context/CmsDataContext";
 import { useTheme } from "../../context/ThemeContext";
+import { getActiveTheme } from "../../themes";
 import { signOut } from "../../services/auth";
 
 interface NavItem {
@@ -26,27 +29,43 @@ interface NavItem {
   labelKey: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  hidden?: boolean;
 }
-
-const NAV_ITEMS: NavItem[] = [
-  { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
-  { to: "/posts", labelKey: "nav.posts", icon: FileText },
-  { to: "/pages", labelKey: "nav.pages", icon: ListChecks },
-  { to: "/taxonomies", labelKey: "nav.taxonomies", icon: FolderTree },
-  { to: "/media", labelKey: "nav.media", icon: ImageIcon },
-  { to: "/menus", labelKey: "nav.menus", icon: MenuIcon },
-  { to: "/themes", labelKey: "nav.themes", icon: Palette },
-  { to: "/plugins", labelKey: "nav.plugins", icon: Plug },
-  { to: "/settings", labelKey: "nav.settings", icon: Settings },
-  { to: "/users", labelKey: "nav.users", icon: Users, adminOnly: true },
-];
 
 export function Sidebar() {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
+  const { settings } = useCmsData();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
-  const items = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+  const activeTheme = getActiveTheme(settings.activeThemeId);
+  const hasThemeSettings = !!activeTheme.settings;
+
+  // Built each render so the "Theme settings" entry can react to the
+  // user activating a different theme (different theme = different
+  // settings surface) without remounting the sidebar.
+  const navItems: NavItem[] = [
+    { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+    { to: "/posts", labelKey: "nav.posts", icon: FileText },
+    { to: "/pages", labelKey: "nav.pages", icon: ListChecks },
+    { to: "/taxonomies", labelKey: "nav.taxonomies", icon: FolderTree },
+    { to: "/media", labelKey: "nav.media", icon: ImageIcon },
+    { to: "/menus", labelKey: "nav.menus", icon: MenuIcon },
+    { to: "/themes", labelKey: "nav.themes", icon: Palette },
+    {
+      to: "/theme-settings",
+      labelKey: "nav.themeSettings",
+      icon: Paintbrush,
+      hidden: !hasThemeSettings,
+    },
+    { to: "/plugins", labelKey: "nav.plugins", icon: Plug },
+    { to: "/settings", labelKey: "nav.settings", icon: Settings },
+    { to: "/users", labelKey: "nav.users", icon: Users, adminOnly: true },
+  ];
+
+  const items = navItems.filter(
+    (item) => !item.hidden && (!item.adminOnly || isAdmin),
+  );
 
   return (
     <aside className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-surface-200 bg-white dark:border-surface-800 dark:bg-surface-900">

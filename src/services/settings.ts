@@ -17,6 +17,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   postsPerPage: 10,
   menus: { header: [], footer: [] },
   pluginConfigs: {},
+  themeConfigs: {},
 };
 
 export function subscribeToSettings(
@@ -59,6 +60,18 @@ export async function updatePluginConfig<T>(pluginId: string, config: T): Promis
   await setDoc(
     siteSettingsRef(),
     { pluginConfigs: { [pluginId]: config } },
+    { merge: true },
+  );
+}
+
+// Writes a theme's config blob. Same shape as updatePluginConfig — the
+// theme's own settings page reads from settings.themeConfigs[themeId]
+// and saves the full blob back here. Other themes' configs are
+// preserved so re-activating an old theme keeps its settings intact.
+export async function updateThemeConfig<T>(themeId: string, config: T): Promise<void> {
+  await setDoc(
+    siteSettingsRef(),
+    { themeConfigs: { [themeId]: config } },
     { merge: true },
   );
 }

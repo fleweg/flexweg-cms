@@ -190,6 +190,12 @@ export interface SiteSettings {
   // JSON-serializable so Firestore can store them. Stored alongside the
   // global site settings so a single subscription keeps everything live.
   pluginConfigs?: Record<string, unknown>;
+  // Per-theme configuration blobs, keyed by theme id. Mirrors
+  // pluginConfigs — each theme's settings page (declared via
+  // ThemeManifest.settings) reads/writes its own slot. Survives theme
+  // switches so re-activating a previously-configured theme keeps its
+  // settings intact.
+  themeConfigs?: Record<string, unknown>;
 }
 
 export type AdminTheme = "dark" | "light";

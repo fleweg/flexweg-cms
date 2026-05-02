@@ -9,9 +9,14 @@
 // themes, and matches the static-only constraint of Flexweg hosting.
 
 import { manifest as defaultManifest } from "./default/manifest";
+import i18n from "../i18n";
 import type { ThemeManifest } from "./types";
 
-export const THEMES: ThemeManifest[] = [defaultManifest];
+// Cast each typed manifest to the unknown-config base — same pattern
+// as plugins/index.ts. The settings.save callback is contravariant in
+// TConfig, which TypeScript can't reconcile against `unknown` without
+// the explicit widening cast.
+export const THEMES: ThemeManifest[] = [defaultManifest as ThemeManifest];
 
 export function getTheme(id: string): ThemeManifest {
   const found = THEMES.find((t) => t.id === id);
@@ -26,3 +31,20 @@ export function getActiveTheme(activeId: string): ThemeManifest {
 export function listThemes(): ThemeManifest[] {
   return THEMES;
 }
+
+// Translation bundles ship inline on each manifest. Loaded at module
+// import time into a dedicated i18next namespace named `theme-<id>`,
+// so a theme's settings page calls `useTranslation("theme-<id>")` to
+// scope its keys. Mirrors the plugin pattern in plugins/index.ts.
+function loadThemeTranslations(): void {
+  for (const theme of THEMES) {
+    if (!theme.i18n) continue;
+    const ns = `theme-${theme.id}`;
+    for (const [locale, resources] of Object.entries(theme.i18n)) {
+      if (!resources) continue;
+      i18n.addResourceBundle(locale, ns, resources, true, true);
+    }
+  }
+}
+
+loadThemeTranslations();

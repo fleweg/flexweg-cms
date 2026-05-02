@@ -10,9 +10,37 @@ import { uploadFile } from "./flexwegApi";
 // effect on resolution.
 export const MENU_JSON_PATH = "data/menu.json";
 
+export interface MenuJsonBranding {
+  // Absolute URL of the active theme's logo, including a cache-bust
+  // query (`?v=<logoUpdatedAt>`). Set when the active theme has a
+  // logo upload feature enabled in its settings; absent otherwise.
+  // The runtime menu loader replaces the static text wordmark with an
+  // <img> when this is present — so admins can swap the logo without
+  // re-publishing every post HTML.
+  logoUrl?: string;
+}
+
 export interface MenuJson {
   header: ResolvedMenuItem[];
   footer: ResolvedMenuItem[];
+  branding?: MenuJsonBranding;
+}
+
+// Resolves the branding block from the active theme's stored config.
+// Convention: a theme that wants to expose a logo uploads it to
+// `theme-assets/<id>-logo.webp` and stores `{ logoEnabled, logoUpdatedAt }`
+// in its theme config. We don't enforce the shape — themes that opt
+// out simply leave `logoEnabled` falsy and get no branding object.
+function resolveBranding(settings: SiteSettings): MenuJsonBranding | undefined {
+  const themeId = settings.activeThemeId;
+  const config = (settings.themeConfigs as Record<string, unknown> | undefined)?.[themeId] as
+    | { logoEnabled?: boolean; logoUpdatedAt?: number }
+    | undefined;
+  if (!config?.logoEnabled) return undefined;
+  const v = config.logoUpdatedAt ?? 0;
+  return {
+    logoUrl: `/theme-assets/${themeId}-logo.webp?v=${v}`,
+  };
 }
 
 // Context handed to plugins via the `menu.json.resolved` filter hook.
@@ -39,6 +67,7 @@ export function buildMenuJson(
   return {
     header: resolveMenuItems(settings.menus.header ?? [], ctx),
     footer: resolveMenuItems(settings.menus.footer ?? [], ctx),
+    branding: resolveBranding(settings),
   };
 }
 

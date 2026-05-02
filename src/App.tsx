@@ -22,6 +22,7 @@ import { MenusPage } from "./pages/MenusPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { PluginSettingsRoute } from "./pages/PluginSettingsRoute";
 import { SettingsLayout } from "./components/layout/SettingsLayout";
+import { ThemeSettingsRoute } from "./pages/ThemeSettingsRoute";
 import { UsersPage } from "./pages/UsersPage";
 import { getAdminEmail, getMissingFirebaseEnvVars } from "./services/firebase";
 
@@ -161,6 +162,7 @@ function AuthenticatedShell() {
           <Route path="/themes" element={<ThemesPage />} />
           <Route path="/plugins" element={<PluginsPage />} />
           <Route path="/menus" element={<MenusPage />} />
+          <Route path="/theme-settings" element={<ThemeSettingsRoute />} />
           <Route path="/settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="general" replace />} />
             <Route path="general" element={<SettingsPage />} />

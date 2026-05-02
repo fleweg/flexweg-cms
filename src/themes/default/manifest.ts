@@ -16,8 +16,14 @@ import cssText from "./theme.scss?inline";
 // uploaded via the same "Sync theme assets" flow as the CSS.
 import jsText from "./menu-loader.js?raw";
 import jsTextPosts from "./posts-loader.js?raw";
+import { en, fr } from "./i18n";
+import {
+  DEFAULT_THEME_CONFIG,
+  DefaultThemeSettingsPage,
+  type DefaultThemeConfig,
+} from "./SettingsPage";
 
-export const manifest: ThemeManifest = {
+export const manifest: ThemeManifest<DefaultThemeConfig> = {
   id: "default",
   name: "Default",
   version: "1.0.0",
@@ -26,6 +32,12 @@ export const manifest: ThemeManifest = {
   cssText,
   jsText,
   jsTextPosts,
+  i18n: { en, fr },
+  settings: {
+    navLabelKey: "title",
+    defaultConfig: DEFAULT_THEME_CONFIG,
+    component: DefaultThemeSettingsPage,
+  },
   // Image catalog used by the upload pipeline. WebP at 80 strikes a fair
   // balance between weight and quality for blog imagery; raise the quality
   // here (or override per-format) if your site is photo-heavy.

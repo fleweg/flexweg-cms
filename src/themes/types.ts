@@ -1,5 +1,13 @@
 import type { ComponentType, ReactNode } from "react";
-import type { ImageFormatConfig, Media, MenuItem, Post, SiteSettings, Term } from "../core/types";
+import type {
+  AdminLocale,
+  ImageFormatConfig,
+  Media,
+  MenuItem,
+  Post,
+  SiteSettings,
+  Term,
+} from "../core/types";
 import type { ResolvedMenuItem } from "../core/menuResolver";
 
 // Re-export so theme components can keep importing from "../types".
@@ -45,6 +53,11 @@ export interface SiteContext {
   };
   // Path on Flexweg of the active theme's CSS, e.g. "theme-assets/default.css".
   themeCssPath: string;
+  // Active theme's resolved config (manifest defaults merged with what
+  // the user saved in /theme-settings). Typed as `unknown` here because
+  // each theme owns its own config shape — theme components cast as
+  // needed. Falls back to the manifest defaults when nothing is stored.
+  themeConfig?: unknown;
 }
 
 export interface BaseLayoutProps {
@@ -106,7 +119,29 @@ export interface NotFoundTemplateProps {
   message?: string;
 }
 
-export interface ThemeManifest {
+// Settings page exposed by a theme via `ThemeManifest.settings`. Mirrors
+// the plugin settings convention so admins get a consistent surface for
+// per-theme configuration (logos, color overrides, layout toggles).
+// Storage lives under `settings.themeConfigs[<theme-id>]` in Firestore.
+export interface ThemeSettingsPageDef<TConfig = unknown> {
+  // i18n key resolved against the theme's i18n namespace (or the
+  // global namespace when the theme ships no translations). Used for
+  // the sidebar entry label and the page heading.
+  navLabelKey: string;
+  // Defaults merged with the stored value before the page renders, so
+  // a fresh install behaves predictably without an explicit save first.
+  defaultConfig: TConfig;
+  // The page is rendered inside the standard admin layout. The admin
+  // hands it `{ config, save, theme }` — same shape as PluginSettingsPage.
+  component: ComponentType<ThemeSettingsPageProps<TConfig>>;
+}
+
+export interface ThemeSettingsPageProps<TConfig = unknown> {
+  config: TConfig;
+  save: (next: TConfig) => Promise<void>;
+}
+
+export interface ThemeManifest<TConfig = unknown> {
   id: string;
   name: string;
   version: string;
@@ -147,6 +182,15 @@ export interface ThemeManifest {
     author: ComponentType<AuthorTemplateProps & { site: SiteContext }>;
     notFound: ComponentType<NotFoundTemplateProps & { site: SiteContext }>;
   };
+  // Optional configuration page reachable at /theme-settings when this
+  // theme is active. Mirrors the plugin settings convention so the
+  // admin gets a consistent surface for per-theme configuration
+  // (logos, color overrides, layout toggles).
+  settings?: ThemeSettingsPageDef<TConfig>;
+  // Optional bundled translations. Loaded into a dedicated i18next
+  // namespace named `theme-<id>` so the settings page calls
+  // `useTranslation("theme-<id>")` without colliding with admin keys.
+  i18n?: Partial<Record<AdminLocale, Record<string, unknown>>>;
 }
 
 // Re-exported so theme code only needs one import statement.

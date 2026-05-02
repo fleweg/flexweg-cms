@@ -32,7 +32,12 @@ export function Header({ site }: { site: SiteContext }) {
           >
             <BurgerIcon />
           </button>
-          <a className="site-brand" href="/index.html">
+          {/* Brand: text wordmark by default. menu-loader.js swaps
+              the inner with an <img> at runtime when the active theme
+              has a logo configured (menu.branding.logoUrl). The static
+              text stays as a graceful fallback when JS / menu.json
+              fails or when no logo is set. */}
+          <a className="site-brand" href="/index.html" data-cms-brand>
             {settings.title}
           </a>
         </div>
