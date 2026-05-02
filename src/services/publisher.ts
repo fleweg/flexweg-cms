@@ -2,10 +2,12 @@ import { renderMarkdown, markdownToPlainText } from "../core/markdown";
 import { applyFilters, doAction } from "../core/pluginRegistry";
 import { renderPageToHtml } from "../core/render";
 import {
+  buildAuthorUrl,
   buildPostUrl,
   buildTermUrl,
   HOME_PATH,
   NOT_FOUND_PATH,
+  pathToPublicUrl,
 } from "../core/slug";
 import { sha256Hex } from "../lib/utils";
 import { mediaToView, pickFormat } from "../core/media";
@@ -14,16 +16,19 @@ import { getActiveTheme } from "../themes";
 import type {
   AuthorView,
   BaseLayoutProps,
+  CardPost,
   CategoryTemplateProps,
   HomeTemplateProps,
   MediaView,
   SingleTemplateProps,
   SiteContext,
 } from "../themes/types";
-import type { Media, Post, SiteSettings, Term } from "../core/types";
+import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 import { deleteFile, uploadFile } from "./flexwegApi";
 import { listAllMedia } from "./media";
 import { publishMenuJson } from "./menuPublisher";
+import { publishPostsJson } from "./postsJsonPublisher";
+import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { markPostDraft, markPostOnline } from "./posts";
 
 export interface PublishLogEntry {
@@ -42,8 +47,14 @@ export interface PublishContext {
   terms: Term[]; // all terms (categories + tags)
   media: Map<string, Media>;
   settings: SiteSettings;
-  // Author lookup is best-effort: we don't fetch every user when publishing,
-  // we only know about the current authenticated user. Pass them in.
+  // All known user records — used by republishAuthorsJson to compose
+  // the public-side /authors.json snapshot. Subscribed via
+  // CmsDataContext and forwarded by publish callers (PublishButton,
+  // PostEditPage, ThemesPage).
+  users: UserRecord[];
+  // Resolves a userId to its full AuthorView (display name, bio,
+  // avatar). Used by templates rendered at publish time and (via the
+  // resolved values) by authors.json on every publish.
   authorLookup: (id: string) => AuthorView | undefined;
 }
 
@@ -73,10 +84,40 @@ function buildSiteContext(ctx: PublishContext): SiteContext {
   };
 }
 
-function postToCardData(post: Post, ctx: PublishContext): Post & { url: string; hero?: MediaView } {
+function postToCardData(post: Post, ctx: PublishContext): CardPost {
   const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
   const url = buildPostUrl({ post, primaryTerm: term });
-  return { ...post, url, hero: resolveMedia(post.heroMediaId, ctx.media) };
+  // Resolve the category's archive URL once so the template doesn't have
+  // to call buildTermUrl itself — keeps theme code free of slug logic.
+  const category =
+    term && term.type === "category"
+      ? { name: term.name, url: `/${buildTermUrl(term)}` }
+      : undefined;
+  // Pre-format the publication date in the site's language. Falls back to
+  // updatedAt then createdAt so cards never render with an empty meta line.
+  const dateMs =
+    post.publishedAt?.toMillis?.() ??
+    post.updatedAt?.toMillis?.() ??
+    post.createdAt?.toMillis?.();
+  let dateLabel: string | undefined;
+  if (dateMs) {
+    try {
+      dateLabel = new Intl.DateTimeFormat(ctx.settings.language || "en", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date(dateMs));
+    } catch {
+      dateLabel = new Date(dateMs).toDateString();
+    }
+  }
+  return {
+    ...post,
+    url,
+    hero: resolveMedia(post.heroMediaId, ctx.media),
+    category,
+    dateLabel,
+  };
 }
 
 // Renders a single post or page to HTML, ready to upload.
@@ -105,6 +146,13 @@ async function renderSingle(post: Post, ctx: PublishContext): Promise<string> {
     ogImage: post.seo?.ogImage ?? pickFormat(hero, "large"),
     currentPath,
   };
+  // Related posts are no longer pre-resolved server-side: the theme's
+  // single template renders an empty `[data-cms-related]` placeholder
+  // and a runtime loader (theme-assets/<id>-posts.js) populates it from
+  // /posts.json on every page load. This keeps published HTML stable
+  // when a sibling post is added later — same trade-off as the
+  // header/footer menu (loaded from /menu.json) and avoids re-rendering
+  // every post in a category on each new publish.
   const templateProps: SingleTemplateProps & { site: SiteContext } = {
     site,
     post,
@@ -171,7 +219,27 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
     .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0))
     .map((p) => postToCardData(p, ctx));
 
-  const templateProps: CategoryTemplateProps & { site: SiteContext } = { site, term, posts };
+  // If the flexweg-rss plugin has a feed configured for this category,
+  // expose its absolute URL so the template can render a Follow button.
+  // Reading pluginConfigs here is a small leak from publisher into the
+  // plugin config shape — accepted in exchange for keeping the flexweg-rss
+  // module out of the publisher's import graph.
+  const baseUrl = (ctx.settings.baseUrl || "").replace(/\/+$/, "");
+  const rssConfig = ctx.settings.pluginConfigs?.["flexweg-rss"] as
+    | { categoryFeeds?: Array<{ termId: string }> }
+    | undefined;
+  const hasCategoryFeed = !!rssConfig?.categoryFeeds?.some((f) => f.termId === term.id);
+  const categoryRssUrl =
+    hasCategoryFeed && baseUrl
+      ? pathToPublicUrl(baseUrl, `${term.slug}/${term.slug}.xml`)
+      : undefined;
+
+  const templateProps: CategoryTemplateProps & { site: SiteContext } = {
+    site,
+    term,
+    posts,
+    categoryRssUrl,
+  };
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
     site,
     pageTitle: term.name,
@@ -185,6 +253,62 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
     template: theme.templates.category,
     templateProps,
   });
+}
+
+// Renders an author archive page (the AuthorTemplate from the active
+// theme) for a single user. Lists every online post they've authored,
+// already resolved to CardPost shape so the theme template stays free
+// of lookups. Author archives are statically rendered today: when a
+// user updates their profile we re-render it; when one of their posts
+// is published/unpublished/deleted we re-render it. The dynamic
+// AuthorBio block on single posts (loaded from /authors.json) keeps
+// the rest of the site in sync without re-rendering each post HTML.
+async function renderAuthor(authorId: string, ctx: PublishContext): Promise<string | null> {
+  const user = ctx.users.find((u) => u.id === authorId);
+  if (!user) return null;
+  const author = ctx.authorLookup(authorId);
+  if (!author) return null;
+
+  const theme = getActiveTheme(ctx.settings.activeThemeId);
+  const site = buildSiteContext(ctx);
+  const posts = ctx.posts
+    .filter((p) => p.status === "online" && p.authorId === authorId)
+    .sort(
+      (a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+    )
+    .map((p) => postToCardData(p, ctx));
+
+  const path = buildAuthorUrl(user, ctx.users);
+  const templateProps = { site, author, posts };
+  const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
+    site,
+    pageTitle: author.displayName,
+    pageDescription: author.bio,
+    currentPath: path,
+  };
+  return renderPageToHtml({
+    base: theme.templates.base,
+    baseProps,
+    template: theme.templates.author,
+    templateProps,
+  });
+}
+
+// Publishes an author archive at /author/<slug>.html. Used by
+// regenerateListings to refresh archives after every post change, and
+// directly from the user-edit modal in /users so a profile update
+// reflects on the archive header in one click.
+export async function publishAuthorArchive(
+  authorId: string,
+  ctx: PublishContext,
+  log: PublishLogger,
+): Promise<void> {
+  const user = ctx.users.find((u) => u.id === authorId);
+  if (!user) return;
+  const path = buildAuthorUrl(user, ctx.users);
+  const html = await renderAuthor(authorId, ctx);
+  if (!html) return;
+  await uploadIfChanged(path, html, undefined, log);
 }
 
 async function renderNotFound(ctx: PublishContext): Promise<string> {
@@ -225,6 +349,7 @@ export async function buildPublishContext(args: {
   pages: Post[];
   terms: Term[];
   settings: SiteSettings;
+  users: UserRecord[];
   authorLookup: (id: string) => AuthorView | undefined;
 }): Promise<PublishContext> {
   // Media library can be large; we fetch it once via getDocs rather than
@@ -324,7 +449,13 @@ export async function publishPost(
 
   log({ level: "info", message: "Regenerating listings…" });
   await regenerateListings(ctx, log);
+  // Refresh the author's archive so it lists this post (or doesn't,
+  // when it just transitioned in/out of online). Other authors are
+  // unaffected — only re-render the one we touched.
+  if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
   await republishMenu(ctx, log);
+  await republishPostsJson(ctx, log);
+  await republishAuthorsJson(ctx, log);
 
   log({ level: "success", message: `Published to /${newPath}` });
   await doAction("publish.after", post, ctx);
@@ -356,7 +487,10 @@ export async function unpublishPost(
     lastPublishedHash: undefined,
   });
   await regenerateListings(ctx, log);
+  if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
   await republishMenu(ctx, log);
+  await republishPostsJson(ctx, log);
+  await republishAuthorsJson(ctx, log);
   log({ level: "success", message: "Unpublished." });
   await doAction("post.unpublished", post, ctx);
 }
@@ -384,6 +518,32 @@ async function republishMenu(ctx: PublishContext, log: PublishLogger): Promise<v
     await publishMenuJson(ctx.settings, ctx.posts, ctx.pages, ctx.terms);
   } catch (err) {
     log({ level: "warn", message: `Menu JSON republish failed: ${(err as Error).message}` });
+  }
+}
+
+// Re-publish /posts.json — the snapshot consumed by the theme's runtime
+// posts loader to fill sidebar widgets (related posts today, latest /
+// recommended later). Same lifecycle as republishMenu: tail step on
+// every publish/unpublish/delete + regenerateAll, best-effort.
+async function republishPostsJson(ctx: PublishContext, log: PublishLogger): Promise<void> {
+  try {
+    await publishPostsJson(ctx.settings, ctx.posts, ctx.pages, ctx.terms, ctx.media);
+  } catch (err) {
+    log({ level: "warn", message: `Posts JSON republish failed: ${(err as Error).message}` });
+  }
+}
+
+// Re-publish /authors.json — the snapshot consumed by the theme's
+// posts-loader to fill the AuthorBio sidebar block on single posts.
+// Lets bio / avatar / name updates reflect on the public site without
+// having to re-render every post HTML the author ever wrote. Also
+// invoked directly from the user-edit modal in /users on profile save.
+// Best-effort: failure is logged + already-toasted by flexwegApi.
+async function republishAuthorsJson(ctx: PublishContext, log: PublishLogger): Promise<void> {
+  try {
+    await publishAuthorsJson(ctx.users, ctx.media, ctx.posts, ctx.pages);
+  } catch (err) {
+    log({ level: "warn", message: `Authors JSON republish failed: ${(err as Error).message}` });
   }
 }
 
@@ -418,9 +578,20 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
 
   await regenerateListings(ctx, log);
 
+  // Author archives — one per user referenced as authorId on at least
+  // one online post. Same throttle as the post pass to spare the API.
+  const authorIds = new Set<string>();
+  for (const p of onlinePosts) if (p.authorId) authorIds.add(p.authorId);
+  for (const id of authorIds) {
+    await publishAuthorArchive(id, ctx, log);
+    await new Promise((r) => setTimeout(r, 75));
+  }
+
   const notFoundHtml = await renderNotFound(ctx);
   await uploadIfChanged(NOT_FOUND_PATH, notFoundHtml, undefined, log);
   await republishMenu(ctx, log);
+  await republishPostsJson(ctx, log);
+  await republishAuthorsJson(ctx, log);
 
   log({ level: "success", message: "Regeneration complete." });
 }
@@ -448,7 +619,10 @@ export async function deletePostAndUnpublish(
   if (post.status === "online") {
     log({ level: "info", message: "Regenerating listings…" });
     await regenerateListings(ctx, log);
+    if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
     await republishMenu(ctx, log);
+    await republishPostsJson(ctx, log);
+    await republishAuthorsJson(ctx, log);
   }
   await doAction("post.deleted", post, ctx);
 }

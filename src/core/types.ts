@@ -15,7 +15,20 @@ export interface UserPreferences {
 export interface UserRecord {
   id: string;
   email: string;
+  // Legacy free-form display name. Kept for back-compat with records
+  // created before firstName/lastName landed; new profiles set the
+  // split fields and derive the display name from them.
   displayName?: string;
+  // Author profile fields — surfaced on public-site templates
+  // (AuthorBio sidebar, single-post author strip, author archive page).
+  // All optional: a fresh user can publish posts before filling them in.
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  // Reference to a media entry used as the author's profile picture.
+  // Resolved through the same media pipeline as post hero images
+  // (multi-variant, falls back gracefully through pickFormat).
+  avatarMediaId?: string;
   role: UserRole;
   disabled: boolean;
   preferences?: UserPreferences;

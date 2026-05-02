@@ -94,6 +94,11 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Profile section is intentionally minimal — name / bio / avatar
+          live on /users (per-row Edit modal), where admins can manage
+          any user and non-admins manage their own. The admin language
+          stays here because it's a per-user *UI* preference, not a
+          public profile field. */}
       <section className="card p-4 space-y-3">
         <h2 className="font-semibold">{t("settings.profile.title")}</h2>
         <div>

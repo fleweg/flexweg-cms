@@ -5,13 +5,19 @@ import type { ResolvedMenuItem } from "../core/menuResolver";
 // Re-export so theme components can keep importing from "../types".
 export type { ResolvedMenuItem };
 
-// Author metadata exposed to themes. Keep this minimal — theme code runs
-// at publish time inside the admin browser, but the rendered HTML is then
-// served statically, so we shouldn't reach back into Firestore from here.
+// Author metadata exposed to themes. Resolved by the publisher at
+// publish time — theme components never reach back into Firestore.
+// `displayName` is the canonical label used in templates; the
+// publisher's authorLookup derives it from firstName + lastName when
+// available, falling back to the legacy displayName field, then email.
+// Avatar (when present) is a fully resolved MediaView so templates can
+// `pickFormat(avatar, "small")` like they do for hero images.
 export interface AuthorView {
   id: string;
   displayName: string;
   email?: string;
+  bio?: string;
+  avatar?: MediaView;
 }
 
 // Resolved media reference for theme consumption. The publisher resolves
@@ -55,6 +61,17 @@ export interface BaseLayoutProps {
   children: ReactNode;
 }
 
+// Post enriched with everything theme cards need to render without doing
+// any lookups themselves: resolved hero media, computed public URL,
+// optional category info (name + URL of the archive), and a pre-formatted
+// date label (locale-aware via settings.language).
+export type CardPost = Post & {
+  url: string;
+  hero?: MediaView;
+  category?: { name: string; url: string };
+  dateLabel?: string;
+};
+
 export interface SingleTemplateProps {
   post: Post;
   // Post body already rendered to safe HTML by core/markdown.ts.
@@ -67,18 +84,22 @@ export interface SingleTemplateProps {
 
 export interface HomeTemplateProps {
   // List of posts to display on the home page (already paginated).
-  posts: Array<Post & { url: string; hero?: MediaView }>;
+  posts: CardPost[];
   staticPage?: { post: Post; bodyHtml: string };
 }
 
 export interface CategoryTemplateProps {
   term: Term;
-  posts: Array<Post & { url: string; hero?: MediaView }>;
+  posts: CardPost[];
+  // Absolute URL of the per-category RSS feed, when one is enabled in the
+  // flexweg-rss plugin config. Lets the template render a "Follow"
+  // button. Undefined when no feed exists for this category.
+  categoryRssUrl?: string;
 }
 
 export interface AuthorTemplateProps {
   author: AuthorView;
-  posts: Array<Post & { url: string; hero?: MediaView }>;
+  posts: CardPost[];
 }
 
 export interface NotFoundTemplateProps {
@@ -111,6 +132,13 @@ export interface ThemeManifest {
   // can supply its own runtime behavior here. Uploaded as
   // `theme-assets/<id>-menu.js` and referenced by BaseLayout's <script>.
   jsText?: string;
+  // Second optional companion JS, used by the default theme's
+  // `posts-loader.js` to fetch /posts.json and populate sidebar widgets
+  // ([data-cms-related] today, more later). Same lifecycle as jsText —
+  // uploaded as `theme-assets/<id>-posts.js`. Themes that have no
+  // dynamic posts widget leave it undefined and get one fewer script
+  // tag in their HTML output.
+  jsTextPosts?: string;
   templates: {
     base: ComponentType<BaseLayoutProps>;
     home: ComponentType<HomeTemplateProps & { site: SiteContext }>;

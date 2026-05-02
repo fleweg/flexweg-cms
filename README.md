@@ -160,8 +160,11 @@ service cloud.firestore {
           && request.auth.uid == uid
           && !isDisabled()
           && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(["preferences"])
-          && request.resource.data.preferences.adminLocale in ["en", "fr"]
+              .hasOnly(["preferences", "firstName", "lastName", "bio", "avatarMediaId"])
+          && (
+            !("preferences" in request.resource.data.diff(resource.data).affectedKeys())
+            || request.resource.data.preferences.adminLocale in ["en", "fr"]
+          )
         );
 
       allow delete: if isAdmin();
@@ -207,7 +210,7 @@ service cloud.firestore {
 
 - **Bootstrap admin**: a user whose email matches `bootstrapAdminEmail()` is treated as admin even without a `users/{uid}` document. This solves the chicken-and-egg problem of the first login (no record exists yet to grant the admin role).
 - **Self-create on first login**: any signed-in user can create their own `users/{uid}` document, but only with `role: "editor"` and `disabled: false` — this prevents privilege escalation. The admin promotes editors via the Users page afterwards.
-- **Self update is restricted to language preference**: a regular user can change `preferences.adminLocale` (used by the in-admin language switcher) but cannot touch their own role or disabled flag. Admins can update any field.
+- **Self update is restricted to profile fields**: a regular user can change their own `preferences` (admin language), `firstName`, `lastName`, `bio`, and `avatarMediaId` — the editable surface of the **Settings → Profile** form. They cannot touch their own role or disabled flag. Admins can update any field on any record.
 - **`config/flexweg` requires admin to write**: editors can read the API key (the publisher needs it), but only admins can rotate it.
 - **Each rule call performs one extra read** via `selfRecord()`. Acceptable for an internal tool; if you need to optimize later, switch to [Firebase Auth custom claims](https://firebase.google.com/docs/auth/admin/custom-claims) (requires an admin SDK backend to set them).
 

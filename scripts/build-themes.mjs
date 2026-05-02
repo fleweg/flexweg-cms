@@ -44,13 +44,13 @@ async function findScssEntry(themeDir) {
   }
 }
 
-async function findMenuLoader(themeDir) {
-  // Convention: themes that ship a runtime menu loader put it next to the
-  // manifest at ./menu-loader.js. We don't enforce a particular variable
-  // name here — we just copy the file verbatim if it exists.
+async function findScript(themeDir, name) {
+  // Themes ship optional runtime scripts next to the manifest. We copy
+  // each file verbatim when present and don't enforce variable names —
+  // each loader manages its own contract with the markup it populates.
   try {
-    await stat(join(themeDir, "menu-loader.js"));
-    return "menu-loader.js";
+    await stat(join(themeDir, name));
+    return name;
   } catch {
     return null;
   }
@@ -78,14 +78,20 @@ async function main() {
     await writeFile(outputPath, result.css, "utf8");
     console.log(`[themes] ${id}.css written (${result.css.length} bytes)`);
 
-    // Optional companion JS — copied verbatim. Naming pattern matches what
-    // `BaseLayout.tsx` and `ThemesPage.handleSyncAssets` expect.
-    const jsEntry = await findMenuLoader(themeDir);
-    if (jsEntry) {
-      const jsRaw = await readFile(join(themeDir, jsEntry), "utf8");
-      const jsOut = join(outDir, `${id}-menu.js`);
-      await writeFile(jsOut, jsRaw, "utf8");
-      console.log(`[themes] ${id}-menu.js written (${jsRaw.length} bytes)`);
+    // Optional companion JS files — copied verbatim. Naming pattern
+    // matches what `BaseLayout.tsx` and `ThemesPage.handleSyncAssets`
+    // expect: theme-assets/<id>-{menu,posts}.js.
+    const runtimeScripts = [
+      { source: "menu-loader.js", suffix: "menu" },
+      { source: "posts-loader.js", suffix: "posts" },
+    ];
+    for (const { source, suffix } of runtimeScripts) {
+      const found = await findScript(themeDir, source);
+      if (!found) continue;
+      const raw = await readFile(join(themeDir, found), "utf8");
+      const out = join(outDir, `${id}-${suffix}.js`);
+      await writeFile(out, raw, "utf8");
+      console.log(`[themes] ${id}-${suffix}.js written (${raw.length} bytes)`);
     }
   }
 }

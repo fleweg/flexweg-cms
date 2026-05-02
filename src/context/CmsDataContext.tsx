@@ -10,8 +10,9 @@ import { subscribeToPosts } from "../services/posts";
 import { subscribeToTerms } from "../services/taxonomies";
 import { subscribeToMedia } from "../services/media";
 import { subscribeToSettings, DEFAULT_SITE_SETTINGS } from "../services/settings";
+import { subscribeToUsers } from "../services/users";
 import { applyPluginRegistration } from "../plugins";
-import type { Media, Post, SiteSettings, Term } from "../core/types";
+import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 
 interface CmsDataValue {
   posts: Post[];
@@ -20,6 +21,11 @@ interface CmsDataValue {
   categories: Term[];
   tags: Term[];
   media: Media[];
+  // All known user records. Used by publish callers to build an
+  // authorLookup that resolves any post's authorId — not just the
+  // currently-authenticated user — so AuthorBio renders for every
+  // post regardless of who clicks Publish.
+  users: UserRecord[];
   settings: SiteSettings;
   loading: boolean;
   error: Error | null;
@@ -34,12 +40,14 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
   const [pages, setPages] = useState<Post[]>([]);
   const [terms, setTerms] = useState<Term[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
+  const [users, setUsers] = useState<UserRecord[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [loadingFlags, setLoadingFlags] = useState({
     posts: true,
     pages: true,
     terms: true,
     media: true,
+    users: true,
     settings: true,
   });
   const [error, setError] = useState<Error | null>(null);
@@ -85,6 +93,13 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
         },
         reportError,
       ),
+      subscribeToUsers(
+        (items) => {
+          setUsers(items);
+          setLoadingFlags((s) => ({ ...s, users: false }));
+        },
+        reportError,
+      ),
       subscribeToSettings(
         (s) => {
           setSettings(s);
@@ -108,11 +123,12 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
       categories: terms.filter((t) => t.type === "category"),
       tags: terms.filter((t) => t.type === "tag"),
       media,
+      users,
       settings,
       loading: Object.values(loadingFlags).some(Boolean),
       error,
     };
-  }, [posts, pages, terms, media, settings, loadingFlags, error]);
+  }, [posts, pages, terms, media, users, settings, loadingFlags, error]);
 
   return <CmsDataContext.Provider value={value}>{children}</CmsDataContext.Provider>;
 }

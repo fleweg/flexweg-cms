@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteField,
   doc,
   getDoc,
   onSnapshot,
@@ -12,7 +13,9 @@ import {
 } from "firebase/firestore";
 import type { User as FirebaseUser } from "firebase/auth";
 import { collections, getDb } from "./firebase";
-import type { AdminLocale, UserPreferences, UserRecord, UserRole } from "../core/types";
+import type { AdminLocale, Media, UserPreferences, UserRecord, UserRole } from "../core/types";
+import { mediaToView } from "../core/media";
+import type { AuthorView } from "../themes/types";
 
 export const USER_ROLES: { admin: UserRole; editor: UserRole } = {
   admin: "admin",
@@ -82,6 +85,73 @@ export async function setUserPreferences(uid: string, prefs: Partial<UserPrefere
   return updateDoc(userDoc(uid), update);
 }
 
+// Persists the editable author profile fields. Empty strings are
+// translated to deleteField() so clearing a value via the UI removes
+// the Firestore entry instead of leaving an empty placeholder around.
+// Called from Settings → Profile by the user editing their own record.
+export interface UserProfilePatch {
+  firstName?: string | null;
+  lastName?: string | null;
+  bio?: string | null;
+  avatarMediaId?: string | null;
+}
+
+export async function setUserProfile(uid: string, patch: UserProfilePatch): Promise<void> {
+  const update: Record<string, unknown> = {};
+  for (const key of ["firstName", "lastName", "bio", "avatarMediaId"] as const) {
+    if (!(key in patch)) continue;
+    const value = patch[key];
+    if (value === null || value === undefined || value === "") {
+      update[key] = deleteField();
+    } else {
+      update[key] = value;
+    }
+  }
+  if (Object.keys(update).length === 0) return;
+  return updateDoc(userDoc(uid), update);
+}
+
+// Best-effort display name for templates / admin lists. Order:
+//   1. firstName + lastName (when at least one is set)
+//   2. legacy displayName field
+//   3. email
+//   4. literal id (last resort, never blank)
+export function resolveDisplayName(record: Pick<UserRecord, "firstName" | "lastName" | "displayName" | "email" | "id">): string {
+  const full = [record.firstName, record.lastName].filter(Boolean).join(" ").trim();
+  if (full) return full;
+  if (record.displayName && record.displayName.trim()) return record.displayName.trim();
+  if (record.email) return record.email;
+  return record.id;
+}
+
 export async function deleteUserRecord(uid: string): Promise<void> {
   return deleteDoc(userDoc(uid));
+}
+
+// Builds an `authorLookup` resolver suitable for `buildPublishContext`.
+// Hits the in-memory users array (subscribed via CmsDataContext) so it
+// works for posts authored by any admin — not just the currently
+// authenticated user. Resolves the author's avatar through the same
+// media catalog the publisher already has in hand, so theme components
+// can `pickFormat(avatar, "small")` like they do for hero images.
+export function buildAuthorLookup(
+  users: UserRecord[],
+  media: Media[] | Map<string, Media>,
+): (id: string) => AuthorView | undefined {
+  const userMap = new Map(users.map((u) => [u.id, u]));
+  const mediaMap = media instanceof Map ? media : new Map(media.map((m) => [m.id, m]));
+  return (id: string) => {
+    const record = userMap.get(id);
+    if (!record) return undefined;
+    const avatar = record.avatarMediaId
+      ? mediaToView(mediaMap.get(record.avatarMediaId))
+      : undefined;
+    return {
+      id: record.id,
+      displayName: resolveDisplayName(record),
+      email: record.email,
+      bio: record.bio,
+      avatar,
+    };
+  };
 }

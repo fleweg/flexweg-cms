@@ -205,7 +205,18 @@
     "profile": {
       "title": "Profile",
       "adminLocale": "Admin language",
-      "adminLocaleHelp": "Language used by the admin interface. Saved to your profile."
+      "adminLocaleHelp": "Language used by the admin interface. Saved to your profile.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "bio": "Bio",
+      "bioPlaceholder": "A short paragraph shown on your author page and below your articles.",
+      "bioHelp": "Visible on the public site in the author bio sidebar and the author archive page.",
+      "avatar": "Profile picture",
+      "avatarHelp": "Pick an image from your media library. Square images render best.",
+      "pickAvatar": "Pick from media",
+      "changeAvatar": "Change picture",
+      "removeAvatar": "Remove",
+      "save": "Save profile"
     }
   },
   "users": {
@@ -213,7 +224,10 @@
     "noUsers": "No users yet.",
     "role": "Role",
     "disabled": "Disabled",
+    "editProfileTitle": "Edit profile — {{email}}",
+    "profileSaved": "Profile saved.",
     "actions": {
+      "editProfile": "Edit profile",
       "promote": "Promote to admin",
       "demote": "Demote to editor",
       "disable": "Disable",

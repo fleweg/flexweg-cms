@@ -49,6 +49,38 @@ export function buildPostUrl({ post, primaryTerm }: BuildPostUrlInput): string {
   return `${postSlug}.html`;
 }
 
+// Author archives live at /author/<slug>.html. Slug is derived from the
+// user's profile name (firstName + lastName, falling back to legacy
+// displayName, then the email's local part, then the user's id). When
+// two users would land on the same slug we suffix the second one with
+// a 6-character prefix of their uid to keep URLs collision-free.
+export interface AuthorUrlUser {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  email: string;
+}
+
+function authorBaseSlug(user: AuthorUrlUser): string {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  const candidate =
+    fullName ||
+    user.displayName?.trim() ||
+    user.email?.split("@")[0] ||
+    user.id;
+  return slugify(candidate) || user.id.slice(0, 8);
+}
+
+export function buildAuthorUrl(user: AuthorUrlUser, others: AuthorUrlUser[]): string {
+  const base = authorBaseSlug(user);
+  // Detect collision against other users' base slugs. Stable suffix
+  // (uid prefix) so the URL doesn't drift across publishes.
+  const collision = others.some((u) => u.id !== user.id && authorBaseSlug(u) === base);
+  const slug = collision ? `${base}-${user.id.slice(0, 6)}` : base;
+  return `author/${slug}.html`;
+}
+
 // Term archives are folder index files: /<term-slug>/index.html.
 // Only categories produce an archive in the MVP — tag pages can be added
 // later via a plugin without changing this function.

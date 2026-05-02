@@ -8,10 +8,11 @@ import { listThemes } from "../themes";
 import { updateSettings } from "../services/settings";
 import { uploadFile } from "../services/flexwegApi";
 import { buildPublishContext, regenerateAll, type PublishLogEntry } from "../services/publisher";
+import { buildAuthorLookup } from "../services/users";
 
 export function ThemesPage() {
   const { t } = useTranslation();
-  const { settings, posts, pages, terms } = useCmsData();
+  const { settings, posts, pages, terms, users, media } = useCmsData();
   const [busy, setBusy] = useState(false);
   const [logEntries, setLogEntries] = useState<PublishLogEntry[]>([]);
   const themes = listThemes();
@@ -39,12 +40,21 @@ export function ThemesPage() {
           log({ level: "info", message: `Uploading ${cssPath}…` });
           await uploadFile({ path: cssPath, content: theme.cssText });
         }
-        // Optional companion JS — themes that opted in get their loader
-        // pushed alongside the CSS at the same /theme-assets/ root.
+        // Optional companion JS files — themes that opted in get their
+        // loaders pushed alongside the CSS at the same /theme-assets/
+        // root. We support two slots: -menu.js (header / burger) and
+        // -posts.js (sidebar widgets fed by /posts.json). Themes that
+        // don't ship one or both simply leave the corresponding
+        // manifest field undefined.
         if (theme.jsText) {
           const jsPath = `theme-assets/${theme.id}-menu.js`;
           log({ level: "info", message: `Uploading ${jsPath}…` });
           await uploadFile({ path: jsPath, content: theme.jsText });
+        }
+        if (theme.jsTextPosts) {
+          const jsPath = `theme-assets/${theme.id}-posts.js`;
+          log({ level: "info", message: `Uploading ${jsPath}…` });
+          await uploadFile({ path: jsPath, content: theme.jsTextPosts });
         }
       }
       log({ level: "success", message: "Theme assets synced." });
@@ -65,7 +75,8 @@ export function ThemesPage() {
         pages,
         terms,
         settings,
-        authorLookup: () => undefined,
+        users,
+        authorLookup: buildAuthorLookup(users, media),
       });
       await regenerateAll(ctx, log);
     } catch (err) {

@@ -26,6 +26,7 @@ import {
   publishPost,
   type PublishLogEntry,
 } from "../services/publisher";
+import { buildAuthorLookup } from "../services/users";
 import { toast } from "../lib/toast";
 import type { Media, Post, SeoMeta } from "../core/types";
 
@@ -42,7 +43,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { posts, pages, categories, tags, media, settings } = useCmsData();
+  const { posts, pages, categories, tags, media, settings, users } = useCmsData();
   const isNew = !id;
   const list = type === "post" ? posts : pages;
   const existing = useMemo(() => list.find((p) => p.id === id), [list, id]);
@@ -229,7 +230,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
           pages: pages.map((p) => (p.id === existing.id ? patchedExisting : p)),
           terms: [...categories, ...tags],
           settings,
-          authorLookup: () => undefined,
+          users,
+          authorLookup: buildAuthorLookup(users, media),
         });
         setShowLog(true);
         setLogEntries([]);
@@ -257,7 +259,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
         pages,
         terms: [...categories, ...tags],
         settings,
-        authorLookup: () => undefined,
+        users,
+        authorLookup: buildAuthorLookup(users, media),
       });
       await deletePostAndUnpublish(existing.id, ctx, log);
       await deletePost(existing.id);

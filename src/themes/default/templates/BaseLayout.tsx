@@ -16,12 +16,15 @@ export function BaseLayout({
   children,
 }: BaseLayoutProps) {
   const cssHref = `/${site.themeCssPath}`;
-  // Sibling JS file shipped by the theme. Same naming convention as the
-  // CSS: theme-assets/<theme-id>-menu.js. Loaded with `defer` so it runs
-  // after the document parsed but before DOMContentLoaded — the loader
-  // listens for that event itself if it happens to land later.
+  // Sibling JS files shipped by the theme. Same naming convention as
+  // the CSS: theme-assets/<theme-id>-menu.js (header / burger menu) and
+  // theme-assets/<theme-id>-posts.js (sidebar widgets fed by
+  // /posts.json). Both loaded with `defer` so they run after the
+  // document parses but before DOMContentLoaded — each loader listens
+  // for that event itself if it happens to land later.
   const themeId = site.themeCssPath.replace(/^theme-assets\//, "").replace(/\.css$/, "");
   const jsHref = `/theme-assets/${themeId}-menu.js`;
+  const jsHrefPosts = `/theme-assets/${themeId}-posts.js`;
   const canonical =
     site.settings.baseUrl && currentPath
       ? `${site.settings.baseUrl.replace(/\/+$/, "")}/${currentPath.replace(/^\/+/, "")}`
@@ -38,6 +41,15 @@ export function BaseLayout({
         <title>{fullTitle}</title>
         {pageDescription && <meta name="description" content={pageDescription} />}
         {canonical && <link rel="canonical" href={canonical} />}
+        {/* Newsreader (serif headings + lede) and Inter (sans body / labels)
+            are the two display faces of the theme. Loaded from Google Fonts
+            with preconnect to keep the request chain short. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap"
+        />
         <link rel="stylesheet" href={cssHref} />
         <meta property="og:title" content={fullTitle} />
         {pageDescription && <meta property="og:description" content={pageDescription} />}
@@ -52,6 +64,7 @@ export function BaseLayout({
         <main className="site-main">{children}</main>
         <Footer site={site} />
         <script src={jsHref} defer />
+        <script src={jsHrefPosts} defer />
       </body>
     </html>
   );
