@@ -4,10 +4,10 @@ import type { Media, Post, UserRecord } from "../core/types";
 import { uploadFile } from "./flexwegApi";
 import { resolveDisplayName } from "./users";
 
-// Path on Flexweg of the public-side authors snapshot. Same site-root
-// strategy as `menu.json` and `posts.json` so absolute fetches work
-// from any folder depth.
-export const AUTHORS_JSON_PATH = "authors.json";
+// Path on Flexweg of the public-side authors snapshot. Grouped under
+// `data/` alongside menu.json + posts.json so the public-site root
+// stays uncluttered. Absolute fetches still work from any folder depth.
+export const AUTHORS_JSON_PATH = "data/authors.json";
 
 // One row in authors.json. Pre-resolved (display name computed,
 // avatar variant URL picked) so the public-side loader never needs a

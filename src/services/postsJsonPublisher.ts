@@ -4,9 +4,10 @@ import { markdownToPlainText } from "../core/markdown";
 import type { Media, Post, SiteSettings, Term } from "../core/types";
 import { uploadFile } from "./flexwegApi";
 
-// Path on Flexweg of the public-side posts feed. Same site-root strategy
-// as `menu.json` so absolute fetches work from any folder depth.
-export const POSTS_JSON_PATH = "posts.json";
+// Path on Flexweg of the public-side posts feed. Grouped under `data/`
+// alongside menu.json + authors.json so the public-site root stays
+// uncluttered. Absolute fetches still work from any folder depth.
+export const POSTS_JSON_PATH = "data/posts.json";
 
 // How many most-recent online posts/pages get included in the snapshot.
 // Larger sites lose access to older content from sidebar widgets. 100 is

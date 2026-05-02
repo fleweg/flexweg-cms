@@ -3,10 +3,12 @@ import { resolveMenuItems, type ResolvedMenuItem } from "../core/menuResolver";
 import type { Post, SiteSettings, Term } from "../core/types";
 import { uploadFile } from "./flexwegApi";
 
-// Path on Flexweg where the dynamic menu blob lives. Always at the public
-// site root because every page (regardless of folder depth) fetches it
-// with an absolute path.
-export const MENU_JSON_PATH = "menu.json";
+// Path on Flexweg where the dynamic menu blob lives. Grouped under
+// `data/` alongside the other content snapshots (posts.json,
+// authors.json) so the public-site root stays uncluttered. Loaders
+// fetch absolute URLs (`/data/menu.json`), so folder depth has no
+// effect on resolution.
+export const MENU_JSON_PATH = "data/menu.json";
 
 export interface MenuJson {
   header: ResolvedMenuItem[];

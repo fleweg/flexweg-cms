@@ -4,11 +4,11 @@
  * Contract:
  *   - Templates declare empty (or fallback-rendered) containers via
  *     `data-cms-*` attributes.
- *   - This script fetches `/posts.json` AND `/authors.json` once on
- *     DOMContentLoaded and populates each container with the right
- *     slice of data — so editing a post sibling list, an author bio,
- *     or an author avatar takes effect on every existing post HTML
- *     without re-publishing.
+ *   - This script fetches `/data/posts.json` AND `/data/authors.json`
+ *     once on DOMContentLoaded and populates each container with the
+ *     right slice of data — so editing a post sibling list, an author
+ *     bio, or an author avatar takes effect on every existing post
+ *     HTML without re-publishing.
  *   - Failure is silent: if a fetch fails (404 because no publish has
  *     happened yet, or transient network), the container either stays
  *     hidden (related) or keeps its publish-time fallback content
@@ -248,7 +248,10 @@
   ready(function () {
     // Parallel fetches — both files live at the same site root and
     // are independent. Each paint pass tolerates the other's failure.
-    Promise.all([fetchJson("/posts.json"), fetchJson("/authors.json")]).then(
+    Promise.all([
+      fetchJson("/data/posts.json"),
+      fetchJson("/data/authors.json"),
+    ]).then(
       function (results) {
         paintRelated(results[0]);
         paintAuthorBios(results[1]);
