@@ -63,6 +63,13 @@ export function BaseLayout({
         <Footer site={site} />
         <script src={jsHref} defer />
         <script src={jsHrefPosts} defer />
+        {/* Sentinel consumed by renderPageToHtml — do not remove.
+            Plugins can register a `page.body.end` filter and have
+            their HTML injected here right before </body>. The
+            `<script>` element is valid in body, takes no rendering
+            space, and survives serialization with a stable shape
+            we can string-match against. */}
+        <script type="application/x-cms-body-end" />
       </body>
     </html>
   );

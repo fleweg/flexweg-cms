@@ -12,7 +12,12 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   language: "en",
   baseUrl: "",
   activeThemeId: "default",
-  enabledPlugins: { "core-seo": true, "flexweg-sitemaps": true, "flexweg-rss": true },
+  enabledPlugins: {
+    "core-seo": true,
+    "flexweg-sitemaps": true,
+    "flexweg-rss": true,
+    "flexweg-favicon": true,
+  },
   homeMode: "latest-posts",
   postsPerPage: 10,
   menus: { header: [], footer: [] },

@@ -49,7 +49,8 @@ flexweg-cms/
 │   ├── plugins/         WordPress-style plugins, registered via filters/actions
 │   │   ├── core-seo/         Built-in SEO plugin (Twitter cards + generator hint)
 │   │   ├── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
-│   │   └── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
+│   │   ├── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
+│   │   └── flexweg-favicon/  Built-in plugin: favicon generator (PNG, ICO, SVG, PWA manifest)
 │   ├── i18n/            Admin UI translations (en + fr)
 │   └── lib/             Small utilities (date format, hashing, classnames)
 ├── scripts/
@@ -534,6 +535,7 @@ Then add it to `PLUGINS` in `src/plugins/index.ts`.
 | `post.html.body` | filter | `(html, post)` — modify rendered post HTML. |
 | `post.template.props` | filter | `(props, post)` — modify the props passed to the active template. |
 | `page.head.extra` | filter (sync) | `(html, baseProps)` — inject extra `<head>` markup. |
+| `page.body.end` | filter (sync) | `(html, baseProps)` — inject extra markup right before `</body>`. Use for tracking scripts, deferred widgets, etc. |
 | `menu.json.resolved` | filter | `(menu, ctx)` — mutate the resolved `{ header, footer }` shape just before `/menu.json` is uploaded. `ctx` exposes `settings`, `posts`, `pages`, `terms`. |
 | `publish.before` | action | `(post, ctx)` |
 | `publish.after` | action | `(post, ctx)` |
@@ -656,6 +658,31 @@ Item descriptions use `post.excerpt` when set, otherwise the first ~300 characte
 Cover images: when a post has a `heroMediaId`, the item gets an RSS 2.0 `<enclosure url="..." length="..." type="..."/>` element. Most modern readers (Feedly, Inoreader, NetNewsWire, Reeder) display this as the article thumbnail. Variant selection prefers `large`, falls back to the asset's `defaultFormat`, then any available variant — same chain as the publisher's `og:image`. Legacy single-URL media is supported transparently. `length` is the variant's stored byte count (`0` when unknown, which readers tolerate); `type` is the asset's `contentType` or guessed from the URL extension.
 
 Footer items injected by this plugin appear at the **end** of the resolved footer in `/menu.json`. Labels are auto-generated: `RSS` for the site feed, `RSS — <category name>` for per-category feeds. To control placement or labels manually, leave the addToFooter checkboxes off and add custom items via **Menus** with the feed URL as an external link.
+
+### `flexweg-favicon`
+
+Generates the full set of favicon files plus a Progressive Web App manifest from a single uploaded image. Configure under **Settings → Favicons** (tab visible only when the plugin is enabled).
+
+Files produced under `/favicon/` on the public site:
+
+- `favicon-96x96.png` — modern browser favicon (96×96)
+- `apple-touch-icon.png` — iOS home-screen icon (180×180, white background to avoid Safari masking transparency)
+- `web-app-manifest-192x192.png` and `web-app-manifest-512x512.png` — PWA install icons (purpose: maskable)
+- `favicon.ico` — multi-size legacy icon (16/32/48 PNG payloads packed via a pure-JS encoder under `src/plugins/flexweg-favicon/icoEncoder.ts`)
+- `favicon.svg` — vector variant. Only generated when the source upload is itself an SVG (passthrough); skipped silently for raster sources since rasterizing a PNG into SVG produces fake-vector output.
+- `site.webmanifest` — PWA manifest JSON
+
+Generation happens entirely in the admin browser via `createImageBitmap` + canvas resize (cover-crop to square). Source image accepts PNG, JPG, WebP and SVG.
+
+Configuration options:
+
+- **Upload + replace** — file picker with live preview of the largest generated PNG.
+- **Status grid** — checklist showing which favicon files are currently published.
+- **PWA manifest** — `name` (default `settings.title`), `short_name` (default first 12 chars), `theme_color`, `background_color`, `display` mode (`standalone` / `browser` / `fullscreen` / `minimal-ui`).
+- **Save & regenerate manifest** — pushes only `site.webmanifest` (no need to re-process the source image when only colors / names change).
+- **Remove all** — wipes every file under `/favicon/`.
+
+Head injection happens automatically via the `page.head.extra` filter — every published page receives the appropriate `<link rel="icon">` / `<link rel="apple-touch-icon">` / `<link rel="manifest">` tags plus a `<meta name="theme-color">` when PWA is configured. Tags only emit for files actually present on the site (the per-format flags in the plugin config drive this), so partial setups don't produce broken links. Cache-busting via `?v=<uploadedAt>` ensures browsers pick up replacements without manual refresh.
 
 ## Tests
 
