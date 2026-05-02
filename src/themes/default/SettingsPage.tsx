@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   ImageIcon,
   Loader2,
@@ -15,12 +15,15 @@ import { publishMenuJson } from "../../services/menuPublisher";
 import type { ThemeSettingsPageProps } from "../types";
 import { manifest } from "./manifest";
 import { logoPath, removeThemeLogo, uploadThemeLogo } from "./logo";
+import { FontSelect, type FontOption } from "./FontSelect";
 import {
   applyAndUploadCustomCss,
+  buildAllFontsPreviewUrl,
   DEFAULT_FONT_SANS,
   DEFAULT_FONT_SERIF,
   DEFAULT_STYLE,
   FONT_PRESETS,
+  FONT_WEIGHT_STEPS,
   THEME_VAR_GROUPS,
   THEME_VAR_SPECS,
   type StyleOverrides,
@@ -264,6 +267,21 @@ function StyleTab({
   const [busy, setBusy] = useState(false);
   const [resetting, setResetting] = useState(false);
 
+  // Lazy-load every curated Google Fonts at weight 400 so the FontSelect
+  // dropdowns can render each option in its own face. Cleanup removes
+  // the <link> when the user leaves the Style tab — keeps the admin's
+  // baseline font load light when not actively customizing.
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = buildAllFontsPreviewUrl();
+    link.dataset.cmsFontsPreview = "";
+    document.head.appendChild(link);
+    return () => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    };
+  }, []);
+
   function setVar(name: string, value: string) {
     setDraft((d) => ({ ...d, vars: { ...d.vars, [name]: value } }));
   }
@@ -326,17 +344,23 @@ function StyleTab({
         {t("style.help")}
       </p>
 
+      {/* Section order: every `THEME_VAR_GROUPS` group renders in
+          turn, with the Typography (FontGroup) section injected
+          right before `weights` so admins see fonts and their
+          weights together — same typographic concern, paired UX. */}
       {THEME_VAR_GROUPS.map((group) => (
-        <VarGroup
-          key={group}
-          group={group}
-          draft={draft}
-          setVar={setVar}
-          clearVar={clearVar}
-        />
+        <Fragment key={group}>
+          {group === "weights" && (
+            <FontGroup draft={draft} setDraft={setDraft} />
+          )}
+          <VarGroup
+            group={group}
+            draft={draft}
+            setVar={setVar}
+            clearVar={clearVar}
+          />
+        </Fragment>
       ))}
-
-      <FontGroup draft={draft} setDraft={setDraft} />
 
       <div className="flex flex-wrap items-center gap-2 pt-2">
         <button
@@ -431,7 +455,7 @@ function VarField({
           </button>
         )}
       </label>
-      {spec.type === "color" ? (
+      {spec.type === "color" && (
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -447,7 +471,8 @@ function VarField({
             onChange={(e) => onChange(e.target.value)}
           />
         </div>
-      ) : (
+      )}
+      {spec.type === "length" && (
         <input
           type="text"
           className="input font-mono text-xs"
@@ -456,9 +481,43 @@ function VarField({
           onChange={(e) => onChange(e.target.value)}
         />
       )}
+      {spec.type === "weight" && (
+        <select
+          className="input"
+          value={effective}
+          onChange={(e) => {
+            // Treat the default value as "no override" so a user
+            // pulling the weight back to its default clears the
+            // stored override and the regenerator skips the slot.
+            const next = e.target.value;
+            onChange(next === spec.defaultValue ? "" : next);
+          }}
+        >
+          {FONT_WEIGHT_STEPS.map((step) => (
+            <option key={step.value} value={step.value}>
+              {step.value} — {step.name}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }
+
+// Both pickers (serif slot + sans slot) receive the SAME merged list
+// so the admin can mix styles freely — pick a sans for headings, a
+// serif for body, anything goes. Each option carries its own
+// `fallback` (derived from the FONT_PRESETS bucket it belongs to)
+// so the dropdown renders each row against the right generic
+// family while the Google Fonts fetch is in flight.
+const ALL_FONT_OPTIONS: FontOption[] = [
+  ...Object.keys(FONT_PRESETS.serif).map(
+    (name) => ({ name, fallback: "serif" }) as FontOption,
+  ),
+  ...Object.keys(FONT_PRESETS.sans).map(
+    (name) => ({ name, fallback: "sans-serif" }) as FontOption,
+  ),
+];
 
 function FontGroup({
   draft,
@@ -468,8 +527,6 @@ function FontGroup({
   setDraft: (next: StyleOverrides) => void;
 }) {
   const { t } = useTranslation("theme-default");
-  const serifNames = Object.keys(FONT_PRESETS.serif);
-  const sansNames = Object.keys(FONT_PRESETS.sans);
   return (
     <section className="card p-4 space-y-3">
       <h3 className="font-semibold flex items-center gap-2">
@@ -479,39 +536,25 @@ function FontGroup({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="label">{t("fonts.serif")}</label>
-          <select
-            className="input"
+          <FontSelect
             value={draft.fontSerif}
-            onChange={(e) =>
-              setDraft({ ...draft, fontSerif: e.target.value || DEFAULT_FONT_SERIF })
+            onChange={(name) =>
+              setDraft({ ...draft, fontSerif: name || DEFAULT_FONT_SERIF })
             }
-          >
-            {serifNames.map((name) => (
-              <option key={name} value={name} style={{ fontFamily: `"${name}", serif` }}>
-                {name}
-              </option>
-            ))}
-          </select>
+            options={ALL_FONT_OPTIONS}
+            ariaLabel={t("fonts.serif")}
+          />
         </div>
         <div>
           <label className="label">{t("fonts.sans")}</label>
-          <select
-            className="input"
+          <FontSelect
             value={draft.fontSans}
-            onChange={(e) =>
-              setDraft({ ...draft, fontSans: e.target.value || DEFAULT_FONT_SANS })
+            onChange={(name) =>
+              setDraft({ ...draft, fontSans: name || DEFAULT_FONT_SANS })
             }
-          >
-            {sansNames.map((name) => (
-              <option
-                key={name}
-                value={name}
-                style={{ fontFamily: `"${name}", sans-serif` }}
-              >
-                {name}
-              </option>
-            ))}
-          </select>
+            options={ALL_FONT_OPTIONS}
+            ariaLabel={t("fonts.sans")}
+          />
         </div>
       </div>
       <p className="text-xs text-surface-500 dark:text-surface-400">{t("fonts.help")}</p>

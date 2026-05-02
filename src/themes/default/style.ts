@@ -16,10 +16,15 @@ import { uploadFile } from "../../services/flexwegApi";
 // One editable variable's metadata. Used both by the form (rendering
 // the right input + label) and by the regenerator (knowing the
 // default value to emit when a slot is empty).
+//
+// Field types:
+//   color  — `<input type="color">` + free-form hex/rgb input
+//   length — free-form text input (any CSS length: px, rem, %)
+//   weight — `<select>` with the 9 numeric font-weight steps 100–900
 export interface ThemeVarSpec {
   // CSS custom property name including the leading `--`.
   name: string;
-  type: "color" | "length";
+  type: "color" | "length" | "weight";
   // Section label key the form groups by.
   group: ThemeVarGroup;
   // i18n key resolved against the theme-default namespace.
@@ -33,8 +38,26 @@ export type ThemeVarGroup =
   | "foreground"
   | "outlines"
   | "accent"
+  | "weights"
   | "spacing"
   | "radius";
+
+// Numeric font-weight steps offered by the weight picker. Maps the
+// CSS value to the typographic name used as a localized hint in the
+// dropdown ("400 — Regular"). Names are static here (English-only)
+// because they're typographic terms admins recognize regardless of
+// locale; the surrounding labels (group title, field label) are i18n.
+export const FONT_WEIGHT_STEPS: { value: string; name: string }[] = [
+  { value: "100", name: "Thin" },
+  { value: "200", name: "Extra Light" },
+  { value: "300", name: "Light" },
+  { value: "400", name: "Regular" },
+  { value: "500", name: "Medium" },
+  { value: "600", name: "Semibold" },
+  { value: "700", name: "Bold" },
+  { value: "800", name: "Extra Bold" },
+  { value: "900", name: "Black" },
+];
 
 // Curated list of editable variables. Mirrors the `:root` block in
 // `theme.scss` — keep the two in sync when changing the design tokens.
@@ -59,6 +82,17 @@ export const THEME_VAR_SPECS: ThemeVarSpec[] = [
   { name: "--color-secondary", type: "color", group: "accent", labelKey: "vars.secondary", defaultValue: "#476558" },
   { name: "--color-secondary-container", type: "color", group: "accent", labelKey: "vars.secondaryContainer", defaultValue: "#c9ead9" },
   { name: "--color-on-secondary-container", type: "color", group: "accent", labelKey: "vars.onSecondaryContainer", defaultValue: "#4d6b5d" },
+  // Font weight tokens, role-based so admins can dial each design
+  // intent independently (e.g. bump display titles to 700 with a
+  // thin body face without making meta labels heavier). Selected
+  // font may not ship every step — the browser then falls back to
+  // the closest available face.
+  { name: "--weight-display", type: "weight", group: "weights", labelKey: "vars.weightDisplay", defaultValue: "600" },
+  { name: "--weight-heading", type: "weight", group: "weights", labelKey: "vars.weightHeading", defaultValue: "500" },
+  { name: "--weight-body", type: "weight", group: "weights", labelKey: "vars.weightBody", defaultValue: "400" },
+  { name: "--weight-meta", type: "weight", group: "weights", labelKey: "vars.weightMeta", defaultValue: "600" },
+  { name: "--weight-emphasis", type: "weight", group: "weights", labelKey: "vars.weightEmphasis", defaultValue: "700" },
+  { name: "--weight-lede", type: "weight", group: "weights", labelKey: "vars.weightLede", defaultValue: "300" },
   // Spacing
   { name: "--container-max", type: "length", group: "spacing", labelKey: "vars.containerMax", defaultValue: "1120px" },
   { name: "--gutter", type: "length", group: "spacing", labelKey: "vars.gutter", defaultValue: "24px" },
@@ -70,6 +104,11 @@ export const THEME_VAR_SPECS: ThemeVarSpec[] = [
   { name: "--radius-xl", type: "length", group: "radius", labelKey: "vars.radiusXl", defaultValue: "0.75rem" },
 ];
 
+// Section order in the Style tab. `weights` sits at the end so the
+// Typography section (rendered separately, since it owns its own
+// FontSelect components) can be injected just above it — the two
+// share the same typographic concern and read more naturally as a
+// pair than scattered across the page.
 export const THEME_VAR_GROUPS: ThemeVarGroup[] = [
   "surfaces",
   "foreground",
@@ -77,13 +116,20 @@ export const THEME_VAR_GROUPS: ThemeVarGroup[] = [
   "accent",
   "spacing",
   "radius",
+  "weights",
 ];
 
 // Curated Google Fonts. Each entry maps a display name to the
 // `family=...` segment used in a Google Fonts CSS2 URL (already
-// URL-encoded so plus signs survive the join). Weights cover the
-// admin's typical body/display use cases — adjust per font when a
-// face has limited weight coverage.
+// URL-encoded so plus signs survive the join). Mix of styles is
+// deliberate so admins have visual options across categories.
+//
+// Some display faces are single-weight on Google Fonts (Anton,
+// Archivo Black, Bowlby One) — their segment omits `:wght@...` so
+// the only available weight is loaded. Body text on those will
+// stay at the same weight regardless of CSS `font-weight: 700`,
+// which is the right behavior for a deliberately heavy display
+// font.
 export const FONT_PRESETS = {
   serif: {
     Newsreader: "Newsreader:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700",
@@ -92,14 +138,28 @@ export const FONT_PRESETS = {
     "EB Garamond": "EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700",
     "Source Serif 4": "Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700",
     "Cormorant Garamond": "Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700",
+    "Crimson Pro": "Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700",
+    Spectral: "Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700",
   },
   sans: {
+    // Humanist / neutral
     Inter: "Inter:wght@400;500;600;700",
     "Plus Jakarta Sans": "Plus+Jakarta+Sans:wght@400;500;600;700",
-    Outfit: "Outfit:wght@400;500;600;700",
     Manrope: "Manrope:wght@400;500;600;700",
-    "DM Sans": "DM+Sans:wght@400;500;600;700",
-    "Work Sans": "Work+Sans:wght@400;500;600;700",
+    // Geometric / modern grotesque
+    Outfit: "Outfit:wght@400;500;600;700",
+    "Space Grotesk": "Space+Grotesk:wght@400;500;600;700",
+    "Bricolage Grotesque": "Bricolage+Grotesque:wght@400;500;600;700",
+    // Condensed / narrow
+    Oswald: "Oswald:wght@400;500;600;700",
+    "Barlow Condensed": "Barlow+Condensed:wght@400;500;600;700",
+    "Big Shoulders Display": "Big+Shoulders+Display:wght@400;500;600;700",
+    // Heavy display (single weight on Google Fonts — already maximally heavy)
+    Anton: "Anton",
+    "Archivo Black": "Archivo+Black",
+    "Bowlby One": "Bowlby+One",
+    // Expressive / sci-fi geometric
+    Unbounded: "Unbounded:wght@400;500;600;700",
   },
 } as const;
 
@@ -145,11 +205,43 @@ export function defaultGoogleFontsUrl(): string {
   return buildGoogleFontsUrl(DEFAULT_FONT_SERIF, DEFAULT_FONT_SANS);
 }
 
+// Lightweight preview URL — loads weight 400 of every curated font.
+// Used by the Style tab to render font picker options in their own
+// face, so admins can see what they're choosing. Heavier weights
+// aren't needed because the preview text is just the font name.
+export function buildAllFontsPreviewUrl(): string {
+  const families = [
+    ...Object.keys(FONT_PRESETS.serif),
+    ...Object.keys(FONT_PRESETS.sans),
+  ];
+  const segments = families.map((name) => `family=${name.replace(/ /g, "+")}`);
+  return `https://fonts.googleapis.com/css2?${segments.join("&")}&display=swap`;
+}
+
 // CSS-safe quoting for a font family name. Inside the CSS variable
 // declaration we want `"Lora"` (quoted), since names like `Plus
 // Jakarta Sans` contain spaces. The fallback chain stays unquoted.
 function quoteFontName(name: string): string {
   return `"${name.replace(/"/g, '\\"')}"`;
+}
+
+// Returns the appropriate generic-family fallback chain for a given
+// font, regardless of which "slot" (--font-serif vs --font-sans) it
+// ends up in. Lets users mix styles freely (sans for headings, serif
+// for body) while keeping FOUC visually consistent.
+export function fontFallbackChain(name: string): string {
+  const isSerif = (FONT_PRESETS.serif as Record<string, string>)[name] !== undefined;
+  return isSerif
+    ? `Georgia, "Times New Roman", serif`
+    : `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`;
+}
+
+// Generic-family classifier exposed for the Style tab so the FontSelect
+// can render each option against the right fallback.
+export function fontGenericFallback(name: string): "serif" | "sans-serif" {
+  return (FONT_PRESETS.serif as Record<string, string>)[name] !== undefined
+    ? "serif"
+    : "sans-serif";
 }
 
 // Produces the customized CSS string. When `style` matches the
@@ -188,9 +280,12 @@ export function buildCustomCss(baseCssText: string, style: StyleOverrides): stri
   // 2. Append a `:root` override block. The cascade resolves later
   // declarations as winners on equal specificity, so values here
   // beat the original `:root` declarations earlier in the file.
+  // Fallback chain follows each chosen font's actual category — so
+  // a sans font picked for the "serif" slot still gets a sans-serif
+  // fallback chain, keeping FOUC visually consistent.
   const fontDecls = fontsChanged
-    ? `--font-serif:${quoteFontName(fontSerif)},Georgia,"Times New Roman",serif;` +
-      `--font-sans:${quoteFontName(fontSans)},-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;`
+    ? `--font-serif:${quoteFontName(fontSerif)},${fontFallbackChain(fontSerif)};` +
+      `--font-sans:${quoteFontName(fontSans)},${fontFallbackChain(fontSans)};`
     : "";
   const varDecls = Object.entries(filteredVars)
     .map(([k, v]) => `${k}:${v};`)
