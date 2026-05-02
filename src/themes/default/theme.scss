@@ -1139,6 +1139,16 @@ a.author-bio__name:hover {
 
 .breadcrumb__current {
   color: var(--color-on-surface);
+  // Truncate over-long current-page titles. The breadcrumb only needs
+  // to communicate location — the full title sits as the <h1> right
+  // below, so an ellipsis here costs nothing while keeping the strip
+  // tidy on a single line.
+  display: inline-block;
+  max-width: min(420px, 60vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 // ─── Pagination (available, optional) ──────────────────────────────
