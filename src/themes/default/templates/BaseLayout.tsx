@@ -41,15 +41,13 @@ export function BaseLayout({
         <title>{fullTitle}</title>
         {pageDescription && <meta name="description" content={pageDescription} />}
         {canonical && <link rel="canonical" href={canonical} />}
-        {/* Newsreader (serif headings + lede) and Inter (sans body / labels)
-            are the two display faces of the theme. Loaded from Google Fonts
-            with preconnect to keep the request chain short. */}
+        {/* Fonts are loaded inside the theme CSS itself (via
+            `@import url(...)`), so the regenerated CSS pushed by
+            Theme Settings → Style can swap the Google Fonts URL
+            without touching this HTML. We keep the preconnects to
+            warm the DNS / TLS for the foreseeable font requests. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap"
-        />
         <link rel="stylesheet" href={cssHref} />
         <meta property="og:title" content={fullTitle} />
         {pageDescription && <meta property="og:description" content={pageDescription} />}

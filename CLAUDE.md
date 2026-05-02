@@ -122,6 +122,22 @@ Each theme can declare an optional settings page via `ThemeManifest.settings = {
 
 Logo branding pattern (default theme): the theme's settings page uploads a resized WebP to `theme-assets/<id>-logo.webp` and stores `{ logoEnabled, logoUpdatedAt }`. The publisher resolves these into `MenuJson.branding.logoUrl` (cache-busted via `?v=<logoUpdatedAt>`); `menu-loader.js` swaps the static text wordmark inside `[data-cms-brand]` with an `<img>`. So updating the logo writes only one small JSON (`data/menu.json`) plus the logo binary — no post-HTML rewrites needed.
 
+#### Theme CSS regeneration (compileCss hook)
+
+`ThemeManifest.compileCss?(config) => string` is an optional CSS transformer called whenever `theme-assets/<id>.css` gets uploaded — `Sync theme assets` in `ThemesPage` and the theme's own settings page both go through it. The bundled `manifest.cssText` (Vite `?inline` of `theme.scss`) is the **baseline**; the hook bakes the user's persisted style overrides into the **live** CSS. Without `compileCss`, syncing would push the baseline and erase customizations.
+
+Default theme implementation in `src/themes/default/style.ts`:
+
+- **Font loading lives inside the SCSS** as `@import url(...)` at the top, NOT in `BaseLayout.tsx` `<link>`. So changing fonts means rewriting a single line in the CSS — no HTML republish. BaseLayout keeps the `preconnect` to fonts.googleapis.com / fonts.gstatic.com to warm the DNS.
+- `buildCustomCss(baseCssText, style)`:
+  1. Regex-swaps the Google Fonts `@import` line with the URL for the chosen `(serif, sans)` pair from `FONT_PRESETS`. The regex tolerates Sass's compressed `@import"..."` form *and* the expanded `@import url("...")` form so the same code works in dev and prod.
+  2. Appends a `:root { … }` block at the end of the file with the user's variable overrides + font-family declarations. CSS cascade picks the later declarations on equal specificity, so this beats the original `:root` declarations earlier in the file.
+  3. **Fast path**: when `style` matches defaults exactly (no var overrides, default fonts), returns `baseCssText` untouched.
+- `THEME_VAR_SPECS` lists all 22 editable variables (colors / spacing / radius) with their group, type (`color` | `length`), labelKey and defaultValue. The Style tab renders fields by group with `<input type="color">` for colors and a free-form text input for length values. An empty value falls back to the default; a small ↺ button on each field clears the override.
+- `applyAndUploadCustomCss({ themeId, baseCssText, style })` produces the CSS and uploads to `theme-assets/<themeId>.css`. Same path as the baseline, so browsers may serve a stale copy until hard-refresh — documented in the success toast.
+
+`DefaultThemeConfig.style: StyleOverrides` carries `{ vars: Record<string, string>, fontSerif, fontSans }`. Stored in `settings.themeConfigs.default.style` like any other theme config — same Firestore subscription drives both the form rehydration and the runtime regenerator.
+
 ### Plugin system
 
 `core/pluginRegistry.ts` is a WordPress-style filter/action registry. Filters mutate values in priority order; actions are side effects that all run. Plugins live in `src/plugins/<id>/`, register through a `manifest.register(api)` callback, and are listed in `src/plugins/index.ts`.

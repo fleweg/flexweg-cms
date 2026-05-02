@@ -37,8 +37,30 @@ export function ThemesPage() {
           log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
         } else {
           const cssPath = `theme-assets/${theme.id}.css`;
+          // When the theme exposes a `compileCss` hook (e.g. the
+          // default theme bakes the user's Style overrides into the
+          // CSS), call it with the merged config. Skipping this would
+          // wipe customizations on every Sync — the bundled cssText
+          // is the *baseline*, not the live state.
+          let cssContent = theme.cssText;
+          if (theme.compileCss && theme.settings) {
+            const stored = (settings.themeConfigs as Record<string, unknown> | undefined)?.[
+              theme.id
+            ];
+            const resolvedConfig = {
+              ...(theme.settings.defaultConfig as object),
+              ...((stored as object) ?? {}),
+            };
+            try {
+              cssContent = theme.compileCss(resolvedConfig);
+            } catch (err) {
+              console.error(`[themes] compileCss for "${theme.id}" failed:`, err);
+              // Fall back to the baseline so the sync still pushes
+              // *something* coherent rather than aborting entirely.
+            }
+          }
           log({ level: "info", message: `Uploading ${cssPath}…` });
-          await uploadFile({ path: cssPath, content: theme.cssText });
+          await uploadFile({ path: cssPath, content: cssContent });
         }
         // Optional companion JS files — themes that opted in get their
         // loaders pushed alongside the CSS at the same /theme-assets/

@@ -191,6 +191,13 @@ export interface ThemeManifest<TConfig = unknown> {
   // namespace named `theme-<id>` so the settings page calls
   // `useTranslation("theme-<id>")` without colliding with admin keys.
   i18n?: Partial<Record<AdminLocale, Record<string, unknown>>>;
+  // Optional CSS transformer. When defined, `Sync theme assets` and
+  // any other code path that uploads `theme-assets/<id>.css` calls
+  // this with the resolved theme config and uploads the result
+  // instead of the raw `cssText`. Themes use this to bake user
+  // overrides (color palette, fonts, etc.) into the published CSS so
+  // the customizations survive every sync cycle.
+  compileCss?: (config: TConfig) => string;
 }
 
 // Re-exported so theme code only needs one import statement.

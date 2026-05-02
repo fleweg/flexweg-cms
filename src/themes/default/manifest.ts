@@ -17,11 +17,9 @@ import cssText from "./theme.scss?inline";
 import jsText from "./menu-loader.js?raw";
 import jsTextPosts from "./posts-loader.js?raw";
 import { en, fr } from "./i18n";
-import {
-  DEFAULT_THEME_CONFIG,
-  DefaultThemeSettingsPage,
-  type DefaultThemeConfig,
-} from "./SettingsPage";
+import { DEFAULT_THEME_CONFIG, type DefaultThemeConfig } from "./config";
+import { DefaultThemeSettingsPage } from "./SettingsPage";
+import { buildCustomCss } from "./style";
 
 export const manifest: ThemeManifest<DefaultThemeConfig> = {
   id: "default",
@@ -38,6 +36,11 @@ export const manifest: ThemeManifest<DefaultThemeConfig> = {
     defaultConfig: DEFAULT_THEME_CONFIG,
     component: DefaultThemeSettingsPage,
   },
+  // Bakes the user's Style overrides (color palette, fonts, spacing,
+  // radius) into the CSS uploaded by `Sync theme assets`. Without
+  // this hook, syncing would push the bundled CSS verbatim and erase
+  // the customizations until the next Save & apply from Theme Settings.
+  compileCss: (config) => buildCustomCss(cssText, config.style),
   // Image catalog used by the upload pipeline. WebP at 80 strikes a fair
   // balance between weight and quality for blog imagery; raise the quality
   // here (or override per-format) if your site is photo-heavy.

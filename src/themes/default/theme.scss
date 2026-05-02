@@ -1,3 +1,10 @@
+// Google Fonts loaded via CSS @import so the regenerated CSS (produced
+// by Theme Settings → Style) can swap the URL without touching the
+// HTML. Sass passes `@import url(...)` through unchanged. The default
+// pair is Newsreader (headings) + Inter (body); the Style tab maps a
+// curated set of Google Fonts to alternative URLs.
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap");
+
 // ─── Default theme — Editorial Minimalist ──────────────────────────
 // Inspired by long-form literary journals: neutral palette anchored on
 // warm off-white, Newsreader serif headings + Inter sans body, generous

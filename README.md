@@ -478,6 +478,30 @@ The default theme exposes a **General** tab with a logo upload. Workflow:
 
 So a logo change pushes only **one** small JSON file (`menu.json`) plus the logo binary — no need to re-publish every post HTML. Removing the logo runs the same flow with `logoEnabled: false` and best-effort deletes the WebP file.
 
+### Default theme — Style tab (colors, fonts, spacing, radius)
+
+The **Style** tab in the default theme's settings page lets admins customize the entire design token set without re-rendering posts. Click **Save & apply** to push a regenerated CSS file to Flexweg.
+
+Editable surface (22 tokens + 2 fonts):
+
+- **Surfaces**: `--color-bg`, `--color-surface`, `--color-surface-{low,mid,high,highest}` — page background and tonal layers
+- **Foreground**: `--color-on-surface`, `--color-on-surface-variant`, `--color-on-surface-muted` — text colors
+- **Outlines**: `--color-outline`, `--color-outline-variant`
+- **Accent**: `--color-primary`, `--color-on-primary`, `--color-secondary`, `--color-secondary-container`, `--color-on-secondary-container`
+- **Spacing & layout**: `--container-max`, `--gutter`, `--section-gap`
+- **Corner radius**: `--radius-{sm,,lg,xl}`
+- **Typography**: serif and sans-serif Google Fonts, picked from a curated list (Newsreader, Lora, Playfair Display, EB Garamond, Source Serif 4, Cormorant Garamond / Inter, Plus Jakarta Sans, Outfit, Manrope, DM Sans, Work Sans)
+
+How it works under the hood:
+
+1. The original compiled CSS is bundled into the admin via Vite's `?inline` import (`manifest.cssText`).
+2. The fonts are loaded via `@import url(...)` at the **top of the SCSS file** (not the HTML), so swapping fonts means rewriting one line in the CSS and re-uploading — no HTML republish.
+3. `buildCustomCss(baseCssText, style)` (in `src/themes/default/style.ts`) takes the bundled CSS, replaces the `@import url(...)` with the URL for the chosen font pair, and appends a new `:root { ... }` block with the user's variable overrides. Cascade resolves later declarations as winners on equal specificity.
+4. The result is uploaded over `theme-assets/default.css` — the same path every published page references. Browsers may serve a cached copy until a hard refresh.
+5. **`compileCss` hook on the manifest** wires this transformation into the **Themes → Sync theme assets** flow so syncing won't wipe customizations: the bundled CSS is the *baseline*, the regenerator is the *live state*.
+
+Reset to defaults: clears the `style` config and pushes the baseline CSS untouched.
+
 ## Creating a plugin
 
 Plugins are bundled into the admin and toggled on/off per site in **Plugins**. Each plugin exports a manifest with a `register(api)` function that hooks into the registry. Optionally, a plugin can also ship its own settings page and translations.
