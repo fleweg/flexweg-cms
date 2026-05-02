@@ -47,6 +47,7 @@ export function AuthorAvatar({ name, avatar, size = "default" }: AuthorAvatarPro
           className={cls.join(" ")}
           src={url}
           alt={avatar.alt ?? name}
+          loading="lazy"
         />
       );
     }

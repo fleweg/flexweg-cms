@@ -85,7 +85,17 @@ export function SingleTemplate({
             {/* The single page is the most prominent surface for a hero
                 image — request the largest variant the theme declares.
                 pickFormat handles fallbacks if "large" doesn't exist. */}
-            <img src={pickFormat(hero, "large")} alt={hero.alt ?? ""} />
+            {/* Above-the-fold hero — typically THE LCP element on
+                single posts. We deliberately skip `loading="lazy"`
+                (which would defer fetching) and ask the browser to
+                prioritize this resource via `fetchpriority="high"`,
+                so the image starts downloading as early as possible
+                in the request waterfall. */}
+            <img
+              src={pickFormat(hero, "large")}
+              alt={hero.alt ?? ""}
+              fetchPriority="high"
+            />
             {hero.caption && <figcaption>{hero.caption}</figcaption>}
           </figure>
         )}

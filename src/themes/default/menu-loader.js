@@ -109,6 +109,7 @@
       img.src = logoUrl;
       img.alt = alt;
       img.className = "site-brand__logo";
+      img.loading = "lazy";
       host.innerHTML = "";
       host.appendChild(img);
     });

@@ -12,7 +12,11 @@ export function HeroFeatured({ post }: { post: CardPost }) {
       <a className="hero-featured__link" href={`/${post.url}`}>
         {heroSrc && (
           <div className="hero-featured__media">
-            <img src={heroSrc} alt={post.hero?.alt ?? ""} />
+            {/* Above-the-fold featured image on the home page —
+                strong LCP candidate. No lazy loading; high fetch
+                priority so it downloads ahead of below-the-fold
+                cards and sidebar widgets. */}
+            <img src={heroSrc} alt={post.hero?.alt ?? ""} fetchPriority="high" />
           </div>
         )}
         <div className="hero-featured__body">

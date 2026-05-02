@@ -158,6 +158,7 @@
       img.className = "author-avatar author-avatar--lg author-avatar--image";
       img.src = url;
       img.alt = name || "";
+      img.loading = "lazy";
       return img;
     }
     var span = document.createElement("span");
