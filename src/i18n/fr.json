@@ -167,7 +167,9 @@
   "pages": {
     "title": "Pages",
     "newPage": "Nouvelle page",
-    "noPages": "Aucune page."
+    "noPages": "Aucune page.",
+    "homeBadge": "Accueil",
+    "homeBadgeTooltip": "Utilisée comme page d'accueil du site"
   },
   "taxonomies": {
     "title": "Catégories & Tags",

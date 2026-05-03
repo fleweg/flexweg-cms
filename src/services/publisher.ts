@@ -61,6 +61,18 @@ export interface PublishContext {
 // THEME CSS PATH on Flexweg, mirrors what the build script produces.
 const THEME_CSS_PREFIX = "theme-assets";
 
+// True when the post (must be a page) is the one currently bound to
+// the static-page home. Such a page lives at index.html only — no
+// per-page <slug>.html mirror — because the home regen pass writes
+// the actual file via the theme's home template.
+function isStaticHome(post: Post, settings: SiteSettings): boolean {
+  return (
+    post.type === "page" &&
+    settings.homeMode === "static-page" &&
+    settings.homePageId === post.id
+  );
+}
+
 function themeCssPath(themeId: string): string {
   return `${THEME_CSS_PREFIX}/${themeId}.css`;
 }
@@ -428,10 +440,13 @@ export async function publishPost(
   await doAction("publish.before", post);
 
   const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
-  const newPath = buildPostUrl({ post, primaryTerm: term });
-
-  log({ level: "info", message: "Rendering page…" });
-  const html = await renderSingle(post, ctx);
+  // Pages bound to the static home live at index.html only. The home
+  // regeneration pass below renders the actual file via the theme's
+  // home template — we just need to clean up any leftover <slug>.html
+  // (e.g. from a previous publish before this page was bound) and
+  // mark the post as online at the home path.
+  const homeBound = isStaticHome(post, ctx.settings);
+  const newPath = homeBound ? HOME_PATH : buildPostUrl({ post, primaryTerm: term });
 
   // Wipe every known stale path before re-uploading. If a previous publish
   // failed to clean a path, it lives in previousPublishedPaths and is
@@ -444,7 +459,16 @@ export async function publishPost(
     log,
   );
 
-  const { hash } = await uploadIfChanged(newPath, html, post.lastPublishedHash, log);
+  let hash = "";
+  if (homeBound) {
+    log({ level: "info", message: "Page bound to home — index.html will be written by the listing pass." });
+  } else {
+    log({ level: "info", message: "Rendering page…" });
+    const html = await renderSingle(post, ctx);
+    const result = await uploadIfChanged(newPath, html, post.lastPublishedHash, log);
+    hash = result.hash;
+  }
+
   await markPostOnline(post.id, {
     lastPublishedPath: newPath,
     lastPublishedHash: hash,
@@ -569,8 +593,11 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
 
   for (const post of onlinePosts) {
     const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
-    const path = buildPostUrl({ post, primaryTerm: term });
-    const html = await renderSingle(post, ctx);
+    // Same home-binding short-circuit as publishPost: a page bound to
+    // the static home lives at index.html only, written by the
+    // regenerateListings pass right after this loop.
+    const homeBound = isStaticHome(post, ctx.settings);
+    const path = homeBound ? HOME_PATH : buildPostUrl({ post, primaryTerm: term });
     // Same multi-path cleanup as a single publish — keeps the public site
     // in a consistent state if regenerateAll is invoked after a series of
     // path changes that left orphans.
@@ -579,7 +606,12 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
       path,
       log,
     );
-    const { hash } = await uploadIfChanged(path, html, undefined, log);
+    let hash = "";
+    if (!homeBound) {
+      const html = await renderSingle(post, ctx);
+      const result = await uploadIfChanged(path, html, undefined, log);
+      hash = result.hash;
+    }
     await markPostOnline(post.id, {
       lastPublishedPath: path,
       lastPublishedHash: hash,
