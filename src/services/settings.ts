@@ -18,6 +18,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     "flexweg-rss": true,
     "flexweg-favicon": true,
     "flexweg-embeds": true,
+    "flexweg-blocks": true,
   },
   homeMode: "latest-posts",
   postsPerPage: 10,

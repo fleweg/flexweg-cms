@@ -1,4 +1,5 @@
 import type { ChainedCommands, Editor, Extensions } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import type { ComponentType } from "react";
 
 // Block registry — the source of truth for every editor block the user
@@ -126,13 +127,89 @@ export function getRegistryVersion(): number {
 }
 
 // Returns the manifest of the block currently active at the editor's
-// cursor. Iterates in registration order; the first manifest whose
-// `isActive` predicate returns true wins, so more specific blocks
-// (plugin overrides) should be registered after the generic ones they
-// extend.
+// cursor. Implements a depth-walk + prefer-inspector strategy:
+//
+//   1. Build the chain of ProseMirror node types from the deepest
+//      ancestor (or selection.node for a NodeSelection) up to the
+//      first non-doc level.
+//   2. First pass — walk deepest-first, return the first manifest
+//      that matches AND has its own inspector. Means a paragraph
+//      inside a column inside a Columns container surfaces the
+//      Columns inspector (paragraph has no inspector → skipped).
+//   3. Second pass — same walk but accept any match regardless of
+//      inspector. Lets the Block tab still display a "no settings"
+//      label for blocks like core/paragraph.
+//
+// Heading levels (manifest ids `core/heading-2`, `core/heading-3`)
+// derive a node-name like "heading2" / "heading3" that doesn't match
+// Tiptap's actual node type "heading". Matched explicitly via the
+// /^heading([1-6])$/ regex + the `level` attr on the node.
 export function findActiveBlock(editor: Editor): BlockManifest | undefined {
-  for (const manifest of blocks.values()) {
-    if (manifest.isActive?.(editor)) return manifest as BlockManifest;
+  const all = Array.from(blocks.values()) as BlockManifest[];
+
+  // Defensive: when called with a non-real editor (tests, transient
+  // states pre-mount) fall back to the legacy isActive-based scan.
+  // Returns the first manifest whose predicate is truthy — same
+  // behaviour as the original implementation, which the unit tests
+  // depend on.
+  const $from = editor?.state?.selection?.$from;
+  if (!$from) {
+    for (const manifest of all) {
+      if (manifest.isActive?.(editor)) return manifest;
+    }
+    return undefined;
+  }
+
+  const { selection } = editor.state;
+
+  // Chain of node frames, deepest-first.
+  type Frame = { typeName: string; attrs: Record<string, unknown> };
+  const chain: Frame[] = [];
+  if (selection instanceof NodeSelection) {
+    chain.push({
+      typeName: selection.node.type.name,
+      attrs: selection.node.attrs as Record<string, unknown>,
+    });
+  }
+  for (let depth = $from.depth; depth >= 1; depth--) {
+    const node = $from.node(depth);
+    chain.push({
+      typeName: node.type.name,
+      attrs: node.attrs as Record<string, unknown>,
+    });
+  }
+
+  function manifestNodeName(m: BlockManifest): string {
+    if (m.nodeName) return m.nodeName;
+    // Legacy core blocks omit nodeName — derive from id ("core/foo-bar"
+    // → "foobar"). Matches the same heuristic used in EditorInspector
+    // for the BlockInspectorRenderer's attrs lookup.
+    if (m.id.startsWith("core/")) {
+      return m.id.slice("core/".length).replace(/-/g, "");
+    }
+    return m.id;
+  }
+
+  function matchesFrame(m: BlockManifest, frame: Frame): boolean {
+    const name = manifestNodeName(m);
+    const headingMatch = name.match(/^heading([1-6])$/);
+    if (headingMatch) {
+      const level = Number.parseInt(headingMatch[1], 10);
+      return frame.typeName === "heading" && frame.attrs.level === level;
+    }
+    return name === frame.typeName;
+  }
+
+  // First pass: deepest manifest WITH an inspector wins.
+  for (const frame of chain) {
+    const matched = all.find((m) => matchesFrame(m, frame));
+    if (matched && matched.inspector) return matched;
+  }
+  // Second pass: deepest manifest period — so the Block tab can
+  // render its "no settings" placeholder for blocks without one.
+  for (const frame of chain) {
+    const matched = all.find((m) => matchesFrame(m, frame));
+    if (matched) return matched;
   }
   return undefined;
 }
