@@ -135,6 +135,10 @@
       "blocks": {
         "addBlock": "Ajouter un bloc",
         "transform": "Transformer en",
+        "moveUp": "Déplacer vers le haut",
+        "moveDown": "Déplacer vers le bas",
+        "duplicate": "Dupliquer",
+        "remove": "Supprimer le bloc",
         "paragraph": "Paragraphe",
         "heading2": "Titre 2",
         "heading3": "Titre 3",

@@ -22,6 +22,7 @@ import {
   type BlockInsertContext,
   type BlockManifest,
 } from "../../core/blockRegistry";
+import { BlockToolbar } from "./BlockToolbar";
 
 interface MarkdownEditorProps {
   value: string;
@@ -60,6 +61,7 @@ export function MarkdownEditor({
   // Tracks the last value we emitted upward; lets us avoid re-applying
   // the editor's own output back into it (which would reset the cursor).
   const lastEmittedRef = useRef<string>(value);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [showInserter, setShowInserter] = useState(false);
 
   // Snapshot the plugin block extensions ONCE for the lifetime of this
@@ -72,7 +74,12 @@ export function MarkdownEditor({
       Link.configure({ openOnClick: false, autolink: true }),
       Image,
       Placeholder.configure({ placeholder: placeholder ?? t("posts.fields.content") }),
-      Markdown.configure({ html: false, transformPastedText: true, breaks: false }),
+      // html: true lets atom blocks (e.g. flexweg-embeds' YouTube /
+      // Twitter / Spotify nodes) round-trip through markdown as their
+      // `<div data-cms-embed=…>` markers. The DOMPurify pass at
+      // publish time strips anything dangerous before the marker is
+      // replaced with the real iframe.
+      Markdown.configure({ html: true, transformPastedText: true, breaks: false }),
     ];
     const pluginExtensions = listBlocks()
       .flatMap((b) => b.extensions ?? [])
@@ -150,7 +157,7 @@ export function MarkdownEditor({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       {/* BubbleMenu surfaces inline formatting on selection. Skipped
           when the cursor is inside an image or code block where these
           marks don't apply. */}
@@ -226,6 +233,12 @@ export function MarkdownEditor({
       </FloatingMenu>
 
       <EditorContent editor={editor} />
+
+      {/* Mounted last so the absolute-positioned toolbar paints above
+          EditorContent without forcing a stacking-context on it. The
+          wrapperRef lets the toolbar anchor its `top` / `right`
+          relative to this same div. */}
+      <BlockToolbar editor={editor} containerRef={wrapperRef} />
     </div>
   );
 }

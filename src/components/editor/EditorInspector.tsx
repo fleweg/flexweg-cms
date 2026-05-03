@@ -134,13 +134,16 @@ function BlockInspectorRenderer({
   const Inspector = block.inspector;
   if (!Inspector) return null;
 
-  // Reading attrs via getAttributes("<nodeName>") only works when the
-  // block id matches the underlying Tiptap node name. Plugin blocks
-  // typically follow the convention `<plugin>/<name>` while their node
-  // name is just `<name>` — manifests can override by exposing a
-  // dedicated `nodeName` later if needed. For core blocks we strip the
-  // "core/" prefix.
-  const nodeName = block.id.startsWith("core/") ? block.id.slice("core/".length).replace(/-/g, "") : block.id;
+  // Manifest-declared nodeName wins; otherwise infer from id. Core
+  // blocks ship without a nodeName (mapped via "core/<x>" → "<x>"
+  // sans dashes); plugin blocks whose id contains a slash MUST set
+  // nodeName explicitly because slashes aren't valid in Tiptap node
+  // names.
+  const nodeName =
+    block.nodeName ??
+    (block.id.startsWith("core/")
+      ? block.id.slice("core/".length).replace(/-/g, "")
+      : block.id);
   const attrs = (editor.getAttributes(nodeName) ?? {}) as Record<string, unknown>;
 
   const updateAttrs = (next: Partial<Record<string, unknown>>) => {

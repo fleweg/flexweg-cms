@@ -135,6 +135,10 @@
       "blocks": {
         "addBlock": "Add block",
         "transform": "Transform to",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "duplicate": "Duplicate",
+        "remove": "Delete block",
         "paragraph": "Paragraph",
         "heading2": "Heading 2",
         "heading3": "Heading 3",

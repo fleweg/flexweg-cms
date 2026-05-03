@@ -36,6 +36,12 @@ export interface BlockInspectorProps<TAttrs = Record<string, unknown>> {
 export interface BlockManifest<TAttrs = Record<string, unknown>> {
   // Stable, namespaced id — "core/paragraph", "<plugin-id>/<block>".
   id: string;
+  // Underlying Tiptap node name. The inspector reads/writes attrs
+  // against this name. Optional — when omitted, the registry falls
+  // back to a heuristic (`core/foo-bar` → `foobar`, otherwise the id
+  // verbatim). Plugin blocks whose id contains a slash MUST set this
+  // explicitly because slashes aren't valid in Tiptap node names.
+  nodeName?: string;
   // i18n key for the block's display name in the inserter / inspector.
   titleKey: string;
   // i18n namespace — when undefined, the global namespace is used.
