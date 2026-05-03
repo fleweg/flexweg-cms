@@ -16,6 +16,7 @@ import { manifest as flexwegFaviconManifest } from "./flexweg-favicon/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
+import { resetBlocks } from "../core/blockRegistry";
 
 // Plugins can optionally expose a settings page. When present, a navigation
 // entry appears under /settings/plugin/<id> and the plugins list shows a
@@ -86,8 +87,14 @@ loadPluginTranslations();
 
 // Re-evaluates the registry against the given enabled flags. Call this on
 // app boot (after settings load) and any time the user toggles a plugin.
+//
+// Resets every plugin-controlled registry first (filters/actions and
+// plugin-registered blocks) so the post-call state always reflects the
+// current enabled set. Core blocks survive because resetBlocks() spares
+// them — see core/blockRegistry.ts.
 export function applyPluginRegistration(enabled: Record<string, boolean>): void {
   resetRegistry();
+  resetBlocks();
   for (const plugin of PLUGINS) {
     if (enabled[plugin.id] === false) continue;
     try {

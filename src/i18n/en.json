@@ -115,7 +115,45 @@
       "publish": "Publish",
       "unpublish": "Unpublish",
       "publishing": "Publishing…",
-      "unpublishing": "Unpublishing…"
+      "unpublishing": "Unpublishing…",
+      "titlePlaceholder": "Add title",
+      "permalink": "Permalink",
+      "slugFormatHint": "Lower-case, ASCII, dash-separated only.",
+      "viewPublished": "View",
+      "confirmDelete": "Delete this entry?",
+      "inspector": {
+        "document": "Document",
+        "block": "Block",
+        "blockEmpty": "Select a block in the editor to see its options.",
+        "publishing": "Publishing",
+        "permalink": "Permalink",
+        "categories": "Categories & tags",
+        "featured": "Featured image",
+        "seo": "SEO",
+        "excerpt": "Excerpt"
+      },
+      "blocks": {
+        "addBlock": "Add block",
+        "transform": "Transform to",
+        "paragraph": "Paragraph",
+        "heading2": "Heading 2",
+        "heading3": "Heading 3",
+        "bulletList": "Bullet list",
+        "orderedList": "Numbered list",
+        "blockquote": "Quote",
+        "codeBlock": "Code",
+        "image": "Image",
+        "horizontalRule": "Separator",
+        "categories": {
+          "text": "Text",
+          "media": "Media",
+          "layout": "Layout",
+          "embed": "Embeds",
+          "advanced": "Advanced"
+        },
+        "noSettings": "This block has no settings.",
+        "noSelection": "Select a block in the editor to see its options."
+      }
     },
     "status": {
       "draft": "Draft",

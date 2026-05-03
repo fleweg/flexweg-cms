@@ -122,9 +122,20 @@ export function listHooks(): { filters: string[]; actions: string[] } {
 // Public API surface passed to each plugin's `register(api)` function. We
 // give each plugin a stable, narrow interface rather than letting it import
 // the registry module directly so we can evolve internals freely.
+//
+// `registerBlock` lets plugins contribute editor blocks (paragraph-style
+// rich-content nodes) that show up in the post editor's inserter and the
+// inspector's Block tab. See core/blockRegistry.ts for the manifest shape.
+import { registerBlock as registerBlockImpl } from "./blockRegistry";
+
 export interface PluginApi {
   addFilter: typeof addFilter;
   addAction: typeof addAction;
+  registerBlock: typeof registerBlockImpl;
 }
 
-export const pluginApi: PluginApi = { addFilter, addAction };
+export const pluginApi: PluginApi = {
+  addFilter,
+  addAction,
+  registerBlock: registerBlockImpl,
+};

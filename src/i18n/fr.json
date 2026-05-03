@@ -115,7 +115,45 @@
       "publish": "Publier",
       "unpublish": "Dépublier",
       "publishing": "Publication…",
-      "unpublishing": "Dépublication…"
+      "unpublishing": "Dépublication…",
+      "titlePlaceholder": "Ajouter un titre",
+      "permalink": "Permalien",
+      "slugFormatHint": "Minuscules ASCII séparées par des tirets uniquement.",
+      "viewPublished": "Voir",
+      "confirmDelete": "Supprimer cet élément ?",
+      "inspector": {
+        "document": "Document",
+        "block": "Bloc",
+        "blockEmpty": "Sélectionnez un bloc dans l'éditeur pour voir ses options.",
+        "publishing": "Publication",
+        "permalink": "Permalien",
+        "categories": "Catégories & tags",
+        "featured": "Image à la une",
+        "seo": "SEO",
+        "excerpt": "Extrait"
+      },
+      "blocks": {
+        "addBlock": "Ajouter un bloc",
+        "transform": "Transformer en",
+        "paragraph": "Paragraphe",
+        "heading2": "Titre 2",
+        "heading3": "Titre 3",
+        "bulletList": "Liste à puces",
+        "orderedList": "Liste numérotée",
+        "blockquote": "Citation",
+        "codeBlock": "Code",
+        "image": "Image",
+        "horizontalRule": "Séparateur",
+        "categories": {
+          "text": "Texte",
+          "media": "Médias",
+          "layout": "Mise en page",
+          "embed": "Intégrations",
+          "advanced": "Avancé"
+        },
+        "noSettings": "Ce bloc n'a pas de réglages.",
+        "noSelection": "Sélectionnez un bloc dans l'éditeur pour voir ses options."
+      }
     },
     "status": {
       "draft": "Brouillon",

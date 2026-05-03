@@ -176,6 +176,29 @@ Inside an action-hook handler, the live config is at `ctx.settings.pluginConfigs
 
   The settings page Save handler patches `settings.pluginConfigs["flexweg-rss"]` and immediately re-runs `publishMenuJson(patchedSettings, posts, pages, terms)` so the footer reflects the new state without waiting for the Firestore subscription to echo back. The same pattern is used by Force regenerate. **Skip silently when `settings.baseUrl` is empty** — feed URLs need an absolute origin.
 
+### Editor and block system
+
+`src/components/editor/MarkdownEditor.tsx` is a Tiptap-based WYSIWYG that reads/writes Markdown via `tiptap-markdown`. The chrome is intentionally Gutenberg-style: no fixed top toolbar, a `BubbleMenu` for inline marks on selection, and a `FloatingMenu` "+" inserter that opens a popover on empty paragraphs.
+
+The post/page edit page wraps the editor in a `EditorTopbar` (sticky command bar with status / save / publish / delete) and an `EditorInspector` (right-hand panel with **Document** and **Block** tabs). The Tiptap editor instance is lifted from `MarkdownEditor` to the page via the `onEditorReady` callback so the inspector's Block tab can subscribe to selection changes.
+
+`src/core/blockRegistry.ts` is the source of truth for every block the user can insert. Two registration channels exist:
+
+- **Core blocks** (`src/core/coreBlocks.ts`, side-effect imported from `main.tsx`) — registered once via `registerCoreBlock(...)`. Persistent: `resetBlocks()` spares them, so toggling a plugin can never strip the basics.
+- **Plugin blocks** — registered through `pluginApi.registerBlock(...)` from a plugin's `manifest.register()`. Cleared on every `applyPluginRegistration()` call alongside filters/actions, so the active set always matches the current enabled-plugin list.
+
+Each `BlockManifest` has:
+- `id` — namespaced (`core/paragraph`, `<plugin-id>/<block>`)
+- `titleKey` + optional `namespace` — i18n lookup; plugin blocks use their plugin id namespace
+- `icon` — Lucide-style component
+- `category` — `"text" | "media" | "layout" | "embed" | "advanced"` (drives inserter grouping)
+- `insert(chain, ctx)` — inserts the block; `ctx.pickMedia` is provided by the host page so blocks like `core/image` can await a media-picker promise
+- `extensions?` — Tiptap Node/Mark/Extension list, picked up at editor mount; toggling a plugin requires reopening the editor for new extensions to take effect (the inserter list refreshes immediately though)
+- `isActive?(editor)` — predicate driving the inspector's Block tab; first manifest whose predicate returns true wins
+- `inspector?` — React component rendered in the Block tab when this block is active; receives `{ attrs, updateAttrs, editor }` and writes attribute changes back via Tiptap's `updateAttributes`
+
+The `EditorInspector` auto-switches to the Block tab when the active block has its own inspector, but never away from it (so the user keeps control of the tab state). Active-block resolution reads attrs by stripping the `core/` prefix and removing dashes (e.g. `core/heading-2` → `heading2`); plugin blocks should match their Tiptap node name to their manifest id.
+
 ### Firestore data model
 
 Collections: `posts` (both posts and pages, distinguished by `type`), `terms` (categories + tags), `media`, `users`, `settings/site` (singleton), `config/flexweg` (singleton with API key, separate from settings so the rules can be stricter on it).
