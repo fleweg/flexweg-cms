@@ -17,15 +17,20 @@ interface EmbedInspectorProps {
 export function EmbedInspector({ editor, provider }: EmbedInspectorProps) {
   const { t } = useTranslation("flexweg-embeds");
   const nodeName = embedNodeName(provider.providerId);
-  const attrs = editor.getAttributes(nodeName) as { url?: string; id?: string };
-  const [draft, setDraft] = useState(attrs.url ?? "");
+  const rawAttrs = editor.getAttributes(nodeName) as { url?: unknown; id?: unknown };
+  // Coerce defensively — see EmbedNodeView for the same rationale.
+  const attrs = {
+    url: typeof rawAttrs.url === "string" ? rawAttrs.url : "",
+    id: typeof rawAttrs.id === "string" ? rawAttrs.id : "",
+  };
+  const [draft, setDraft] = useState(attrs.url);
   const [error, setError] = useState<string | null>(null);
 
   // Sync the draft with the underlying node when the user clicks
   // between embeds: the inspector instance is reused across blocks
   // (provider differs, attrs differ) so we re-read on attrs change.
   useEffect(() => {
-    setDraft(attrs.url ?? "");
+    setDraft(attrs.url);
     setError(null);
   }, [attrs.url, attrs.id]);
 

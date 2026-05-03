@@ -3,9 +3,9 @@ import type { ComponentType } from "react";
 
 // One descriptor per supported embed kind. The Tiptap node factory
 // reads these to build a node per provider; the publish-time transform
-// reads them to render iframes/blockquotes; the inspector reads them
-// for help text and icons. Adding a new provider is exactly one entry
-// in this map plus, optionally, an i18n key.
+// reads them to render iframes; the inspector reads them for help text
+// and icons. Adding a new provider is exactly one entry in this map
+// plus, optionally, an i18n key.
 export interface EmbedProvider {
   // Stable id; appears in `data-cms-embed="<id>"` markers and the
   // matching Tiptap node name (camelCase prefix `embed`).
@@ -18,30 +18,48 @@ export interface EmbedProvider {
   // i18n key for the URL input's help text. Same namespace as titleKey.
   hintKey: string;
   // Parses a public URL into the provider-specific identifier (video
-  // ID for YouTube/Vimeo, full URL for Twitter, "type/id" for
-  // Spotify). Returns null when the URL doesn't match this provider —
-  // the inspector uses that to surface an inline validation error.
+  // ID, tweet ID, "<kind>/<id>" for Spotify). Returns null when the
+  // URL doesn't match this provider.
   parseUrl(url: string): string | null;
-  // Builds the published-page embed HTML. Receives the parsed id; the
-  // result is injected verbatim into the post body during the
-  // post.html.body filter.
+  // Builds the embed HTML. Used both at publish time (post.html.body
+  // filter replaces markers with this output) and inside the editor
+  // (NodeView injects it via dangerouslySetInnerHTML). All current
+  // providers use a self-contained iframe — same markup works in both
+  // contexts. Providers that need a different in-editor representation
+  // can override via `renderEditorPreview`.
   renderHtml(id: string): string;
-  // Editor-side preview HTML rendered inside the NodeView. Often the
-  // same iframe as renderHtml minus a few permission allowlist
-  // entries, or a placeholder card when an iframe would be too noisy
-  // (Twitter — widgets.js doesn't run inside the editor).
-  renderEditorPreview(id: string): string;
+  // Optional override for the in-editor preview. Defaults to renderHtml.
+  // Useful if a provider's published-page embed depends on a runtime
+  // script that the admin can't load (CSP, sandboxing, …) — in that
+  // case the editor can fall back to a static placeholder.
+  renderEditorPreview?(id: string): string;
   // Optional script tag emitted at body-end when at least one block
-  // of this provider is present on the page. Empty for iframe-only
-  // embeds (YouTube, Vimeo, Spotify); set for Twitter (widgets.js).
+  // of this provider is present on the published page. Used by
+  // providers whose embed needs a host-side runtime script
+  // (Instagram embed.js, TikTok, …). Currently unused — every shipped
+  // provider relies on a self-contained iframe.
   bodyScript?: string;
+  // URL of a runtime script the in-editor NodeView needs to load to
+  // render the preview properly. Same use-case as bodyScript but
+  // scoped to the admin. Loaded lazily and only once per session via
+  // scriptLoader.loadScriptOnce.
+  editorScript?: string;
+  // Callback invoked after the NodeView injected the preview HTML and
+  // `editorScript` (if any) finished loading. Hook for the provider
+  // to call its script's "process this subtree" API.
+  attachEditor?(element: HTMLElement): void;
 }
 
 // Escapes a string for safe inclusion as an HTML attribute value.
 // Local helper because the providers and the publish-time transform
 // both build raw HTML strings and we don't want to depend on the
 // page renderer's React JSX escaping.
-function escapeAttr(value: string): string {
+//
+// Coerces non-string inputs to "" rather than throwing — defensive
+// against malformed node.attrs that could otherwise crash the editor
+// when passed straight to renderHtml.
+function escapeAttr(value: unknown): string {
+  if (typeof value !== "string") return "";
   return value
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
@@ -68,10 +86,6 @@ const youtube: EmbedProvider = {
     const safe = escapeAttr(id);
     return `<div class="cms-embed cms-embed-youtube"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${safe}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
   },
-  renderEditorPreview(id) {
-    const safe = escapeAttr(id);
-    return `<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${safe}" frameborder="0" allowfullscreen></iframe>`;
-  },
 };
 
 const vimeo: EmbedProvider = {
@@ -90,10 +104,6 @@ const vimeo: EmbedProvider = {
     const safe = escapeAttr(id);
     return `<div class="cms-embed cms-embed-vimeo"><iframe loading="lazy" src="https://player.vimeo.com/video/${safe}" title="Vimeo video" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`;
   },
-  renderEditorPreview(id) {
-    const safe = escapeAttr(id);
-    return `<iframe loading="lazy" src="https://player.vimeo.com/video/${safe}" frameborder="0" allowfullscreen></iframe>`;
-  },
 };
 
 const twitter: EmbedProvider = {
@@ -102,26 +112,25 @@ const twitter: EmbedProvider = {
   hintKey: "twitter.hint",
   icon: Twitter,
   parseUrl(url) {
-    // Twitter accepts twitter.com and x.com; the full URL is what
-    // widgets.js uses to fetch the tweet, so we keep it intact rather
-    // than splitting out the id. We only validate the shape.
+    // Capture only the numeric tweet id — the embed iframe URL only
+    // needs the id, no host-side script. Username is discarded.
+    // Accepts both twitter.com and x.com.
     const match = url.match(
-      /^https?:\/\/(?:twitter\.com|x\.com)\/[A-Za-z0-9_]+\/status\/\d+/,
+      /^https?:\/\/(?:twitter\.com|x\.com)\/[A-Za-z0-9_]+\/status\/(\d+)/,
     );
-    return match ? match[0] : null;
+    return match ? match[1] : null;
   },
-  renderHtml(tweetUrl) {
-    const safe = escapeAttr(tweetUrl);
-    return `<blockquote class="twitter-tweet" data-dnt="true"><a href="${safe}"></a></blockquote>`;
+  renderHtml(tweetId) {
+    // platform.twitter.com/embed/Tweet.html is Twitter's first-party
+    // iframe URL. It loads the tweet card without any host-side JS,
+    // sidesteps every widgets.js timing/CORS issue, and works
+    // identically inside contentEditable editors and on static pages.
+    // The only tradeoff is a fixed iframe height — set per-provider
+    // CSS in styles.ts gives a reasonable default that fits most
+    // tweets without scrollbars.
+    const safe = escapeAttr(tweetId);
+    return `<div class="cms-embed cms-embed-twitter"><iframe loading="lazy" src="https://platform.twitter.com/embed/Tweet.html?id=${safe}" title="Tweet" frameborder="0" scrolling="no" allowfullscreen></iframe></div>`;
   },
-  renderEditorPreview(tweetUrl) {
-    const safe = escapeAttr(tweetUrl);
-    return `<div class="cms-embed-placeholder"><strong>Tweet</strong><br/><a href="${safe}" target="_blank" rel="noreferrer">${safe}</a><br/><small>Preview loads on the published page.</small></div>`;
-  },
-  // widgets.js scans the DOM at load and rewrites every blockquote it
-  // finds. async + defer so it never blocks first paint. Charset is
-  // mandatory per Twitter's docs — they choke without it.
-  bodyScript: `<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>`,
 };
 
 const spotify: EmbedProvider = {
@@ -141,10 +150,6 @@ const spotify: EmbedProvider = {
   renderHtml(idPath) {
     const safe = escapeAttr(idPath);
     return `<div class="cms-embed cms-embed-spotify"><iframe loading="lazy" src="https://open.spotify.com/embed/${safe}" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>`;
-  },
-  renderEditorPreview(idPath) {
-    const safe = escapeAttr(idPath);
-    return `<iframe loading="lazy" src="https://open.spotify.com/embed/${safe}" frameborder="0" allowfullscreen></iframe>`;
   },
 };
 

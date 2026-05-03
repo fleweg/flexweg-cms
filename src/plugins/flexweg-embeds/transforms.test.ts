@@ -31,13 +31,12 @@ describe("provider URL parsers", () => {
     expect(PROVIDERS.vimeo.parseUrl("https://vimeo.com/channels/staffpicks")).toBeNull();
   });
 
-  it("Twitter — accepts twitter.com and x.com status URLs", () => {
+  it("Twitter — extracts the numeric tweet id from twitter.com and x.com URLs", () => {
     const tw = PROVIDERS.twitter;
-    expect(tw.parseUrl("https://twitter.com/jack/status/20")).toBe(
-      "https://twitter.com/jack/status/20",
-    );
-    expect(tw.parseUrl("https://x.com/elon/status/1234567890")).toBe(
-      "https://x.com/elon/status/1234567890",
+    expect(tw.parseUrl("https://twitter.com/jack/status/20")).toBe("20");
+    expect(tw.parseUrl("https://x.com/elon/status/1234567890")).toBe("1234567890");
+    expect(tw.parseUrl("https://x.com/officialjoel4_/status/2050718225923752234")).toBe(
+      "2050718225923752234",
     );
     expect(tw.parseUrl("https://x.com/elon")).toBeNull();
   });
@@ -80,41 +79,28 @@ describe("transformBodyHtml", () => {
 });
 
 describe("getDetectedBodyScripts", () => {
-  it("emits Twitter widgets.js exactly once when a tweet is embedded", () => {
-    transformBodyHtml(
-      '<div data-cms-embed="twitter" data-id="https://x.com/jack/status/20" data-url="https://x.com/jack/status/20"></div>',
-    );
-    const scripts = getDetectedBodyScripts();
-    expect(scripts).toContain("platform.twitter.com/widgets.js");
-    // Single occurrence — the script tag appears once in the output.
-    expect(scripts.match(/platform\.twitter\.com\/widgets\.js/g)?.length).toBe(1);
-  });
+  // Every shipped provider currently uses a self-contained iframe
+  // (no host-side runtime script). The dedup mechanism is still wired
+  // up — covered by these tests — but the assertions reflect the
+  // current "no scripts emitted" reality. Re-add provider-specific
+  // assertions when a JS-needing provider (Instagram, TikTok) lands.
 
-  it("dedupes when several tweets are embedded on the same page", () => {
+  it("returns an empty string for iframe-only embeds", () => {
     transformBodyHtml(
       [
-        '<div data-cms-embed="twitter" data-id="https://x.com/jack/status/20" data-url="https://x.com/jack/status/20"></div>',
-        '<div data-cms-embed="twitter" data-id="https://x.com/elon/status/100" data-url="https://x.com/elon/status/100"></div>',
-        '<div data-cms-embed="twitter" data-id="https://x.com/foo/status/300" data-url="https://x.com/foo/status/300"></div>',
+        '<div data-cms-embed="youtube" data-id="dQw4w9WgXcQ"></div>',
+        '<div data-cms-embed="vimeo" data-id="12345"></div>',
+        '<div data-cms-embed="twitter" data-id="2050718225923752234"></div>',
+        '<div data-cms-embed="spotify" data-id="track/abc"></div>',
       ].join("\n"),
-    );
-    const scripts = getDetectedBodyScripts();
-    expect(scripts.match(/platform\.twitter\.com\/widgets\.js/g)?.length).toBe(1);
-  });
-
-  it("returns an empty string when only iframe-only embeds are used", () => {
-    transformBodyHtml(
-      '<div data-cms-embed="youtube" data-id="dQw4w9WgXcQ"></div><div data-cms-embed="vimeo" data-id="12345"></div>',
     );
     expect(getDetectedBodyScripts()).toBe("");
   });
 
   it("resets state between successive transforms (no bleed across pages)", () => {
-    transformBodyHtml(
-      '<div data-cms-embed="twitter" data-id="https://x.com/jack/status/20"></div>',
-    );
-    expect(getDetectedBodyScripts()).toContain("widgets.js");
     transformBodyHtml('<div data-cms-embed="youtube" data-id="abc"></div>');
+    expect(getDetectedBodyScripts()).toBe("");
+    transformBodyHtml("<p>Plain text.</p>");
     expect(getDetectedBodyScripts()).toBe("");
   });
 });

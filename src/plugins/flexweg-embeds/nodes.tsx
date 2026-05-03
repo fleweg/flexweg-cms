@@ -30,42 +30,51 @@ export function createEmbedNode(provider: EmbedProvider) {
     selectable: true,
     draggable: true,
 
+    // Per-attribute parseHTML/renderHTML pin each Tiptap attr to its
+    // own `data-*` counterpart. Without these overrides Tiptap's
+    // default mapper would also emit attrs named `id="..."` /
+    // `url="..."`, where the former collides with HTML's native `id`
+    // attribute and the latter is meaningless on a <div>. The collision
+    // caused round-tripped nodes to come back with a non-string `id`
+    // (the DOM element's id property leaked into node.attrs.id),
+    // crashing renderEditorPreview.
     addAttributes() {
       return {
-        // Public URL the user pasted. Kept around so the inspector can
-        // surface the original input even after the parsed id is also
-        // stored. Optional in the marker (re-derivable from `id`).
-        url: { default: "" },
-        // Provider-specific identifier extracted from `url` —
-        // see provider.parseUrl for shape.
-        id: { default: "" },
+        url: {
+          default: "",
+          // Fall back to `url` for posts saved by the buggy initial
+          // version of this plugin (which let Tiptap auto-emit `url`
+          // as a plain HTML attribute alongside the data-* version).
+          parseHTML: (el: HTMLElement) =>
+            el.getAttribute("data-url") ?? el.getAttribute("url") ?? "",
+          renderHTML: (attrs: Record<string, unknown>) =>
+            attrs.url ? { "data-url": String(attrs.url) } : {},
+        },
+        id: {
+          default: "",
+          // Same fallback story for `id`. Reading the legacy plain
+          // attribute is scoped to divs already matched by the
+          // rule-level selector, so no collision with arbitrary HTML
+          // ids elsewhere in the document.
+          parseHTML: (el: HTMLElement) =>
+            el.getAttribute("data-id") ?? el.getAttribute("id") ?? "",
+          renderHTML: (attrs: Record<string, unknown>) =>
+            attrs.id ? { "data-id": String(attrs.id) } : {},
+        },
       };
     },
 
     parseHTML() {
-      return [
-        {
-          tag: `div[data-cms-embed="${provider.providerId}"]`,
-          getAttrs: (el) => {
-            if (typeof el === "string") return null;
-            const node = el as HTMLElement;
-            return {
-              url: node.getAttribute("data-url") ?? "",
-              id: node.getAttribute("data-id") ?? "",
-            };
-          },
-        },
-      ];
+      return [{ tag: `div[data-cms-embed="${provider.providerId}"]` }];
     },
 
-    renderHTML({ HTMLAttributes, node }) {
+    renderHTML({ HTMLAttributes }) {
+      // The per-attribute renderHTML callbacks above already merged
+      // `data-id` / `data-url` into HTMLAttributes; we only need to
+      // tag the marker with the provider id here.
       return [
         "div",
-        mergeAttributes(HTMLAttributes, {
-          "data-cms-embed": provider.providerId,
-          "data-id": node.attrs.id,
-          "data-url": node.attrs.url,
-        }),
+        mergeAttributes(HTMLAttributes, { "data-cms-embed": provider.providerId }),
       ];
     },
 

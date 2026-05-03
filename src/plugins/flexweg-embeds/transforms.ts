@@ -1,4 +1,5 @@
 import { PROVIDERS } from "./providers";
+import { EMBED_BASELINE_STYLE_TAG } from "./styles";
 
 // Cross-filter coordination state. The publish pipeline is sequential
 // for a given page render (post.html.body runs first, page.body.end
@@ -65,24 +66,12 @@ export function getDetectedBodyScripts(): string {
   return tags.join("\n");
 }
 
-// Baseline styles emitted at most once per page, only when at least
-// one embed was detected. Themes can override these rules with their
-// own `.cms-embed*` selectors but the defaults here make sure iframes
-// look reasonable out of the box (16:9 aspect-ratio, full width,
-// transparent background).
-const BASELINE_STYLE = `<style data-cms-embed-styles>
-.cms-embed{aspect-ratio:16/9;max-width:100%;margin:1.5rem 0;background:transparent;}
-.cms-embed iframe{width:100%;height:100%;border:0;display:block;}
-.cms-embed-spotify{aspect-ratio:auto;height:152px;}
-.cms-embed-placeholder{display:block;padding:1rem;border:1px dashed currentColor;border-radius:.5rem;font-size:.875rem;line-height:1.4;opacity:.7;}
-.twitter-tweet{max-width:550px;margin:1.5rem auto;}
-</style>`;
-
 // Returns the head <style> block when at least one embed was used on
 // the page; empty string otherwise. Read by the page.head.extra
 // filter chain. Single output regardless of how many embeds appear.
+// The CSS itself is shared with the admin editor via styles.ts.
 export function getDetectedHeadStyles(): string {
-  return detectedProviders.size > 0 ? BASELINE_STYLE : "";
+  return detectedProviders.size > 0 ? EMBED_BASELINE_STYLE_TAG : "";
 }
 
 // Test-only helper: lets unit tests reset module state between cases.

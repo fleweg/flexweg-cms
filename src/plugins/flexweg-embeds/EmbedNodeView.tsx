@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import type { EmbedProvider } from "./providers";
+import { loadScriptOnce } from "./scriptLoader";
 import { cn } from "../../lib/utils";
 
 interface EmbedNodeViewProps extends NodeViewProps {
@@ -14,14 +15,49 @@ interface EmbedNodeViewProps extends NodeViewProps {
 //     paste straight into the block, mirroring Gutenberg's empty-
 //     embed UX. Once a valid URL is entered, attrs are written and
 //     the view flips to the preview.
-//   • Filled — renders the provider's renderEditorPreview HTML inside
-//     a sandboxed iframe-style container so the editor visually
-//     matches the published page.
+//   • Filled — renders provider.renderEditorPreview (or renderHtml as
+//     fallback) and, for providers that need a runtime script (kept
+//     as an extension point for future Instagram / TikTok blocks),
+//     lazy-loads the script then calls provider.attachEditor.
 export function EmbedNodeView({ node, updateAttributes, selected, provider }: EmbedNodeViewProps) {
   const { t } = useTranslation("flexweg-embeds");
-  const id = (node.attrs.id as string) || "";
-  const [draftUrl, setDraftUrl] = useState((node.attrs.url as string) || "");
+  // Coerce defensively — older posts (or attrs round-tripped through
+  // an HTML pass that turned them into something unexpected) might
+  // hand us anything but a string here. An empty string puts the
+  // NodeView into its "paste a URL" empty state, which is recoverable;
+  // throwing inside renderHtml is not.
+  const id = typeof node.attrs.id === "string" ? node.attrs.id : "";
+  const initialUrl = typeof node.attrs.url === "string" ? node.attrs.url : "";
+  const [draftUrl, setDraftUrl] = useState(initialUrl);
   const [error, setError] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Wire the in-editor preview to the provider's optional runtime
+  // script. Currently every shipped provider uses a self-contained
+  // iframe (no editorScript) so this effect is a no-op for them; the
+  // hook is preserved so future providers (Instagram embed.js, …)
+  // can plug in without changes here.
+  useEffect(() => {
+    if (!id || !previewRef.current) return;
+    if (!provider.editorScript) {
+      provider.attachEditor?.(previewRef.current);
+      return;
+    }
+    const target = previewRef.current;
+    let cancelled = false;
+    loadScriptOnce(provider.editorScript)
+      .then(() => {
+        if (cancelled) return;
+        provider.attachEditor?.(target);
+      })
+      .catch(() => {
+        // Script load failures fall back to the un-upgraded preview
+        // (HTML supplied by renderHtml). Better than crashing.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, provider]);
 
   function commitUrl() {
     const trimmed = draftUrl.trim();
@@ -38,6 +74,14 @@ export function EmbedNodeView({ node, updateAttributes, selected, provider }: Em
     setError(null);
     updateAttributes({ url: trimmed, id: parsed });
   }
+
+  // Use the editor-specific preview when the provider supplies one,
+  // otherwise fall back to renderHtml — same markup as the published
+  // page, which thanks to the .cms-embed* CSS injected at module-load
+  // time looks identical inside the editor.
+  const previewHtml = id
+    ? (provider.renderEditorPreview ?? provider.renderHtml)(id)
+    : "";
 
   return (
     <NodeViewWrapper
@@ -56,13 +100,18 @@ export function EmbedNodeView({ node, updateAttributes, selected, provider }: Em
       </div>
       {id ? (
         <div
-          // Editor previews are pre-built HTML strings (iframes /
-          // placeholders) supplied by each provider. Treated as trusted
-          // because providers ship inside the bundle — never reflect
-          // user URLs into raw HTML without escaping (handled in
-          // providers.ts).
-          className="cms-embed-preview aspect-video overflow-hidden bg-surface-50 dark:bg-surface-950 [&_iframe]:h-full [&_iframe]:w-full"
-          dangerouslySetInnerHTML={{ __html: provider.renderEditorPreview(id) }}
+          ref={previewRef}
+          // Editor previews are pre-built HTML strings supplied by
+          // each provider — treated as trusted because providers ship
+          // inside the bundle and renderHtml escapes user input via
+          // escapeAttr.
+          //
+          // The wrapper itself is unstyled (display: block, padding
+          // 0) — the .cms-embed* class on the inner div carries the
+          // sizing rules (aspect ratio for videos, fixed height for
+          // tweets, etc.).
+          className="cms-embed-preview overflow-hidden bg-surface-50 px-3 py-2 dark:bg-surface-950"
+          dangerouslySetInnerHTML={{ __html: previewHtml }}
         />
       ) : (
         <div className="space-y-2 p-3">

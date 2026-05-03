@@ -9,8 +9,17 @@ import {
   getDetectedHeadStyles,
   transformBodyHtml,
 } from "./transforms";
+import { ensureAdminEmbedStyles } from "./styles";
 
 const PLUGIN_ID = "flexweg-embeds";
+
+// Inject baseline embed CSS into the admin document head once at
+// module load. This is idempotent and ensures iframe-based embed
+// previews (YouTube, Vimeo, Spotify) get their 16:9 aspect ratio
+// inside the editor, matching the published page. Safe in non-
+// browser environments (publisher tests run in jsdom but ensure*
+// guards against missing document).
+ensureAdminEmbedStyles();
 
 export const manifest: PluginManifest = {
   id: PLUGIN_ID,
