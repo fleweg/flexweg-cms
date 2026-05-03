@@ -18,12 +18,17 @@ export function Card({ post }: { post: CardPost }) {
             <img src={heroSrc} alt={post.hero?.alt ?? ""} loading="lazy" />
           </div>
         )}
-        {post.category && (
-          <p className="card-post__eyebrow">{post.category.name}</p>
-        )}
-        <h3 className="card-post__title">{post.title}</h3>
-        {post.excerpt && <p className="card-post__excerpt">{post.excerpt}</p>}
-        {post.dateLabel && <p className="card-post__meta">{post.dateLabel}</p>}
+        {/* Body wrapper so the card's outer chrome (background +
+            border + padding) frames the text content uniformly with
+            the hero split variants and the cms-card-default block. */}
+        <div className="card-post__body">
+          {post.category && (
+            <p className="card-post__eyebrow">{post.category.name}</p>
+          )}
+          <h3 className="card-post__title">{post.title}</h3>
+          {post.excerpt && <p className="card-post__excerpt">{post.excerpt}</p>}
+          {post.dateLabel && <p className="card-post__meta">{post.dateLabel}</p>}
+        </div>
       </a>
     </article>
   );

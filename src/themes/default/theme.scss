@@ -382,24 +382,33 @@ body.burger-open {
 }
 
 // ─── Card (listings) ───────────────────────────────────────────────
-// Image stays in full color; a subtle scale-up on hover is the only
-// affordance, keeping the editorial feel without the grayscale trick.
+// Shares the same chrome as the hero split variants: subtle
+// surface-low background + 1px outline-variant border + padded body.
+// Image is flush with the card's top edge; on hover the image scales
+// 1.03 and the title shifts to the secondary accent.
 .card-post {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-low);
+  border: 1px solid var(--color-outline-variant);
+  overflow: hidden;
+  height: 100%;
 }
 
 .card-post__link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   text-decoration: none;
   color: inherit;
-  display: block;
 }
 
 .card-post__media {
   aspect-ratio: 16 / 9;
   background: var(--color-surface-high);
   overflow: hidden;
-  margin-bottom: 20px;
-  border-radius: var(--radius);
+  // No bottom margin — body wrapper handles the spacing and the
+  // image now sits flush with the card top edge.
 }
 
 .card-post__media img {
@@ -411,6 +420,17 @@ body.burger-open {
 
 .card-post:hover .card-post__media img {
   transform: scale(1.03);
+}
+
+// Body wrapper — pads every text element uniformly. flex+column lets
+// the meta line use `margin-top: auto` to anchor at the bottom of
+// the card (keeps multi-card grids visually aligned regardless of
+// excerpt length).
+.card-post__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px;
 }
 
 .card-post__eyebrow {
@@ -455,7 +475,10 @@ body.burger-open {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-on-surface-muted);
-  margin: 0;
+  // margin-top: auto pins the date to the bottom of the body so
+  // cards in a grid stay vertically aligned even with variable-
+  // length excerpts.
+  margin: auto 0 0 0;
 }
 
 // ─── Hero featured (home) ──────────────────────────────────────────
@@ -1282,6 +1305,22 @@ a.author-bio__name:hover {
    All sizing rules are mobile-first; the `md:` layer (>=768px) opens
    the multi-column layouts and side-by-side hero variants. */
 
+/* Anchor reset — block UIs rely on color shifts / hover affordances
+   instead of underlines. Resets the browser's default text-decoration
+   so links inside block markup (which lives inside .page-body on
+   static-home pages) don't pick up the underline that markdown body
+   links inherit. Block elements that explicitly want an underline
+   can override locally. */
+.cms-hero a,
+.cms-card a,
+.cms-cta a,
+.cms-categories a,
+.cms-list-block a,
+.cms-list-header a,
+.card-post a {
+  text-decoration: none;
+}
+
 /* Hero ─────────────────────────────────────────────────────────── */
 .cms-hero {
   position: relative;
@@ -1589,7 +1628,6 @@ a.author-bio__name:hover {
   aspect-ratio: 16 / 9;
   background: var(--color-surface-mid);
   overflow: hidden;
-  margin-bottom: 16px;
 }
 .cms-card-image {
   width: 100%;
@@ -1640,6 +1678,31 @@ a.author-bio__name:hover {
   font-size: 11px;
   letter-spacing: 0.05em;
   color: var(--color-on-surface-muted);
+}
+
+// Default card variant — same chrome language as .card-post and the
+// hero split variants. Image flush to the top edge, body padded
+// inside the card. Compact / list / numbered variants stay on their
+// own (different visual treatments).
+.cms-card-default {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-low);
+  border: 1px solid var(--color-outline-variant);
+  overflow: hidden;
+  height: 100%;
+}
+.cms-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px;
+}
+// meta pinned to the bottom so cards in a grid line up regardless
+// of varying excerpt lengths above.
+.cms-card-body .cms-card-meta {
+  margin-top: auto;
+  padding-top: 8px;
 }
 /* Compact card (single line) */
 .cms-card-compact {

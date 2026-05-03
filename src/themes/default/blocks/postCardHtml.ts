@@ -88,13 +88,16 @@ export function renderPostItemHtml({
 
   // cards (default) and slider share the same item shape — the
   // parent container's CSS class controls layout (grid vs scroller).
+  // Text content lives inside .cms-card-body so the card chrome
+  // (background + border) can pad it consistently. Image stays flush
+  // to the top.
   const image = imageUrl
     ? `<div class="cms-card-image-wrap"><img class="cms-card-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></div>`
     : "";
   const excerpt = post.excerpt
     ? `<p class="cms-card-excerpt">${escapeText(post.excerpt)}</p>`
     : "";
-  return `<a href="${escapeAttr(url)}" class="cms-card cms-card-default">${image}${categoryLabel}<h4 class="cms-card-title">${escapeText(post.title)}</h4>${excerpt}${meta}</a>`;
+  return `<a href="${escapeAttr(url)}" class="cms-card cms-card-default">${image}<div class="cms-card-body">${categoryLabel}<h4 class="cms-card-title">${escapeText(post.title)}</h4>${excerpt}${meta}</div></a>`;
 }
 
 // Wraps an array of pre-rendered item HTML in the variant-appropriate
