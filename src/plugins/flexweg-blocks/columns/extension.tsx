@@ -1,6 +1,8 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
+import { Columns3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Minimum / maximum number of columns exposed to the user. Outside
 // that range the layout breaks visually — at 1 col it's a no-op, at
@@ -95,23 +97,42 @@ export const Column = Node.create({
   },
 });
 
-// React NodeView for the container. The grid layout is applied to
-// NodeViewContent — NOT to the outer NodeViewWrapper — so the
-// columns are direct children of the grid container. Putting the
-// grid class on the outer wrapper made <NodeViewContent>'s own
-// wrapper element (which Tiptap inserts between Wrapper and the
-// column children) the only direct child, breaking the layout.
+// React NodeView for the container. Two visible parts:
+//
+//   • A header strip with the block label + count — gives the user a
+//     stable click target to select the whole columns block
+//     (matching how the embed blocks surface their identity).
+//   • A grid host that holds the columns. Tiptap-React injects two
+//     intermediate wrappers between NodeViewContent and the actual
+//     column NodeViewWrappers (`[data-node-view-content-react]` →
+//     `.react-renderer`). The styles.ts CSS applies `display: contents`
+//     to both so the column elements end up as direct grid children.
+//
+// We deliberately do NOT pass `as="div"` here — older Tiptap React
+// versions leak unknown props onto the rendered element, leaving an
+// `as="div"` attribute on the DOM. Default rendering is already a
+// div, so it's redundant either way.
 function ColumnsContainerView({ node, selected }: NodeViewProps) {
+  const { t } = useTranslation("flexweg-blocks");
   const cols = (node.attrs.cols as number | undefined) ?? DEFAULT_COLS;
   return (
     <NodeViewWrapper
-      className={`cms-columns-host${selected ? " is-selected" : ""}`}
+      className={`cms-columns-block${selected ? " is-selected" : ""}`}
       data-cms-columns-editor="true"
     >
-      <NodeViewContent
-        as="div"
-        className={`cms-columns cms-columns-cols-${cols}`}
-      />
+      <div
+        className="cms-columns-block-header"
+        // The header itself isn't editable — clicks on it select the
+        // node so the user can run the inspector / move buttons.
+        contentEditable={false}
+      >
+        <Columns3 className="cms-columns-block-header-icon" />
+        <span className="cms-columns-block-header-label">
+          {t("blocks.columns.title")}
+        </span>
+        <span className="cms-columns-block-header-meta">{cols}</span>
+      </div>
+      <NodeViewContent className={`cms-columns cms-columns-cols-${cols}`} />
     </NodeViewWrapper>
   );
 }
