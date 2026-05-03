@@ -7,12 +7,19 @@
 // selectors but the defaults below give a clean responsive grid out
 // of the box.
 
+// Custom widths flow through the --cms-columns-template variable.
+// The variable indirection matters for the mobile media query at
+// the bottom: the rule sets `grid-template-columns: 1fr` directly
+// (a regular property), which always wins over an inline style that
+// only sets the variable. Without this trick, an explicit inline
+// `grid-template-columns: 80fr 20fr` would beat the media query and
+// the mobile stack would never trigger.
 export const COLUMNS_BASELINE_CSS = `
-.cms-columns{display:grid;gap:24px;margin:32px 0;}
-.cms-columns-cols-1{grid-template-columns:1fr;}
-.cms-columns-cols-2{grid-template-columns:repeat(2,1fr);}
-.cms-columns-cols-3{grid-template-columns:repeat(3,1fr);}
-.cms-columns-cols-4{grid-template-columns:repeat(4,1fr);}
+.cms-columns{display:grid;gap:24px;margin:32px 0;grid-template-columns:var(--cms-columns-template,1fr 1fr);}
+.cms-columns-cols-1{--cms-columns-template:1fr;}
+.cms-columns-cols-2{--cms-columns-template:repeat(2,1fr);}
+.cms-columns-cols-3{--cms-columns-template:repeat(3,1fr);}
+.cms-columns-cols-4{--cms-columns-template:repeat(4,1fr);}
 .cms-column{min-width:0;}
 .cms-column>*:first-child{margin-top:0;}
 .cms-column>*:last-child{margin-bottom:0;}

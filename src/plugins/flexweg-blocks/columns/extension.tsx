@@ -46,6 +46,43 @@ export const ColumnsContainer = Node.create({
           "data-cols": String(attrs.cols ?? DEFAULT_COLS),
         }),
       },
+      // Per-column width proportions (comma-separated in the DOM,
+      // array in attrs). When undefined the .cms-columns-cols-N
+      // class supplies the default `repeat(N, 1fr)` template via
+      // CSS variable; when defined, an inline style sets the
+      // variable to "<a>fr <b>fr ..." so each column gets its share
+      // proportionally.
+      //
+      // Stored as an array for inspector ergonomics. `fr` units
+      // (rather than %) sidestep the "must sum to 100" constraint
+      // — 80/20 and 50/50 both work, the grid distributes
+      // relatively.
+      widths: {
+        default: null as number[] | null,
+        parseHTML: (el) => {
+          const raw = (el as HTMLElement).getAttribute("data-widths");
+          if (!raw) return null;
+          const arr = raw
+            .split(",")
+            .map((v) => Number.parseFloat(v.trim()))
+            .filter((n) => Number.isFinite(n) && n >= 0);
+          return arr.length > 0 ? arr : null;
+        },
+        renderHTML: (attrs: { widths?: number[] | null }) => {
+          const w = attrs.widths;
+          if (!w || w.length === 0) return {};
+          const csv = w.join(",");
+          // Inline style sets the CSS variable consumed by
+          // .cms-columns. The variable indirection lets the mobile
+          // media query override the template without battling
+          // inline-style specificity. See styles.ts.
+          const template = w.map((n) => `${n}fr`).join(" ");
+          return {
+            "data-widths": csv,
+            style: `--cms-columns-template: ${template};`,
+          };
+        },
+      },
     };
   },
 
@@ -115,6 +152,15 @@ export const Column = Node.create({
 function ColumnsContainerView({ node, selected }: NodeViewProps) {
   const { t } = useTranslation("flexweg-blocks");
   const cols = (node.attrs.cols as number | undefined) ?? DEFAULT_COLS;
+  const widths = node.attrs.widths as number[] | null | undefined;
+  // Same indirection as renderHTML: emit a CSS variable inline so
+  // the mobile media query can override the grid template without
+  // an !important war. When widths is missing we leave the style
+  // off — the .cms-columns-cols-N class supplies the default.
+  const inlineStyle =
+    widths && widths.length > 0
+      ? { ["--cms-columns-template" as string]: widths.map((n) => `${n}fr`).join(" ") }
+      : undefined;
   return (
     <NodeViewWrapper
       className={`cms-columns-block${selected ? " is-selected" : ""}`}
@@ -132,7 +178,10 @@ function ColumnsContainerView({ node, selected }: NodeViewProps) {
         </span>
         <span className="cms-columns-block-header-meta">{cols}</span>
       </div>
-      <NodeViewContent className={`cms-columns cms-columns-cols-${cols}`} />
+      <NodeViewContent
+        className={`cms-columns cms-columns-cols-${cols}`}
+        style={inlineStyle}
+      />
     </NodeViewWrapper>
   );
 }
