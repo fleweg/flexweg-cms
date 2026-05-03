@@ -12,6 +12,7 @@ import { subscribeToMedia } from "../services/media";
 import { subscribeToSettings, DEFAULT_SITE_SETTINGS } from "../services/settings";
 import { subscribeToUsers } from "../services/users";
 import { applyPluginRegistration } from "../plugins";
+import { applyThemeRegistration } from "../themes";
 import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 
 interface CmsDataValue {
@@ -106,7 +107,12 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
           setLoadingFlags((s2) => ({ ...s2, settings: false }));
           // Re-register plugins whenever the enabled-flag map changes. Cheap
           // because the registry just rebuilds against in-memory manifests.
+          // Plugin re-registration ALSO wipes plugin / theme blocks via
+          // resetBlocks(); we then re-register the active theme's blocks
+          // immediately after so the editor's inserter stays consistent
+          // across both plugin toggles and theme switches.
           applyPluginRegistration(s.enabledPlugins ?? {});
+          applyThemeRegistration(s.activeThemeId);
         },
         reportError,
       ),

@@ -766,7 +766,6 @@ body.burger-open {
 .page-body img {
   width: 100%;
   border-radius: var(--radius);
-  margin: 32px 0;
 }
 
 .page-body a {
@@ -1276,4 +1275,453 @@ a.author-bio__name:hover {
 .page-not-found a:hover {
   color: var(--color-secondary);
   border-color: var(--color-secondary);
+}
+
+/* ─── Layout blocks (registered when this theme is active) ────────
+   Markup is generated at publish time by src/themes/default/blocks/*.
+   All sizing rules are mobile-first; the `md:` layer (>=768px) opens
+   the multi-column layouts and side-by-side hero variants. */
+
+/* Hero ─────────────────────────────────────────────────────────── */
+.cms-hero {
+  margin: 32px 0;
+}
+.cms-hero-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.cms-hero-image-wrap {
+  width: 100%;
+  background: var(--color-surface-mid);
+  overflow: hidden;
+}
+.cms-hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cms-hero-category {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--color-secondary-container);
+  color: var(--color-on-surface);
+  padding: 4px 8px;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+.cms-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: var(--weight-display);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px 0;
+  color: inherit;
+}
+.cms-hero-excerpt {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-on-surface-variant);
+  margin: 0 0 16px 0;
+  max-width: 60ch;
+}
+.cms-hero-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
+.cms-hero-author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.cms-hero-author-name {
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+/* Variant: image-overlay — image + text on top of it */
+.cms-hero-image-overlay {
+  position: relative;
+}
+.cms-hero-image-overlay .cms-hero-image-wrap {
+  aspect-ratio: 16 / 9;
+}
+.cms-hero-image-overlay .cms-hero-overlay {
+  margin-top: 24px;
+}
+@media (min-width: 768px) {
+  .cms-hero-image-overlay .cms-hero-image-wrap {
+    aspect-ratio: 21 / 9;
+  }
+}
+/* Variants: split-left / split-right — image and text side by side */
+.cms-hero-split-left,
+.cms-hero-split-right {
+  .cms-hero-link {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+  .cms-hero-image-wrap {
+    aspect-ratio: 4 / 3;
+  }
+}
+@media (min-width: 768px) {
+  .cms-hero-split-left .cms-hero-link,
+  .cms-hero-split-right .cms-hero-link {
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .cms-hero-split-right .cms-hero-link {
+    direction: rtl;
+  }
+  .cms-hero-split-right .cms-hero-link > * {
+    direction: ltr;
+  }
+}
+/* Variant: minimal — text only, centered */
+.cms-hero-minimal .cms-hero-link {
+  text-align: center;
+  max-width: 720px;
+  margin: 48px auto;
+}
+.cms-hero-minimal .cms-hero-author {
+  justify-content: center;
+}
+
+/* Posts list / Category posts ───────────────────────────────────── */
+.cms-list-block {
+  margin: 48px 0;
+}
+.cms-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+.cms-list-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: var(--weight-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.cms-list-see-more {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+}
+.cms-list-see-more:hover {
+  color: var(--color-primary);
+}
+
+/* List container variants */
+.cms-list-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+@media (min-width: 768px) {
+  .cms-list-cards.cms-list-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cms-list-cards.cms-list-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cms-list-cards.cms-list-cols-4 { grid-template-columns: repeat(4, 1fr); }
+}
+.cms-list-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.cms-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cms-list-numbered {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cms-list-slider {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  /* Hide horizontal scrollbar visual noise */
+  scrollbar-width: thin;
+}
+.cms-list-slider > .cms-card {
+  scroll-snap-align: start;
+  flex: 0 0 280px;
+}
+@media (min-width: 768px) {
+  .cms-list-slider > .cms-card {
+    flex: 0 0 360px;
+  }
+}
+
+/* Card item variants */
+.cms-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.cms-card-image-wrap {
+  aspect-ratio: 16 / 9;
+  background: var(--color-surface-mid);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.cms-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.cms-card:hover .cms-card-image {
+  transform: scale(1.03);
+}
+.cms-card-category {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-muted);
+  margin-bottom: 6px;
+}
+.cms-card-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: var(--weight-heading);
+  line-height: 1.3;
+  margin: 0 0 8px 0;
+  color: var(--color-on-surface);
+  transition: color 0.2s ease;
+}
+.cms-card:hover .cms-card-title {
+  color: var(--color-secondary);
+}
+.cms-card-excerpt {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-on-surface-variant);
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cms-card-meta {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-muted);
+}
+/* Compact card (single line) */
+.cms-card-compact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+.cms-card-compact .cms-card-title {
+  font-size: 16px;
+  font-weight: var(--weight-heading);
+  margin: 0;
+  flex: 1;
+  font-family: var(--font-sans);
+}
+/* Numbered card */
+.cms-card-numbered {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.cms-card-number {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-outline-variant);
+  line-height: 1;
+}
+.cms-card-numbered .cms-card-title {
+  font-size: 16px;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-heading);
+  line-height: 1.3;
+  margin: 0;
+}
+.cms-card-numbered .cms-card-meta {
+  margin-top: 4px;
+  display: block;
+}
+/* List variant card (image absent, prose-heavy) */
+.cms-card-list {
+  display: block;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+.cms-card-list:last-child {
+  border-bottom: none;
+}
+
+/* CTA card ─────────────────────────────────────────────────────── */
+.cms-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  margin: 32px 0;
+}
+.cms-cta-light {
+  background: var(--color-surface-mid);
+  color: var(--color-on-surface);
+}
+.cms-cta-dark {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.cms-cta-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: var(--weight-heading);
+  line-height: 1.3;
+  margin: 0;
+}
+.cms-cta-description {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.85;
+}
+.cms-cta-button {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 2px solid currentColor;
+  padding-bottom: 4px;
+  text-decoration: none;
+  color: inherit;
+  margin-top: 8px;
+  transition: opacity 0.2s ease;
+}
+.cms-cta-button:hover {
+  opacity: 0.7;
+}
+@media (min-width: 768px) {
+  .cms-cta {
+    padding: 40px;
+  }
+  /* When 3 CTAs in a row: equal-width grid */
+  .cms-cta + .cms-cta + .cms-cta {
+    /* No-op — relies on the publisher emitting wrappers if grid behavior
+       is desired. For now CTAs stack; future "Columns" container will
+       handle multi-CTA rows. */
+  }
+}
+
+/* Categories pills ─────────────────────────────────────────────── */
+.cms-categories {
+  margin: 32px 0;
+}
+.cms-categories-title {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-outline-variant);
+  padding-bottom: 12px;
+  margin: 0 0 16px 0;
+}
+.cms-categories-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cms-categories-pill {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: var(--weight-meta);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 9999px;
+  text-decoration: none;
+  color: var(--color-on-surface);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.cms-categories-pill:hover {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.cms-categories-list .cms-categories-items {
+  flex-direction: column;
+  gap: 4px;
+}
+.cms-categories-list .cms-categories-pill {
+  border: none;
+  border-radius: 0;
+  padding: 4px 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+
+/* Spacer ───────────────────────────────────────────────────────── */
+.cms-spacer {
+  display: block;
+}
+.cms-spacer-sm { height: 24px; }
+.cms-spacer-md { height: 48px; }
+.cms-spacer-lg { height: 96px; }
+.cms-spacer-divider {
+  position: relative;
+}
+.cms-spacer-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 1px;
+  background: var(--color-outline-variant);
 }

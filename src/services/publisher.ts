@@ -30,6 +30,7 @@ import { publishMenuJson } from "./menuPublisher";
 import { publishPostsJson } from "./postsJsonPublisher";
 import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { markPostDraft, markPostOnline } from "./posts";
+import { setCurrentPublishContext } from "./publishContext";
 
 export interface PublishLogEntry {
   level: "info" | "success" | "warn" | "error";
@@ -150,9 +151,20 @@ async function renderSingle(post: Post, ctx: PublishContext): Promise<string> {
   const theme = getActiveTheme(ctx.settings.activeThemeId);
   const site = buildSiteContext(ctx);
 
-  const filteredMd = await applyFilters<string>("post.markdown.before", post.contentMarkdown, post);
-  let bodyHtml = renderMarkdown(filteredMd);
-  bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, post);
+  // Expose the full publish context to the post.html.body filter
+  // chain so theme blocks (Hero, Posts list, …) can resolve queries
+  // against posts/terms/media without us having to widen the filter
+  // signature. Cleared in the finally below so a stale ctx never
+  // bleeds into another page or a non-publish code path.
+  setCurrentPublishContext(ctx);
+  let bodyHtml = "";
+  try {
+    const filteredMd = await applyFilters<string>("post.markdown.before", post.contentMarkdown, post);
+    bodyHtml = renderMarkdown(filteredMd);
+    bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, post);
+  } finally {
+    setCurrentPublishContext(null);
+  }
 
   const tags = ctx.terms.filter((t) => post.termIds.includes(t.id) && t.type === "tag");
   const primaryTerm = post.primaryTermId
@@ -210,9 +222,18 @@ async function renderHome(ctx: PublishContext): Promise<string> {
   if (ctx.settings.homeMode === "static-page" && ctx.settings.homePageId) {
     const page = ctx.pages.find((p) => p.id === ctx.settings.homePageId && p.status === "online");
     if (page) {
-      const md = await applyFilters<string>("post.markdown.before", page.contentMarkdown, page);
-      let bodyHtml = renderMarkdown(md);
-      bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, page);
+      // Same publish-context exposure as renderSingle so home-bound
+      // pages can use theme blocks (Hero, Posts list, …) too. The
+      // home page is the most likely place to use them.
+      setCurrentPublishContext(ctx);
+      let bodyHtml = "";
+      try {
+        const md = await applyFilters<string>("post.markdown.before", page.contentMarkdown, page);
+        bodyHtml = renderMarkdown(md);
+        bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, page);
+      } finally {
+        setCurrentPublishContext(null);
+      }
       templateProps = { site, posts: onlinePosts, staticPage: { post: page, bodyHtml } };
     } else {
       templateProps = { site, posts: onlinePosts };

@@ -20,6 +20,13 @@ import { en, fr } from "./i18n";
 import { DEFAULT_THEME_CONFIG, type DefaultThemeConfig } from "./config";
 import { DefaultThemeSettingsPage } from "./SettingsPage";
 import { buildCustomCss } from "./style";
+import { heroBlock } from "./blocks/hero/manifest";
+import { postsListBlock } from "./blocks/postsList/manifest";
+import { categoryPostsBlock } from "./blocks/categoryPosts/manifest";
+import { ctaBlock } from "./blocks/cta/manifest";
+import { categoriesPillsBlock } from "./blocks/categoriesPills/manifest";
+import { spacerBlock } from "./blocks/spacer/manifest";
+import { transformBodyHtml } from "./blocks/transforms";
 
 export const manifest: ThemeManifest<DefaultThemeConfig> = {
   id: "default",
@@ -66,5 +73,28 @@ export const manifest: ThemeManifest<DefaultThemeConfig> = {
     category: CategoryTemplate,
     author: AuthorTemplate,
     notFound: NotFoundTemplate,
+  },
+  // Layout blocks the editor exposes when this theme is active. Each
+  // block ships its own Tiptap node + NodeView + inspector and a
+  // pure publish-time renderer in blocks/<id>/render.ts. The
+  // post.html.body filter below glues them together — see
+  // blocks/transforms.ts for the two-pass dedup pipeline.
+  blocks: [
+    heroBlock,
+    postsListBlock,
+    categoryPostsBlock,
+    ctaBlock,
+    categoriesPillsBlock,
+    spacerBlock,
+  ] as ThemeManifest["blocks"],
+  register(api) {
+    // Single filter: scans the rendered post body for our block
+    // markers and replaces each with its publish-time HTML. Reads
+    // the full PublishContext via setCurrentPublishContext (set by
+    // services/publisher.ts) so blocks can resolve queries against
+    // posts / terms / media without widening the filter signature.
+    api.addFilter<string>("post.html.body", (html, ...rest) =>
+      transformBodyHtml(html, rest[0] as Parameters<typeof transformBodyHtml>[1]),
+    );
   },
 };

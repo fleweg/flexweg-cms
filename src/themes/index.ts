@@ -10,6 +10,8 @@
 
 import { manifest as defaultManifest } from "./default/manifest";
 import i18n from "../i18n";
+import { registerBlock } from "../core/blockRegistry";
+import { pluginApi } from "../core/pluginRegistry";
 import type { ThemeManifest } from "./types";
 
 // Cast each typed manifest to the unknown-config base — same pattern
@@ -48,3 +50,37 @@ function loadThemeTranslations(): void {
 }
 
 loadThemeTranslations();
+
+// Registers every block contributed by the currently-active theme and
+// runs the theme's optional `register(api)` callback so theme-side
+// hooks (e.g. `post.html.body` for block markers) re-attach after the
+// pluginRegistry's reset. Mirrors plugins/index.ts'
+// applyPluginRegistration but for theme-side concerns.
+//
+// The caller (the settings subscription in CmsDataContext) is
+// expected to run applyPluginRegistration FIRST so the filters /
+// blocks registry has been wiped of any previous theme's
+// contributions before we re-add the active theme's set.
+//
+// A swallow-and-log try/catch keeps a single bad block / hook from
+// taking down the whole admin — same defensive pattern as
+// plugins/index.ts.
+export function applyThemeRegistration(activeThemeId: string): void {
+  const theme = getActiveTheme(activeThemeId);
+  if (theme.blocks) {
+    for (const block of theme.blocks) {
+      try {
+        registerBlock(block);
+      } catch (err) {
+        console.error(`Theme "${theme.id}" failed to register block "${block.id}":`, err);
+      }
+    }
+  }
+  if (theme.register) {
+    try {
+      theme.register(pluginApi);
+    } catch (err) {
+      console.error(`Theme "${theme.id}" failed in its register() callback:`, err);
+    }
+  }
+}

@@ -9,6 +9,7 @@ import type {
   Term,
 } from "../core/types";
 import type { ResolvedMenuItem } from "../core/menuResolver";
+import type { BlockManifest } from "../core/blockRegistry";
 
 // Re-export so theme components can keep importing from "../types".
 export type { ResolvedMenuItem };
@@ -198,6 +199,20 @@ export interface ThemeManifest<TConfig = unknown> {
   // overrides (color palette, fonts, etc.) into the published CSS so
   // the customizations survive every sync cycle.
   compileCss?: (config: TConfig) => string;
+  // Editor blocks contributed by this theme. Registered into the
+  // global block registry whenever the theme becomes active and reset
+  // on theme switch (the next theme's blocks replace them). Allows
+  // theme-specific layout primitives (Hero, Posts list, …) that rely
+  // on the theme's own CSS without polluting the registry when an
+  // unrelated theme is active.
+  blocks?: BlockManifest[];
+  // Optional registration callback invoked when the theme becomes
+  // active. Mirrors the plugin pattern — a theme uses this to hook
+  // its own filters (e.g. `post.html.body` to render its block
+  // markers) without scattering side effects through the codebase.
+  // Called AFTER the theme's blocks have been registered, so handlers
+  // can rely on registry availability if needed.
+  register?: (api: import("../core/pluginRegistry").PluginApi) => void;
 }
 
 // Re-exported so theme code only needs one import statement.
