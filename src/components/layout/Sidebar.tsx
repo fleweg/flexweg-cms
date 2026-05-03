@@ -14,6 +14,7 @@ import {
   Settings,
   Sun,
   Users,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,15 @@ interface NavItem {
   hidden?: boolean;
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  // Mobile-only: when true the drawer slides in over the page; when
+  // false it sits off-canvas. Ignored at md+ where the sidebar is
+  // statically positioned and always visible.
+  mobileOpen: boolean;
+  onMobileClose: () => void;
+}
+
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
   const { settings } = useCmsData();
@@ -68,15 +77,46 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="hidden md:flex md:flex-col w-60 shrink-0 border-r border-surface-200 bg-white dark:border-surface-800 dark:bg-surface-900">
+    <>
+      {/* Backdrop visible only when the mobile drawer is open. Tapping
+          it dismisses the drawer (matches the OS-native scrim pattern).
+          Hidden on md+ because the sidebar is always docked. */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden",
+          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        aria-hidden="true"
+        onClick={onMobileClose}
+      />
+      <aside
+        className={cn(
+          // Mobile: fixed off-canvas drawer that slides in via
+          // translate. Desktop (md+): static positioning, always
+          // visible, no transform — explicit `md:translate-x-0`
+          // overrides the closed-state -translate-x-full.
+          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-surface-200 bg-white transition-transform dark:border-surface-800 dark:bg-surface-900",
+          "md:static md:z-auto md:w-60 md:max-w-none md:translate-x-0 md:transition-none",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+        aria-hidden={!mobileOpen}
+      >
       <div className="px-5 h-16 flex items-center gap-2.5 border-b border-surface-200 dark:border-surface-800">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-card">
           <LayoutDashboard className="h-4 w-4 text-white" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-none">{t("common.appName")}</p>
           <p className="text-[11px] text-surface-500 mt-0.5 dark:text-surface-400">Static publisher</p>
         </div>
+        <button
+          type="button"
+          onClick={onMobileClose}
+          aria-label={t("nav.closeMenu")}
+          className="md:hidden rounded-md p-1.5 text-surface-500 hover:bg-surface-100 hover:text-surface-900 dark:text-surface-400 dark:hover:bg-surface-800 dark:hover:text-surface-50"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {items.map(({ to, labelKey, icon: Icon }) => (
@@ -126,6 +166,7 @@ export function Sidebar() {
           {t("common.signOut")}
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

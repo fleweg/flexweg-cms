@@ -57,6 +57,8 @@
     }
   },
   "nav": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
     "dashboard": "Dashboard",
     "posts": "Posts",
     "pages": "Pages",
