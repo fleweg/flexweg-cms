@@ -162,6 +162,16 @@
     "status": {
       "draft": "Draft",
       "online": "Online"
+    },
+    "preview": {
+      "title": "Preview",
+      "rendering": "Rendering preview…",
+      "error": "Preview failed: {{error}}",
+      "viewports": {
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      }
     }
   },
   "pages": {

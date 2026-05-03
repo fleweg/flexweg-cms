@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "lucide-react";
 import type { Editor } from "@tiptap/core";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
@@ -11,6 +11,7 @@ import { EditorTopbar } from "../components/editor/EditorTopbar";
 import { InlineTitle } from "../components/editor/InlineTitle";
 import { InlineSlug } from "../components/editor/InlineSlug";
 import { EditorInspector, InspectorSection } from "../components/editor/EditorInspector";
+import { PreviewModal } from "../components/editor/PreviewModal";
 import { useEditorStyleInjection } from "../hooks/useEditorStyleInjection";
 import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
@@ -31,6 +32,7 @@ import {
   publishPost,
   type PublishLogEntry,
 } from "../services/publisher";
+import { renderPostPreview } from "../services/previewRenderer";
 import { buildAuthorLookup } from "../services/users";
 import { toast } from "../lib/toast";
 import type { Media, Post, SeoMeta } from "../core/types";
@@ -83,6 +85,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const handleEditorReady = useCallback((next: Editor | null) => {
     setEditor(next);
   }, []);
+
+  // Preview modal — controlled by a single Promise<string> that the
+  // modal awaits internally. Set to a fresh promise each Open click
+  // so the modal re-resolves with the current draft state; reset to
+  // null on close so a re-open kicks a new render.
+  const [previewPromise, setPreviewPromise] = useState<Promise<string> | null>(null);
 
   // Hydrate from Firestore record on first match. Only depend on the id +
   // existing.id to avoid resetting fields on every Firestore-driven re-render.
@@ -301,6 +309,58 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     setLogEntries((prev) => [...prev, entry]);
   }
 
+  // Builds a synthetic Post from the current editor state and hands
+  // it to the preview pipeline. Both new and existing posts go through
+  // the same path — for new ones we mint a synthetic id so blocks that
+  // reference posts by id stay self-consistent during the render. The
+  // returned promise feeds the modal which paints a loading state
+  // until it resolves.
+  function openPreview() {
+    const termIds = primaryTermId ? [primaryTermId, ...tagIds] : [...tagIds];
+    const seo: SeoMeta = {};
+    if (seoTitle.trim()) seo.title = seoTitle.trim();
+    if (seoDescription.trim()) seo.description = seoDescription.trim();
+    const draft: Post = existing
+      ? {
+          ...existing,
+          title,
+          slug: slug || "preview",
+          contentMarkdown,
+          excerpt: excerpt || undefined,
+          termIds,
+          primaryTermId: primaryTermId || undefined,
+          heroMediaId: heroMediaId ?? undefined,
+          seo: Object.keys(seo).length ? seo : undefined,
+        }
+      : {
+          id: "__preview__",
+          type,
+          title,
+          slug: slug || "preview",
+          contentMarkdown,
+          excerpt: excerpt || undefined,
+          authorId: user?.uid ?? "",
+          termIds,
+          primaryTermId: primaryTermId || undefined,
+          heroMediaId,
+          seo: Object.keys(seo).length ? seo : undefined,
+          status: "draft",
+        };
+
+    setPreviewPromise(
+      renderPostPreview({
+        draft,
+        posts,
+        pages,
+        terms: [...categories, ...tags],
+        media,
+        settings,
+        users,
+        authorLookup: buildAuthorLookup(users, media),
+      }),
+    );
+  }
+
   async function pickInlineMedia(): Promise<{ url: string; alt?: string } | null> {
     setShowInlinePicker(true);
     return new Promise((resolve) => {
@@ -352,6 +412,16 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
         }
         right={
           <>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={openPreview}
+              disabled={!title.trim()}
+              title={t("posts.preview.title")}
+            >
+              <Eye className="h-4 w-4" />
+              <span className="hidden md:inline">{t("posts.preview.title")}</span>
+            </button>
             {publishedUrl && (
               <a
                 href={publishedUrl}
@@ -555,6 +625,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
         <MediaPicker
           onPick={(m) => inlinePickerResolveRef.current?.(m)}
           onClose={() => inlinePickerResolveRef.current?.(null)}
+        />
+      )}
+      {previewPromise && (
+        <PreviewModal
+          htmlPromise={previewPromise}
+          onClose={() => setPreviewPromise(null)}
         />
       )}
     </>

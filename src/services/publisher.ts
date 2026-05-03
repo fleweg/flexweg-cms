@@ -146,6 +146,28 @@ function postToCardData(post: Post, ctx: PublishContext): CardPost {
   };
 }
 
+// Public entry point for the editor's Preview modal. Renders the
+// post's HTML using the same pipeline that produces the published
+// page — same filters, same template, same plugin hooks — without
+// any side effect on Firestore or Flexweg. The caller is expected to
+// have built a `ctx` whose posts/pages array contains the *draft*
+// version of `post` so unsaved edits show up.
+//
+// Routing: when the post is the page bound to the static home, the
+// home template is what the user sees on the public site, so we
+// dispatch to renderHome instead of renderSingle. Listing pages
+// (category, author archives) aren't reachable via this entry — they
+// are just static lists of cards driven by the same posts array.
+export async function renderPreviewHtml(
+  post: Post,
+  ctx: PublishContext,
+): Promise<string> {
+  if (isStaticHome(post, ctx.settings)) {
+    return renderHome(ctx);
+  }
+  return renderSingle(post, ctx);
+}
+
 // Renders a single post or page to HTML, ready to upload.
 async function renderSingle(post: Post, ctx: PublishContext): Promise<string> {
   const theme = getActiveTheme(ctx.settings.activeThemeId);

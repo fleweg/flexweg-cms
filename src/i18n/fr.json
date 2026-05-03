@@ -162,6 +162,16 @@
     "status": {
       "draft": "Brouillon",
       "online": "En ligne"
+    },
+    "preview": {
+      "title": "Aperçu",
+      "rendering": "Génération de l'aperçu…",
+      "error": "Échec de l'aperçu : {{error}}",
+      "viewports": {
+        "mobile": "Mobile",
+        "tablet": "Tablette",
+        "desktop": "Bureau"
+      }
     }
   },
   "pages": {
