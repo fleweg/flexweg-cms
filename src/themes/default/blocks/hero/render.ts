@@ -41,6 +41,27 @@ function resolveFeatured(attrs: HeroAttrs, env: RenderEnv): Post | null {
   return candidates[0] ?? null;
 }
 
+// Renders the hero section. Markup pattern (every variant):
+//
+//   <section class="cms-hero cms-hero-<variant>">
+//     [<div class="cms-hero-image-wrap">
+//        <a href="<post>" tabindex="-1" aria-hidden="true">
+//          <img class="cms-hero-image" />
+//        </a>
+//      </div>]
+//     <div class="cms-hero-content">
+//       <a class="cms-hero-category" href="<term>">…</a>
+//       <h2 class="cms-hero-title"><a href="<post>">…</a></h2>
+//       <p class="cms-hero-excerpt">…</p>
+//       <div class="cms-hero-author">…</div>
+//     </div>
+//   </section>
+//
+// Title and image both link to the post; the image link is hidden
+// from assistive tech (`tabindex=-1` + `aria-hidden`) so the title
+// stays the canonical entry — avoids two adjacent screen-reader
+// announcements for the same destination. Category links to its
+// archive. The minimal variant skips the image wrap entirely.
 export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
   const post = resolveFeatured(attrs, env);
   if (!post) {
@@ -56,8 +77,8 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
     : undefined;
   const url = `/${buildPostUrl({ post, primaryTerm: term })}`;
   const heroMedia = mediaToView(env.ctx.media.get(post.heroMediaId ?? ""));
-  // Pick the largest available variant for hero use — falls through
-  // pickFormat's chain so even legacy single-URL media renders.
+  // Largest available variant for hero use; pickFormat falls through
+  // its chain so even legacy single-URL media renders.
   const imageUrl = pickFormat(heroMedia, "large");
   const author = post.authorId ? env.ctx.authorLookup(post.authorId) : undefined;
 
@@ -65,6 +86,11 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
     showCategory && term
       ? `<a href="/${escapeAttr(buildTermUrl(term))}" class="cms-hero-category">${escapeText(term.name)}</a>`
       : "";
+
+  const titleHtml = `<h2 class="cms-hero-title"><a href="${escapeAttr(url)}">${escapeText(post.title)}</a></h2>`;
+  const excerptHtml = post.excerpt
+    ? `<p class="cms-hero-excerpt">${escapeText(post.excerpt)}</p>`
+    : "";
 
   // Avatar runs through the same pickFormat chain as hero images —
   // falls back gracefully to the avatar's first available variant
@@ -79,35 +105,21 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
         }<span class="cms-hero-author-name">${escapeText(author.displayName)}</span></div>`
       : "";
 
-  const titleHtml = `<h2 class="cms-hero-title">${escapeText(post.title)}</h2>`;
-  const excerptHtml = post.excerpt
-    ? `<p class="cms-hero-excerpt">${escapeText(post.excerpt)}</p>`
+  const imageHtml = imageUrl
+    ? `<div class="cms-hero-image-wrap"><a href="${escapeAttr(url)}" tabindex="-1" aria-hidden="true"><img class="cms-hero-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></a></div>`
     : "";
 
-  const imageHtml = imageUrl
-    ? `<div class="cms-hero-image-wrap"><img class="cms-hero-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></div>`
-    : "";
+  const contentHtml = `<div class="cms-hero-content">${categoryHtml}${titleHtml}${excerptHtml}${authorHtml}</div>`;
 
   const variantClass = `cms-hero cms-hero-${variant}`;
-  // image-overlay puts everything on top of the image; split layouts
-  // sit image and text in side-by-side cells; minimal drops the image
-  // entirely. Markup is the same — only CSS reorganizes via the
-  // variant class.
   if (variant === "minimal") {
     return {
-      html: `<section class="${variantClass}"><a href="${escapeAttr(url)}" class="cms-hero-link">${categoryHtml}${titleHtml}${excerptHtml}${authorHtml}</a></section>`,
+      html: `<section class="${variantClass}">${contentHtml}</section>`,
       consumedPostId: post.id,
     };
   }
-  if (variant === "image-overlay") {
-    return {
-      html: `<section class="${variantClass}"><a href="${escapeAttr(url)}" class="cms-hero-link">${imageHtml}<div class="cms-hero-overlay">${categoryHtml}${titleHtml}${excerptHtml}${authorHtml}</div></a></section>`,
-      consumedPostId: post.id,
-    };
-  }
-  // split-left / split-right
   return {
-    html: `<section class="${variantClass}"><a href="${escapeAttr(url)}" class="cms-hero-link">${imageHtml}<div class="cms-hero-text">${categoryHtml}${titleHtml}${excerptHtml}${authorHtml}</div></a></section>`,
+    html: `<section class="${variantClass}">${imageHtml}${contentHtml}</section>`,
     consumedPostId: post.id,
   };
 }

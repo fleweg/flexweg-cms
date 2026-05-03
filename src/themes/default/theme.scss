@@ -1284,121 +1284,219 @@ a.author-bio__name:hover {
 
 /* Hero ─────────────────────────────────────────────────────────── */
 .cms-hero {
-  margin: 32px 0;
-}
-.cms-hero-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-}
-.cms-hero-image-wrap {
-  width: 100%;
-  background: var(--color-surface-mid);
-  overflow: hidden;
-}
-.cms-hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.cms-hero-category {
-  display: inline-block;
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: var(--weight-meta);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: var(--color-secondary-container);
-  color: var(--color-on-surface);
-  padding: 4px 8px;
-  margin-bottom: 12px;
-  text-decoration: none;
-}
-.cms-hero-title {
-  font-family: var(--font-serif);
-  font-size: clamp(28px, 5vw, 48px);
-  font-weight: var(--weight-display);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  margin: 0 0 12px 0;
-  color: inherit;
-}
-.cms-hero-excerpt {
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--color-on-surface-variant);
-  margin: 0 0 16px 0;
-  max-width: 60ch;
-}
-.cms-hero-author {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--color-on-surface-variant);
-}
-.cms-hero-author-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.cms-hero-author-name {
-  font-weight: 600;
-  color: var(--color-on-surface);
-}
-/* Variant: image-overlay — image + text on top of it */
-.cms-hero-image-overlay {
   position: relative;
-}
-.cms-hero-image-overlay .cms-hero-image-wrap {
-  aspect-ratio: 16 / 9;
-}
-.cms-hero-image-overlay .cms-hero-overlay {
-  margin-top: 24px;
-}
-@media (min-width: 768px) {
-  .cms-hero-image-overlay .cms-hero-image-wrap {
-    aspect-ratio: 21 / 9;
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  margin: 32px 0;
+  background: var(--color-bg);
+
+  // Common content elements ─────────────────────────────────────
+  .cms-hero-image-wrap {
+    background: var(--color-surface-mid);
+    overflow: hidden;
+
+    a {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+  .cms-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .cms-hero-content {
+    padding: 32px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+  .cms-hero-category {
+    display: inline-block;
+    align-self: flex-start;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: var(--weight-meta);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--color-secondary-container);
+    color: var(--color-on-surface);
+    padding: 4px 10px;
+    margin: 0 0 16px 0;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+  .cms-hero-title {
+    font-family: var(--font-serif);
+    font-size: clamp(26px, 4.5vw, 40px);
+    font-weight: var(--weight-display);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px 0;
+
+    a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: var(--color-secondary);
+      }
+    }
+  }
+  .cms-hero-excerpt {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-on-surface-variant);
+    margin: 0 0 20px 0;
+    max-width: 60ch;
+  }
+  .cms-hero-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-on-surface-variant);
+
+    &-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    &-name {
+      font-weight: 700;
+      color: var(--color-on-surface);
+    }
   }
 }
-/* Variants: split-left / split-right — image and text side by side */
+
+// Variant 1: image-overlay — image plein cadre + texte sur fond
+// dégradé sombre. Le ::after applique un voile linéaire qui assure la
+// lisibilité du texte blanc, indépendamment de l'image source.
+.cms-hero-image-overlay {
+  min-height: 320px;
+  align-items: flex-end;
+
+  .cms-hero-image-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.2) 60%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+  .cms-hero-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    color: #ffffff;
+    padding: 32px;
+  }
+  .cms-hero-title a,
+  .cms-hero-author-name {
+    color: #ffffff;
+  }
+  .cms-hero-title a:hover {
+    color: var(--color-secondary-container);
+  }
+  .cms-hero-excerpt {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .cms-hero-author {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  @media (min-width: 768px) {
+    min-height: 480px;
+
+    .cms-hero-content {
+      padding: 48px;
+    }
+  }
+}
+
+// Variants 2 & 3: split-left / split-right — image et texte côte à
+// côte sur ≥ md, empilés sur mobile. L'écart 50/50 et le fond très
+// légèrement gris détachent le bloc du flux du body.
 .cms-hero-split-left,
 .cms-hero-split-right {
-  .cms-hero-link {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-    align-items: center;
-  }
+  background: var(--color-surface-low);
+  border: 1px solid var(--color-outline-variant);
+  flex-direction: column;
+
   .cms-hero-image-wrap {
-    aspect-ratio: 4 / 3;
+    width: 100%;
+    height: 240px;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    min-height: 360px;
+
+    .cms-hero-image-wrap {
+      flex: 0 0 50%;
+      height: auto;
+    }
   }
 }
-@media (min-width: 768px) {
-  .cms-hero-split-left .cms-hero-link,
-  .cms-hero-split-right .cms-hero-link {
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-  }
-  .cms-hero-split-right .cms-hero-link {
-    direction: rtl;
-  }
-  .cms-hero-split-right .cms-hero-link > * {
-    direction: ltr;
+.cms-hero-split-right {
+  @media (min-width: 768px) {
+    flex-direction: row-reverse;
   }
 }
-/* Variant: minimal — text only, centered */
-.cms-hero-minimal .cms-hero-link {
+
+// Variant 4: minimal — pas d'image, contenu centré, taille augmentée
+// pour compenser visuellement l'absence du hero. Trait de séparation
+// en bas pour borner le bloc contre le contenu suivant.
+.cms-hero-minimal {
+  flex-direction: column;
   text-align: center;
-  max-width: 720px;
-  margin: 48px auto;
-}
-.cms-hero-minimal .cms-hero-author {
-  justify-content: center;
+  align-items: center;
+  padding: 48px 16px;
+  border-bottom: 2px solid var(--color-on-surface);
+
+  .cms-hero-content {
+    max-width: 720px;
+    align-items: center;
+    padding: 0;
+  }
+  .cms-hero-category {
+    align-self: center;
+  }
+  .cms-hero-title {
+    font-size: clamp(32px, 6vw, 56px);
+  }
+  .cms-hero-author {
+    justify-content: center;
+  }
+
+  @media (min-width: 768px) {
+    padding: 80px 24px;
+  }
 }
 
 /* Posts list / Category posts ───────────────────────────────────── */
