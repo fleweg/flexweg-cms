@@ -8,6 +8,7 @@ import {
   type SitemapsConfig,
 } from "./generator";
 import { SitemapsSettingsPage } from "./SettingsPage";
+import readme from "./README.md?raw";
 
 // Reads the plugin's effective config out of the publish context's settings.
 // Always falls back to the manifest defaults so a fresh install (no entry
@@ -48,8 +49,10 @@ export const manifest: PluginManifest<SitemapsConfig> = {
   id: "flexweg-sitemaps",
   name: "Flexweg Sitemaps",
   version: "1.0.0",
+  author: "Flexweg",
   description:
     "Generates sitemap-index.xml, per-year sitemaps, an optional Google News sitemap, and a robots.txt that points to them.",
+  readme,
   i18n: { en, fr },
   settings: {
     navLabelKey: "title",

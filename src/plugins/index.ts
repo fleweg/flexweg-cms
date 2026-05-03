@@ -45,6 +45,15 @@ export interface PluginManifest<TConfig = unknown> {
   name: string;
   version: string;
   description?: string;
+  // Plugin author / vendor — surfaced in /admin/#/plugins next to
+  // the version. Free-form string ("Flexweg", company name, GitHub
+  // handle, …) — the admin renders it verbatim.
+  author?: string;
+  // Long-form documentation, typically the plugin's README.md. When
+  // present, the plugins list shows a "Learn more" button that opens
+  // a modal with the rendered Markdown. Imported via Vite's `?raw`
+  // suffix so the file content ships as a string in the bundle.
+  readme?: string;
   register: (api: typeof pluginApi) => void;
   // Optional configuration page for /settings/plugin/<id>.
   settings?: PluginSettingsPageDef<TConfig>;

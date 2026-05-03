@@ -1,5 +1,6 @@
 import type { PluginManifest } from "../index";
 import type { BaseLayoutProps } from "../../themes/types";
+import readme from "./README.md?raw";
 
 // Built-in SEO plugin. Scope is intentionally tiny — it adds extra
 // <head> markup not already covered by the default BaseLayout (most of
@@ -39,7 +40,9 @@ export const manifest: PluginManifest = {
   id: "core-seo",
   name: "SEO",
   version: "1.0.0",
+  author: "Flexweg",
   description: "Adds Twitter card meta tags and a generator hint to every published page.",
+  readme,
   register(api) {
     api.addFilter<string>("page.head.extra", (current, ...rest) => {
       const props = rest[0] as BaseLayoutProps | undefined;

@@ -2,6 +2,7 @@ import type { PluginManifest } from "../index";
 import type { BaseLayoutProps } from "../../themes/types";
 import { en, fr } from "./i18n";
 import { DEFAULT_FAVICON_CONFIG, FaviconSettingsPage, type FaviconConfig } from "./SettingsPage";
+import readme from "./README.md?raw";
 
 const PLUGIN_ID = "flexweg-favicon";
 const FOLDER = "favicon";
@@ -66,8 +67,10 @@ export const manifest: PluginManifest<FaviconConfig> = {
   id: PLUGIN_ID,
   name: "Flexweg Favicon",
   version: "1.0.0",
+  author: "Flexweg",
   description:
     "Upload one square image; the plugin generates every favicon variant (PNG, ICO, Apple touch, PWA manifest), uploads them under /favicon/ on the public site, and injects the matching <link> tags into every published page.",
+  readme,
   i18n: { en, fr },
   settings: {
     navLabelKey: "title",

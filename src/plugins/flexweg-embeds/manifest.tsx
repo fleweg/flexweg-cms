@@ -10,6 +10,7 @@ import {
   transformBodyHtml,
 } from "./transforms";
 import { ensureAdminEmbedStyles } from "./styles";
+import readme from "./README.md?raw";
 
 const PLUGIN_ID = "flexweg-embeds";
 
@@ -25,8 +26,10 @@ export const manifest: PluginManifest = {
   id: PLUGIN_ID,
   name: "Flexweg Embeds",
   version: "1.0.0",
+  author: "Flexweg",
   description:
     "Adds embed blocks (YouTube, Vimeo, Twitter/X, Spotify) to the post editor. Per-page detection injects each provider's runtime script at most once and only when at least one block of that kind is used.",
+  readme,
   i18n: { en, fr },
   register(api) {
     // Each provider becomes one block in the registry. The Tiptap

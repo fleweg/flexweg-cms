@@ -219,7 +219,9 @@
     "disabled": "Disabled",
     "enable": "Enable",
     "disable": "Disable",
-    "configure": "Configure"
+    "configure": "Configure",
+    "author": "author",
+    "learnMore": "Learn more"
   },
   "menus": {
     "title": "Menus",

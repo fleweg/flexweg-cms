@@ -15,6 +15,7 @@ import {
 } from "./generator";
 import { FlexwegRssSettingsPage } from "./SettingsPage";
 import type { PluginManifest } from "../index";
+import readme from "./README.md?raw";
 
 const PLUGIN_ID = "flexweg-rss";
 
@@ -110,8 +111,10 @@ export const manifest: PluginManifest<RssConfig> = {
   id: PLUGIN_ID,
   name: "Flexweg RSS",
   version: "1.0.0",
+  author: "Flexweg",
   description:
     "Generates an RSS 2.0 feed at /rss.xml plus optional per-category feeds, and can list them in the site footer.",
+  readme,
   i18n: { en, fr },
   settings: {
     navLabelKey: "title",
