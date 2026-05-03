@@ -3,6 +3,9 @@ import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types"
 import type { PublishContext } from "./publisher";
 import { renderPreviewHtml } from "./publisher";
 import { getActiveTheme } from "../themes";
+import { buildMenuJson } from "./menuPublisher";
+import { buildPostsJson } from "./postsJsonPublisher";
+import { buildAuthorsJson } from "./authorsJsonPublisher";
 
 interface RenderPostPreviewOpts {
   // The current editor draft. Required fields: id, type, title, slug,
@@ -25,7 +28,8 @@ interface RenderPostPreviewOpts {
 }
 
 // Renders a post's preview HTML using the same pipeline as the
-// publisher, with two preview-specific tweaks applied to the result:
+// publisher, with three preview-specific tweaks applied to the
+// result before it ships to the iframe:
 //
 //   1. The /theme-assets/<id>.css stylesheet link is replaced by an
 //      inline <style> tag carrying the theme's locally-bundled CSS
@@ -33,16 +37,21 @@ interface RenderPostPreviewOpts {
 //      bundled cssText). Lets the preview reflect Theme Settings
 //      changes the user hasn't synced yet.
 //
-//   2. <script src="/theme-assets/<id>-*.js"> tags are stripped.
-//      Their loaders fetch /menu.json and /posts.json from the
-//      published origin which the iframe doesn't have a base for —
-//      stripping is preferable to broken JS errors in the preview's
-//      console. Header / related-posts widgets render empty in V1;
-//      good enough for body / hero / blocks visual review.
+//   2. <script src="/theme-assets/<id>-*.js"> tags are replaced by
+//      inline <script> blocks carrying the manifest's jsText /
+//      jsTextPosts. Same reason as the CSS swap — preview should
+//      reflect un-synced theme JS. The loaders run as-is.
+//
+//   3. A bootstrap <script> is injected into <head> ahead of the
+//      loaders. It pre-computes /data/{menu,posts,authors}.json from
+//      the same builders the publisher uses and patches window.fetch
+//      so the loaders see them on their normal fetch paths. Means
+//      burger menu, branding, related-posts and author bio all
+//      render live in the preview — without touching the loaders.
 export async function renderPostPreview(opts: RenderPostPreviewOpts): Promise<string> {
   const ctx = buildPreviewContext(opts);
   const html = await renderPreviewHtml(opts.draft, ctx);
-  return postProcessForIframe(html, opts.settings);
+  return postProcessForIframe(html, ctx, opts.settings);
 }
 
 // Builds the in-memory PublishContext used by the preview pipeline.
@@ -88,10 +97,15 @@ function upsert(list: Post[], item: Post): Post[] {
   return next;
 }
 
-// Replaces /theme-assets/<id>.css link with the bundled CSS (resolved
-// through compileCss when the theme provides one). Removes any
-// /theme-assets/<id>-*.js script tag — see top-of-file comment.
-function postProcessForIframe(html: string, settings: SiteSettings): string {
+// Replaces /theme-assets/<id>.css link with bundled CSS, replaces
+// the theme JS <script src> tags with inline <script> blocks, and
+// injects a small bootstrap that pre-fills the data the loaders
+// would normally fetch.
+function postProcessForIframe(
+  html: string,
+  ctx: PublishContext,
+  settings: SiteSettings,
+): string {
   const theme = getActiveTheme(settings.activeThemeId);
   // Same resolution path as the Sync flow: defaults merged with the
   // user's stored theme config, then handed to compileCss when the
@@ -119,11 +133,96 @@ function postProcessForIframe(html: string, settings: SiteSettings): string {
     /<link\s+rel="stylesheet"\s+href="[^"]*theme-assets\/[^"]*\.css[^"]*"[^>]*>/g,
     `<style data-cms-preview-css>${css}</style>`,
   );
-  // Strip theme-bundled JS (menu loader, posts loader). These need
-  // /menu.json / /posts.json which aren't reachable from the iframe.
+
+  // Inline the theme JS instead of stripping. Order:
+  //   1. fetch-mock bootstrap (sets window.fetch to return our
+  //      pre-built JSON for the loader paths)
+  //   2. menu-loader (uses fetch internally — picks up our mock)
+  //   3. posts-loader (same)
+  // Bootstrap runs before the loaders thanks to head-injection
+  // before the </head> tag and the loaders living at the bottom of
+  // body — but to be safe we wrap the bootstrap to set up the
+  // override synchronously regardless of insertion point.
+  const bootstrap = buildPreviewBootstrap(ctx, settings);
+
+  // Replace the menu / posts loader <script src> tags with their
+  // inline equivalents. We match by data-attribute or by suffix.
+  if (theme.jsText) {
+    out = out.replace(
+      /<script[^>]+src="[^"]*theme-assets\/[^"]+-menu\.js"[^>]*><\/script>/g,
+      `<script>${theme.jsText}</script>`,
+    );
+  }
+  if (theme.jsTextPosts) {
+    out = out.replace(
+      /<script[^>]+src="[^"]*theme-assets\/[^"]+-posts\.js"[^>]*><\/script>/g,
+      `<script>${theme.jsTextPosts}</script>`,
+    );
+  }
+  // Drop any remaining theme-assets JS tag — defensive net so a
+  // newly added theme script doesn't 404 in the iframe.
   out = out.replace(
     /<script[^>]+src="[^"]*theme-assets\/[^"]+\.js"[^>]*><\/script>/g,
     "",
   );
+
+  // Inject the bootstrap right after the <head> open tag so it runs
+  // before any other script. Falls back to prepending into <html>
+  // if no <head> match (defensive — every theme template has one).
+  if (out.includes("<head>")) {
+    out = out.replace("<head>", `<head>${bootstrap}`);
+  } else {
+    out = bootstrap + out;
+  }
   return out;
+}
+
+// Builds the inline bootstrap script that pre-populates JSON data
+// for the theme's loaders. Three datasets:
+//   - /data/menu.json (used by menu-loader to paint header / drawer)
+//   - /data/posts.json (used by posts-loader for related / latest)
+//   - /data/authors.json (same loader, fills AuthorBio sidebar)
+//
+// We patch window.fetch instead of pre-setting globals because the
+// loaders use plain fetch — leaving the loader source unchanged
+// means they keep working identically on the public site.
+function buildPreviewBootstrap(ctx: PublishContext, settings: SiteSettings): string {
+  const menuJson = buildMenuJson(settings, ctx.posts, ctx.pages, ctx.terms);
+  const postsJson = buildPostsJson(
+    settings,
+    ctx.posts,
+    ctx.pages,
+    ctx.terms,
+    ctx.media,
+  );
+  const authorsJson = buildAuthorsJson(ctx.users, ctx.media, ctx.posts, ctx.pages);
+
+  const payload = {
+    menu: menuJson,
+    posts: postsJson,
+    authors: authorsJson,
+  };
+  // Encode as JSON string and embed inside a <script>. Closing
+  // </script> sequences inside the data would prematurely terminate
+  // the tag — escape the / so the payload stays inert. Same gotcha
+  // as inline <script type="application/json">.
+  const json = JSON.stringify(payload).replace(/<\/script>/g, "<\\/script>");
+
+  return `<script data-cms-preview-bootstrap>(function(){
+var data=${json};
+var origFetch=window.fetch;
+window.fetch=function(input,init){
+  var url=typeof input==='string'?input:(input&&input.url)||'';
+  if(url.indexOf('/data/menu.json')!==-1){
+    return Promise.resolve(new Response(JSON.stringify(data.menu),{headers:{'Content-Type':'application/json'}}));
+  }
+  if(url.indexOf('/data/posts.json')!==-1){
+    return Promise.resolve(new Response(JSON.stringify(data.posts),{headers:{'Content-Type':'application/json'}}));
+  }
+  if(url.indexOf('/data/authors.json')!==-1){
+    return Promise.resolve(new Response(JSON.stringify(data.authors),{headers:{'Content-Type':'application/json'}}));
+  }
+  return origFetch.apply(this,arguments);
+};
+})();</script>`;
 }
