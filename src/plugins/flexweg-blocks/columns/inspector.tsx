@@ -95,13 +95,19 @@ export function ColumnsInspector({ editor }: ColumnsInspectorProps) {
 
     if (!tr.docChanged) return;
     editor.view.dispatch(tr);
-    editor.view.focus();
+    // No editor.view.focus() — focusing the editor here steals
+    // DOM focus from whichever inspector control the user is
+    // interacting with (the cols select, in this case). Tiptap
+    // keeps its selection state across DOM blur events so this
+    // works fine.
   }
 
   function setWidths(next: number[] | null) {
+    // See setColumnCount above and hero/manifest.tsx: .focus()
+    // omitted so per-column width inputs keep DOM focus while
+    // typing.
     editor
       .chain()
-      .focus()
       .updateAttributes(COLUMNS_NODE_NAME, { widths: next })
       .run();
   }

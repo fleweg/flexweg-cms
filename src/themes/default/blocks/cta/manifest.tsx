@@ -42,9 +42,10 @@ function CtaInspector({ editor }: { editor: Editor }) {
   const attrs = { ...DEFAULT_ATTRS, ...(raw.attrs ?? {}) };
 
   function patch(next: Partial<CtaAttrs>) {
+    // See hero/manifest.tsx for why .focus() is omitted: keeps
+    // input focus while typing in the inspector.
     editor
       .chain()
-      .focus()
       .updateAttributes(NODE_NAME, { attrs: { ...attrs, ...next } })
       .run();
   }

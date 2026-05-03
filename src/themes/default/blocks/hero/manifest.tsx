@@ -71,9 +71,13 @@ function HeroInspector({ editor }: HeroInspectorProps) {
   const attrs = { ...DEFAULT_ATTRS, ...(raw.attrs ?? {}) };
 
   function patch(next: Partial<HeroAttrs>) {
+    // No .focus() in the chain — focusing the editor here steals
+    // DOM focus from the inspector input the user is typing into,
+    // dropping every keystroke after the first. Tiptap preserves
+    // its selection state across DOM blur events, so the chain
+    // still targets the right node without an explicit re-focus.
     editor
       .chain()
-      .focus()
       .updateAttributes(NODE_NAME, { attrs: { ...attrs, ...next } })
       .run();
   }

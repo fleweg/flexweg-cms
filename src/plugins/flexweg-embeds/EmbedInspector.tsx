@@ -35,9 +35,13 @@ export function EmbedInspector({ editor, provider }: EmbedInspectorProps) {
   }, [attrs.url, attrs.id]);
 
   function commit() {
+    // No .focus() in the chain — keeps DOM focus on whatever
+    // element the user landed on after blurring the URL input.
+    // Tiptap's own selection state survives DOM blur, so the
+    // chain still targets the right node without re-focusing.
     const trimmed = draft.trim();
     if (!trimmed) {
-      editor.chain().focus().updateAttributes(nodeName, { url: "", id: "" }).run();
+      editor.chain().updateAttributes(nodeName, { url: "", id: "" }).run();
       setError(null);
       return;
     }
@@ -47,7 +51,7 @@ export function EmbedInspector({ editor, provider }: EmbedInspectorProps) {
       return;
     }
     setError(null);
-    editor.chain().focus().updateAttributes(nodeName, { url: trimmed, id: parsed }).run();
+    editor.chain().updateAttributes(nodeName, { url: trimmed, id: parsed }).run();
   }
 
   return (
