@@ -86,6 +86,20 @@ export function renderPostItemHtml({
     return `<a href="${escapeAttr(url)}" class="cms-card cms-card-compact"><span class="cms-card-title">${escapeText(post.title)}</span>${meta}</a>`;
   }
 
+  if (variant === "slider") {
+    // Story-style card: full-bleed image as background, gradient
+    // overlay at the bottom, text on top in white. Falls back to a
+    // solid dark card (no gradient) when the post has no hero — the
+    // .cms-card-slider-no-image modifier disables the ::after layer
+    // so the title sits flat on the solid surface instead of getting
+    // a redundant darkening pass.
+    const sliderImg = imageUrl
+      ? `<div class="cms-card-slider-image-wrap"><img class="cms-card-slider-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></div>`
+      : "";
+    const noImageMod = sliderImg ? "" : " cms-card-slider-no-image";
+    return `<a href="${escapeAttr(url)}" class="cms-card cms-card-slider${noImageMod}">${sliderImg}<div class="cms-card-slider-overlay">${categoryLabel}<h4 class="cms-card-title">${escapeText(post.title)}</h4>${meta}</div></a>`;
+  }
+
   if (variant === "list") {
     const excerpt =
       showExcerpt && post.excerpt

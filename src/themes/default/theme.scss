@@ -1610,11 +1610,86 @@ a.author-bio__name:hover {
 }
 .cms-list-slider > .cms-card {
   scroll-snap-align: start;
-  flex: 0 0 280px;
+  flex: 0 0 240px;
 }
 @media (min-width: 768px) {
   .cms-list-slider > .cms-card {
-    flex: 0 0 360px;
+    flex: 0 0 280px;
+  }
+}
+
+/* Slider card item — story-style (image background, text overlay).
+   Pattern mirrors the Hero image-overlay variant: image absolute-
+   positioned underneath, gradient ::after for legibility, content
+   bottom-anchored on top.
+   The .cms-card-slider-no-image modifier swaps the gradient for a
+   solid dark backdrop when the post has no hero. */
+.cms-card-slider {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  // Aspect-ratio on a fixed-width flex item determines its height —
+  // 4:5 gives a tall portrait card (e.g. 240×300, 280×350) without
+  // becoming overwhelming like full 9:16.
+  aspect-ratio: 4 / 5;
+  background: var(--color-on-surface);
+  color: #ffffff;
+  text-decoration: none;
+}
+.cms-card-slider-image-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.cms-card-slider-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+.cms-card-slider:hover .cms-card-slider-image {
+  transform: scale(1.05);
+}
+.cms-card-slider::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.3) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+// No-image fallback: card sits on the solid backdrop, the gradient
+// would be redundant.
+.cms-card-slider-no-image::after {
+  display: none;
+}
+.cms-card-slider-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .cms-card-category {
+    align-self: flex-start;
+    margin: 0;
+  }
+  .cms-card-title {
+    color: #ffffff;
+    font-size: 16px;
+    line-height: 1.25;
+    margin: 0;
+  }
+  .cms-card-meta {
+    color: rgba(255, 255, 255, 0.85);
   }
 }
 
