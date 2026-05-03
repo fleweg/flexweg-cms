@@ -245,6 +245,17 @@
       "siteUrlHelp": "URL publique de votre site Flexweg sans slash final.",
       "apiBaseUrl": "URL de base de l'API"
     },
+    "editor": {
+      "title": "Éditeur",
+      "help": "Typographie utilisée dans l'éditeur d'articles / pages. Indépendante du thème public.",
+      "fontFamily": "Police",
+      "bodySize": "Taille du corps",
+      "h1Size": "Taille H1",
+      "h2Size": "Taille H2",
+      "h3Size": "Taille H3",
+      "sizeHelp": "Longueur CSS, ex. 16px ou 1rem. Laisser vide pour la valeur par défaut.",
+      "reset": "Réinitialiser"
+    },
     "profile": {
       "title": "Profil",
       "adminLocale": "Langue de l'administration",

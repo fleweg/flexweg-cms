@@ -71,9 +71,14 @@
   }
 }
 
-/* TipTap content styles, scoped to .prose-editor. */
+/* TipTap content styles, scoped to .prose-editor. Font family and
+   text/heading sizes intentionally NOT set here — they come from the
+   inline <style data-cms-editor-style> block injected by
+   useEditorStyleInjection so the user's Settings → Editor preferences
+   take effect without !important fights. Only marges, weights and
+   colors live here. */
 .prose-editor {
-  @apply text-sm text-surface-900 dark:text-surface-100;
+  @apply text-surface-900 dark:text-surface-100;
 }
 .prose-editor:focus-visible {
   @apply ring-2 ring-blue-500/60;
@@ -82,13 +87,13 @@
   @apply mt-2;
 }
 .prose-editor h1 {
-  @apply text-xl font-semibold mt-4;
+  @apply font-semibold mt-4;
 }
 .prose-editor h2 {
-  @apply text-lg font-semibold mt-3;
+  @apply font-semibold mt-3;
 }
 .prose-editor h3 {
-  @apply text-base font-semibold mt-2.5;
+  @apply font-semibold mt-2.5;
 }
 .prose-editor p {
   @apply leading-relaxed;

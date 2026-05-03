@@ -8,13 +8,23 @@ import { cn } from "../../lib/utils";
 // proper styled element. Each option's text uses its own font face,
 // giving the admin a true visual preview.
 //
-// Each option carries its own `fallback` (serif vs sans-serif) so a
-// merged list of serif + sans fonts can render every entry against
-// the right generic family while the Google Fonts fetch is in flight.
+// Each option carries its own `fallback` (serif / sans-serif /
+// monospace) so a merged list of mixed-family fonts can render every
+// entry against the right generic family while the Google Fonts
+// fetch is in flight.
+//
+// Options may also declare a `googleHref` — when present, the picker
+// injects a <link rel="stylesheet"> for that URL on mount so the
+// dropdown row can render in its own font face. Idempotent per URL
+// (deduped via a data-attribute) so re-mounting / swapping option
+// lists doesn't pile up duplicate <link>s.
+
+export type FontFallback = "serif" | "sans-serif" | "monospace";
 
 export interface FontOption {
   name: string;
-  fallback: "serif" | "sans-serif";
+  fallback: FontFallback;
+  googleHref?: string;
 }
 
 interface FontSelectProps {
@@ -33,6 +43,23 @@ export function FontSelect({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Lazy-load any Google Fonts referenced by the options. Each link
+  // tag is keyed by its href so reopening the dropdown or swapping
+  // option sets doesn't add duplicates.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    for (const opt of options) {
+      if (!opt.googleHref) continue;
+      const selector = `link[data-cms-font-preview="${cssEscape(opt.googleHref)}"]`;
+      if (document.querySelector(selector)) continue;
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = opt.googleHref;
+      link.setAttribute("data-cms-font-preview", opt.googleHref);
+      document.head.appendChild(link);
+    }
+  }, [options]);
+
   // Close on outside click. `pointerdown` fires before `click` on the
   // underlying option so a tap on a row closes the dropdown via the
   // option's own handler instead of being swallowed by this listener.
@@ -46,7 +73,7 @@ export function FontSelect({
     return () => document.removeEventListener("pointerdown", onDocPointerDown);
   }, []);
 
-  function familyStack(name: string, fallback: "serif" | "sans-serif"): string {
+  function familyStack(name: string, fallback: FontFallback): string {
     return `"${name.replace(/"/g, '\\"')}", ${fallback}`;
   }
 
@@ -104,4 +131,13 @@ export function FontSelect({
       )}
     </div>
   );
+}
+
+// Minimal CSS attribute selector escape — the URLs we put into
+// data-cms-font-preview can contain `&`, `?`, `=` which are valid in
+// attribute values but need quoting in selectors. We strip everything
+// non-alphanumeric for a safe matcher; collisions are unlikely with
+// our preset list.
+function cssEscape(value: string): string {
+  return value.replace(/[^a-zA-Z0-9]/g, (c) => `\\${c}`);
 }

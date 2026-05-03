@@ -11,6 +11,7 @@ import { EditorTopbar } from "../components/editor/EditorTopbar";
 import { InlineTitle } from "../components/editor/InlineTitle";
 import { InlineSlug } from "../components/editor/InlineSlug";
 import { EditorInspector, InspectorSection } from "../components/editor/EditorInspector";
+import { useEditorStyleInjection } from "../hooks/useEditorStyleInjection";
 import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
 import { PublishLog } from "../components/publishing/PublishLog";
@@ -51,6 +52,11 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const isNew = !id;
   const list = type === "post" ? posts : pages;
   const existing = useMemo(() => list.find((p) => p.id === id), [list, id]);
+
+  // Apply the site-wide editor typography preference. Reads from the
+  // same Firestore subscription that drives the rest of the page, so
+  // any change in Settings → Editor reflects instantly.
+  useEditorStyleInjection(settings.editorStyle);
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");

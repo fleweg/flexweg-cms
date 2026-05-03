@@ -12,7 +12,9 @@ import {
 } from "../services/flexwegConfig";
 import { updateSettings } from "../services/settings";
 import { setUserPreferences } from "../services/users";
-import type { AdminLocale } from "../core/types";
+import { EDITOR_FONT_OPTIONS, DEFAULT_EDITOR_SIZES, SYSTEM_FONT_NAME } from "../core/editorFonts";
+import { FontSelect } from "../components/ui/FontSelect";
+import type { AdminLocale, EditorStyle } from "../core/types";
 
 // Renders the "General" tab inside <SettingsLayout />. Outer page chrome
 // (title + tab strip) lives in the layout, so this component is just the
@@ -90,6 +92,44 @@ export function SettingsPage() {
   async function changeAdminLocale(locale: AdminLocale) {
     await setActiveLocale(locale);
     if (user && record) await setUserPreferences(user.uid, { adminLocale: locale });
+  }
+
+  // Editor typography. Stored alongside other site settings so the
+  // hook that injects the styles into the post editor reads them
+  // through the same Firestore subscription that drives CmsDataContext
+  // — changes propagate without needing a refresh.
+  const [editorStyle, setEditorStyle] = useState<EditorStyle>(settings.editorStyle ?? {});
+  const [savingEditor, setSavingEditor] = useState(false);
+
+  useEffect(() => {
+    setEditorStyle(settings.editorStyle ?? {});
+  }, [settings.editorStyle]);
+
+  function patchEditorStyle(patch: Partial<EditorStyle>) {
+    setEditorStyle((prev) => ({ ...prev, ...patch }));
+  }
+
+  async function saveEditorStyle() {
+    setSavingEditor(true);
+    try {
+      // Trim empties to undefined so the doc stays clean (no
+      // "fontFamily: ''" leftovers). Defaults kick in via the hook.
+      const clean: EditorStyle = {};
+      if (editorStyle.fontFamily) clean.fontFamily = editorStyle.fontFamily;
+      if (editorStyle.bodySize?.trim()) clean.bodySize = editorStyle.bodySize.trim();
+      if (editorStyle.h1Size?.trim()) clean.h1Size = editorStyle.h1Size.trim();
+      if (editorStyle.h2Size?.trim()) clean.h2Size = editorStyle.h2Size.trim();
+      if (editorStyle.h3Size?.trim()) clean.h3Size = editorStyle.h3Size.trim();
+      await updateSettings({
+        editorStyle: Object.keys(clean).length > 0 ? clean : undefined,
+      });
+    } finally {
+      setSavingEditor(false);
+    }
+  }
+
+  function resetEditorStyle() {
+    setEditorStyle({});
   }
 
   return (
@@ -193,6 +233,85 @@ export function SettingsPage() {
           {savingSite && <Loader2 className="h-4 w-4 animate-spin" />}
           {savingSite ? t("common.saving") : t("common.save")}
         </button>
+      </section>
+
+      <section className="card p-4 space-y-3">
+        <h2 className="font-semibold">{t("settings.editor.title")}</h2>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("settings.editor.help")}
+        </p>
+        <div className="max-w-xs">
+          <label className="label">{t("settings.editor.fontFamily")}</label>
+          <FontSelect
+            value={editorStyle.fontFamily ?? SYSTEM_FONT_NAME}
+            onChange={(name) =>
+              patchEditorStyle({
+                // Storing SYSTEM_FONT_NAME explicitly is fine but we
+                // prefer leaving the field undefined when on default
+                // — keeps the doc clean and lets the hook short-
+                // circuit to its own fallback path.
+                fontFamily: name === SYSTEM_FONT_NAME ? undefined : name,
+              })
+            }
+            options={EDITOR_FONT_OPTIONS}
+            ariaLabel={t("settings.editor.fontFamily")}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-w-md">
+          <div>
+            <label className="label">{t("settings.editor.bodySize")}</label>
+            <input
+              className="input"
+              value={editorStyle.bodySize ?? ""}
+              onChange={(e) => patchEditorStyle({ bodySize: e.target.value })}
+              placeholder={DEFAULT_EDITOR_SIZES.body}
+            />
+          </div>
+          <div>
+            <label className="label">{t("settings.editor.h1Size")}</label>
+            <input
+              className="input"
+              value={editorStyle.h1Size ?? ""}
+              onChange={(e) => patchEditorStyle({ h1Size: e.target.value })}
+              placeholder={DEFAULT_EDITOR_SIZES.h1}
+            />
+          </div>
+          <div>
+            <label className="label">{t("settings.editor.h2Size")}</label>
+            <input
+              className="input"
+              value={editorStyle.h2Size ?? ""}
+              onChange={(e) => patchEditorStyle({ h2Size: e.target.value })}
+              placeholder={DEFAULT_EDITOR_SIZES.h2}
+            />
+          </div>
+          <div>
+            <label className="label">{t("settings.editor.h3Size")}</label>
+            <input
+              className="input"
+              value={editorStyle.h3Size ?? ""}
+              onChange={(e) => patchEditorStyle({ h3Size: e.target.value })}
+              placeholder={DEFAULT_EDITOR_SIZES.h3}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("settings.editor.sizeHelp")}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={saveEditorStyle}
+            disabled={savingEditor}
+          >
+            {savingEditor && <Loader2 className="h-4 w-4 animate-spin" />}
+            {savingEditor ? t("common.saving") : t("common.save")}
+          </button>
+          <button type="button" className="btn-ghost" onClick={resetEditorStyle}>
+            {t("settings.editor.reset")}
+          </button>
+        </div>
       </section>
 
       <section className="card p-4 space-y-3">

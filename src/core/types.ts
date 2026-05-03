@@ -196,6 +196,27 @@ export interface SiteSettings {
   // switches so re-activating a previously-configured theme keeps its
   // settings intact.
   themeConfigs?: Record<string, unknown>;
+  // Editor-only typography preferences. Drive how the post body looks
+  // *inside the admin's WYSIWYG canvas* — completely decoupled from
+  // the public theme's typography. A writer can pick a comfortable
+  // serif at 18px while the public site keeps its own styling.
+  editorStyle?: EditorStyle;
+}
+
+// Site-wide editor typography. Each field is optional so the user can
+// override only what they care about; missing values fall back to the
+// admin's default styling (matching the values that previously came
+// from index.css).
+export interface EditorStyle {
+  // Preset id from EDITOR_FONTS. Empty / undefined → system font.
+  fontFamily?: string;
+  // CSS length values (`16px`, `1rem`, …). Validation is a "looks like
+  // a length" regex on the input side; the renderer accepts whatever
+  // the user typed.
+  bodySize?: string;
+  h1Size?: string;
+  h2Size?: string;
+  h3Size?: string;
 }
 
 export type AdminTheme = "dark" | "light";

@@ -245,6 +245,17 @@
       "siteUrlHelp": "Public URL of your Flexweg site without trailing slash.",
       "apiBaseUrl": "API base URL"
     },
+    "editor": {
+      "title": "Editor",
+      "help": "Typography used inside the post / page editor. Independent of the public theme.",
+      "fontFamily": "Font family",
+      "bodySize": "Body size",
+      "h1Size": "H1 size",
+      "h2Size": "H2 size",
+      "h3Size": "H3 size",
+      "sizeHelp": "CSS length, e.g. 16px or 1rem. Leave empty for default.",
+      "reset": "Reset to defaults"
+    },
     "profile": {
       "title": "Profile",
       "adminLocale": "Admin language",

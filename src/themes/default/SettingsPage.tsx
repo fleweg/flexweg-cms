@@ -15,7 +15,7 @@ import { publishMenuJson } from "../../services/menuPublisher";
 import type { ThemeSettingsPageProps } from "../types";
 import { manifest } from "./manifest";
 import { logoPath, removeThemeLogo, uploadThemeLogo } from "./logo";
-import { FontSelect, type FontOption } from "./FontSelect";
+import { FontSelect, type FontOption } from "../../components/ui/FontSelect";
 import {
   applyAndUploadCustomCss,
   buildAllFontsPreviewUrl,

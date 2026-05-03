@@ -30,7 +30,12 @@ export function InlineTitle({ value, onChange, placeholder }: InlineTitleProps) 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="block w-full resize-none border-0 bg-transparent px-0 py-1 text-3xl md:text-4xl font-semibold leading-tight text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-0 dark:text-surface-50 dark:placeholder:text-surface-500"
+      // The cms-editor-title class is targeted by the editor-style
+      // hook (alongside .prose-editor h1) so the user's H1 size +
+      // font from Settings → Editor applies to the inline title too.
+      // Tailwind text sizes are intentionally OUT — the injected rule
+      // owns sizing.
+      className="cms-editor-title block w-full resize-none border-0 bg-transparent px-0 py-1 font-semibold leading-tight text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-0 dark:text-surface-50 dark:placeholder:text-surface-500"
       // Enter creates a body block, not a newline in the title — match
       // Gutenberg's UX. We just preventDefault here; focus jumping into
       // the editor is handled at the page level when needed.
