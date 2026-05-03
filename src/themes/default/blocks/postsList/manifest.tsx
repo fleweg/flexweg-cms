@@ -190,6 +190,14 @@ function PostsListInspector({ editor }: PostsListInspectorProps) {
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
+          checked={attrs.showExcerpt ?? true}
+          onChange={(e) => patch({ showExcerpt: e.target.checked })}
+        />
+        <span>{t("blocks.postsList.showExcerpt")}</span>
+      </label>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
           checked={attrs.excludeUsed ?? true}
           onChange={(e) => patch({ excludeUsed: e.target.checked })}
         />

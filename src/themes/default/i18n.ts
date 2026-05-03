@@ -130,6 +130,7 @@ export const en = {
       seeMoreLabel: "See more — label",
       seeMoreUrl: "See more — URL",
       excludeUsed: "Exclude posts already shown above on the page",
+      showExcerpt: "Show excerpt under title",
     },
     categoryPosts: {
       title: "Category posts",
@@ -300,6 +301,7 @@ export const fr: typeof en = {
       seeMoreLabel: "Voir plus — libellé",
       seeMoreUrl: "Voir plus — URL",
       excludeUsed: "Exclure les articles déjà affichés au-dessus",
+      showExcerpt: "Afficher l'extrait sous le titre",
     },
     categoryPosts: {
       title: "Articles d'une catégorie",

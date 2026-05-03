@@ -13,6 +13,12 @@ interface RenderPostItemOptions {
   // 0-based index inside the list — used by the `numbered` variant
   // to render "01", "02", … on the side. Ignored by other variants.
   index: number;
+  // When false, suppresses the excerpt for variants that would
+  // otherwise show it (cards default + list). When true (default),
+  // shows the excerpt only if the post has one. The numbered and
+  // compact variants never display an excerpt regardless of this
+  // flag — too cramped.
+  showExcerpt?: boolean;
 }
 
 // Date formatter — uses the site language for locale-aware short
@@ -44,6 +50,7 @@ export function renderPostItemHtml({
   ctx,
   variant,
   index,
+  showExcerpt = true,
 }: RenderPostItemOptions): string {
   const term = post.primaryTermId
     ? ctx.terms.find((t) => t.id === post.primaryTermId && t.type === "category")
@@ -80,10 +87,24 @@ export function renderPostItemHtml({
   }
 
   if (variant === "list") {
-    const excerpt = post.excerpt
-      ? `<p class="cms-card-excerpt">${escapeText(post.excerpt)}</p>`
+    const excerpt =
+      showExcerpt && post.excerpt
+        ? `<p class="cms-card-excerpt">${escapeText(post.excerpt)}</p>`
+        : "";
+    // List rows display the hero on the left in a fixed-size square
+    // (~120px). The "small" variant (480²) is roughly a 2x match for
+    // that footprint — picks `small` first, falls back through the
+    // pickFormat chain to whatever's available. Omitted entirely when
+    // the post has no hero so the row collapses to text-only.
+    const listImageUrl = pickFormat(heroMedia, "small");
+    const listImage = listImageUrl
+      ? `<div class="cms-card-list-image-wrap"><img class="cms-card-list-image" src="${escapeAttr(listImageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></div>`
       : "";
-    return `<a href="${escapeAttr(url)}" class="cms-card cms-card-list">${categoryLabel}<h4 class="cms-card-title">${escapeText(post.title)}</h4>${excerpt}${meta}</a>`;
+    // List variant intentionally drops the category label — the
+    // dense list layout (especially with an image) crowds badly with
+    // an extra row of meta. The category remains visible on cards
+    // and numbered variants.
+    return `<a href="${escapeAttr(url)}" class="cms-card cms-card-list${listImage ? " cms-card-list-with-image" : ""}">${listImage}<div class="cms-card-list-body"><h4 class="cms-card-title">${escapeText(post.title)}</h4>${excerpt}${meta}</div></a>`;
   }
 
   // cards (default) and slider share the same item shape — the
@@ -94,9 +115,10 @@ export function renderPostItemHtml({
   const image = imageUrl
     ? `<div class="cms-card-image-wrap"><img class="cms-card-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></div>`
     : "";
-  const excerpt = post.excerpt
-    ? `<p class="cms-card-excerpt">${escapeText(post.excerpt)}</p>`
-    : "";
+  const excerpt =
+    showExcerpt && post.excerpt
+      ? `<p class="cms-card-excerpt">${escapeText(post.excerpt)}</p>`
+      : "";
   return `<a href="${escapeAttr(url)}" class="cms-card cms-card-default">${image}<div class="cms-card-body">${categoryLabel}<h4 class="cms-card-title">${escapeText(post.title)}</h4>${excerpt}${meta}</div></a>`;
 }
 

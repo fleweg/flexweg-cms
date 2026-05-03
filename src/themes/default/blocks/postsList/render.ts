@@ -16,6 +16,10 @@ export interface PostsListAttrs {
   // When true (default), exclude posts already pinned/used by an
   // earlier block on the page so the same post never appears twice.
   excludeUsed?: boolean;
+  // When false, hides the excerpt across every variant that would
+  // otherwise show it (cards, list). Default true — matches the
+  // pre-toggle behavior.
+  showExcerpt?: boolean;
 }
 
 interface RenderEnv {
@@ -66,8 +70,9 @@ export function renderPostsList(attrs: PostsListAttrs, env: RenderEnv): PostsLis
     return { html: "", consumedPostIds: [] };
   }
 
+  const showExcerpt = attrs.showExcerpt ?? true;
   const items = picked.map((post, index) =>
-    renderPostItemHtml({ post, ctx: env.ctx, variant, index }),
+    renderPostItemHtml({ post, ctx: env.ctx, variant, index, showExcerpt }),
   );
   const list = wrapList(items, variant, columns);
 

@@ -1652,7 +1652,10 @@ a.author-bio__name:hover {
 .cms-card-title {
   font-family: var(--font-serif);
   font-size: 20px;
-  font-weight: var(--weight-heading);
+  // Match the Hero title weight so every block-level card title
+  // shares the same typographic emphasis. Was --weight-heading (500);
+  // now aligned with the Hero (--weight-display, 600).
+  font-weight: var(--weight-display);
   line-height: 1.3;
   margin: 0 0 8px 0;
   color: var(--color-on-surface);
@@ -1715,7 +1718,7 @@ a.author-bio__name:hover {
 }
 .cms-card-compact .cms-card-title {
   font-size: 16px;
-  font-weight: var(--weight-heading);
+  font-weight: var(--weight-display);
   margin: 0;
   flex: 1;
   font-family: var(--font-sans);
@@ -1724,7 +1727,11 @@ a.author-bio__name:hover {
 .cms-card-numbered {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 16px;
+  // Split column / row gap so the date sits tight under the title
+  // (2px) while the number stays comfortably separated from the
+  // content column (16px). A single `gap` would apply both axes.
+  column-gap: 16px;
+  row-gap: 2px;
   align-items: start;
 }
 .cms-card-number {
@@ -1738,15 +1745,25 @@ a.author-bio__name:hover {
 .cms-card-numbered .cms-card-title {
   font-size: 16px;
   font-family: var(--font-sans);
-  font-weight: var(--weight-heading);
+  font-weight: var(--weight-display);
   line-height: 1.3;
   margin: 0;
 }
 .cms-card-numbered .cms-card-meta {
-  margin-top: 4px;
+  // Force the date into column 2 so it sits beneath the title (left-
+  // edge aligned with it) instead of falling into row 2 column 1
+  // beneath the number, which is what auto-placement would do for a
+  // third grid item. row-gap on the parent handles the spacing.
+  grid-column: 2;
   display: block;
 }
-/* List variant card (image absent, prose-heavy) */
+/* List variant card.
+   Two layouts in one selector: text-only (no hero) keeps the
+   original block flow; with-image switches to a 2-col flex with a
+   square image on the left and the text on the right. The
+   `cms-card-list-with-image` modifier is applied at render time only
+   when a hero is available so we never reserve empty image space.
+*/
 .cms-card-list {
   display: block;
   padding-bottom: 24px;
@@ -1754,6 +1771,55 @@ a.author-bio__name:hover {
 }
 .cms-card-list:last-child {
   border-bottom: none;
+}
+// With-image layout — flex row, image fixed-size square, body fills
+// the remainder. min-width: 0 on the body lets long titles ellipsis
+// or wrap cleanly without pushing the image out.
+.cms-card-list-with-image {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+
+  .cms-card-list-image-wrap {
+    flex: 0 0 120px;
+    aspect-ratio: 1;
+    background: var(--color-surface-mid);
+    overflow: hidden;
+  }
+  .cms-card-list-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  &:hover .cms-card-list-image {
+    transform: scale(1.03);
+  }
+  .cms-card-list-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Smaller image on narrow viewports so the body keeps enough room
+  // for the title + a one-line excerpt.
+  @media (max-width: 480px) {
+    gap: 12px;
+    .cms-card-list-image-wrap {
+      flex: 0 0 84px;
+    }
+  }
+}
+// Tighten the gap before the meta (date) — matches the 2px row-gap
+// of the numbered variant. Targets both the excerpt and the title
+// since either can be the last text element above the date when the
+// excerpt is absent. Applied via attribute selector so it lands on
+// both with-image and text-only list variants.
+.cms-card-list .cms-card-title,
+.cms-card-list .cms-card-excerpt {
+  margin-bottom: 2px;
 }
 
 /* CTA card ─────────────────────────────────────────────────────── */

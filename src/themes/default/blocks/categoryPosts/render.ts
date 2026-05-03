@@ -16,6 +16,9 @@ export interface CategoryPostsAttrs {
   seeMoreLabel?: string;
   seeMoreUrl?: string;
   excludeUsed?: boolean;
+  // When false, hides the excerpt across every variant that would
+  // otherwise show it (cards, list). Default true.
+  showExcerpt?: boolean;
 }
 
 interface RenderEnv {
@@ -54,8 +57,9 @@ export function renderCategoryPosts(
   const picked = filtered.slice(0, count);
   if (picked.length === 0) return { html: "", consumedPostIds: [] };
 
+  const showExcerpt = attrs.showExcerpt ?? true;
   const items = picked.map((post, index) =>
-    renderPostItemHtml({ post, ctx: env.ctx, variant, index }),
+    renderPostItemHtml({ post, ctx: env.ctx, variant, index, showExcerpt }),
   );
   const list = wrapList(items, variant, columns);
 
