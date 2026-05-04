@@ -165,6 +165,10 @@ export async function listImportFolder(): Promise<FolderListing> {
       if (rel.startsWith("images/") && /^(jpe?g|png|webp|svg|gif)$/i.test(ext)) {
         imageFiles.push({ path: item.path, name, bytes: item.size ?? 0 });
       } else if (ext === "md" && !rel.includes("/")) {
+        // Skip README/readme files — they're documentation that
+        // users routinely drop alongside the actual content (and
+        // the importer's own example bundle ships one).
+        if (/^readme\.md$/i.test(name)) continue;
         markdownFiles.push({ path: item.path, name });
       } else if (ext === "xml" && !rel.includes("/")) {
         xmlFiles.push({ path: item.path, name });
@@ -356,10 +360,12 @@ export function scanBundle(bundle: ImportBundle, ctx: ScanContext, options: Impo
   for (const entry of parsed.entries) {
     if (!entry.title) continue; // already produced an error warning
 
-    // Slug
+    // Slug. findAvailableSlug expects isUsed(slug) to return TRUE
+    // when the slug is taken — invert here would loop the whole
+    // 1..1000 attempt range and dead-end on a Date.now() fallback.
     const requested = entry.slug && isValidSlug(entry.slug) ? entry.slug : slugify(entry.title);
     const taken = new Set([...existingSlugs, ...usedSlugsInBatch]);
-    const finalSlug = findAvailableSlug(requested, (s) => !taken.has(s));
+    const finalSlug = findAvailableSlug(requested, (s) => taken.has(s));
     usedSlugsInBatch.add(finalSlug);
     const slugWasModified = finalSlug !== requested;
     if (slugWasModified) {

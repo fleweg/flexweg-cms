@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { splitFrontmatter, parseMarkdownFile } from "./parsers/markdown";
 import { parseWordPressXml } from "./parsers/wordpress";
+import { scanBundle, DEFAULT_IMPORT_OPTIONS, type ImportBundle } from "./importer";
 
 describe("markdown frontmatter parser", () => {
   it("splits frontmatter and body when fence is present", () => {
@@ -241,5 +242,85 @@ describe("parseWordPressXml", () => {
     const result = parseWordPressXml("<not really xml>", "broken.xml");
     expect(result.entries).toHaveLength(0);
     expect(result.warnings[0]?.level).toBe("error");
+  });
+});
+
+describe("scanBundle slug resolution", () => {
+  // Regression: findAvailableSlug expects isUsed(slug) to return TRUE
+  // when the slug is taken. An earlier version inverted the
+  // predicate, which turned every slug into a Date.now()-suffixed
+  // fallback (`hello-world-1777899702832`) and produced a
+  // misleading "renamed" warning for every entry.
+  it("doesn't rename slugs when nothing collides", () => {
+    const bundle: ImportBundle = {
+      source: "drop",
+      markdown: [
+        {
+          name: "post.md",
+          content: "---\ntitle: Hello world\n---\nbody",
+        },
+      ],
+      xml: [],
+      images: [],
+    };
+    const summary = scanBundle(
+      bundle,
+      {
+        posts: [],
+        pages: [],
+        terms: [],
+        media: [],
+        users: [],
+        importerUserId: "user-1",
+      },
+      DEFAULT_IMPORT_OPTIONS,
+    );
+    expect(summary.entries).toHaveLength(1);
+    expect(summary.entries[0].finalSlug).toBe("hello-world");
+    expect(summary.entries[0].slugWasModified).toBe(false);
+    expect(
+      summary.warnings.some((w) => w.message.includes("already in use")),
+    ).toBe(false);
+  });
+
+  it("resolves real collisions to numeric suffix", () => {
+    const bundle: ImportBundle = {
+      source: "drop",
+      markdown: [
+        {
+          name: "post.md",
+          content: "---\ntitle: Hello world\n---\nbody",
+        },
+      ],
+      xml: [],
+      images: [],
+    };
+    // Existing post already has the slug — first import slot is
+    // taken, the importer should pick "hello-world-2".
+    const summary = scanBundle(
+      bundle,
+      {
+        posts: [
+          {
+            id: "p1",
+            type: "post",
+            title: "Existing",
+            slug: "hello-world",
+            contentMarkdown: "",
+            authorId: "u1",
+            termIds: [],
+            status: "online",
+          },
+        ],
+        pages: [],
+        terms: [],
+        media: [],
+        users: [],
+        importerUserId: "user-1",
+      },
+      DEFAULT_IMPORT_OPTIONS,
+    );
+    expect(summary.entries[0].finalSlug).toBe("hello-world-2");
+    expect(summary.entries[0].slugWasModified).toBe(true);
   });
 });

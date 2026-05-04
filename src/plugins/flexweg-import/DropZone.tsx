@@ -38,6 +38,10 @@ const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp", "svg", "gif"]);
 
 function classifyFile(filename: string): "markdown" | "xml" | "image" | null {
   const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  // README/readme files are documentation, not content. The
+  // import bundle's own example folder ships one — skip silently
+  // so the user can drop the whole folder without curating it.
+  if (/^readme\.md$/i.test(filename)) return null;
   if (ext === "md") return "markdown";
   if (ext === "xml") return "xml";
   if (IMAGE_EXTS.has(ext)) return "image";
