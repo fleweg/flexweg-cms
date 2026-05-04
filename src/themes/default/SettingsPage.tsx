@@ -30,7 +30,12 @@ import {
   type ThemeVarGroup,
   type ThemeVarSpec,
 } from "./style";
-import type { DefaultThemeConfig } from "./config";
+import {
+  DEFAULT_HOME_LAYOUT,
+  type DefaultThemeConfig,
+  type HomeHeroVariant,
+} from "./config";
+import type { ListVariant } from "./blocks/postCardHtml";
 
 // Logo box dimensions. Image is letterboxed inside this box (no
 // cropping) so wide / tall logos both stay legible.
@@ -184,7 +189,35 @@ function GeneralTab({
     }
   }
 
+  // Home layout: persisted on every select change. Each setting is a
+  // single dropdown with no validation needed, so the autosave UX is
+  // simpler than a draft + Save button — and matches what users
+  // expect for low-stakes preference toggles. The home page is
+  // re-rendered on the next publish; we don't trigger a republish
+  // here on purpose (changing a hero variant before publishing five
+  // posts shouldn't queue five upload churns).
+  const home = config.home ?? DEFAULT_HOME_LAYOUT;
+  async function patchHome(patch: Partial<DefaultThemeConfig["home"]>) {
+    const next: DefaultThemeConfig = {
+      ...config,
+      home: { ...home, ...patch },
+    };
+    await save(next);
+  }
+
+  // Variant lists wired to the existing block i18n keys so the
+  // labels stay in sync with what the editor's Hero / Posts list
+  // inspector shows.
+  const heroVariants: HomeHeroVariant[] = [
+    "image-overlay",
+    "split-left",
+    "split-right",
+    "minimal",
+  ];
+  const listVariants: ListVariant[] = ["cards", "list", "compact", "numbered", "slider"];
+
   return (
+    <Fragment>
     <section className="card p-4 space-y-4">
       <h2 className="font-semibold">{t("logo.title")}</h2>
       <p className="text-xs text-surface-500 dark:text-surface-400">
@@ -251,6 +284,79 @@ function GeneralTab({
         </div>
       </div>
     </section>
+
+    <section className="card p-4 space-y-4">
+      <header className="space-y-1">
+        <h2 className="font-semibold">{t("home.title")}</h2>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("home.help")}
+        </p>
+      </header>
+
+      <div>
+        <label className="label" htmlFor="home-hero-variant">
+          {t("home.heroVariant")}
+        </label>
+        <select
+          id="home-hero-variant"
+          className="input max-w-xs"
+          value={home.heroVariant}
+          onChange={(e) => void patchHome({ heroVariant: e.target.value as HomeHeroVariant })}
+        >
+          {heroVariants.map((v) => (
+            <option key={v} value={v}>
+              {t(`blocks.hero.variants.${v}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="label" htmlFor="home-list-variant">
+          {t("home.listVariant")}
+        </label>
+        <select
+          id="home-list-variant"
+          className="input max-w-xs"
+          value={home.listVariant}
+          onChange={(e) => void patchHome({ listVariant: e.target.value as ListVariant })}
+        >
+          {listVariants.map((v) => (
+            <option key={v} value={v}>
+              {t(`blocks.postsList.variants.${v}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Columns is meaningful only for the Cards variant — the
+          other layouts (list, compact, numbered, slider) have a
+          single-column / horizontal logic that ignores this. Hide
+          the field when not applicable so the form stays honest. */}
+      {home.listVariant === "cards" && (
+        <div>
+          <label className="label" htmlFor="home-list-columns">
+            {t("home.listColumns")}
+          </label>
+          <select
+            id="home-list-columns"
+            className="input max-w-xs"
+            value={home.listColumns}
+            onChange={(e) => void patchHome({ listColumns: Number(e.target.value) })}
+          >
+            {[1, 2, 3, 4].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
+            {t("home.listColumnsHelp")}
+          </p>
+        </div>
+      )}
+    </section>
+    </Fragment>
   );
 }
 

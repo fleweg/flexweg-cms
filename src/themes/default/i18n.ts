@@ -177,6 +177,17 @@ export const en = {
     },
   },
 
+  // ─── Home page layout (settings) ───────────────────────────────
+  home: {
+    title: "Home page layout",
+    help:
+      "Picks the variant for the featured (hero) post and the latest-articles list under it. Same variants the Hero and Posts list blocks expose in the editor.",
+    heroVariant: "Featured post (hero)",
+    listVariant: "Latest articles list",
+    listColumns: "Columns",
+    listColumnsHelp: "Only applies to the Cards variant.",
+  },
+
   // Strings baked into published HTML by SingleTemplate. Resolved
   // against the *public* site language (settings.language) — NOT the
   // admin's UI language — so visitors see them in the language of the
@@ -357,6 +368,15 @@ export const fr: typeof en = {
       dividerOn: "avec filet",
     },
   },
+  home: {
+    title: "Mise en page de la home",
+    help:
+      "Choisit la variante de l'article mis en avant (hero) et de la liste des derniers articles en dessous. Mêmes variantes que les blocs Hero et Liste d'articles dans l'éditeur.",
+    heroVariant: "Article mis en avant (hero)",
+    listVariant: "Liste des derniers articles",
+    listColumns: "Colonnes",
+    listColumnsHelp: "S'applique uniquement à la variante Cartes.",
+  },
   publicBaked: {
     authorBioEyebrow: "À propos de l'auteur",
     relatedPostsLabel: "Lectures suggérées",
@@ -530,6 +550,15 @@ export const de: typeof en = {
       divider: "Einen dünnen, zentrierten Trenner anzeigen",
       dividerOn: "mit Trenner",
     },
+  },
+  home: {
+    title: "Layout der Startseite",
+    help:
+      "Legt die Variante für den hervorgehobenen Beitrag (Hero) und die darunter stehende Liste der neuesten Artikel fest. Dieselben Varianten, die die Hero- und Beitragsliste-Blöcke im Editor anbieten.",
+    heroVariant: "Hervorgehobener Beitrag (Hero)",
+    listVariant: "Liste der neuesten Artikel",
+    listColumns: "Spalten",
+    listColumnsHelp: "Gilt nur für die Karten-Variante.",
   },
   publicBaked: {
     authorBioEyebrow: "Über den Autor",
@@ -705,6 +734,15 @@ export const es: typeof en = {
       dividerOn: "con divisor",
     },
   },
+  home: {
+    title: "Diseño de la home",
+    help:
+      "Elige la variante para la entrada destacada (hero) y la lista de últimos artículos debajo. Las mismas variantes que los bloques Hero y Lista de entradas exponen en el editor.",
+    heroVariant: "Entrada destacada (hero)",
+    listVariant: "Lista de últimos artículos",
+    listColumns: "Columnas",
+    listColumnsHelp: "Solo se aplica a la variante Tarjetas.",
+  },
   publicBaked: {
     authorBioEyebrow: "Sobre el autor",
     relatedPostsLabel: "Sigue leyendo",
@@ -878,6 +916,15 @@ export const nl: typeof en = {
       divider: "Een dunne gecentreerde scheiding tonen",
       dividerOn: "met scheiding",
     },
+  },
+  home: {
+    title: "Lay-out van de homepagina",
+    help:
+      "Kiest de variant voor het uitgelichte bericht (hero) en de lijst met recente artikelen daaronder. Dezelfde varianten die de Hero- en Berichtenlijst-blokken in de editor aanbieden.",
+    heroVariant: "Uitgelicht bericht (hero)",
+    listVariant: "Lijst met recente artikelen",
+    listColumns: "Kolommen",
+    listColumnsHelp: "Alleen van toepassing op de Kaarten-variant.",
   },
   publicBaked: {
     authorBioEyebrow: "Over de auteur",
@@ -1053,6 +1100,15 @@ export const pt: typeof en = {
       dividerOn: "com separador",
     },
   },
+  home: {
+    title: "Disposição da página inicial",
+    help:
+      "Escolhe a variante para o artigo em destaque (hero) e para a lista de artigos mais recentes por baixo. As mesmas variantes que os blocos Hero e Lista de artigos expõem no editor.",
+    heroVariant: "Artigo em destaque (hero)",
+    listVariant: "Lista de artigos mais recentes",
+    listColumns: "Colunas",
+    listColumnsHelp: "Aplica-se apenas à variante Cartões.",
+  },
   publicBaked: {
     authorBioEyebrow: "Sobre o autor",
     relatedPostsLabel: "Continuar a ler",
@@ -1226,6 +1282,15 @@ export const ko: typeof en = {
       divider: "가는 중앙 구분선 표시",
       dividerOn: "구분선 포함",
     },
+  },
+  home: {
+    title: "홈 페이지 레이아웃",
+    help:
+      "추천 게시물(히어로)과 그 아래 최신 기사 목록의 변형을 선택합니다. 편집기의 히어로 및 게시물 목록 블록에서 노출되는 동일한 변형입니다.",
+    heroVariant: "추천 게시물 (히어로)",
+    listVariant: "최신 기사 목록",
+    listColumns: "열 수",
+    listColumnsHelp: "카드 변형에만 적용됩니다.",
   },
   publicBaked: {
     authorBioEyebrow: "작성자 소개",

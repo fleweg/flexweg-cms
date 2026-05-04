@@ -107,9 +107,20 @@ export interface ArchivesLink {
 
 export interface HomeTemplateProps {
   // List of posts to display on the home page (already paginated).
+  // Used by themes that render their own card grid; the default
+  // theme ignores this and consumes `heroHtml` + `listHtml` instead.
   posts: CardPost[];
   staticPage?: { post: Post; bodyHtml: string };
   archivesLink?: ArchivesLink;
+  // Pre-rendered HTML strings produced by the active theme's Hero
+  // and Posts list block render functions. The publisher resolves
+  // them by reading the theme config (variant choices) before
+  // mounting the template, so the home page picks up the same
+  // visual variants the editor exposes for content blocks.
+  // Themes that don't want this delegation can simply ignore the
+  // props and render from `posts` directly.
+  heroHtml?: string;
+  listHtml?: string;
 }
 
 export interface CategoryTemplateProps {

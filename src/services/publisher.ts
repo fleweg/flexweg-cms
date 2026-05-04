@@ -32,6 +32,9 @@ import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { markPostDraft, markPostOnline } from "./posts";
 import { setCurrentPublishContext } from "./publishContext";
 import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
+import { renderHero } from "../themes/default/blocks/hero/render";
+import { renderPostsList } from "../themes/default/blocks/postsList/render";
+import type { DefaultThemeConfig } from "../themes/default/config";
 
 export interface PublishLogEntry {
   level: "info" | "success" | "warn" | "error";
@@ -251,6 +254,53 @@ async function renderHome(ctx: PublishContext): Promise<string> {
   // so the link never appears spuriously.
   const archivesLink = resolveArchivesLink(ctx.settings, ctx.posts, "home");
 
+  // Default theme delegates the hero + grid to its own block render
+  // functions so the home shares variants with the editor's Hero /
+  // Posts list blocks. We resolve the HTML here (publisher) so the
+  // template stays a pure props consumer — same contract as
+  // postToCardData / CardPost.
+  // Other themes ignore heroHtml/listHtml and render from `posts`.
+  let heroHtml: string | undefined;
+  let listHtml: string | undefined;
+  if (
+    ctx.settings.activeThemeId === "default" &&
+    ctx.settings.homeMode !== "static-page"
+  ) {
+    const themeConfig = (site.themeConfig as DefaultThemeConfig | undefined) ?? undefined;
+    // Defaults match the manifest's DEFAULT_THEME_CONFIG.home so a
+    // site that hasn't saved theme settings yet still gets the
+    // intended look (image-overlay hero + cards grid).
+    const heroVariant = themeConfig?.home?.heroVariant ?? "image-overlay";
+    const listVariant = themeConfig?.home?.listVariant ?? "cards";
+    const listColumns = themeConfig?.home?.listColumns ?? 3;
+    // The home page has no canonical "current post"; use a sentinel
+    // so the env API stays satisfied without accidentally pinning or
+    // excluding any real post.
+    const homeStub = { id: "__home__" } as unknown as Post;
+    const used = new Set<string>();
+    const heroResult = renderHero(
+      { featuredPostId: "latest", variant: heroVariant },
+      { ctx, current: homeStub },
+    );
+    heroHtml = heroResult.html;
+    if (heroResult.consumedPostId) used.add(heroResult.consumedPostId);
+    const listResult = renderPostsList(
+      {
+        query: "latest",
+        variant: listVariant,
+        // Match the previous HomeTemplate behaviour: hero + (postsPerPage − 1)
+        // grid items below. The Posts list block clamps to a max of 24.
+        count: Math.max(1, ctx.settings.postsPerPage - 1),
+        // Cards-only column count. wrapList ignores this for the
+        // other variants and clamps to 1–4 either way.
+        columns: listColumns,
+        excludeUsed: true,
+      },
+      { ctx, current: homeStub, used },
+    );
+    listHtml = listResult.html;
+  }
+
   let templateProps: HomeTemplateProps & { site: SiteContext };
   if (ctx.settings.homeMode === "static-page" && ctx.settings.homePageId) {
     const page = ctx.pages.find((p) => p.id === ctx.settings.homePageId && p.status === "online");
@@ -274,10 +324,10 @@ async function renderHome(ctx: PublishContext): Promise<string> {
         archivesLink,
       };
     } else {
-      templateProps = { site, posts: onlinePosts, archivesLink };
+      templateProps = { site, posts: onlinePosts, archivesLink, heroHtml, listHtml };
     }
   } else {
-    templateProps = { site, posts: onlinePosts, archivesLink };
+    templateProps = { site, posts: onlinePosts, archivesLink, heroHtml, listHtml };
   }
 
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {

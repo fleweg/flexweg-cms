@@ -1,15 +1,22 @@
 import type { HomeTemplateProps, SiteContext } from "../../types";
-import { Card } from "../components/Card";
-import { HeroFeatured } from "../components/HeroFeatured";
 
 // Home page layout. When the site is configured to render a static page
-// as home, we delegate to that page's bodyHtml. Otherwise the most
-// recent post becomes the featured hero (21:9) and the rest fall into a
-// 3-column grid below.
+// as home, we delegate to that page's bodyHtml. Otherwise we render two
+// pre-resolved HTML strings provided by the publisher:
+//   • heroHtml — the featured post, produced by the Hero block render
+//     function in the variant chosen via theme settings.
+//   • listHtml — the latest-articles list, produced by the Posts list
+//     block render function in the variant chosen via theme settings.
+//
+// This keeps the home in lockstep with the editor's content blocks: any
+// variant the editor exposes (image-overlay / split / minimal for hero;
+// cards / list / compact / numbered / slider for the grid) is available
+// for the home page without per-template duplication.
 export function HomeTemplate({
-  posts,
   staticPage,
   archivesLink,
+  heroHtml,
+  listHtml,
 }: HomeTemplateProps & { site: SiteContext }) {
   if (staticPage) {
     return (
@@ -23,7 +30,11 @@ export function HomeTemplate({
     );
   }
 
-  if (posts.length === 0) {
+  // No posts yet — the publisher returns empty strings from both
+  // block render functions when the corpus is empty. Show a friendly
+  // empty state instead of two blank containers.
+  const hasContent = (heroHtml && heroHtml.length > 0) || (listHtml && listHtml.length > 0);
+  if (!hasContent) {
     return (
       <div className="page-home container">
         <p className="empty-state">No posts yet.</p>
@@ -31,27 +42,19 @@ export function HomeTemplate({
     );
   }
 
-  // Featured slot uses the first (most recent) post; the remainder fills
-  // the "Latest articles" grid below it.
-  const [featured, ...rest] = posts;
   return (
     <>
-      <div className="container">
-        {featured && <HeroFeatured post={featured} />}
-      </div>
-      {rest.length > 0 && (
-        <div className="container">
-          <div className="page-home__title-row">
-            <h3 className="page-home__title">Latest articles</h3>
-          </div>
-          <ul className="post-grid">
-            {rest.map((post) => (
-              <li key={post.id}>
-                <Card post={post} />
-              </li>
-            ))}
-          </ul>
-        </div>
+      {heroHtml && (
+        <div
+          className="container"
+          dangerouslySetInnerHTML={{ __html: heroHtml }}
+        />
+      )}
+      {listHtml && (
+        <div
+          className="container"
+          dangerouslySetInnerHTML={{ __html: listHtml }}
+        />
       )}
       {archivesLink && (
         <div className="container">
