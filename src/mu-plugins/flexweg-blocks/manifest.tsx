@@ -1,4 +1,4 @@
-import type { PluginManifest } from "../index";
+import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
 import { en, fr } from "./i18n";
 import { columnsBlock } from "./columns/manifest";

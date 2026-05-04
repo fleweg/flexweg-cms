@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { Info, Settings as SettingsIcon } from "lucide-react";
+import { Info, Lock, Settings as SettingsIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { ReadmeModal } from "../components/plugins/ReadmeModal";
 import { useCmsData } from "../context/CmsDataContext";
 import { listPlugins, type PluginManifest } from "../plugins";
+import { listMuPlugins } from "../mu-plugins";
 import { updateSettings } from "../services/settings";
+import { cn } from "../lib/utils";
+
+type Tab = "regular" | "mustUse";
 
 export function PluginsPage() {
   const { t } = useTranslation();
   const { settings } = useCmsData();
-  const plugins = listPlugins();
+  const [tab, setTab] = useState<Tab>("regular");
   // Manifest of the plugin whose README modal is open. null → no
   // modal mounted. Storing the whole manifest (vs an id) means the
   // modal can render even when the plugin gets re-listed under a
   // different id later.
   const [readmePlugin, setReadmePlugin] = useState<PluginManifest | null>(null);
+
+  const visiblePlugins = tab === "regular" ? listPlugins() : listMuPlugins();
 
   async function toggle(id: string, current: boolean) {
     await updateSettings({
@@ -27,9 +33,25 @@ export function PluginsPage() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader title={t("plugins.title")} />
+      <nav
+        className="flex flex-wrap gap-1 border-b border-surface-200 dark:border-surface-800"
+        aria-label={t("plugins.title")}
+      >
+        <TabButton
+          active={tab === "regular"}
+          onClick={() => setTab("regular")}
+          label={t("plugins.tabs.regular")}
+        />
+        <TabButton
+          active={tab === "mustUse"}
+          onClick={() => setTab("mustUse")}
+          label={t("plugins.tabs.mustUse")}
+        />
+      </nav>
       <ul className="space-y-3">
-        {plugins.map((plugin) => {
-          const enabled = settings.enabledPlugins[plugin.id] !== false;
+        {visiblePlugins.map((plugin) => {
+          const isMustUse = tab === "mustUse";
+          const enabled = isMustUse || settings.enabledPlugins[plugin.id] !== false;
           const hasSettings = !!plugin.settings;
           const hasReadme = !!plugin.readme;
           return (
@@ -37,7 +59,10 @@ export function PluginsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3 sm:block">
                   <div className="min-w-0">
-                    <p className="font-semibold">{plugin.name}</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      <span>{plugin.name}</span>
+                      {isMustUse && <MustUseBadge label={t("plugins.mustUseBadge")} />}
+                    </p>
                     <p className="text-xs text-surface-500 mt-0.5 dark:text-surface-400">
                       v{plugin.version} · {plugin.id}
                       {plugin.author ? ` — ${t("plugins.author")} : ${plugin.author}` : ""}
@@ -47,16 +72,19 @@ export function PluginsPage() {
                       header row reads "name + status toggle" at a glance.
                       On sm+ the toggle moves into the right-aligned slot
                       below alongside the description and secondary
-                      actions. */}
-                  <button
-                    type="button"
-                    className={
-                      "shrink-0 sm:hidden " + (enabled ? "btn-secondary" : "btn-primary")
-                    }
-                    onClick={() => toggle(plugin.id, enabled)}
-                  >
-                    {enabled ? t("plugins.disable") : t("plugins.enable")}
-                  </button>
+                      actions. Hidden entirely for must-use plugins —
+                      they have no toggle. */}
+                  {!isMustUse && (
+                    <button
+                      type="button"
+                      className={
+                        "shrink-0 sm:hidden " + (enabled ? "btn-secondary" : "btn-primary")
+                      }
+                      onClick={() => toggle(plugin.id, enabled)}
+                    >
+                      {enabled ? t("plugins.disable") : t("plugins.enable")}
+                    </button>
+                  )}
                 </div>
                 {plugin.description && (
                   <p className="text-sm text-surface-600 mt-2 dark:text-surface-300">
@@ -90,16 +118,19 @@ export function PluginsPage() {
                 </div>
               </div>
               {/* Toggle on the right edge for sm+. Hidden on mobile —
-                  the duplicate at the top-right takes over there. */}
-              <div className="hidden sm:flex shrink-0 items-start">
-                <button
-                  type="button"
-                  className={enabled ? "btn-secondary" : "btn-primary"}
-                  onClick={() => toggle(plugin.id, enabled)}
-                >
-                  {enabled ? t("plugins.disable") : t("plugins.enable")}
-                </button>
-              </div>
+                  the duplicate at the top-right takes over there.
+                  Must-use plugins have no toggle. */}
+              {!isMustUse && (
+                <div className="hidden sm:flex shrink-0 items-start">
+                  <button
+                    type="button"
+                    className={enabled ? "btn-secondary" : "btn-primary"}
+                    onClick={() => toggle(plugin.id, enabled)}
+                  >
+                    {enabled ? t("plugins.disable") : t("plugins.enable")}
+                  </button>
+                </div>
+              )}
             </li>
           );
         })}
@@ -112,5 +143,42 @@ export function PluginsPage() {
         />
       )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "px-3 py-2 text-sm font-medium -mb-px border-b-2 transition-colors",
+        active
+          ? "border-blue-600 text-surface-900 dark:text-surface-50"
+          : "border-transparent text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function MustUseBadge({ label }: { label: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-surface-100 px-2 py-0.5 text-[11px] font-medium text-surface-600 dark:bg-surface-800 dark:text-surface-300"
+      title={label}
+    >
+      <Lock className="h-3 w-3" />
+      {label}
+    </span>
   );
 }

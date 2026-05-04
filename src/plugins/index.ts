@@ -12,14 +12,11 @@ import type { ComponentType } from "react";
 import { manifest as coreSeoManifest } from "./core-seo/manifest";
 import { manifest as flexwegSitemapsManifest } from "./flexweg-sitemaps/manifest";
 import { manifest as flexwegRssManifest } from "./flexweg-rss/manifest";
-import { manifest as flexwegFaviconManifest } from "./flexweg-favicon/manifest";
-import { manifest as flexwegEmbedsManifest } from "./flexweg-embeds/manifest";
-import { manifest as flexwegBlocksManifest } from "./flexweg-blocks/manifest";
-import { manifest as flexwegCustomCodeManifest } from "./flexweg-custom-code/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
 import { resetBlocks } from "../core/blockRegistry";
+import { MU_PLUGINS } from "../mu-plugins";
 
 // Plugins can optionally expose a settings page. When present, a navigation
 // entry appears under /settings/plugin/<id> and the plugins list shows a
@@ -69,27 +66,27 @@ export const PLUGINS: PluginManifest[] = [
   coreSeoManifest,
   flexwegSitemapsManifest as PluginManifest,
   flexwegRssManifest as PluginManifest,
-  flexwegFaviconManifest as PluginManifest,
-  flexwegEmbedsManifest,
-  flexwegBlocksManifest,
-  flexwegCustomCodeManifest as PluginManifest,
 ];
 
 export function listPlugins(): PluginManifest[] {
   return PLUGINS;
 }
 
+// Resolves a manifest by id across both regular and MU registries.
+// Used by routes (settings page, README modal lookups) that don't
+// care which registry a plugin lives in.
 export function getPluginManifest(id: string): PluginManifest | undefined {
-  return PLUGINS.find((p) => p.id === id);
+  return PLUGINS.find((p) => p.id === id) ?? MU_PLUGINS.find((p) => p.id === id);
 }
 
 // Translation bundles ship inline in each manifest. Loading them at module
 // load (rather than inside applyPluginRegistration) means the bundles are
 // always available — even for disabled plugins, which is fine because the
 // config UI for a disabled plugin is unreachable but the keys themselves
-// are harmless if present.
+// are harmless if present. MU plugins go through the same path so their
+// settings pages can resolve translations exactly like regular plugins.
 function loadPluginTranslations(): void {
-  for (const plugin of PLUGINS) {
+  for (const plugin of [...MU_PLUGINS, ...PLUGINS]) {
     if (!plugin.i18n) continue;
     for (const [locale, resources] of Object.entries(plugin.i18n)) {
       if (!resources) continue;
@@ -110,6 +107,17 @@ loadPluginTranslations();
 export function applyPluginRegistration(enabled: Record<string, boolean>): void {
   resetRegistry();
   resetBlocks();
+  // MU plugins always register, regardless of `enabled`. They run
+  // first so their filters / actions sit at the bottom of priority
+  // chains — regular plugins added on top can override or layer on
+  // their behaviour the same way they would for any other plugin.
+  for (const plugin of MU_PLUGINS) {
+    try {
+      plugin.register(pluginApi);
+    } catch (err) {
+      console.error(`MU plugin "${plugin.id}" failed to register:`, err);
+    }
+  }
   for (const plugin of PLUGINS) {
     if (enabled[plugin.id] === false) continue;
     try {

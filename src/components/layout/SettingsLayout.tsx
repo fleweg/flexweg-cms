@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "./PageHeader";
 import { useCmsData } from "../../context/CmsDataContext";
 import { listPlugins, type PluginManifest } from "../../plugins";
+import { listMuPlugins } from "../../mu-plugins";
 import { cn } from "../../lib/utils";
 
 // Resolves the label of a plugin's settings tab from its own i18n namespace.
@@ -21,9 +22,14 @@ function PluginTabLabel({ plugin }: { plugin: PluginManifest }) {
 export function SettingsLayout() {
   const { t } = useTranslation();
   const { settings } = useCmsData();
-  const pluginTabs = listPlugins().filter(
-    (p) => p.settings && settings.enabledPlugins[p.id] !== false,
-  );
+  // MU plugins are always active, so no enabled-flag filter — only the
+  // settings-presence check. Their tabs sit alongside regular plugin
+  // tabs in the same strip; users see one unified row of configurable
+  // plugins.
+  const pluginTabs: PluginManifest[] = [
+    ...listMuPlugins().filter((p) => !!p.settings),
+    ...listPlugins().filter((p) => p.settings && settings.enabledPlugins[p.id] !== false),
+  ];
 
   return (
     <div className="p-4 md:p-6 space-y-6">

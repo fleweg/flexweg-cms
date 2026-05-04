@@ -46,11 +46,15 @@ flexweg-cms/
 │   ├── pages/           Admin pages (one file per route)
 │   ├── themes/          Public-site themes (one folder per theme)
 │   │   └── default/     Default theme — base/home/single/category/author/404 + components + SCSS
-│   ├── plugins/         WordPress-style plugins, registered via filters/actions
+│   ├── plugins/         WordPress-style plugins, toggleable via /admin/#/plugins
 │   │   ├── core-seo/         Built-in SEO plugin (Twitter cards + generator hint)
 │   │   ├── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
-│   │   ├── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
-│   │   └── flexweg-favicon/  Built-in plugin: favicon generator (PNG, ICO, SVG, PWA manifest)
+│   │   └── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
+│   ├── mu-plugins/      Must-use plugins — same API as plugins/, but always active (cannot be disabled)
+│   │   ├── flexweg-favicon/     Favicon generator (PNG, ICO, SVG, PWA manifest)
+│   │   ├── flexweg-blocks/      Extra editor blocks (Custom HTML, Columns, …)
+│   │   ├── flexweg-custom-code/ Site-wide HTML/CSS/JS injection (head + body end)
+│   │   └── flexweg-embeds/      YouTube / Vimeo / Twitter / Spotify embed blocks
 │   ├── i18n/            Admin UI translations (en + fr)
 │   └── lib/             Small utilities (date format, hashing, classnames)
 ├── scripts/
@@ -505,7 +509,7 @@ Reset to defaults: clears the `style` config and pushes the baseline CSS untouch
 
 ## Creating a plugin
 
-Plugins are bundled into the admin and toggled on/off per site in **Plugins**. Each plugin exports a manifest with a `register(api)` function that hooks into the registry. Optionally, a plugin can also ship its own settings page and translations.
+Plugins are bundled into the admin and toggled on/off per site in **Plugins** (the **Plugins** tab on `/admin/#/plugins`). Each plugin exports a manifest with a `register(api)` function that hooks into the registry. Optionally, a plugin can also ship its own settings page and translations.
 
 ```ts
 // src/plugins/my-plugin/manifest.ts
@@ -603,6 +607,33 @@ return <h2>{t("title")}</h2>;
 
 Bundles are loaded once at module import and persist regardless of plugin enable state — translations are cheap and orthogonal to the runtime hook registration.
 
+## Must-use plugins (mu-plugins)
+
+A plugin placed under `src/mu-plugins/` instead of `src/plugins/` is **always active** — there is no enable / disable toggle in the admin and no entry in `settings.enabledPlugins`. Use this folder for behaviour the site cannot meaningfully run without (favicons, future features that ship as plugins for code organisation but aren't optional for users). The mechanism mirrors WordPress's [must-use plugins](https://wordpress.org/documentation/article/must-use-plugins/) directory.
+
+The manifest shape, hook API, settings page support, and i18n bundles are **identical** to regular plugins — a must-use plugin is just a plugin that lives in a different folder. To convert between the two, move the folder and update the import in `src/mu-plugins/index.ts` or `src/plugins/index.ts`.
+
+```ts
+// src/mu-plugins/my-mu-plugin/manifest.ts
+import type { PluginManifest } from "../../plugins";
+
+export const manifest: PluginManifest = {
+  id: "my-mu-plugin",
+  name: "My must-use plugin",
+  version: "1.0.0",
+  register(api) {
+    api.addFilter<string>("page.head.extra", (head) => head + "<meta name=\"x\" />");
+  },
+};
+```
+
+Then add it to `MU_PLUGINS` in `src/mu-plugins/index.ts`. The plugin loader registers MU plugins **before** regular plugins on every `applyPluginRegistration()` pass, regardless of the enabled-flags map; settings pages declared by MU plugins appear in the **Settings** tab strip alongside regular-plugin tabs.
+
+In the admin at `/admin/#/plugins`, two tabs split the UI:
+
+- **Plugins** — regular plugins, with the standard Enable / Disable button.
+- **Must-use** — MU plugins. Each card shows a discreet **Must-use** badge and no toggle. Configure / Learn more remain available.
+
 ## Built-in plugins
 
 ### `core-seo`
@@ -659,16 +690,18 @@ Cover images: when a post has a `heroMediaId`, the item gets an RSS 2.0 `<enclos
 
 Footer items injected by this plugin appear at the **end** of the resolved footer in `/menu.json`. Labels are auto-generated: `RSS` for the site feed, `RSS — <category name>` for per-category feeds. To control placement or labels manually, leave the addToFooter checkboxes off and add custom items via **Menus** with the feed URL as an external link.
 
-### `flexweg-favicon`
+### `flexweg-favicon` (must-use)
 
-Generates the full set of favicon files plus a Progressive Web App manifest from a single uploaded image. Configure under **Settings → Favicons** (tab visible only when the plugin is enabled).
+Lives under `src/mu-plugins/` — always active, cannot be disabled in the admin (every site benefits from a favicon by default).
+
+Generates the full set of favicon files plus a Progressive Web App manifest from a single uploaded image. Configure under **Settings → Favicons**.
 
 Files produced under `/favicon/` on the public site:
 
 - `favicon-96x96.png` — modern browser favicon (96×96)
 - `apple-touch-icon.png` — iOS home-screen icon (180×180, white background to avoid Safari masking transparency)
 - `web-app-manifest-192x192.png` and `web-app-manifest-512x512.png` — PWA install icons (purpose: maskable)
-- `favicon.ico` — multi-size legacy icon (16/32/48 PNG payloads packed via a pure-JS encoder under `src/plugins/flexweg-favicon/icoEncoder.ts`)
+- `favicon.ico` — multi-size legacy icon (16/32/48 PNG payloads packed via a pure-JS encoder under `src/mu-plugins/flexweg-favicon/icoEncoder.ts`)
 - `favicon.svg` — vector variant. Only generated when the source upload is itself an SVG (passthrough); skipped silently for raster sources since rasterizing a PNG into SVG produces fake-vector output.
 - `site.webmanifest` — PWA manifest JSON
 
@@ -683,6 +716,36 @@ Configuration options:
 - **Remove all** — wipes every file under `/favicon/`.
 
 Head injection happens automatically via the `page.head.extra` filter — every published page receives the appropriate `<link rel="icon">` / `<link rel="apple-touch-icon">` / `<link rel="manifest">` tags plus a `<meta name="theme-color">` when PWA is configured. Tags only emit for files actually present on the site (the per-format flags in the plugin config drive this), so partial setups don't produce broken links. Cache-busting via `?v=<uploadedAt>` ensures browsers pick up replacements without manual refresh.
+
+### `flexweg-blocks` (must-use)
+
+Lives under `src/mu-plugins/` — always active. Ships first-party editor blocks the post / page editor relies on:
+
+- **Custom HTML** — paste arbitrary HTML into a block. Inspector hosts a CodeMirror-backed editor with line numbers, syntax highlighting, and a fullscreen modal for long blobs.
+- **Columns** — multi-column layout block (configurable count) for side-by-side content.
+
+Disabling these would silently strip blocks from existing posts on the next render — they're must-use to prevent that footgun. New blocks belong in this plugin (or in their own dedicated plugin if they're optional).
+
+### `flexweg-custom-code` (must-use)
+
+Lives under `src/mu-plugins/` — always active. Configure under **Settings → Custom code**.
+
+Two free-form code zones injected into every published page:
+
+- **Head** — appended to the bottom of `<head>`. Use for analytics (Google Analytics, Plausible), web fonts, custom `<style>` overrides.
+- **Body end** — appended just before `</body>`. Use for deferred scripts (chat widgets, late analytics) that need the DOM parsed.
+
+Both editors share the CodeMirror component used by the Custom HTML block (lazy-loaded so the bundle ships only once). Code is injected **as-is** — no sanitisation. A broken `<script>` can take down the whole site until you fix it; the editor surfaces a warning to that effect.
+
+Hooks: `page.head.extra` and `page.body.end`. Reading the live config from the resolved `BaseLayoutProps` keeps the filter handlers stateless.
+
+### `flexweg-embeds` (must-use)
+
+Lives under `src/mu-plugins/` — always active. Adds editor blocks for **YouTube**, **Vimeo**, **Twitter / X**, and **Spotify**. Each block is an atom Tiptap node that round-trips through Markdown as `<div data-cms-embed="<provider>" data-id="<x>" data-url="<y>"></div>`, so embeds survive editor saves without losing the source URL.
+
+At publish time the publisher rewrites each marker into the provider's actual iframe / blockquote (via the `post.html.body` filter), and per-page detection injects a single `<style>` tag plus any provider-specific scripts (Twitter's `widgets.js` is the only one needing JS today — YouTube / Vimeo / Spotify are iframe-only). Pages without embeds pay zero overhead.
+
+Adding a new provider = one entry in [src/mu-plugins/flexweg-embeds/providers.ts](src/mu-plugins/flexweg-embeds/providers.ts) + one i18n key pair. Disabling this plugin would silently strip embeds from existing posts on the next render — must-use to prevent that footgun.
 
 ## Tests
 

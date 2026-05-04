@@ -10,7 +10,7 @@ import {
   regenerateManifest,
   removeAllFavicons,
 } from "./generator";
-import type { PluginSettingsPageProps } from "../index";
+import type { PluginSettingsPageProps } from "../../plugins";
 
 // Plugin config shape. Stored at
 // settings.pluginConfigs["flexweg-favicon"]; merged with defaults by

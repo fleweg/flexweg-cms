@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCmsData } from "../context/CmsDataContext";
 import { getPluginManifest } from "../plugins";
+import { isMuPlugin } from "../mu-plugins";
 import { updatePluginConfig } from "../services/settings";
 
 // Renders the settings page declared by a plugin's manifest. Resolves the
@@ -26,8 +27,10 @@ export function PluginSettingsRoute() {
   }, [plugin, settings.pluginConfigs]);
 
   if (!plugin || !plugin.settings) return <Navigate to="/settings/general" replace />;
-  if (settings.enabledPlugins[plugin.id] === false) {
-    // Disabled plugin: silently bounce — admin can re-enable from /plugins.
+  // MU plugins ignore the enabled flag entirely — they cannot be
+  // disabled. For regular plugins, a disabled state silently bounces
+  // the user back to General; they can re-enable from /plugins.
+  if (!isMuPlugin(plugin.id) && settings.enabledPlugins[plugin.id] === false) {
     return <Navigate to="/settings/general" replace />;
   }
   if (!config) return null;

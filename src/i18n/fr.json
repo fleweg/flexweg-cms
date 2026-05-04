@@ -223,7 +223,12 @@
     "disable": "Désactiver",
     "configure": "Configurer",
     "author": "auteur",
-    "learnMore": "En savoir plus"
+    "learnMore": "En savoir plus",
+    "mustUseBadge": "Indispensable",
+    "tabs": {
+      "regular": "Plugins",
+      "mustUse": "Indispensables"
+    }
   },
   "menus": {
     "title": "Menus",

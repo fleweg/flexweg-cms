@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Loader2, Maximize2, TriangleAlert, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { toast } from "../../lib/toast";
-import type { PluginSettingsPageProps } from "../index";
+import type { PluginSettingsPageProps } from "../../plugins";
 
 export interface CustomCodeConfig {
   head: string;
