@@ -351,6 +351,25 @@
       "delete": "Datensatz löschen"
     }
   },
+  "firestoreSetup": {
+    "title": "Firestore-Setup erforderlich",
+    "intro": "Die Artikel- und Seiten-Listenseiten benötigen einige Firestore-Composite-Indexes für effiziente Abfragen. Diese müssen manuell erstellt werden — Firebase reserviert die Index-Erstellung für Projekt-Admins.",
+    "checking": "Firestore-Indexes werden geprüft…",
+    "missingCount_one": "{{count}} Index fehlt:",
+    "missingCount_other": "{{count}} Indexes fehlen:",
+    "openConsole": "Firebase Console zum Erstellen öffnen",
+    "noUrl": "Auto-Vorschlag-URL nicht extrahierbar — siehe README für den gcloud-Befehl.",
+    "howItWorks": "Wie es funktioniert",
+    "step1": "Klicken Sie für jeden fehlenden Index auf den Link — Firebase Console öffnet sich mit der vorausgefüllten Index-Definition.",
+    "step2": "Klicken Sie auf „Create\" und warten Sie 1–5 Minuten, bis der Index aufgebaut ist (Status in der Console).",
+    "step3": "Kommen Sie zurück und klicken Sie auf Wiederholen. Sobald beide Abfragen erfolgreich sind, lädt der Admin.",
+    "retry": "Wiederholen",
+    "retrying": "Wiederholt…",
+    "buildHint": "Der Aufbau eines Indexes kann nach der Erstellung einige Minuten dauern.",
+    "allReady": "Alle Indexes bereit.",
+    "unexpectedTitle": "Firestore nicht erreichbar",
+    "unexpectedHint": "Prüfen Sie Ihre Verbindung und die Firestore-Regeln. Wenn Sie die Indexes gerade erstellt haben, warten Sie auf den Abschluss des Aufbaus und versuchen Sie es erneut."
+  },
   "errors": {
     "appError": "Anwendungsfehler",
     "loadAccountFailed": "Konto konnte nicht geladen werden",

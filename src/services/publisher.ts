@@ -29,7 +29,7 @@ import { listAllMedia } from "./media";
 import { publishMenuJson } from "./menuPublisher";
 import { publishPostsJson } from "./postsJsonPublisher";
 import { publishAuthorsJson } from "./authorsJsonPublisher";
-import { markPostDraft, markPostOnline } from "./posts";
+import { fetchAllPosts, markPostDraft, markPostOnline } from "./posts";
 import { setCurrentPublishContext } from "./publishContext";
 import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
 import { renderHero } from "../themes/default/blocks/hero/render";
@@ -481,19 +481,38 @@ async function uploadIfChanged(
 
 // Loads everything the publisher needs from the data context. Caller should
 // pass already-subscribed arrays so we avoid double fetching.
+// Builds the PublishContext needed by every render / regen op. Posts
+// + pages are fetched on demand from Firestore (cached briefly — see
+// fetchAllPosts in services/posts.ts) so the admin SPA no longer
+// needs a global posts subscription. terms / users / settings are
+// small + ambient enough that callers still pass them explicitly
+// from useCmsData().
 export async function buildPublishContext(args: {
-  posts: Post[];
-  pages: Post[];
   terms: Term[];
   settings: SiteSettings;
   users: UserRecord[];
   authorLookup: (id: string) => AuthorView | undefined;
+  // Optional pre-fetched lists. Callers that just persisted a post
+  // and need the new state visible in the publish ctx can pass the
+  // fresh list here instead of relying on the cache.
+  posts?: Post[];
+  pages?: Post[];
 }): Promise<PublishContext> {
-  // Media library can be large; we fetch it once via getDocs rather than
-  // lugging it through the context. Cached by the function caller.
-  const mediaList = await listAllMedia();
+  const [posts, pages, mediaList] = await Promise.all([
+    args.posts ? Promise.resolve(args.posts) : fetchAllPosts({ type: "post" }),
+    args.pages ? Promise.resolve(args.pages) : fetchAllPosts({ type: "page" }),
+    listAllMedia(),
+  ]);
   const media = new Map(mediaList.map((m) => [m.id, m]));
-  return { ...args, media };
+  return {
+    posts,
+    pages,
+    terms: args.terms,
+    settings: args.settings,
+    users: args.users,
+    authorLookup: args.authorLookup,
+    media,
+  };
 }
 
 // Patches the post inside the publish context's `posts`/`pages` arrays. The

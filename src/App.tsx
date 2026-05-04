@@ -8,6 +8,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorScreen } from "./components/ErrorScreen";
 import { ToastContainer } from "./components/ui/ToastContainer";
+import { FirestoreSetupGate } from "./components/FirestoreSetupGate";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PostsListPage } from "./pages/PostsListPage";
@@ -146,8 +147,9 @@ function AuthenticatedShell() {
   }
 
   return (
-    <CmsDataProvider>
-      <Routes>
+    <FirestoreSetupGate>
+      <CmsDataProvider>
+        <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -179,7 +181,8 @@ function AuthenticatedShell() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
-    </CmsDataProvider>
+      </CmsDataProvider>
+    </FirestoreSetupGate>
   );
 }
 

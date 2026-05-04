@@ -5,6 +5,7 @@ import { ArrowLeft, Eye, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "
 import type { Editor } from "@tiptap/core";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
+import { useAllPosts } from "../hooks/useAllPosts";
 import { MarkdownEditor } from "../components/editor/MarkdownEditor";
 import { MediaPicker } from "../components/editor/MediaPicker";
 import { EditorTopbar } from "../components/editor/EditorTopbar";
@@ -50,10 +51,16 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { posts, pages, categories, tags, media, settings, users } = useCmsData();
+  const { categories, tags, media, settings, users } = useCmsData();
+  // Posts + pages used to come from the global subscription. Now
+  // we fetch on mount (cached for 30 s in services/posts.ts) — the
+  // edit page needs both lists for slug collision checks across the
+  // whole corpus, plus the matching list to look up `existing`.
+  const { posts } = useAllPosts("post");
+  const { posts: pages } = useAllPosts("page");
   const isNew = !id;
   const list = type === "post" ? posts : pages;
-  const existing = useMemo(() => list.find((p) => p.id === id), [list, id]);
+  const existing = useMemo(() => list.find((p: Post) => p.id === id), [list, id]);
 
   // Apply the site-wide editor typography preference. Reads from the
   // same Firestore subscription that drives the rest of the page, so
@@ -244,24 +251,10 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       // this, saving an online post used to leave the published file
       // untouched until the user manually toggled Unpublish + Publish.
       if (existing.status === "online") {
-        // The CmsDataContext snapshot in `posts`/`pages` doesn't yet
-        // include the values we just wrote (Firestore subscription
-        // hasn't propagated). Patch the publish context locally so
-        // `publishPost` renders with the new title/slug/hero/etc.
-        const patchedExisting: Post = {
-          ...existing,
-          title,
-          slug,
-          contentMarkdown,
-          excerpt: excerpt || undefined,
-          termIds,
-          primaryTermId: primaryTermId || undefined,
-          heroMediaId: heroMediaId ?? undefined,
-          seo,
-        };
+        // updatePost above invalidated the fetchAllPosts cache; the
+        // ctx fetch picks up the fresh title / slug / category state
+        // automatically. No need to hand-patch the lists.
         const ctx = await buildPublishContext({
-          posts: posts.map((p) => (p.id === existing.id ? patchedExisting : p)),
-          pages: pages.map((p) => (p.id === existing.id ? patchedExisting : p)),
           terms: [...categories, ...tags],
           settings,
           users,
@@ -289,8 +282,6 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
     try {
       const ctx = await buildPublishContext({
-        posts,
-        pages,
         terms: [...categories, ...tags],
         settings,
         users,

@@ -4,7 +4,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import type { BlockManifest } from "../../../../core/blockRegistry";
 import type { Post } from "../../../../core/types";
-import { useCmsData } from "../../../../context/CmsDataContext";
+import { useAllPosts } from "../../../../hooks/useAllPosts";
 import { blockNodeName, createBlockNode } from "../createBlockNode";
 import type { HeroAttrs } from "./render";
 
@@ -29,10 +29,13 @@ interface HeroNodeViewProps {
 // editing.
 function HeroNodeView({ attrs, selected }: HeroNodeViewProps) {
   const { t } = useTranslation("theme-default");
-  const { posts } = useCmsData();
+  // Editor preview: load the posts list once via the cache-backed
+  // helper. It's just to display the featured post's title — no
+  // need for a live subscription.
+  const { posts } = useAllPosts("post");
   const featured = attrs.featuredPostId === "latest" || !attrs.featuredPostId
     ? t("blocks.hero.latestLabel")
-    : posts.find((p) => p.id === attrs.featuredPostId)?.title ?? t("blocks.hero.unknownPost");
+    : posts.find((p: Post) => p.id === attrs.featuredPostId)?.title ?? t("blocks.hero.unknownPost");
 
   return (
     <NodeViewWrapper
@@ -66,7 +69,7 @@ interface HeroInspectorProps {
 
 function HeroInspector({ editor }: HeroInspectorProps) {
   const { t } = useTranslation("theme-default");
-  const { posts } = useCmsData();
+  const { posts } = useAllPosts("post");
   const raw = editor.getAttributes(NODE_NAME) as { attrs?: HeroAttrs };
   const attrs = { ...DEFAULT_ATTRS, ...(raw.attrs ?? {}) };
 
@@ -87,8 +90,11 @@ function HeroInspector({ editor }: HeroInspectorProps) {
   // "latest" sentinel resolves to so users immediately see it at the
   // top of the dropdown.
   const onlinePosts: Post[] = posts
-    .filter((p) => p.status === "online")
-    .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0));
+    .filter((p: Post) => p.status === "online")
+    .sort(
+      (a: Post, b: Post) =>
+        (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+    );
 
   return (
     <div className="space-y-3">

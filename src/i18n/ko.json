@@ -351,6 +351,25 @@
       "delete": "기록 삭제"
     }
   },
+  "firestoreSetup": {
+    "title": "Firestore 설정 필요",
+    "intro": "게시물 및 페이지 목록 페이지는 효율적인 쿼리를 위해 몇 개의 Firestore 복합 인덱스가 필요합니다. 수동으로 생성해야 합니다 — Firebase는 인덱스 생성을 프로젝트 관리자에게만 허용합니다.",
+    "checking": "Firestore 인덱스 확인 중…",
+    "missingCount_one": "{{count}}개의 인덱스가 누락되었습니다:",
+    "missingCount_other": "{{count}}개의 인덱스가 누락되었습니다:",
+    "openConsole": "생성하려면 Firebase Console 열기",
+    "noUrl": "자동 제안 URL을 추출할 수 없습니다 — gcloud 명령은 README를 참조하세요.",
+    "howItWorks": "작동 방식",
+    "step1": "각 누락된 인덱스의 링크를 클릭하세요 — Firebase Console이 정의가 미리 채워진 상태로 열립니다.",
+    "step2": "'Create'를 클릭하고 인덱스가 빌드될 때까지 1~5분 기다리세요 (콘솔에서 상태 확인).",
+    "step3": "여기로 돌아와 재시도를 클릭하세요. 두 쿼리가 모두 성공하면 관리자가 로드됩니다.",
+    "retry": "재시도",
+    "retrying": "재시도 중…",
+    "buildHint": "인덱스 생성 후 빌드까지 몇 분이 걸릴 수 있습니다.",
+    "allReady": "모든 인덱스가 준비되었습니다.",
+    "unexpectedTitle": "Firestore에 도달할 수 없음",
+    "unexpectedHint": "네트워크 연결과 Firestore 규칙을 확인하세요. 인덱스를 방금 생성했다면 빌드가 끝날 때까지 기다린 후 재시도하세요."
+  },
   "errors": {
     "appError": "애플리케이션 오류",
     "loadAccountFailed": "계정을 불러올 수 없습니다",

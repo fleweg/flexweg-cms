@@ -351,6 +351,25 @@
       "delete": "Record verwijderen"
     }
   },
+  "firestoreSetup": {
+    "title": "Firestore-setup vereist",
+    "intro": "De berichten- en pagina-overzichtspagina's hebben enkele Firestore composite indexes nodig om efficiënt te queryen. Die moeten handmatig worden aangemaakt — Firebase reserveert het aanmaken van indexes voor projectbeheerders.",
+    "checking": "Je Firestore-indexes controleren…",
+    "missingCount_one": "{{count}} index ontbreekt:",
+    "missingCount_other": "{{count}} indexes ontbreken:",
+    "openConsole": "Firebase Console openen om aan te maken",
+    "noUrl": "Auto-suggestie-URL niet extraheerbaar — zie README voor het gcloud-commando.",
+    "howItWorks": "Hoe het werkt",
+    "step1": "Klik op de link voor elke ontbrekende index — Firebase Console opent met de definitie vooraf ingevuld.",
+    "step2": "Klik op \"Create\" en wacht 1–5 minuten tot de index is opgebouwd (status in de console).",
+    "step3": "Kom terug en klik op Opnieuw proberen. Zodra beide queries slagen, laadt de admin.",
+    "retry": "Opnieuw proberen",
+    "retrying": "Opnieuw proberen…",
+    "buildHint": "Het opbouwen van een index kan na aanmaak een paar minuten duren.",
+    "allReady": "Alle indexes klaar.",
+    "unexpectedTitle": "Firestore niet bereikbaar",
+    "unexpectedHint": "Controleer je verbinding en Firestore-regels. Als je net de indexes hebt aangemaakt, wacht tot ze klaar zijn en probeer opnieuw."
+  },
   "errors": {
     "appError": "Toepassingsfout",
     "loadAccountFailed": "Kon je account niet laden",

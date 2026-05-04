@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FileCode2, Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCmsData } from "../../context/CmsDataContext";
+import { fetchAllPosts } from "../../services/posts";
 import { toast } from "../../lib/toast";
 import {
   defaultRobotsTxt,
@@ -17,7 +18,7 @@ import type { PluginSettingsPageProps } from "../index";
 // stored value, so `props.config` is always a complete SitemapsConfig.
 export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<SitemapsConfig>) {
   const { t } = useTranslation("flexweg-sitemaps");
-  const { settings, posts, pages, terms } = useCmsData();
+  const { settings, terms } = useCmsData();
 
   const [draft, setDraft] = useState<SitemapsConfig>(config);
   // External settings updates re-hydrate the draft so toggling another
@@ -69,6 +70,11 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
       // Stylesheets first so any newly uploaded sitemap immediately
       // resolves its xml-stylesheet PI to a fresh XSL on the public site.
       const xslResult = await regenerateStylesheets({ settings, config: draft });
+      // Fetch corpus on demand — global subscription is gone.
+      const [posts, pages] = await Promise.all([
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       const result = await regenerateSitemaps({
         posts,
         pages,

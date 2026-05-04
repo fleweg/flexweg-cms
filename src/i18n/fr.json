@@ -351,6 +351,25 @@
       "delete": "Supprimer"
     }
   },
+  "firestoreSetup": {
+    "title": "Configuration Firestore requise",
+    "intro": "Les pages de listing posts/pages ont besoin de quelques index composites Firestore pour fonctionner. Ils doivent être créés manuellement — Firebase réserve cette opération aux admins du projet.",
+    "checking": "Vérification de vos index Firestore…",
+    "missingCount_one": "{{count}} index manquant :",
+    "missingCount_other": "{{count}} index manquants :",
+    "openConsole": "Ouvrir Firebase Console pour créer",
+    "noUrl": "URL d'auto-suggestion introuvable — voir le README pour la commande gcloud.",
+    "howItWorks": "Comment ça marche",
+    "step1": "Cliquez sur le lien de chaque index manquant — Firebase Console ouvre avec la définition pré-remplie.",
+    "step2": "Cliquez sur « Create » et attendez 1 à 5 minutes la construction de l'index (statut dans la console).",
+    "step3": "Revenez ici et cliquez sur Réessayer. Une fois les deux queries OK, l'admin se charge.",
+    "retry": "Réessayer",
+    "retrying": "Vérification…",
+    "buildHint": "La construction d'un index peut prendre quelques minutes après création.",
+    "allReady": "Tous les index sont prêts.",
+    "unexpectedTitle": "Impossible de joindre Firestore",
+    "unexpectedHint": "Vérifiez votre connexion et les règles Firestore. Si vous venez de créer les index, attendez la fin de leur construction puis réessayez."
+  },
   "errors": {
     "appError": "Erreur applicative",
     "loadAccountFailed": "Impossible de charger votre compte",

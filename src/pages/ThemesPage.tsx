@@ -12,7 +12,7 @@ import { buildAuthorLookup } from "../services/users";
 
 export function ThemesPage() {
   const { t } = useTranslation();
-  const { settings, posts, pages, terms, users, media } = useCmsData();
+  const { settings, terms, users, media } = useCmsData();
   const [busy, setBusy] = useState(false);
   const [logEntries, setLogEntries] = useState<PublishLogEntry[]>([]);
   const themes = listThemes();
@@ -93,8 +93,6 @@ export function ThemesPage() {
     const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
     try {
       const ctx = await buildPublishContext({
-        posts,
-        pages,
         terms,
         settings,
         users,

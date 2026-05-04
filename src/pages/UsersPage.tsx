@@ -7,6 +7,7 @@ import { useCmsData } from "../context/CmsDataContext";
 import { pickMediaUrl } from "../core/media";
 import { ADMIN_PREVIEW_KEY, ADMIN_THUMB_KEY } from "../services/imageFormats";
 import { publishAuthorsJson } from "../services/authorsJsonPublisher";
+import { fetchAllPosts } from "../services/posts";
 import {
   buildPublishContext,
   publishAuthorArchive,
@@ -141,7 +142,7 @@ function UserRow({ user, onEdit }: { user: UserRecord; onEdit: () => void }) {
 // patch ANY user record while non-admins are restricted to their own.
 function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => void }) {
   const { t } = useTranslation();
-  const { media, users, posts, pages, terms, settings } = useCmsData();
+  const { media, users, terms, settings } = useCmsData();
 
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [lastName, setLastName] = useState(user.lastName ?? "");
@@ -191,8 +192,17 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
             }
           : u,
       );
+      // The publisher refresh below needs the full post + page corpus
+      // to (a) update authors.json post counts and (b) decide whether
+      // an author archive page even exists for this user. Fetch on
+      // demand from the cache-backed helper instead of relying on a
+      // global subscription.
+      const [allPosts, allPages] = await Promise.all([
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       try {
-        await publishAuthorsJson(optimisticUsers, media, posts, pages);
+        await publishAuthorsJson(optimisticUsers, media, allPosts, allPages);
       } catch (err) {
         // Surface failure but keep the local Firestore write — the
         // next post publish (or another profile save) will retry.
@@ -202,14 +212,12 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
       // bio/avatar/name; post grid stays the same since posts didn't
       // change). Skipped silently when the user has no online posts —
       // there's no archive to refresh in that case.
-      const hasOnlinePosts = [...posts, ...pages].some(
+      const hasOnlinePosts = [...allPosts, ...allPages].some(
         (p) => p.status === "online" && p.authorId === user.id,
       );
       if (hasOnlinePosts) {
         try {
           const ctx = await buildPublishContext({
-            posts,
-            pages,
             terms,
             settings,
             users: optimisticUsers,

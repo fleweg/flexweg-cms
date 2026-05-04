@@ -13,6 +13,7 @@ import {
   type RssConfig,
 } from "./generator";
 import { publishMenuJson } from "../../services/menuPublisher";
+import { fetchAllPosts } from "../../services/posts";
 import type { PluginSettingsPageProps } from "../index";
 
 // Settings page rendered at /settings/plugin/flexweg-rss. The wrapping
@@ -20,7 +21,7 @@ import type { PluginSettingsPageProps } from "../index";
 // the stored value, so `props.config` is always a complete RssConfig.
 export function FlexwegRssSettingsPage({ config, save }: PluginSettingsPageProps<RssConfig>) {
   const { t } = useTranslation("flexweg-rss");
-  const { settings, posts, pages, terms, categories, media } = useCmsData();
+  const { settings, terms, categories, media } = useCmsData();
 
   // Local draft kept in sync with Firestore — same pattern as the other
   // plugin settings pages. External updates (a co-admin tweaks something)
@@ -94,6 +95,12 @@ export function FlexwegRssSettingsPage({ config, save }: PluginSettingsPageProps
         pluginConfigs: { ...settings.pluginConfigs, "flexweg-rss": cleanup.nextConfig },
       };
       try {
+        // Fetch the corpus on demand — the global subscription is
+        // gone. fetchAllPosts caches for 30 s.
+        const [posts, pages] = await Promise.all([
+          fetchAllPosts({ type: "post" }),
+          fetchAllPosts({ type: "page" }),
+        ]);
         await publishMenuJson(patchedSettings, posts, pages, terms);
       } catch (err) {
         console.error("[flexweg-rss] menu.json republish failed:", err);
@@ -136,6 +143,10 @@ export function FlexwegRssSettingsPage({ config, save }: PluginSettingsPageProps
 
       await regenerateStylesheet({ settings });
 
+      const [posts, pages] = await Promise.all([
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       const out = await regenerateAllFeeds({
         posts,
         terms,
@@ -154,6 +165,8 @@ export function FlexwegRssSettingsPage({ config, save }: PluginSettingsPageProps
         pluginConfigs: { ...settings.pluginConfigs, "flexweg-rss": out.nextConfig },
       };
       try {
+        // Re-use the posts / pages fetched a few lines above —
+        // the cache is still warm.
         await publishMenuJson(patchedSettings, posts, pages, terms);
       } catch (err) {
         console.error("[flexweg-rss] menu.json republish failed:", err);

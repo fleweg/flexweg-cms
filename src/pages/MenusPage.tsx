@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { EntityCombobox, type ComboboxOption } from "../components/ui/EntityCombobox";
 import { useCmsData } from "../context/CmsDataContext";
+import { useAllPosts } from "../hooks/useAllPosts";
 import { updateSettings } from "../services/settings";
 import { publishMenuJson } from "../services/menuPublisher";
 import { toast } from "../lib/toast";
@@ -51,7 +52,12 @@ function sameMenu(a: MenuItem[], b: MenuItem[]): boolean {
 
 export function MenusPage() {
   const { t, i18n } = useTranslation();
-  const { settings, posts, pages, terms } = useCmsData();
+  const { settings, terms } = useCmsData();
+  // Menu items reference posts + pages by id. We need the full
+  // corpus on screen to populate the picker, so this surface is one
+  // of the legitimate fetchAllPosts-on-mount call sites.
+  const { posts } = useAllPosts("post");
+  const { posts: pages } = useAllPosts("page");
   const savedHeader = settings.menus.header ?? [];
   const savedFooter = settings.menus.footer ?? [];
 

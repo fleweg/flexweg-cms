@@ -21,13 +21,11 @@ interface PublishButtonProps {
 // inline display under the editor.
 export function PublishButton({ post, onLog }: PublishButtonProps) {
   const { t } = useTranslation();
-  const { posts, pages, terms, settings, users, media } = useCmsData();
+  const { terms, settings, users, media } = useCmsData();
   const [busy, setBusy] = useState(false);
 
   async function withCtx() {
     return buildPublishContext({
-      posts,
-      pages,
       terms,
       settings,
       users,

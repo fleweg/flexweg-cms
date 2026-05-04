@@ -29,6 +29,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useCmsData } from "../../context/CmsDataContext";
 import { listAllMedia } from "../../services/media";
+import { fetchAllPosts } from "../../services/posts";
 import { toast } from "../../lib/toast";
 import { DropZone, type DroppedBundle } from "./DropZone";
 import {
@@ -188,12 +189,18 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
       }
       lastBundleRef.current = bundle;
       // Need a fresh media listing — useCmsData doesn't carry it.
-      const media = await listAllMedia();
+      // posts + pages are also fetched on demand now that the global
+      // subscription is gone.
+      const [media, posts, pages] = await Promise.all([
+        listAllMedia(),
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       const dry = scanBundle(
         bundle,
         {
-          posts: cms.posts,
-          pages: cms.pages,
+          posts,
+          pages,
           terms: cms.terms,
           media,
           users: cms.users,
@@ -217,11 +224,15 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
     setResult(null);
     setLogLines([]);
     try {
-      const media = await listAllMedia();
+      const [media, posts, pages] = await Promise.all([
+        listAllMedia(),
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       const out = await runImport({
         ctx: {
-          posts: cms.posts,
-          pages: cms.pages,
+          posts,
+          pages,
           terms: cms.terms,
           media,
           users: cms.users,

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCmsData } from "../../context/CmsDataContext";
+import { fetchAllPosts } from "../../services/posts";
 import { toast } from "../../lib/toast";
 import {
   type ArchivesConfig,
@@ -19,7 +20,7 @@ export function ArchivesSettingsPage({
   save,
 }: PluginSettingsPageProps<ArchivesConfig>) {
   const { t } = useTranslation("flexweg-archives");
-  const { posts, pages, terms, settings } = useCmsData();
+  const { terms, settings } = useCmsData();
 
   const [draft, setDraft] = useState<ArchivesConfig>(config);
   // Re-hydrate the draft if the stored config changes externally
@@ -50,6 +51,12 @@ export function ArchivesSettingsPage({
       // unsaved changes (e.g. drill-down switched moments before
       // clicking Force regenerate).
       await save(draft);
+      // Fetch full corpus on demand (cached for 30 s in
+      // services/posts.ts) — the global subscription is gone.
+      const [posts, pages] = await Promise.all([
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       const result = await runForceRegenerate({ posts, pages, terms, settings });
       toast.success(t("settings.regenerated", { count: result.uploaded.length }));
     } catch (err) {

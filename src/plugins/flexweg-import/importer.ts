@@ -695,32 +695,16 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
     if (shouldPublish) {
       try {
         log(`Publishing: ${entry.title}`);
-        // buildPublishContext is an async helper; we rebuild per
-        // post so the ctx reflects all newly-created posts/terms.
+        // createPost above invalidated the fetchAllPosts cache;
+        // buildPublishContext below picks up the freshly-created
+        // post from Firestore (read-your-writes consistency), so
+        // we don't need to manually patch a synthetic into ctx.
         const publishCtx = await buildPublishContext({
-          posts: ctx.posts,
-          pages: ctx.pages,
           terms: ctx.terms,
           users: ctx.users,
           settings,
           authorLookup: buildAuthorLookup(ctx.users, ctx.media),
         });
-        // Patch in our newly-created post so publishPost can find
-        // it. We don't have a Firestore subscription update yet at
-        // this point — the caller will get one moments later.
-        const synthetic: Post = {
-          id: postId,
-          type: entry.type,
-          title: entry.title,
-          slug: resolved.finalSlug,
-          contentMarkdown: body,
-          authorId,
-          termIds,
-          primaryTermId,
-          status: "draft",
-        } as Post;
-        if (entry.type === "post") publishCtx.posts = [...publishCtx.posts, synthetic];
-        else publishCtx.pages = [...publishCtx.pages, synthetic];
         await publishPost(postId, publishCtx, () => {});
         result.publishedPostIds.push(postId);
       } catch (err) {

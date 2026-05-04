@@ -221,6 +221,87 @@ service cloud.firestore {
 
 If you want only admins to manage themes/plugins/menus, change `allow write: if isEditor();` to `allow write: if isAdmin();` on `match /settings/{docId}`.
 
+## Firestore indexes
+
+The post and page list pages run server-side paginated queries (`orderBy("createdAt", "desc")` with cursor-based pagination + an optional `where("status", ...)` filter). These need composite indexes on the `posts` collection.
+
+### Indexes to create
+
+| Use case | Fields | Order |
+|---|---|---|
+| All posts/pages, paginated | `type` (asc), `createdAt` (desc) | desc on `createdAt` |
+| Posts/pages by status, paginated | `type` (asc), `status` (asc), `createdAt` (desc) | desc on `createdAt` |
+
+### Option 1 — gcloud CLI (recommended)
+
+Install the [gcloud CLI](https://cloud.google.com/sdk/docs/install), authenticate (`gcloud auth login`), then set the active project:
+
+```bash
+gcloud config set project <YOUR_FIREBASE_PROJECT_ID>
+```
+
+Create the two indexes:
+
+```bash
+# Index 1: type + createdAt — covers the "all" tab
+gcloud firestore indexes composite create \
+  --collection-group=posts \
+  --query-scope=COLLECTION \
+  --field-config=field-path=type,order=ASCENDING \
+  --field-config=field-path=createdAt,order=DESCENDING
+
+# Index 2: type + status + createdAt — covers the draft / online tabs
+gcloud firestore indexes composite create \
+  --collection-group=posts \
+  --query-scope=COLLECTION \
+  --field-config=field-path=type,order=ASCENDING \
+  --field-config=field-path=status,order=ASCENDING \
+  --field-config=field-path=createdAt,order=DESCENDING
+```
+
+Each command finishes synchronously and reports the index id. The index itself takes 1–5 minutes to build on the backend depending on collection size — Firebase Console → Firestore → Indexes shows the progress.
+
+### Option 2 — `firestore.indexes.json` (Firebase CLI)
+
+Drop the following at your project root, then run `firebase deploy --only firestore:indexes`:
+
+```json
+{
+  "indexes": [
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
+```
+
+### Option 3 — let the admin guide you (zero config, recommended for non-CLI users)
+
+If you skip Options 1 and 2, the admin SPA detects the missing indexes on **first login** and shows a setup screen with direct one-click links to the Firebase Console. Each link opens the index-creation form pre-filled — you click "Create" inside Firebase, wait 1–5 minutes for the build, then click "Retry" in the admin. Once both indexes report ready, the gate disappears and the admin proceeds.
+
+This works on Firestore's **free tier (Spark plan)** without any additional configuration. The detection runs only on first boot — once the indexes are confirmed ready, the result is cached in `localStorage` and the gate becomes a no-op on subsequent reloads.
+
+You only need to do this **once per browser** that signs into your admin (or once per `localStorage` reset). Other admins signing in from their own browsers just see a single ping that succeeds silently.
+
+### Verifying
+
+After the indexes finish building (status: `READY` in the console), the post / page list pages load in under a second regardless of corpus size, and the dashboard's stat cards return their counts via aggregation queries (single read each).
+
 ## Building & deploying
 
 ```bash

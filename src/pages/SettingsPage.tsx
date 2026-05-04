@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
+import { useAllPosts } from "../hooks/useAllPosts";
 import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS, pickPublicLocale } from "../i18n";
 import {
   DEFAULT_FLEXWEG_API_BASE_URL,
@@ -22,7 +23,10 @@ import type { AdminLocale, EditorStyle } from "../core/types";
 export function SettingsPage() {
   const { t } = useTranslation();
   const { user, record } = useAuth();
-  const { settings, pages } = useCmsData();
+  const { settings } = useCmsData();
+  // The home-page picker needs the full pages list. Loaded on mount
+  // — the picker is the only place this list is needed on this page.
+  const { posts: pages } = useAllPosts("page");
 
   // Site
   const [title, setTitle] = useState(settings.title);

@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useCmsData } from "../../context/CmsDataContext";
 import { toast } from "../../lib/toast";
 import { publishMenuJson } from "../../services/menuPublisher";
+import { fetchAllPosts } from "../../services/posts";
 import type { ThemeSettingsPageProps } from "../types";
 import { manifest } from "./manifest";
 import { logoPath, removeThemeLogo, uploadThemeLogo } from "./logo";
@@ -113,7 +114,7 @@ function GeneralTab({
   save,
 }: ThemeSettingsPageProps<DefaultThemeConfig>) {
   const { t } = useTranslation("theme-default");
-  const { settings, posts, pages, terms } = useCmsData();
+  const { settings, terms } = useCmsData();
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -132,6 +133,14 @@ function GeneralTab({
       themeConfigs: { ...settings.themeConfigs, default: nextConfig },
     };
     try {
+      // Posts + pages are needed only for menu item resolution
+      // (links to specific posts/pages). Fetched on demand from
+      // the cache-backed helper now that the global subscription
+      // is gone.
+      const [posts, pages] = await Promise.all([
+        fetchAllPosts({ type: "post" }),
+        fetchAllPosts({ type: "page" }),
+      ]);
       await publishMenuJson(patchedSettings, posts, pages, terms);
     } catch (err) {
       console.error("[theme-default] menu.json refresh failed:", err);

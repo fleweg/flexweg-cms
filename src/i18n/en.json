@@ -351,6 +351,25 @@
       "delete": "Delete record"
     }
   },
+  "firestoreSetup": {
+    "title": "Firestore setup needed",
+    "intro": "The post and page list pages need a couple of Firestore composite indexes to query efficiently. They have to be created manually — Firebase reserves index creation for project admins.",
+    "checking": "Checking your Firestore indexes…",
+    "missingCount_one": "{{count}} index missing:",
+    "missingCount_other": "{{count}} indexes missing:",
+    "openConsole": "Open Firebase Console to create",
+    "noUrl": "Couldn't extract the auto-suggest URL — see the README for the gcloud command.",
+    "howItWorks": "How this works",
+    "step1": "Click the link for each missing index — Firebase Console opens with the index definition pre-filled.",
+    "step2": "Click \"Create\" and wait 1–5 minutes for the index to build (status badge in the console).",
+    "step3": "Come back here and click Retry. Once both queries succeed, the admin loads.",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "buildHint": "Indexes can take up to a few minutes to build after creation.",
+    "allReady": "All indexes ready.",
+    "unexpectedTitle": "Couldn't reach Firestore",
+    "unexpectedHint": "Check your network connection and Firestore rules. If you just created the indexes, wait a moment for them to finish building, then retry."
+  },
   "errors": {
     "appError": "Application error",
     "loadAccountFailed": "Could not load your account",

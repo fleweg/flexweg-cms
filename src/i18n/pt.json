@@ -351,6 +351,25 @@
       "delete": "Eliminar registo"
     }
   },
+  "firestoreSetup": {
+    "title": "Configuração do Firestore necessária",
+    "intro": "As páginas de listagem de artigos e páginas precisam de alguns índices compostos do Firestore para consultas eficientes. Precisam de ser criados manualmente — o Firebase reserva a criação de índices aos administradores do projeto.",
+    "checking": "A verificar os teus índices Firestore…",
+    "missingCount_one": "{{count}} índice em falta:",
+    "missingCount_other": "{{count}} índices em falta:",
+    "openConsole": "Abrir Firebase Console para criar",
+    "noUrl": "Não foi possível extrair o URL de auto-sugestão — consulta o README para o comando gcloud.",
+    "howItWorks": "Como funciona",
+    "step1": "Clica no link de cada índice em falta — Firebase Console abre com a definição pré-preenchida.",
+    "step2": "Clica em «Create» e espera 1–5 minutos pela construção do índice (estado na consola).",
+    "step3": "Volta aqui e clica em Tentar novamente. Quando ambas as consultas tiverem êxito, o admin carrega.",
+    "retry": "Tentar novamente",
+    "retrying": "A tentar…",
+    "buildHint": "A construção de um índice pode demorar alguns minutos após a criação.",
+    "allReady": "Todos os índices estão prontos.",
+    "unexpectedTitle": "Firestore inacessível",
+    "unexpectedHint": "Verifica a tua ligação e as regras do Firestore. Se acabaste de criar os índices, espera que terminem e tenta novamente."
+  },
   "errors": {
     "appError": "Erro da aplicação",
     "loadAccountFailed": "Não foi possível carregar a tua conta",

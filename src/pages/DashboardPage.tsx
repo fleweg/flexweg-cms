@@ -1,23 +1,47 @@
 import { useTranslation } from "react-i18next";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useCmsData } from "../context/CmsDataContext";
 import { PageHeader } from "../components/layout/PageHeader";
+import { countPosts } from "../services/posts";
 
+interface Stats {
+  posts: number;
+  pages: number;
+  online: number;
+  drafts: number;
+}
+
+// Dashboard pulls four numbers via Firestore aggregation queries
+// (single read each, regardless of corpus size). With the global
+// posts subscription gone, this is the only practical way to get
+// stats without dragging the full collection into memory.
 export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { posts, pages } = useCmsData();
+  const [stats, setStats] = useState<Stats | null>(null);
 
-  const stats = useMemo(() => {
-    const all = [...posts, ...pages];
-    return {
-      posts: posts.length,
-      pages: pages.length,
-      online: all.filter((p) => p.status === "online").length,
-      drafts: all.filter((p) => p.status === "draft").length,
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      countPosts({ type: "post" }),
+      countPosts({ type: "page" }),
+      countPosts({ type: "post", status: "online" }),
+      countPosts({ type: "page", status: "online" }),
+      countPosts({ type: "post", status: "draft" }),
+      countPosts({ type: "page", status: "draft" }),
+    ]).then(([posts, pages, postsOnline, pagesOnline, postsDraft, pagesDraft]) => {
+      if (cancelled) return;
+      setStats({
+        posts,
+        pages,
+        online: postsOnline + pagesOnline,
+        drafts: postsDraft + pagesDraft,
+      });
+    });
+    return () => {
+      cancelled = true;
     };
-  }, [posts, pages]);
+  }, []);
 
   return (
     <div className="p-4 md:p-6">
@@ -26,10 +50,10 @@ export function DashboardPage() {
         description={t("dashboard.welcome", { email: user?.email ?? "" })}
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label={t("dashboard.stats.totalPosts")} value={stats.posts} />
-        <StatCard label={t("dashboard.stats.totalPages")} value={stats.pages} />
-        <StatCard label={t("dashboard.stats.online")} value={stats.online} />
-        <StatCard label={t("dashboard.stats.drafts")} value={stats.drafts} />
+        <StatCard label={t("dashboard.stats.totalPosts")} value={stats?.posts ?? 0} />
+        <StatCard label={t("dashboard.stats.totalPages")} value={stats?.pages ?? 0} />
+        <StatCard label={t("dashboard.stats.online")} value={stats?.online ?? 0} />
+        <StatCard label={t("dashboard.stats.drafts")} value={stats?.drafts ?? 0} />
       </div>
     </div>
   );

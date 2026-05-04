@@ -6,18 +6,30 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { subscribeToPosts } from "../services/posts";
 import { subscribeToTerms } from "../services/taxonomies";
 import { subscribeToMedia } from "../services/media";
 import { subscribeToSettings, DEFAULT_SITE_SETTINGS } from "../services/settings";
 import { subscribeToUsers } from "../services/users";
 import { applyPluginRegistration } from "../plugins";
 import { applyThemeRegistration } from "../themes";
-import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
+import type { Media, SiteSettings, Term, UserRecord } from "../core/types";
 
+// Posts + pages are NOT in this context. They live behind two
+// access patterns instead:
+//
+//   • Display-side (PostsListPage, PagesListPage, hero block, …) →
+//     `usePostsPage()` + `subscribeToPostsPaginated()` for cursor-
+//     based pagination, or the search mode's `fetchAllPosts()`.
+//
+//   • Publish-side (publisher pipeline, plugin force-regenerate
+//     buttons, importer) → `fetchAllPosts()` from
+//     `services/posts.ts` (cached for 30 s, invalidated on every
+//     write).
+//
+// Removing posts/pages from this context lets sites with thousands
+// of posts run the admin without paying a multi-MB initial fetch
+// just to render the sidebar.
 interface CmsDataValue {
-  posts: Post[];
-  pages: Post[];
   terms: Term[];
   categories: Term[];
   tags: Term[];
@@ -35,17 +47,11 @@ interface CmsDataValue {
 const CmsDataContext = createContext<CmsDataValue | null>(null);
 
 export function CmsDataProvider({ children }: { children: ReactNode }) {
-  // Two separate subscriptions for posts vs pages because each is filtered
-  // server-side. Keeps the working set small even when the site grows.
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [pages, setPages] = useState<Post[]>([]);
   const [terms, setTerms] = useState<Term[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
   const [loadingFlags, setLoadingFlags] = useState({
-    posts: true,
-    pages: true,
     terms: true,
     media: true,
     users: true,
@@ -64,22 +70,6 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubs = [
-      subscribeToPosts(
-        { type: "post" },
-        (items) => {
-          setPosts(items);
-          setLoadingFlags((s) => ({ ...s, posts: false }));
-        },
-        reportError,
-      ),
-      subscribeToPosts(
-        { type: "page" },
-        (items) => {
-          setPages(items);
-          setLoadingFlags((s) => ({ ...s, pages: false }));
-        },
-        reportError,
-      ),
       subscribeToTerms(
         (items) => {
           setTerms(items);
@@ -123,8 +113,6 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CmsDataValue>(() => {
     return {
-      posts,
-      pages,
       terms,
       categories: terms.filter((t) => t.type === "category"),
       tags: terms.filter((t) => t.type === "tag"),
@@ -134,7 +122,7 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
       loading: Object.values(loadingFlags).some(Boolean),
       error,
     };
-  }, [posts, pages, terms, media, users, settings, loadingFlags, error]);
+  }, [terms, media, users, settings, loadingFlags, error]);
 
   return <CmsDataContext.Provider value={value}>{children}</CmsDataContext.Provider>;
 }
