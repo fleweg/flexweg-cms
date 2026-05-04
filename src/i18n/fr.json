@@ -85,11 +85,30 @@
     "title": "Articles",
     "newPost": "Nouvel article",
     "noPosts": "Aucun article. Créez le premier pour commencer.",
+    "noPostsInFilter": "Aucun article ne correspond au filtre courant.",
+    "search": {
+      "placeholder": "Rechercher des articles…",
+      "clear": "Effacer la recherche",
+      "noResults": "Aucun article ne correspond à votre recherche."
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "showing": "Affichage {{from}}–{{to}} sur {{total}}",
+      "pageOf": "Page {{page}} sur {{total}}"
+    },
     "bulk": {
       "selectedCount_one": "{{count}} sélectionné",
       "selectedCount_other": "{{count}} sélectionnés",
-      "selectAllInView": "Tout sélectionner dans la vue",
-      "deselectAllInView": "Tout désélectionner",
+      "selectPage_one": "Sélectionner {{count}} sur cette page",
+      "selectPage_other": "Sélectionner les {{count}} de cette page",
+      "deselectPage": "Désélectionner la page",
+      "allOnPageSelected_one": "{{count}} sur cette page sélectionné.",
+      "allOnPageSelected_other": "Les {{count}} de cette page sont sélectionnés.",
+      "selectAllMatching_one": "Sélectionner l'article correspondant",
+      "selectAllMatching_other": "Sélectionner les {{count}} articles correspondants",
+      "allMatchingSelected_one": "L'article correspondant est sélectionné.",
+      "allMatchingSelected_other": "Les {{count}} articles correspondants sont sélectionnés.",
       "selectOne": "Sélectionner « {{title}} »",
       "publish": "Publier ({{count}})",
       "publishing": "Publication…",

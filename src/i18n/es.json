@@ -85,11 +85,30 @@
     "title": "Entradas",
     "newPost": "Nueva entrada",
     "noPosts": "Aún no hay entradas. Crea la primera para empezar.",
+    "noPostsInFilter": "Ninguna entrada coincide con el filtro actual.",
+    "search": {
+      "placeholder": "Buscar entradas…",
+      "clear": "Borrar búsqueda",
+      "noResults": "Ninguna entrada coincide con tu búsqueda."
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+      "pageOf": "Página {{page}} de {{total}}"
+    },
     "bulk": {
       "selectedCount_one": "{{count}} seleccionada",
       "selectedCount_other": "{{count}} seleccionadas",
-      "selectAllInView": "Seleccionar todo en la vista",
-      "deselectAllInView": "Deseleccionar todo",
+      "selectPage_one": "Seleccionar {{count}} en esta página",
+      "selectPage_other": "Seleccionar las {{count}} de esta página",
+      "deselectPage": "Deseleccionar página",
+      "allOnPageSelected_one": "{{count}} en esta página seleccionada.",
+      "allOnPageSelected_other": "Las {{count}} de esta página están seleccionadas.",
+      "selectAllMatching_one": "Seleccionar la entrada coincidente",
+      "selectAllMatching_other": "Seleccionar las {{count}} entradas coincidentes",
+      "allMatchingSelected_one": "La entrada coincidente está seleccionada.",
+      "allMatchingSelected_other": "Las {{count}} entradas coincidentes están seleccionadas.",
       "selectOne": "Seleccionar «{{title}}»",
       "publish": "Publicar ({{count}})",
       "publishing": "Publicando…",

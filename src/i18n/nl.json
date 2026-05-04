@@ -85,11 +85,30 @@
     "title": "Berichten",
     "newPost": "Nieuw bericht",
     "noPosts": "Nog geen berichten. Maak je eerste bericht om te beginnen.",
+    "noPostsInFilter": "Geen berichten passen bij het huidige filter.",
+    "search": {
+      "placeholder": "Berichten zoeken…",
+      "clear": "Zoekopdracht wissen",
+      "noResults": "Geen berichten komen overeen met je zoekopdracht."
+    },
+    "pagination": {
+      "previous": "Vorige",
+      "next": "Volgende",
+      "showing": "{{from}}–{{to}} van {{total}} weergegeven",
+      "pageOf": "Pagina {{page}} van {{total}}"
+    },
     "bulk": {
       "selectedCount_one": "{{count}} geselecteerd",
       "selectedCount_other": "{{count}} geselecteerd",
-      "selectAllInView": "Alles in beeld selecteren",
-      "deselectAllInView": "Selectie wissen",
+      "selectPage_one": "{{count}} op deze pagina selecteren",
+      "selectPage_other": "Alle {{count}} op deze pagina selecteren",
+      "deselectPage": "Pagina deselecteren",
+      "allOnPageSelected_one": "{{count}} op deze pagina geselecteerd.",
+      "allOnPageSelected_other": "Alle {{count}} op deze pagina geselecteerd.",
+      "selectAllMatching_one": "Het overeenkomende bericht selecteren",
+      "selectAllMatching_other": "Alle {{count}} overeenkomende berichten selecteren",
+      "allMatchingSelected_one": "Het overeenkomende bericht is geselecteerd.",
+      "allMatchingSelected_other": "Alle {{count}} overeenkomende berichten zijn geselecteerd.",
       "selectOne": "\"{{title}}\" selecteren",
       "publish": "Publiceren ({{count}})",
       "publishing": "Publiceren…",

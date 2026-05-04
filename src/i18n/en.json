@@ -85,11 +85,30 @@
     "title": "Posts",
     "newPost": "New post",
     "noPosts": "No posts yet. Create your first one to get started.",
+    "noPostsInFilter": "No posts match the current filter.",
+    "search": {
+      "placeholder": "Search posts…",
+      "clear": "Clear search",
+      "noResults": "No posts match your search."
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "pageOf": "Page {{page}} of {{total}}"
+    },
     "bulk": {
       "selectedCount_one": "{{count}} selected",
       "selectedCount_other": "{{count}} selected",
-      "selectAllInView": "Select all in view",
-      "deselectAllInView": "Deselect all",
+      "selectPage_one": "Select {{count}} on this page",
+      "selectPage_other": "Select all {{count}} on this page",
+      "deselectPage": "Deselect page",
+      "allOnPageSelected_one": "{{count}} on this page selected.",
+      "allOnPageSelected_other": "All {{count}} on this page selected.",
+      "selectAllMatching_one": "Select the {{count}} matching post",
+      "selectAllMatching_other": "Select all {{count}} matching posts",
+      "allMatchingSelected_one": "All {{count}} matching post selected.",
+      "allMatchingSelected_other": "All {{count}} matching posts selected.",
       "selectOne": "Select \"{{title}}\"",
       "publish": "Publish ({{count}})",
       "publishing": "Publishing…",

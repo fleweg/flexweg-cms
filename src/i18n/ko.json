@@ -85,11 +85,30 @@
     "title": "게시물",
     "newPost": "새 게시물",
     "noPosts": "아직 게시물이 없습니다. 첫 게시물을 만들어 시작하세요.",
+    "noPostsInFilter": "현재 필터와 일치하는 게시물이 없습니다.",
+    "search": {
+      "placeholder": "게시물 검색…",
+      "clear": "검색 지우기",
+      "noResults": "검색과 일치하는 게시물이 없습니다."
+    },
+    "pagination": {
+      "previous": "이전",
+      "next": "다음",
+      "showing": "{{total}}개 중 {{from}}–{{to}} 표시",
+      "pageOf": "{{total}}페이지 중 {{page}}페이지"
+    },
     "bulk": {
       "selectedCount_one": "{{count}}개 선택됨",
       "selectedCount_other": "{{count}}개 선택됨",
-      "selectAllInView": "보이는 항목 모두 선택",
-      "deselectAllInView": "선택 해제",
+      "selectPage_one": "이 페이지에서 {{count}}개 선택",
+      "selectPage_other": "이 페이지의 {{count}}개 모두 선택",
+      "deselectPage": "페이지 선택 해제",
+      "allOnPageSelected_one": "이 페이지에서 {{count}}개가 선택되었습니다.",
+      "allOnPageSelected_other": "이 페이지의 {{count}}개가 모두 선택되었습니다.",
+      "selectAllMatching_one": "일치하는 게시물 선택",
+      "selectAllMatching_other": "일치하는 {{count}}개 게시물 모두 선택",
+      "allMatchingSelected_one": "일치하는 게시물이 선택되었습니다.",
+      "allMatchingSelected_other": "일치하는 {{count}}개 게시물이 모두 선택되었습니다.",
       "selectOne": "\"{{title}}\" 선택",
       "publish": "게시 ({{count}})",
       "publishing": "게시 중…",
