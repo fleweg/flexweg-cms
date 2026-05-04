@@ -9,6 +9,7 @@ import { HeroFeatured } from "../components/HeroFeatured";
 export function HomeTemplate({
   posts,
   staticPage,
+  archivesLink,
 }: HomeTemplateProps & { site: SiteContext }) {
   if (staticPage) {
     return (
@@ -50,6 +51,13 @@ export function HomeTemplate({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {archivesLink && (
+        <div className="container">
+          <p className="archives-link">
+            <a href={archivesLink.href}>{archivesLink.label}</a>
+          </p>
         </div>
       )}
     </>

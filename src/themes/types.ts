@@ -96,10 +96,20 @@ export interface SingleTemplateProps {
   tags: Term[];
 }
 
+// Optional "See full archives →" link injected by the flexweg-archives
+// plugin when enabled. Resolved at publish time by the publisher and
+// rendered by the theme as a footer-style link below the post list.
+// Themes that want to ignore it can simply not destructure the prop.
+export interface ArchivesLink {
+  href: string;
+  label: string;
+}
+
 export interface HomeTemplateProps {
   // List of posts to display on the home page (already paginated).
   posts: CardPost[];
   staticPage?: { post: Post; bodyHtml: string };
+  archivesLink?: ArchivesLink;
 }
 
 export interface CategoryTemplateProps {
@@ -109,6 +119,7 @@ export interface CategoryTemplateProps {
   // flexweg-rss plugin config. Lets the template render a "Follow"
   // button. Undefined when no feed exists for this category.
   categoryRssUrl?: string;
+  archivesLink?: ArchivesLink;
 }
 
 export interface AuthorTemplateProps {

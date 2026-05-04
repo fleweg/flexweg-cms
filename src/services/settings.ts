@@ -16,6 +16,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     "core-seo": true,
     "flexweg-sitemaps": true,
     "flexweg-rss": true,
+    "flexweg-archives": true,
   },
   homeMode: "latest-posts",
   postsPerPage: 10,

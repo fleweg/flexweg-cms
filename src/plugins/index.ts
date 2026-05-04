@@ -12,6 +12,7 @@ import type { ComponentType } from "react";
 import { manifest as coreSeoManifest } from "./core-seo/manifest";
 import { manifest as flexwegSitemapsManifest } from "./flexweg-sitemaps/manifest";
 import { manifest as flexwegRssManifest } from "./flexweg-rss/manifest";
+import { manifest as flexwegArchivesManifest } from "./flexweg-archives/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
@@ -66,6 +67,7 @@ export const PLUGINS: PluginManifest[] = [
   coreSeoManifest,
   flexwegSitemapsManifest as PluginManifest,
   flexwegRssManifest as PluginManifest,
+  flexwegArchivesManifest as PluginManifest,
 ];
 
 export function listPlugins(): PluginManifest[] {

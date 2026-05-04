@@ -31,6 +31,7 @@ import { publishPostsJson } from "./postsJsonPublisher";
 import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { markPostDraft, markPostOnline } from "./posts";
 import { setCurrentPublishContext } from "./publishContext";
+import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
 
 export interface PublishLogEntry {
   level: "info" | "success" | "warn" | "error";
@@ -83,7 +84,11 @@ function resolveMedia(id: string | undefined, media: Map<string, Media>): MediaV
   return mediaToView(media.get(id));
 }
 
-function buildSiteContext(ctx: PublishContext): SiteContext {
+// Exported so plugins that render through the active theme's
+// BaseLayout (archives, future custom-page generators…) can build
+// the same SiteContext the core publisher uses, without duplicating
+// the menu/theme-config resolution logic.
+export function buildSiteContext(ctx: PublishContext): SiteContext {
   // Menus are also resolved by the dynamic menu.json publisher; the shared
   // helper in core/menuResolver.ts is the single source of truth so static
   // header rendering and the runtime JSON stay in lockstep.
@@ -240,6 +245,12 @@ async function renderHome(ctx: PublishContext): Promise<string> {
     .slice(0, ctx.settings.postsPerPage)
     .map((p) => postToCardData(p, ctx));
 
+  // Optional "See full archives →" link, resolved by the
+  // flexweg-archives plugin when enabled. Returns undefined when the
+  // plugin is off, the home toggle is off, or no posts exist yet —
+  // so the link never appears spuriously.
+  const archivesLink = resolveArchivesLink(ctx.settings, ctx.posts, "home");
+
   let templateProps: HomeTemplateProps & { site: SiteContext };
   if (ctx.settings.homeMode === "static-page" && ctx.settings.homePageId) {
     const page = ctx.pages.find((p) => p.id === ctx.settings.homePageId && p.status === "online");
@@ -256,12 +267,17 @@ async function renderHome(ctx: PublishContext): Promise<string> {
       } finally {
         setCurrentPublishContext(null);
       }
-      templateProps = { site, posts: onlinePosts, staticPage: { post: page, bodyHtml } };
+      templateProps = {
+        site,
+        posts: onlinePosts,
+        staticPage: { post: page, bodyHtml },
+        archivesLink,
+      };
     } else {
-      templateProps = { site, posts: onlinePosts };
+      templateProps = { site, posts: onlinePosts, archivesLink };
     }
   } else {
-    templateProps = { site, posts: onlinePosts };
+    templateProps = { site, posts: onlinePosts, archivesLink };
   }
 
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
@@ -302,11 +318,14 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
       ? pathToPublicUrl(baseUrl, `${term.slug}/${term.slug}.xml`)
       : undefined;
 
+  const archivesLink = resolveArchivesLink(ctx.settings, ctx.posts, "category");
+
   const templateProps: CategoryTemplateProps & { site: SiteContext } = {
     site,
     term,
     posts,
     categoryRssUrl,
+    archivesLink,
   };
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
     site,

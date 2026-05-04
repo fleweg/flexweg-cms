@@ -9,6 +9,7 @@ export function CategoryTemplate({
   term,
   posts,
   categoryRssUrl,
+  archivesLink,
 }: CategoryTemplateProps & { site: SiteContext }) {
   return (
     <div className="page-archive container">
@@ -41,6 +42,11 @@ export function CategoryTemplate({
             </li>
           ))}
         </ul>
+      )}
+      {archivesLink && (
+        <p className="archives-link">
+          <a href={archivesLink.href}>{archivesLink.label}</a>
+        </p>
       )}
     </div>
   );

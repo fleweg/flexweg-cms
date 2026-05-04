@@ -2027,3 +2027,190 @@ a.author-bio__name:hover {
   height: 1px;
   background: var(--color-outline-variant);
 }
+
+/* Archives plugin styles ──────────────────────────────────────────
+   Owned by flexweg-archives. Themes can override or replace freely;
+   the plugin's HTML is BEM-classed (`archives__*`) so selectors are
+   stable. Keep this block standalone so removing the plugin lets
+   custom themes drop these rules cleanly. */
+
+.archives {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--section-gap, 4rem) var(--gutter, 1rem);
+}
+
+.archives__header {
+  margin-bottom: 2.5rem;
+}
+
+.archives__back {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+
+  a {
+    color: var(--color-on-surface-variant);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-on-surface);
+    text-decoration: underline;
+  }
+}
+
+.archives__title {
+  font-family: var(--font-serif);
+  font-weight: var(--weight-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+  margin: 0 0 0.5rem;
+  color: var(--color-on-surface);
+}
+
+.archives__subtitle {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 1rem;
+}
+
+.archives__empty {
+  color: var(--color-on-surface-muted);
+  font-style: italic;
+}
+
+.archives__years {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.archives__year {
+  border-top: 1px solid var(--color-outline-variant);
+  padding-top: 1.5rem;
+}
+
+.archives__year:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.archives__year-heading {
+  font-family: var(--font-serif);
+  font-weight: var(--weight-heading);
+  font-size: 1.75rem;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.archives__year-link,
+.archives__group-link,
+.archives__drilldown-link,
+.archives__item-link {
+  color: var(--color-on-surface);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.archives__year-link:hover,
+.archives__group-link:hover,
+.archives__drilldown-link:hover,
+.archives__item-link:hover {
+  border-bottom-color: currentColor;
+}
+
+.archives__count {
+  color: var(--color-on-surface-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.archives__drilldown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.archives__drilldown-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.archives__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.archives__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.archives__item:last-child {
+  border-bottom: 0;
+}
+
+.archives__item-link {
+  flex: 1;
+  font-size: 1rem;
+}
+
+.archives__item-date {
+  color: var(--color-on-surface-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.archives__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.archives__group-heading {
+  font-family: var(--font-serif);
+  font-weight: var(--weight-heading);
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+/* "See full archives →" link injected on home + category listings.
+   Right-aligned, top-margin'd so it sits clearly below the post grid. */
+.archives-link {
+  margin: 3rem 0 0;
+  text-align: right;
+  font-size: 0.95rem;
+
+  a {
+    color: var(--color-secondary);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 0.1rem;
+  }
+
+  a:hover {
+    color: var(--color-on-surface);
+  }
+}
