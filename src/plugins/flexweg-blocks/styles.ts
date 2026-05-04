@@ -90,6 +90,21 @@ const ADMIN_EXTRAS_CSS = `
 .cms-html-block-codeeditor-fallback{display:flex;align-items:center;gap:8px;padding:24px;border:1px solid rgba(127,127,127,0.25);border-radius:6px;font-size:12px;color:rgba(127,127,127,0.85);justify-content:center;}
 .cms-html-block-warning{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;font-size:11px;line-height:1.4;color:rgba(180,90,0,0.95);background:rgba(255,180,40,0.10);border:1px solid rgba(255,180,40,0.30);border-radius:6px;}
 
+/* Fullscreen modal body — fill the viewport remainder under the
+   modal header. Inside, the codeeditor wrapper expands to 100%
+   so CodeMirror's internal layout (with height: 100%) actually
+   has a definite parent height to fill.
+   The .cm-theme wrapper @uiw/react-codemirror inserts between
+   our wrapper and the actual .cm-editor doesn't grow on its
+   own — without a forced width: 100% it collapses to its
+   intrinsic content width, leaving the long-text columns truncated
+   on the right side of the modal. */
+.cms-html-block-modal-body{flex:1;min-height:0;display:flex;padding:0;}
+.cms-html-block-modal-body .cms-html-block-codeeditor{flex:1;border:0;border-radius:0;display:flex;width:100%;}
+.cms-html-block-modal-body .cms-html-block-codeeditor>.cm-theme{flex:1;width:100%;height:100%;display:flex;}
+.cms-html-block-modal-body .cms-html-block-codeeditor .cm-editor{flex:1;height:100%;width:100%;}
+.cms-html-block-modal-body .cms-html-block-codeeditor:focus-within{border:0;box-shadow:none;}
+
 /* Dark mode — the prose-editor adapts via the .dark scope used
    elsewhere in the admin. */
 .dark .prose-editor .cms-html-block{background:#1a1a1a;border-color:rgba(180,180,180,0.18);}

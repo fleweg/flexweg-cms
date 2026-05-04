@@ -24,6 +24,9 @@ export const en = {
         "Write your HTML, CSS or JavaScript here. Anything you type runs verbatim on the published page.",
       editInSidebar: "Empty — open the right sidebar's Block tab to add code.",
       loadingEditor: "Loading code editor…",
+      expand: "Expand",
+      modalTitle: "Custom HTML",
+      modalClose: "Close",
       lines: "{{n}} line",
       lines_other: "{{n}} lines",
       warning:
@@ -54,6 +57,9 @@ export const fr: typeof en = {
       editInSidebar:
         "Vide — ouvrez l'onglet Bloc dans la barre latérale droite pour saisir du code.",
       loadingEditor: "Chargement de l'éditeur…",
+      expand: "Agrandir",
+      modalTitle: "HTML libre",
+      modalClose: "Fermer",
       lines: "{{n}} ligne",
       lines_other: "{{n}} lignes",
       warning:

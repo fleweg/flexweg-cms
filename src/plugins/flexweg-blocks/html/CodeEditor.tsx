@@ -12,6 +12,15 @@ interface CodeEditorProps {
   placeholder?: string;
   minHeight?: string;
   maxHeight?: string;
+  // Explicit height — when set, overrides the min/max auto-grow
+  // behaviour. Used by the fullscreen modal which needs the
+  // editor to fill the available space rather than grow with
+  // content.
+  height?: string;
+  // Auto-focuses the editor on mount. Useful when the editor opens
+  // inside a freshly-mounted modal so the user can start typing
+  // without an extra click.
+  autoFocus?: boolean;
 }
 
 // Small wrapper around CodeMirror 6 specialised for our HTML
@@ -38,6 +47,8 @@ export function CodeEditor({
   placeholder,
   minHeight = "240px",
   maxHeight = "600px",
+  height,
+  autoFocus,
 }: CodeEditorProps) {
   const { theme } = useTheme();
   const extensions = useMemo(
@@ -54,8 +65,13 @@ export function CodeEditor({
         extensions={extensions}
         theme={theme === "dark" ? oneDark : undefined}
         placeholder={placeholder}
-        minHeight={minHeight}
-        maxHeight={maxHeight}
+        // When `height` is set, prefer it over min/max so the
+        // editor fills its parent (modal use case). Otherwise fall
+        // back to the auto-growing min/max bounds.
+        height={height}
+        minHeight={height ? undefined : minHeight}
+        maxHeight={height ? undefined : maxHeight}
+        autoFocus={autoFocus}
         basicSetup={{
           lineNumbers: true,
           highlightActiveLineGutter: true,
