@@ -251,6 +251,11 @@ export function scanBundle(bundle: ImportBundle, ctx: ScanContext, options: Impo
   // become the seed; markdown adds on top.
   const allParsedTerms = new Map<string, ParsedTerm>();
   for (const t of parsed.terms) {
+    const exists =
+      t.type === "category"
+        ? existingCategoryBySlug.has(t.slug)
+        : existingTagBySlug.has(t.slug);
+    if (exists) continue;
     allParsedTerms.set(`${t.type}:${t.slug}`, t);
   }
   // Walk markdown entries to discover categories + tags they
