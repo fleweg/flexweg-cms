@@ -1,6 +1,6 @@
 import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import { columnsBlock } from "./columns/manifest";
 import {
   getDetectedColumnsStyles,
@@ -26,7 +26,7 @@ export const manifest: PluginManifest = {
   description:
     "Layout and code primitives for the post editor. Ships a Columns block (2-4 columns, mobile-stacking) and a Custom HTML block for raw HTML/JS / CSS.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   register(api) {
     // Make the Columns + HTML blocks available in the editor's
     // inserter. Both register under the "layout" category.

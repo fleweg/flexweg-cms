@@ -1,0 +1,358 @@
+{
+  "common": {
+    "save": "저장",
+    "saving": "저장 중…",
+    "saved": "저장됨",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "create": "만들기",
+    "search": "검색",
+    "loading": "불러오는 중…",
+    "yes": "예",
+    "no": "아니요",
+    "confirm": "확인",
+    "back": "뒤로",
+    "next": "다음",
+    "previous": "이전",
+    "close": "닫기",
+    "all": "전체",
+    "none": "없음",
+    "actions": "작업",
+    "name": "이름",
+    "slug": "슬러그",
+    "description": "설명",
+    "status": "상태",
+    "createdAt": "생성됨",
+    "updatedAt": "업데이트됨",
+    "publishedAt": "게시됨",
+    "language": "언어",
+    "darkMode": "다크 모드",
+    "lightMode": "라이트 모드",
+    "signOut": "로그아웃",
+    "administrator": "관리자",
+    "editor": "편집자",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "로그인",
+    "signingIn": "로그인 중…",
+    "email": "이메일",
+    "password": "비밀번호",
+    "emailPlaceholder": "you@company.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "resetEmailSent": "{{email}} 주소로 비밀번호 재설정 이메일을 보냈습니다.",
+    "enterEmailFirst": "위에 이메일을 먼저 입력한 다음 재설정을 클릭하세요.",
+    "emailPasswordRequired": "이메일과 비밀번호를 모두 입력해 주세요.",
+    "signInSubtitle": "업무용 이메일과 비밀번호를 사용하세요.",
+    "footer": "계정 요청은 관리자를 통해 처리됩니다.",
+    "errors": {
+      "invalidEmail": "유효하지 않은 이메일 주소입니다.",
+      "invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다.",
+      "tooManyRequests": "시도 횟수가 너무 많습니다. 나중에 다시 시도하거나 비밀번호를 재설정하세요.",
+      "userDisabled": "이 계정은 비활성화되었습니다.",
+      "networkFailed": "네트워크 오류입니다. 연결 상태를 확인하세요.",
+      "generic": "인증에 실패했습니다."
+    }
+  },
+  "nav": {
+    "openMenu": "메뉴 열기",
+    "closeMenu": "메뉴 닫기",
+    "dashboard": "대시보드",
+    "posts": "게시물",
+    "pages": "페이지",
+    "taxonomies": "카테고리 및 태그",
+    "media": "미디어",
+    "themes": "테마",
+    "themeSettings": "테마 설정",
+    "plugins": "플러그인",
+    "menus": "메뉴",
+    "users": "사용자",
+    "settings": "설정"
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "welcome": "{{email}}님, 다시 오신 것을 환영합니다.",
+    "stats": {
+      "totalPosts": "게시물",
+      "totalPages": "페이지",
+      "online": "온라인",
+      "drafts": "초안"
+    }
+  },
+  "posts": {
+    "title": "게시물",
+    "newPost": "새 게시물",
+    "noPosts": "아직 게시물이 없습니다. 첫 게시물을 만들어 시작하세요.",
+    "filters": {
+      "all": "전체",
+      "draft": "초안",
+      "online": "온라인"
+    },
+    "fields": {
+      "title": "제목",
+      "slug": "슬러그",
+      "excerpt": "발췌문",
+      "content": "본문",
+      "category": "카테고리",
+      "tags": "태그",
+      "heroImage": "대표 이미지",
+      "seoTitle": "SEO 제목",
+      "seoDescription": "SEO 설명"
+    },
+    "edit": {
+      "newTitle": "새 게시물",
+      "editTitle": "게시물 편집",
+      "saved": "저장되었습니다.",
+      "savedAndRepublished": "저장 및 재게시되었습니다.",
+      "saveFailed": "저장에 실패했습니다.",
+      "saveAndRepublish": "저장 및 재게시",
+      "draftSaved": "초안이 저장되었습니다.",
+      "slugCollision": {
+        "post": "이 URL은 이미 게시물에서 사용 중입니다: \"{{label}}\".",
+        "page": "이 URL은 이미 페이지에서 사용 중입니다: \"{{label}}\".",
+        "category": "이 URL은 이미 카테고리에서 사용 중입니다: \"{{label}}\"."
+      },
+      "publish": "게시",
+      "unpublish": "게시 취소",
+      "publishing": "게시 중…",
+      "unpublishing": "게시 취소 중…",
+      "titlePlaceholder": "제목 추가",
+      "permalink": "고유 링크",
+      "slugFormatHint": "소문자 ASCII와 하이픈만 사용할 수 있습니다.",
+      "viewPublished": "보기",
+      "confirmDelete": "이 항목을 삭제하시겠습니까?",
+      "inspector": {
+        "document": "문서",
+        "block": "블록",
+        "blockEmpty": "옵션을 보려면 편집기에서 블록을 선택하세요.",
+        "publishing": "게시",
+        "permalink": "고유 링크",
+        "categories": "카테고리 및 태그",
+        "featured": "대표 이미지",
+        "seo": "SEO",
+        "excerpt": "발췌문"
+      },
+      "blocks": {
+        "addBlock": "블록 추가",
+        "transform": "변환",
+        "moveUp": "위로 이동",
+        "moveDown": "아래로 이동",
+        "duplicate": "복제",
+        "remove": "블록 삭제",
+        "paragraph": "단락",
+        "heading2": "제목 2",
+        "heading3": "제목 3",
+        "bulletList": "글머리 기호 목록",
+        "orderedList": "번호 매기기 목록",
+        "blockquote": "인용",
+        "codeBlock": "코드",
+        "image": "이미지",
+        "horizontalRule": "구분선",
+        "categories": {
+          "text": "텍스트",
+          "media": "미디어",
+          "layout": "레이아웃",
+          "embed": "임베드",
+          "advanced": "고급"
+        },
+        "noSettings": "이 블록에는 설정이 없습니다.",
+        "noSelection": "옵션을 보려면 편집기에서 블록을 선택하세요."
+      }
+    },
+    "status": {
+      "draft": "초안",
+      "online": "온라인"
+    },
+    "preview": {
+      "title": "미리보기",
+      "rendering": "미리보기 렌더링 중…",
+      "error": "미리보기 실패: {{error}}",
+      "viewports": {
+        "mobile": "모바일",
+        "tablet": "태블릿",
+        "desktop": "데스크탑"
+      }
+    }
+  },
+  "pages": {
+    "title": "페이지",
+    "newPage": "새 페이지",
+    "noPages": "아직 페이지가 없습니다.",
+    "homeBadge": "홈",
+    "homeBadgeTooltip": "사이트 홈 페이지로 사용됨"
+  },
+  "taxonomies": {
+    "title": "카테고리 및 태그",
+    "categories": "카테고리",
+    "tags": "태그",
+    "newCategory": "새 카테고리",
+    "newTag": "새 태그",
+    "noCategories": "아직 카테고리가 없습니다.",
+    "noTags": "아직 태그가 없습니다.",
+    "slugCollision": "이 슬러그는 이미 \"{{label}}\"에서 사용 중입니다."
+  },
+  "media": {
+    "title": "미디어 라이브러리",
+    "upload": "업로드",
+    "uploading": "업로드 중…",
+    "finalizing": "마무리 중…",
+    "uploadFailed": "업로드 실패",
+    "retry": "재시도",
+    "noMedia": "아직 미디어가 없습니다.",
+    "alt": "대체 텍스트",
+    "caption": "캡션",
+    "filename": "파일명",
+    "size": "크기",
+    "type": "유형"
+  },
+  "themes": {
+    "title": "테마",
+    "active": "활성",
+    "activate": "활성화",
+    "syncAssets": "테마 자산 동기화",
+    "regenerateSite": "사이트 재생성",
+    "regenerating": "재생성 중…"
+  },
+  "plugins": {
+    "title": "플러그인",
+    "enabled": "활성화됨",
+    "disabled": "비활성화됨",
+    "enable": "활성화",
+    "disable": "비활성화",
+    "configure": "설정",
+    "author": "제작자",
+    "learnMore": "자세히 보기",
+    "mustUseBadge": "필수",
+    "tabs": {
+      "regular": "플러그인",
+      "mustUse": "필수 플러그인"
+    }
+  },
+  "menus": {
+    "title": "메뉴",
+    "header": "헤더 메뉴",
+    "footer": "푸터 메뉴",
+    "saveAndPublish": "저장 및 생성",
+    "discard": "변경 취소",
+    "saved": "메뉴가 저장되어 게시되었습니다.",
+    "saveFailed": "메뉴를 저장할 수 없습니다.",
+    "unsavedChanges": "저장되지 않은 변경 사항이 있습니다."
+  },
+  "settings": {
+    "title": "설정",
+    "tabs": {
+      "general": "일반"
+    },
+    "site": {
+      "title": "사이트",
+      "siteTitle": "사이트 제목",
+      "siteDescription": "사이트 설명",
+      "siteLanguage": "사이트 언어",
+      "siteLanguageHelp": "게시되는 모든 페이지의 <html lang=\"…\">에 삽입되는 BCP-47 언어 태그입니다.",
+      "baseUrl": "공개 사이트 URL",
+      "postsPerPage": "페이지당 게시물 수",
+      "homeMode": "홈 콘텐츠",
+      "homeLatest": "최신 게시물",
+      "homeStatic": "정적 페이지",
+      "homePage": "홈 페이지"
+    },
+    "flexweg": {
+      "title": "Flexweg API",
+      "apiKey": "API 키",
+      "apiKeyHelp": "Flexweg 계정 → API에서 생성됩니다. Firestore에 저장됩니다.",
+      "siteUrl": "사이트 URL",
+      "siteUrlHelp": "끝에 슬래시가 없는 Flexweg 사이트의 공개 URL.",
+      "apiBaseUrl": "API 기본 URL"
+    },
+    "editor": {
+      "title": "편집기",
+      "help": "게시물 / 페이지 편집기 내부의 타이포그래피. 공개 테마와는 별개입니다.",
+      "fontFamily": "글꼴",
+      "bodySize": "본문 크기",
+      "h1Size": "H1 크기",
+      "h2Size": "H2 크기",
+      "h3Size": "H3 크기",
+      "sizeHelp": "CSS 길이 (예: 16px, 1rem). 비워두면 기본값이 적용됩니다.",
+      "reset": "기본값으로 재설정"
+    },
+    "profile": {
+      "title": "프로필",
+      "adminLocale": "관리자 언어",
+      "adminLocaleHelp": "관리자 인터페이스에서 사용되는 언어입니다. 프로필에 저장됩니다.",
+      "firstName": "이름",
+      "lastName": "성",
+      "bio": "소개",
+      "bioPlaceholder": "작성자 페이지와 기사 하단에 표시되는 짧은 단락입니다.",
+      "bioHelp": "공개 사이트의 작성자 사이드바와 작성자 아카이브 페이지에 표시됩니다.",
+      "avatar": "프로필 사진",
+      "avatarHelp": "미디어 라이브러리에서 이미지를 선택하세요. 정사각형 이미지가 가장 잘 표시됩니다.",
+      "pickAvatar": "미디어에서 선택",
+      "changeAvatar": "사진 변경",
+      "removeAvatar": "삭제",
+      "save": "프로필 저장"
+    }
+  },
+  "users": {
+    "title": "사용자",
+    "noUsers": "아직 사용자가 없습니다.",
+    "role": "역할",
+    "disabled": "비활성화됨",
+    "editProfileTitle": "프로필 편집 — {{email}}",
+    "profileSaved": "프로필이 저장되었습니다.",
+    "actions": {
+      "editProfile": "프로필 편집",
+      "promote": "관리자로 승격",
+      "demote": "편집자로 강등",
+      "disable": "비활성화",
+      "enable": "활성화",
+      "delete": "기록 삭제"
+    }
+  },
+  "errors": {
+    "appError": "애플리케이션 오류",
+    "loadAccountFailed": "계정을 불러올 수 없습니다",
+    "loadAccountHint": "문제가 지속되면 로그아웃한 뒤 다시 시도하세요.",
+    "accountDisabled": "계정 비활성화됨",
+    "accountDisabledMessage": "이 CMS에 대한 접근 권한이 비활성화되었습니다. 관리자에게 문의하세요.",
+    "firebaseNotConfigured": "Firebase가 설정되지 않았습니다",
+    "firebaseEnvMissing": "다음 환경 변수가 누락되었습니다:\n{{vars}}\n\n.env.example을 .env로 복사하고 Firebase 프로젝트 자격 증명을 입력한 후 개발 서버를 재시작하세요.",
+    "adminEmailNotConfigured": "관리자 이메일이 설정되지 않았습니다",
+    "adminEmailMessage": ".env에 VITE_ADMIN_EMAIL이 누락되었습니다. 부트스트랩 관리자의 이메일로 설정하세요.",
+    "consoleHint": "브라우저 콘솔과 .env 설정을 확인하세요. 설정 방법은 README를 참조하세요."
+  },
+  "flexweg": {
+    "actions": {
+      "upload": "파일 업로드",
+      "delete": "파일 삭제",
+      "rename": "파일 이름 변경",
+      "get": "파일 읽기",
+      "list": "파일 목록 조회",
+      "createFolder": "폴더 생성",
+      "renameFolder": "폴더 이름 변경",
+      "deleteFolder": "폴더 삭제"
+    },
+    "errors": {
+      "configMissing": "Flexweg API 키가 설정되지 않았습니다. 게시 전에 관리자 설정에서 입력하세요.",
+      "network": "{{action}}: 네트워크 오류 또는 CORS가 차단되었습니다. 연결 상태를 확인하세요.",
+      "auth": "{{action}}: 인증에 실패했습니다. 설정에서 Flexweg API 키를 확인하세요.",
+      "notFound": "{{action}}: Flexweg에서 대상을 찾을 수 없습니다.",
+      "tooLarge": "{{action}}: 파일이 Flexweg 요금제에 비해 너무 큽니다.",
+      "rateLimited": "{{action}}: 요청이 너무 많습니다. 잠시 후 다시 시도하세요.",
+      "serverError": "{{action}}: Flexweg 서버 오류 ({{status}}). 다시 시도하세요.",
+      "generic": "{{action}} 실패 ({{status}}){{detail}}."
+    }
+  },
+  "publish": {
+    "log": {
+      "rendering": "페이지 렌더링 중…",
+      "uploading": "{{path}} 업로드 중…",
+      "deleting": "{{path}} 삭제 중…",
+      "regenerating": "목록 재생성 중…",
+      "skipped": "{{path}} 건너뜀 (변경 없음)",
+      "done": "{{url}}에 게시됨",
+      "failed": "실패: {{error}}"
+    }
+  }
+}

@@ -1,14 +1,9 @@
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
-import { setActiveLocale, SUPPORTED_LOCALES } from "../../i18n";
+import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS } from "../../i18n";
 import { setUserPreferences } from "../../services/users";
 import type { AdminLocale } from "../../core/types";
-
-const LOCALE_LABELS: Record<AdminLocale, string> = {
-  en: "English",
-  fr: "Français",
-};
 
 export function LocaleSwitcher() {
   const { i18n } = useTranslation();

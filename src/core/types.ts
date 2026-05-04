@@ -5,7 +5,7 @@ import type { FieldValue, Timestamp } from "firebase/firestore";
 // Timestamp; write payloads use this union so callers can hand off either.
 export type FirestoreTime = Timestamp | FieldValue;
 
-export type AdminLocale = "en" | "fr";
+export type AdminLocale = "en" | "fr" | "de" | "es" | "nl" | "pt" | "ko";
 export type UserRole = "admin" | "editor";
 
 export interface UserPreferences {

@@ -5,7 +5,7 @@ import type { Post } from "../../core/types";
 import type { MenuFilterContext, MenuJson } from "../../services/menuPublisher";
 import type { PublishContext } from "../../services/publisher";
 import { updatePluginConfig } from "../../services/settings";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   categoryFeedPath,
   DEFAULT_RSS_CONFIG,
@@ -115,7 +115,7 @@ export const manifest: PluginManifest<RssConfig> = {
   description:
     "Generates an RSS 2.0 feed at /rss.xml plus optional per-category feeds, and can list them in the site footer.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   settings: {
     navLabelKey: "title",
     defaultConfig: DEFAULT_RSS_CONFIG,

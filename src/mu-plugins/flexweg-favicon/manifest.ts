@@ -1,6 +1,6 @@
 import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import { DEFAULT_FAVICON_CONFIG, FaviconSettingsPage, type FaviconConfig } from "./SettingsPage";
 import readme from "./README.md?raw";
 
@@ -71,7 +71,7 @@ export const manifest: PluginManifest<FaviconConfig> = {
   description:
     "Upload one square image; the plugin generates every favicon variant (PNG, ICO, Apple touch, PWA manifest), uploads them under /favicon/ on the public site, and injects the matching <link> tags into every published page.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   settings: {
     navLabelKey: "title",
     defaultConfig: DEFAULT_FAVICON_CONFIG,

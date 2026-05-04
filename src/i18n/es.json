@@ -1,0 +1,358 @@
+{
+  "common": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "loading": "Cargando…",
+    "yes": "Sí",
+    "no": "No",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar",
+    "all": "Todos",
+    "none": "Ninguno",
+    "actions": "Acciones",
+    "name": "Nombre",
+    "slug": "Slug",
+    "description": "Descripción",
+    "status": "Estado",
+    "createdAt": "Creado",
+    "updatedAt": "Actualizado",
+    "publishedAt": "Publicado",
+    "language": "Idioma",
+    "darkMode": "Modo oscuro",
+    "lightMode": "Modo claro",
+    "signOut": "Cerrar sesión",
+    "administrator": "Administrador",
+    "editor": "Editor",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "emailPlaceholder": "tu@empresa.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetEmailSent": "Correo de restablecimiento de contraseña enviado a {{email}}.",
+    "enterEmailFirst": "Introduce primero tu correo arriba y luego haz clic en restablecer.",
+    "emailPasswordRequired": "El correo y la contraseña son obligatorios.",
+    "signInSubtitle": "Usa tu correo de trabajo y tu contraseña.",
+    "footer": "Las solicitudes de cuenta se gestionan a través de tu administrador.",
+    "errors": {
+      "invalidEmail": "Dirección de correo no válida.",
+      "invalidCredentials": "Correo o contraseña no válidos.",
+      "tooManyRequests": "Demasiados intentos. Inténtalo más tarde o restablece tu contraseña.",
+      "userDisabled": "Esta cuenta ha sido deshabilitada.",
+      "networkFailed": "Error de red. Comprueba tu conexión.",
+      "generic": "Error de autenticación."
+    }
+  },
+  "nav": {
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "dashboard": "Panel",
+    "posts": "Entradas",
+    "pages": "Páginas",
+    "taxonomies": "Categorías y etiquetas",
+    "media": "Medios",
+    "themes": "Temas",
+    "themeSettings": "Ajustes del tema",
+    "plugins": "Plugins",
+    "menus": "Menús",
+    "users": "Usuarios",
+    "settings": "Ajustes"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido de nuevo, {{email}}.",
+    "stats": {
+      "totalPosts": "Entradas",
+      "totalPages": "Páginas",
+      "online": "En línea",
+      "drafts": "Borradores"
+    }
+  },
+  "posts": {
+    "title": "Entradas",
+    "newPost": "Nueva entrada",
+    "noPosts": "Aún no hay entradas. Crea la primera para empezar.",
+    "filters": {
+      "all": "Todas",
+      "draft": "Borrador",
+      "online": "En línea"
+    },
+    "fields": {
+      "title": "Título",
+      "slug": "Slug",
+      "excerpt": "Extracto",
+      "content": "Contenido",
+      "category": "Categoría",
+      "tags": "Etiquetas",
+      "heroImage": "Imagen destacada",
+      "seoTitle": "Título SEO",
+      "seoDescription": "Descripción SEO"
+    },
+    "edit": {
+      "newTitle": "Nueva entrada",
+      "editTitle": "Editar entrada",
+      "saved": "Guardado.",
+      "savedAndRepublished": "Guardado y republicado.",
+      "saveFailed": "Error al guardar.",
+      "saveAndRepublish": "Guardar y republicar",
+      "draftSaved": "Borrador guardado.",
+      "slugCollision": {
+        "post": "Esta URL ya la usa la entrada: \"{{label}}\".",
+        "page": "Esta URL ya la usa la página: \"{{label}}\".",
+        "category": "Esta URL ya la usa la categoría: \"{{label}}\"."
+      },
+      "publish": "Publicar",
+      "unpublish": "Despublicar",
+      "publishing": "Publicando…",
+      "unpublishing": "Despublicando…",
+      "titlePlaceholder": "Añadir título",
+      "permalink": "Enlace permanente",
+      "slugFormatHint": "Solo minúsculas, ASCII, separadas por guiones.",
+      "viewPublished": "Ver",
+      "confirmDelete": "¿Eliminar esta entrada?",
+      "inspector": {
+        "document": "Documento",
+        "block": "Bloque",
+        "blockEmpty": "Selecciona un bloque en el editor para ver sus opciones.",
+        "publishing": "Publicación",
+        "permalink": "Enlace permanente",
+        "categories": "Categorías y etiquetas",
+        "featured": "Imagen destacada",
+        "seo": "SEO",
+        "excerpt": "Extracto"
+      },
+      "blocks": {
+        "addBlock": "Añadir bloque",
+        "transform": "Transformar a",
+        "moveUp": "Mover arriba",
+        "moveDown": "Mover abajo",
+        "duplicate": "Duplicar",
+        "remove": "Eliminar bloque",
+        "paragraph": "Párrafo",
+        "heading2": "Título 2",
+        "heading3": "Título 3",
+        "bulletList": "Lista con viñetas",
+        "orderedList": "Lista numerada",
+        "blockquote": "Cita",
+        "codeBlock": "Código",
+        "image": "Imagen",
+        "horizontalRule": "Separador",
+        "categories": {
+          "text": "Texto",
+          "media": "Medios",
+          "layout": "Diseño",
+          "embed": "Incrustaciones",
+          "advanced": "Avanzado"
+        },
+        "noSettings": "Este bloque no tiene ajustes.",
+        "noSelection": "Selecciona un bloque en el editor para ver sus opciones."
+      }
+    },
+    "status": {
+      "draft": "Borrador",
+      "online": "En línea"
+    },
+    "preview": {
+      "title": "Vista previa",
+      "rendering": "Generando vista previa…",
+      "error": "Error en la vista previa: {{error}}",
+      "viewports": {
+        "mobile": "Móvil",
+        "tablet": "Tableta",
+        "desktop": "Escritorio"
+      }
+    }
+  },
+  "pages": {
+    "title": "Páginas",
+    "newPage": "Nueva página",
+    "noPages": "Aún no hay páginas.",
+    "homeBadge": "Inicio",
+    "homeBadgeTooltip": "Se usa como página de inicio del sitio"
+  },
+  "taxonomies": {
+    "title": "Categorías y etiquetas",
+    "categories": "Categorías",
+    "tags": "Etiquetas",
+    "newCategory": "Nueva categoría",
+    "newTag": "Nueva etiqueta",
+    "noCategories": "Aún no hay categorías.",
+    "noTags": "Aún no hay etiquetas.",
+    "slugCollision": "Este slug ya lo usa \"{{label}}\"."
+  },
+  "media": {
+    "title": "Biblioteca de medios",
+    "upload": "Subir",
+    "uploading": "Subiendo…",
+    "finalizing": "Finalizando…",
+    "uploadFailed": "Error al subir",
+    "retry": "Reintentar",
+    "noMedia": "Aún no hay medios.",
+    "alt": "Texto alternativo",
+    "caption": "Pie de foto",
+    "filename": "Nombre de archivo",
+    "size": "Tamaño",
+    "type": "Tipo"
+  },
+  "themes": {
+    "title": "Temas",
+    "active": "Activo",
+    "activate": "Activar",
+    "syncAssets": "Sincronizar recursos del tema",
+    "regenerateSite": "Regenerar el sitio",
+    "regenerating": "Regenerando…"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "enabled": "Activado",
+    "disabled": "Desactivado",
+    "enable": "Activar",
+    "disable": "Desactivar",
+    "configure": "Configurar",
+    "author": "autor",
+    "learnMore": "Más información",
+    "mustUseBadge": "Obligatorio",
+    "tabs": {
+      "regular": "Plugins",
+      "mustUse": "Obligatorios"
+    }
+  },
+  "menus": {
+    "title": "Menús",
+    "header": "Menú de cabecera",
+    "footer": "Menú de pie de página",
+    "saveAndPublish": "Guardar y generar",
+    "discard": "Descartar",
+    "saved": "Menús guardados y publicados.",
+    "saveFailed": "No se pudieron guardar los menús.",
+    "unsavedChanges": "Tienes cambios sin guardar."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "tabs": {
+      "general": "General"
+    },
+    "site": {
+      "title": "Sitio",
+      "siteTitle": "Título del sitio",
+      "siteDescription": "Descripción del sitio",
+      "siteLanguage": "Idioma del sitio",
+      "siteLanguageHelp": "Etiqueta de idioma BCP-47 inyectada en <html lang=\"…\"> de cada página publicada.",
+      "baseUrl": "URL pública del sitio",
+      "postsPerPage": "Entradas por página",
+      "homeMode": "Contenido de la página de inicio",
+      "homeLatest": "Últimas entradas",
+      "homeStatic": "Página estática",
+      "homePage": "Página de inicio"
+    },
+    "flexweg": {
+      "title": "API de Flexweg",
+      "apiKey": "Clave API",
+      "apiKeyHelp": "Generada desde tu cuenta Flexweg → API. Almacenada en Firestore.",
+      "siteUrl": "URL del sitio",
+      "siteUrlHelp": "URL pública de tu sitio Flexweg sin barra final.",
+      "apiBaseUrl": "URL base de la API"
+    },
+    "editor": {
+      "title": "Editor",
+      "help": "Tipografía usada dentro del editor de entradas/páginas. Independiente del tema público.",
+      "fontFamily": "Familia tipográfica",
+      "bodySize": "Tamaño del cuerpo",
+      "h1Size": "Tamaño H1",
+      "h2Size": "Tamaño H2",
+      "h3Size": "Tamaño H3",
+      "sizeHelp": "Longitud CSS, p. ej. 16px o 1rem. Deja vacío para el valor por defecto.",
+      "reset": "Restablecer valores predeterminados"
+    },
+    "profile": {
+      "title": "Perfil",
+      "adminLocale": "Idioma del admin",
+      "adminLocaleHelp": "Idioma usado por la interfaz de administración. Guardado en tu perfil.",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "bio": "Biografía",
+      "bioPlaceholder": "Un párrafo corto que se muestra en tu página de autor y debajo de tus artículos.",
+      "bioHelp": "Visible en el sitio público en la barra lateral de autor y en la página de archivo del autor.",
+      "avatar": "Foto de perfil",
+      "avatarHelp": "Elige una imagen de tu biblioteca de medios. Las imágenes cuadradas se muestran mejor.",
+      "pickAvatar": "Elegir de medios",
+      "changeAvatar": "Cambiar foto",
+      "removeAvatar": "Eliminar",
+      "save": "Guardar perfil"
+    }
+  },
+  "users": {
+    "title": "Usuarios",
+    "noUsers": "Aún no hay usuarios.",
+    "role": "Rol",
+    "disabled": "Deshabilitado",
+    "editProfileTitle": "Editar perfil — {{email}}",
+    "profileSaved": "Perfil guardado.",
+    "actions": {
+      "editProfile": "Editar perfil",
+      "promote": "Promover a administrador",
+      "demote": "Degradar a editor",
+      "disable": "Deshabilitar",
+      "enable": "Habilitar",
+      "delete": "Eliminar registro"
+    }
+  },
+  "errors": {
+    "appError": "Error de la aplicación",
+    "loadAccountFailed": "No se pudo cargar tu cuenta",
+    "loadAccountHint": "Si el problema persiste, cierra sesión e inténtalo de nuevo.",
+    "accountDisabled": "Cuenta deshabilitada",
+    "accountDisabledMessage": "Tu acceso a este CMS ha sido deshabilitado. Contacta con tu administrador.",
+    "firebaseNotConfigured": "Firebase no está configurado",
+    "firebaseEnvMissing": "Faltan las siguientes variables de entorno:\n{{vars}}\n\nCopia .env.example a .env, rellena las credenciales de tu proyecto Firebase y reinicia el servidor de desarrollo.",
+    "adminEmailNotConfigured": "El correo del admin no está configurado",
+    "adminEmailMessage": "Falta VITE_ADMIN_EMAIL en .env. Establécelo con el correo del administrador inicial.",
+    "consoleHint": "Revisa la consola del navegador y tu configuración .env. Consulta el README para las instrucciones de configuración."
+  },
+  "flexweg": {
+    "actions": {
+      "upload": "Subiendo archivo",
+      "delete": "Eliminando archivo",
+      "rename": "Renombrando archivo",
+      "get": "Leyendo archivo",
+      "list": "Listando archivos",
+      "createFolder": "Creando carpeta",
+      "renameFolder": "Renombrando carpeta",
+      "deleteFolder": "Eliminando carpeta"
+    },
+    "errors": {
+      "configMissing": "La clave API de Flexweg no está configurada. Configúrala en los ajustes del admin antes de publicar.",
+      "network": "{{action}}: error de red o CORS bloqueado. Comprueba tu conexión.",
+      "auth": "{{action}}: fallo de autenticación. Revisa tu clave API de Flexweg en los ajustes.",
+      "notFound": "{{action}}: destino no encontrado en Flexweg.",
+      "tooLarge": "{{action}}: archivo demasiado grande para tu plan Flexweg.",
+      "rateLimited": "{{action}}: demasiadas peticiones, vuelve a intentarlo en un momento.",
+      "serverError": "{{action}}: error del servidor Flexweg ({{status}}). Vuelve a intentarlo.",
+      "generic": "{{action}} falló ({{status}}){{detail}}."
+    }
+  },
+  "publish": {
+    "log": {
+      "rendering": "Generando página…",
+      "uploading": "Subiendo {{path}}…",
+      "deleting": "Eliminando {{path}}…",
+      "regenerating": "Regenerando listados…",
+      "skipped": "Omitido {{path}} (sin cambios)",
+      "done": "Publicado en {{url}}",
+      "failed": "Falló: {{error}}"
+    }
+  }
+}

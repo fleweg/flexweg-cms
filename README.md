@@ -168,7 +168,7 @@ service cloud.firestore {
               .hasOnly(["preferences", "firstName", "lastName", "bio", "avatarMediaId"])
           && (
             !("preferences" in request.resource.data.diff(resource.data).affectedKeys())
-            || request.resource.data.preferences.adminLocale in ["en", "fr"]
+            || request.resource.data.preferences.adminLocale in ["en", "fr", "de", "es", "nl", "pt", "ko"]
           )
         );
 
@@ -248,9 +248,33 @@ After that, every publish action from the admin uploads HTML/asset files directl
 
 ## Internationalisation
 
-The admin UI is fully translated to English (default) and French. Each user picks their preferred admin language from the **Topbar** language selector or in **Settings → Profile**. The choice is saved on the user's Firestore profile (so it follows them across devices) and in `localStorage` (so reloads don't flash the wrong language).
+The admin UI ships with translations for seven locales:
 
-The site language for the public output is configured separately in **Settings → Site → Site language** (BCP-47), and is injected as `<html lang="…">` on every published page.
+| Code | Language | |
+|---|---|---|
+| `en` | English | 🇬🇧 |
+| `fr` | Français | 🇫🇷 |
+| `de` | Deutsch | 🇩🇪 |
+| `es` | Español | 🇪🇸 |
+| `nl` | Nederlands | 🇳🇱 |
+| `pt` | Português | 🇵🇹 |
+| `ko` | 한국어 | 🇰🇷 |
+
+Each user picks their preferred admin language from the **Topbar** language selector or in **Settings → Profile**. The choice is saved on the user's Firestore profile (so it follows them across devices) and in `localStorage` (so reloads don't flash the wrong language). English is the source of truth — `src/i18n/en.json` is the canonical bundle and i18next falls back to it for any missing key in the other locales, so the admin never breaks if a translation is incomplete.
+
+Plugins / mu-plugins / themes ship their own bundled translations alongside their manifest. They're loaded into a dedicated i18next namespace named after the plugin or theme id (e.g. `theme-default`, `flexweg-rss`). All seven admin locales are supported across every built-in plugin and theme.
+
+The site language for the public output is configured separately in **Settings → Site → Site language** (BCP-47), and is injected as `<html lang="…">` on every published page. The bundled `flexweg-sitemaps` plugin also localises the styled sitemap-viewer (the HTML rendering of the XML sitemaps in a browser) for the same seven languages — pick the right one when you upload the XSL stylesheets.
+
+### Updating Firestore security rules
+
+The example Firestore rules above lock the `preferences.adminLocale` field to a closed list:
+
+```
+&& request.resource.data.preferences.adminLocale in ["en", "fr", "de", "es", "nl", "pt", "ko"]
+```
+
+If you upgraded from an older deployment that allowed only `["en", "fr"]`, copy the updated list into your Firebase Console → Firestore → Rules tab; otherwise users won't be able to save the new locales.
 
 ## URL strategy
 

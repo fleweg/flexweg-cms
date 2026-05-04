@@ -1,0 +1,358 @@
+{
+  "common": {
+    "save": "Opslaan",
+    "saving": "Opslaan…",
+    "saved": "Opgeslagen",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "create": "Aanmaken",
+    "search": "Zoeken",
+    "loading": "Laden…",
+    "yes": "Ja",
+    "no": "Nee",
+    "confirm": "Bevestigen",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "close": "Sluiten",
+    "all": "Alle",
+    "none": "Geen",
+    "actions": "Acties",
+    "name": "Naam",
+    "slug": "Slug",
+    "description": "Beschrijving",
+    "status": "Status",
+    "createdAt": "Aangemaakt",
+    "updatedAt": "Bijgewerkt",
+    "publishedAt": "Gepubliceerd",
+    "language": "Taal",
+    "darkMode": "Donkere modus",
+    "lightMode": "Lichte modus",
+    "signOut": "Uitloggen",
+    "administrator": "Beheerder",
+    "editor": "Redacteur",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "Inloggen",
+    "signingIn": "Inloggen…",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "emailPlaceholder": "jij@bedrijf.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "resetEmailSent": "E-mail om wachtwoord opnieuw in te stellen verzonden naar {{email}}.",
+    "enterEmailFirst": "Voer eerst je e-mail hierboven in en klik dan op resetten.",
+    "emailPasswordRequired": "E-mail en wachtwoord zijn vereist.",
+    "signInSubtitle": "Gebruik je werk-e-mail en wachtwoord.",
+    "footer": "Accountaanvragen verlopen via je beheerder.",
+    "errors": {
+      "invalidEmail": "Ongeldig e-mailadres.",
+      "invalidCredentials": "Ongeldig e-mailadres of wachtwoord.",
+      "tooManyRequests": "Te veel pogingen. Probeer later opnieuw of stel je wachtwoord opnieuw in.",
+      "userDisabled": "Dit account is uitgeschakeld.",
+      "networkFailed": "Netwerkfout. Controleer je verbinding.",
+      "generic": "Authenticatie mislukt."
+    }
+  },
+  "nav": {
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "dashboard": "Dashboard",
+    "posts": "Berichten",
+    "pages": "Pagina's",
+    "taxonomies": "Categorieën & Tags",
+    "media": "Media",
+    "themes": "Thema's",
+    "themeSettings": "Thema-instellingen",
+    "plugins": "Plugins",
+    "menus": "Menu's",
+    "users": "Gebruikers",
+    "settings": "Instellingen"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welkom terug, {{email}}.",
+    "stats": {
+      "totalPosts": "Berichten",
+      "totalPages": "Pagina's",
+      "online": "Online",
+      "drafts": "Concepten"
+    }
+  },
+  "posts": {
+    "title": "Berichten",
+    "newPost": "Nieuw bericht",
+    "noPosts": "Nog geen berichten. Maak je eerste bericht om te beginnen.",
+    "filters": {
+      "all": "Alle",
+      "draft": "Concept",
+      "online": "Online"
+    },
+    "fields": {
+      "title": "Titel",
+      "slug": "Slug",
+      "excerpt": "Samenvatting",
+      "content": "Inhoud",
+      "category": "Categorie",
+      "tags": "Tags",
+      "heroImage": "Uitgelichte afbeelding",
+      "seoTitle": "SEO-titel",
+      "seoDescription": "SEO-beschrijving"
+    },
+    "edit": {
+      "newTitle": "Nieuw bericht",
+      "editTitle": "Bericht bewerken",
+      "saved": "Opgeslagen.",
+      "savedAndRepublished": "Opgeslagen en opnieuw gepubliceerd.",
+      "saveFailed": "Opslaan mislukt.",
+      "saveAndRepublish": "Opslaan en opnieuw publiceren",
+      "draftSaved": "Concept opgeslagen.",
+      "slugCollision": {
+        "post": "Deze URL wordt al gebruikt door bericht: \"{{label}}\".",
+        "page": "Deze URL wordt al gebruikt door pagina: \"{{label}}\".",
+        "category": "Deze URL wordt al gebruikt door categorie: \"{{label}}\"."
+      },
+      "publish": "Publiceren",
+      "unpublish": "Depubliceren",
+      "publishing": "Publiceren…",
+      "unpublishing": "Depubliceren…",
+      "titlePlaceholder": "Titel toevoegen",
+      "permalink": "Permalink",
+      "slugFormatHint": "Alleen kleine letters, ASCII, gescheiden door streepjes.",
+      "viewPublished": "Bekijken",
+      "confirmDelete": "Dit item verwijderen?",
+      "inspector": {
+        "document": "Document",
+        "block": "Blok",
+        "blockEmpty": "Selecteer een blok in de editor om de opties te zien.",
+        "publishing": "Publicatie",
+        "permalink": "Permalink",
+        "categories": "Categorieën & tags",
+        "featured": "Uitgelichte afbeelding",
+        "seo": "SEO",
+        "excerpt": "Samenvatting"
+      },
+      "blocks": {
+        "addBlock": "Blok toevoegen",
+        "transform": "Omzetten naar",
+        "moveUp": "Omhoog verplaatsen",
+        "moveDown": "Omlaag verplaatsen",
+        "duplicate": "Dupliceren",
+        "remove": "Blok verwijderen",
+        "paragraph": "Paragraaf",
+        "heading2": "Kop 2",
+        "heading3": "Kop 3",
+        "bulletList": "Opsomming",
+        "orderedList": "Genummerde lijst",
+        "blockquote": "Citaat",
+        "codeBlock": "Code",
+        "image": "Afbeelding",
+        "horizontalRule": "Scheiding",
+        "categories": {
+          "text": "Tekst",
+          "media": "Media",
+          "layout": "Lay-out",
+          "embed": "Insluitingen",
+          "advanced": "Geavanceerd"
+        },
+        "noSettings": "Dit blok heeft geen instellingen.",
+        "noSelection": "Selecteer een blok in de editor om de opties te zien."
+      }
+    },
+    "status": {
+      "draft": "Concept",
+      "online": "Online"
+    },
+    "preview": {
+      "title": "Voorbeeld",
+      "rendering": "Voorbeeld renderen…",
+      "error": "Voorbeeld mislukt: {{error}}",
+      "viewports": {
+        "mobile": "Mobiel",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      }
+    }
+  },
+  "pages": {
+    "title": "Pagina's",
+    "newPage": "Nieuwe pagina",
+    "noPages": "Nog geen pagina's.",
+    "homeBadge": "Startpagina",
+    "homeBadgeTooltip": "Wordt gebruikt als startpagina van de site"
+  },
+  "taxonomies": {
+    "title": "Categorieën & Tags",
+    "categories": "Categorieën",
+    "tags": "Tags",
+    "newCategory": "Nieuwe categorie",
+    "newTag": "Nieuwe tag",
+    "noCategories": "Nog geen categorieën.",
+    "noTags": "Nog geen tags.",
+    "slugCollision": "Deze slug wordt al gebruikt door \"{{label}}\"."
+  },
+  "media": {
+    "title": "Mediabibliotheek",
+    "upload": "Uploaden",
+    "uploading": "Uploaden…",
+    "finalizing": "Afronden…",
+    "uploadFailed": "Upload mislukt",
+    "retry": "Opnieuw proberen",
+    "noMedia": "Nog geen media.",
+    "alt": "Alt-tekst",
+    "caption": "Bijschrift",
+    "filename": "Bestandsnaam",
+    "size": "Grootte",
+    "type": "Type"
+  },
+  "themes": {
+    "title": "Thema's",
+    "active": "Actief",
+    "activate": "Activeren",
+    "syncAssets": "Thema-bestanden synchroniseren",
+    "regenerateSite": "Site opnieuw genereren",
+    "regenerating": "Opnieuw genereren…"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "enabled": "Ingeschakeld",
+    "disabled": "Uitgeschakeld",
+    "enable": "Inschakelen",
+    "disable": "Uitschakelen",
+    "configure": "Configureren",
+    "author": "auteur",
+    "learnMore": "Meer info",
+    "mustUseBadge": "Verplicht",
+    "tabs": {
+      "regular": "Plugins",
+      "mustUse": "Verplichte plugins"
+    }
+  },
+  "menus": {
+    "title": "Menu's",
+    "header": "Hoofdmenu",
+    "footer": "Voettekstmenu",
+    "saveAndPublish": "Opslaan & genereren",
+    "discard": "Negeren",
+    "saved": "Menu's opgeslagen en gepubliceerd.",
+    "saveFailed": "Kon menu's niet opslaan.",
+    "unsavedChanges": "Je hebt niet-opgeslagen wijzigingen."
+  },
+  "settings": {
+    "title": "Instellingen",
+    "tabs": {
+      "general": "Algemeen"
+    },
+    "site": {
+      "title": "Site",
+      "siteTitle": "Sitetitel",
+      "siteDescription": "Sitebeschrijving",
+      "siteLanguage": "Sitetaal",
+      "siteLanguageHelp": "BCP-47-taalcode die op elke gepubliceerde pagina in <html lang=\"…\"> wordt geplaatst.",
+      "baseUrl": "Publieke site-URL",
+      "postsPerPage": "Berichten per pagina",
+      "homeMode": "Inhoud startpagina",
+      "homeLatest": "Laatste berichten",
+      "homeStatic": "Statische pagina",
+      "homePage": "Startpagina"
+    },
+    "flexweg": {
+      "title": "Flexweg-API",
+      "apiKey": "API-sleutel",
+      "apiKeyHelp": "Aangemaakt vanuit je Flexweg-account → API. Opgeslagen in Firestore.",
+      "siteUrl": "Site-URL",
+      "siteUrlHelp": "Publieke URL van je Flexweg-site zonder slash op het einde.",
+      "apiBaseUrl": "API-basis-URL"
+    },
+    "editor": {
+      "title": "Editor",
+      "help": "Typografie binnen de bericht-/pagina-editor. Onafhankelijk van het publieke thema.",
+      "fontFamily": "Lettertypefamilie",
+      "bodySize": "Tekstgrootte",
+      "h1Size": "H1-grootte",
+      "h2Size": "H2-grootte",
+      "h3Size": "H3-grootte",
+      "sizeHelp": "CSS-lengte, bijv. 16px of 1rem. Laat leeg voor standaard.",
+      "reset": "Terugzetten naar standaard"
+    },
+    "profile": {
+      "title": "Profiel",
+      "adminLocale": "Admin-taal",
+      "adminLocaleHelp": "Taal die wordt gebruikt door de adminschermen. Opgeslagen in je profiel.",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "bio": "Biografie",
+      "bioPlaceholder": "Een korte alinea die op je auteurspagina en onder je artikelen verschijnt.",
+      "bioHelp": "Zichtbaar op de publieke site in de auteur-zijbalk en op de auteursarchiefpagina.",
+      "avatar": "Profielfoto",
+      "avatarHelp": "Kies een afbeelding uit je mediabibliotheek. Vierkante afbeeldingen werken het best.",
+      "pickAvatar": "Kies uit media",
+      "changeAvatar": "Foto wijzigen",
+      "removeAvatar": "Verwijderen",
+      "save": "Profiel opslaan"
+    }
+  },
+  "users": {
+    "title": "Gebruikers",
+    "noUsers": "Nog geen gebruikers.",
+    "role": "Rol",
+    "disabled": "Uitgeschakeld",
+    "editProfileTitle": "Profiel bewerken — {{email}}",
+    "profileSaved": "Profiel opgeslagen.",
+    "actions": {
+      "editProfile": "Profiel bewerken",
+      "promote": "Promoveren tot beheerder",
+      "demote": "Degraderen tot redacteur",
+      "disable": "Uitschakelen",
+      "enable": "Inschakelen",
+      "delete": "Record verwijderen"
+    }
+  },
+  "errors": {
+    "appError": "Toepassingsfout",
+    "loadAccountFailed": "Kon je account niet laden",
+    "loadAccountHint": "Als het probleem aanhoudt, log uit en probeer opnieuw.",
+    "accountDisabled": "Account uitgeschakeld",
+    "accountDisabledMessage": "Je toegang tot deze CMS is uitgeschakeld. Neem contact op met je beheerder.",
+    "firebaseNotConfigured": "Firebase is niet geconfigureerd",
+    "firebaseEnvMissing": "De volgende omgevingsvariabelen ontbreken:\n{{vars}}\n\nKopieer .env.example naar .env, vul je Firebase-projectgegevens in en herstart de dev-server.",
+    "adminEmailNotConfigured": "Admin-e-mail is niet geconfigureerd",
+    "adminEmailMessage": "VITE_ADMIN_EMAIL ontbreekt in .env. Stel deze in op het e-mailadres van de bootstrap-beheerder.",
+    "consoleHint": "Controleer de browserconsole en je .env-configuratie. Zie de README voor instellingsinstructies."
+  },
+  "flexweg": {
+    "actions": {
+      "upload": "Bestand uploaden",
+      "delete": "Bestand verwijderen",
+      "rename": "Bestand hernoemen",
+      "get": "Bestand lezen",
+      "list": "Bestanden lijsten",
+      "createFolder": "Map aanmaken",
+      "renameFolder": "Map hernoemen",
+      "deleteFolder": "Map verwijderen"
+    },
+    "errors": {
+      "configMissing": "Flexweg API-sleutel is niet geconfigureerd. Stel deze in via de admininstellingen voordat je publiceert.",
+      "network": "{{action}}: netwerkfout of CORS geblokkeerd. Controleer je verbinding.",
+      "auth": "{{action}}: authenticatie mislukt. Controleer je Flexweg API-sleutel in de instellingen.",
+      "notFound": "{{action}}: doel niet gevonden op Flexweg.",
+      "tooLarge": "{{action}}: bestand te groot voor je Flexweg-pakket.",
+      "rateLimited": "{{action}}: te veel verzoeken, probeer het zo opnieuw.",
+      "serverError": "{{action}}: Flexweg-serverfout ({{status}}). Probeer het opnieuw.",
+      "generic": "{{action}} mislukt ({{status}}){{detail}}."
+    }
+  },
+  "publish": {
+    "log": {
+      "rendering": "Pagina renderen…",
+      "uploading": "{{path}} uploaden…",
+      "deleting": "{{path}} verwijderen…",
+      "regenerating": "Lijsten opnieuw genereren…",
+      "skipped": "{{path}} overgeslagen (geen wijzigingen)",
+      "done": "Gepubliceerd op {{url}}",
+      "failed": "Mislukt: {{error}}"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   CustomCodeSettingsPage,
   DEFAULT_CUSTOM_CODE_CONFIG,
@@ -28,7 +28,7 @@ export const manifest: PluginManifest<CustomCodeConfig> = {
   description:
     "Inject site-wide HTML / CSS / JS into the <head> or before </body> of every published page. Useful for analytics, fonts, third-party widgets, custom overrides.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   settings: {
     navLabelKey: "title",
     defaultConfig: DEFAULT_CUSTOM_CODE_CONFIG,

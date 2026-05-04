@@ -45,6 +45,24 @@ export async function getUserRecord(uid: string): Promise<UserRecord | null> {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as UserRecord) : null;
 }
 
+// Live subscription to a single user's record. AuthContext uses this to
+// keep the signed-in user's record fresh after the initial load — so
+// settings like adminLocale change immediately in the UI when the user
+// updates them, without waiting for a reload.
+export function subscribeToUserRecord(
+  uid: string,
+  onChange: (record: UserRecord | null) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  return onSnapshot(
+    userDoc(uid),
+    (snap) => {
+      onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as UserRecord) : null);
+    },
+    onError,
+  );
+}
+
 // Self-create record on first login. New users default to the editor role
 // and English admin locale. Bootstrap admin status is derived from the env
 // var, not from this record (so the very first login has admin powers even

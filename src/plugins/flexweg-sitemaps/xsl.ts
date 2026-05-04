@@ -33,7 +33,9 @@ interface XslLabels {
   columnPubdate: string;
 }
 
-const LABELS: Record<"en" | "fr", XslLabels> = {
+type XslLocale = "en" | "fr" | "de" | "es" | "nl" | "pt" | "ko";
+
+const LABELS: Record<XslLocale, XslLabels> = {
   en: {
     pageTitle: "XML Sitemap",
     heading: "XML Sitemap",
@@ -70,11 +72,102 @@ const LABELS: Record<"en" | "fr", XslLabels> = {
     columnTitle: "Titre",
     columnPubdate: "Date de publication",
   },
+  de: {
+    pageTitle: "XML-Sitemap",
+    heading: "XML-Sitemap",
+    meta: "Diese XML-Sitemap ist für Suchmaschinen bestimmt.",
+    indexCountBefore: "Dieser Index verweist auf ",
+    indexCountAfter: " Sitemaps.",
+    urlCountBefore: "Diese Sitemap enthält ",
+    urlCountAfter: " URLs.",
+    newsCountBefore: "Diese News-Sitemap enthält ",
+    newsCountAfter: " Artikel.",
+    newsHeading: "XML News-Sitemap",
+    newsPageTitle: "XML News-Sitemap",
+    columnSitemap: "Sitemap-URL",
+    columnUrl: "URL",
+    columnLastmod: "Zuletzt geändert",
+    columnTitle: "Titel",
+    columnPubdate: "Veröffentlichungsdatum",
+  },
+  es: {
+    pageTitle: "Sitemap XML",
+    heading: "Sitemap XML",
+    meta: "Este sitemap XML está destinado a los motores de búsqueda.",
+    indexCountBefore: "Este índice referencia ",
+    indexCountAfter: " sitemaps.",
+    urlCountBefore: "Este sitemap contiene ",
+    urlCountAfter: " URLs.",
+    newsCountBefore: "Este sitemap News contiene ",
+    newsCountAfter: " artículos.",
+    newsHeading: "Sitemap XML News",
+    newsPageTitle: "Sitemap XML News",
+    columnSitemap: "URL del sitemap",
+    columnUrl: "URL",
+    columnLastmod: "Última modificación",
+    columnTitle: "Título",
+    columnPubdate: "Fecha de publicación",
+  },
+  nl: {
+    pageTitle: "XML-sitemap",
+    heading: "XML-sitemap",
+    meta: "Deze XML-sitemap is bedoeld voor gebruik door zoekmachines.",
+    indexCountBefore: "Deze index verwijst naar ",
+    indexCountAfter: " sitemaps.",
+    urlCountBefore: "Deze sitemap bevat ",
+    urlCountAfter: " URLs.",
+    newsCountBefore: "Deze News-sitemap bevat ",
+    newsCountAfter: " artikelen.",
+    newsHeading: "XML News-sitemap",
+    newsPageTitle: "XML News-sitemap",
+    columnSitemap: "Sitemap-URL",
+    columnUrl: "URL",
+    columnLastmod: "Laatst gewijzigd",
+    columnTitle: "Titel",
+    columnPubdate: "Publicatiedatum",
+  },
+  pt: {
+    pageTitle: "Sitemap XML",
+    heading: "Sitemap XML",
+    meta: "Este sitemap XML destina-se aos motores de busca.",
+    indexCountBefore: "Este índice referencia ",
+    indexCountAfter: " sitemaps.",
+    urlCountBefore: "Este sitemap contém ",
+    urlCountAfter: " URLs.",
+    newsCountBefore: "Este sitemap News contém ",
+    newsCountAfter: " artigos.",
+    newsHeading: "Sitemap XML News",
+    newsPageTitle: "Sitemap XML News",
+    columnSitemap: "URL do sitemap",
+    columnUrl: "URL",
+    columnLastmod: "Última modificação",
+    columnTitle: "Título",
+    columnPubdate: "Data de publicação",
+  },
+  ko: {
+    pageTitle: "XML 사이트맵",
+    heading: "XML 사이트맵",
+    meta: "이 XML 사이트맵은 검색 엔진을 위한 것입니다.",
+    indexCountBefore: "이 인덱스는 ",
+    indexCountAfter: "개의 사이트맵을 참조합니다.",
+    urlCountBefore: "이 사이트맵에는 ",
+    urlCountAfter: "개의 URL이 포함되어 있습니다.",
+    newsCountBefore: "이 News 사이트맵에는 ",
+    newsCountAfter: "개의 기사가 포함되어 있습니다.",
+    newsHeading: "XML News 사이트맵",
+    newsPageTitle: "XML News 사이트맵",
+    columnSitemap: "사이트맵 URL",
+    columnUrl: "URL",
+    columnLastmod: "마지막 수정일",
+    columnTitle: "제목",
+    columnPubdate: "게시일",
+  },
 };
 
-function pickLocale(language: string): "en" | "fr" {
+function pickLocale(language: string): XslLocale {
   const prefix = (language || "").split("-")[0]?.toLowerCase();
-  return prefix === "fr" ? "fr" : "en";
+  if (prefix && prefix in LABELS) return prefix as XslLocale;
+  return "en";
 }
 
 // Embedded CSS shared by both stylesheets. Sober palette aligned with the

@@ -1,0 +1,358 @@
+{
+  "common": {
+    "save": "Speichern",
+    "saving": "Speichert…",
+    "saved": "Gespeichert",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "loading": "Lädt…",
+    "yes": "Ja",
+    "no": "Nein",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige",
+    "close": "Schließen",
+    "all": "Alle",
+    "none": "Keine",
+    "actions": "Aktionen",
+    "name": "Name",
+    "slug": "Slug",
+    "description": "Beschreibung",
+    "status": "Status",
+    "createdAt": "Erstellt",
+    "updatedAt": "Aktualisiert",
+    "publishedAt": "Veröffentlicht",
+    "language": "Sprache",
+    "darkMode": "Dunkelmodus",
+    "lightMode": "Hellmodus",
+    "signOut": "Abmelden",
+    "administrator": "Administrator",
+    "editor": "Redakteur",
+    "appName": "Flexweg CMS"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signingIn": "Anmeldung läuft…",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "emailPlaceholder": "sie@firma.com",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Passwort vergessen?",
+    "resetEmailSent": "E-Mail zum Zurücksetzen des Passworts wurde an {{email}} gesendet.",
+    "enterEmailFirst": "Geben Sie zuerst Ihre E-Mail-Adresse oben ein und klicken Sie dann auf Zurücksetzen.",
+    "emailPasswordRequired": "E-Mail und Passwort sind erforderlich.",
+    "signInSubtitle": "Verwenden Sie Ihre Geschäfts-E-Mail und Ihr Passwort.",
+    "footer": "Kontoanfragen erfolgen über Ihren Administrator.",
+    "errors": {
+      "invalidEmail": "Ungültige E-Mail-Adresse.",
+      "invalidCredentials": "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+      "tooManyRequests": "Zu viele Versuche. Versuchen Sie es später erneut oder setzen Sie Ihr Passwort zurück.",
+      "userDisabled": "Dieses Konto wurde deaktiviert.",
+      "networkFailed": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung.",
+      "generic": "Authentifizierung fehlgeschlagen."
+    }
+  },
+  "nav": {
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "dashboard": "Übersicht",
+    "posts": "Artikel",
+    "pages": "Seiten",
+    "taxonomies": "Kategorien & Schlagwörter",
+    "media": "Medien",
+    "themes": "Themes",
+    "themeSettings": "Theme-Einstellungen",
+    "plugins": "Plugins",
+    "menus": "Menüs",
+    "users": "Benutzer",
+    "settings": "Einstellungen"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "welcome": "Willkommen zurück, {{email}}.",
+    "stats": {
+      "totalPosts": "Artikel",
+      "totalPages": "Seiten",
+      "online": "Online",
+      "drafts": "Entwürfe"
+    }
+  },
+  "posts": {
+    "title": "Artikel",
+    "newPost": "Neuer Artikel",
+    "noPosts": "Noch keine Artikel. Erstellen Sie Ihren ersten Artikel, um zu beginnen.",
+    "filters": {
+      "all": "Alle",
+      "draft": "Entwurf",
+      "online": "Online"
+    },
+    "fields": {
+      "title": "Titel",
+      "slug": "Slug",
+      "excerpt": "Auszug",
+      "content": "Inhalt",
+      "category": "Kategorie",
+      "tags": "Schlagwörter",
+      "heroImage": "Beitragsbild",
+      "seoTitle": "SEO-Titel",
+      "seoDescription": "SEO-Beschreibung"
+    },
+    "edit": {
+      "newTitle": "Neuer Artikel",
+      "editTitle": "Artikel bearbeiten",
+      "saved": "Gespeichert.",
+      "savedAndRepublished": "Gespeichert und neu veröffentlicht.",
+      "saveFailed": "Speichern fehlgeschlagen.",
+      "saveAndRepublish": "Speichern & neu veröffentlichen",
+      "draftSaved": "Entwurf gespeichert.",
+      "slugCollision": {
+        "post": "Diese URL wird bereits vom Artikel verwendet: \"{{label}}\".",
+        "page": "Diese URL wird bereits von der Seite verwendet: \"{{label}}\".",
+        "category": "Diese URL wird bereits von der Kategorie verwendet: \"{{label}}\"."
+      },
+      "publish": "Veröffentlichen",
+      "unpublish": "Zurückziehen",
+      "publishing": "Veröffentlicht…",
+      "unpublishing": "Wird zurückgezogen…",
+      "titlePlaceholder": "Titel hinzufügen",
+      "permalink": "Permalink",
+      "slugFormatHint": "Nur Kleinbuchstaben, ASCII, Bindestriche.",
+      "viewPublished": "Ansehen",
+      "confirmDelete": "Diesen Eintrag löschen?",
+      "inspector": {
+        "document": "Dokument",
+        "block": "Block",
+        "blockEmpty": "Wählen Sie einen Block im Editor, um seine Optionen anzuzeigen.",
+        "publishing": "Veröffentlichung",
+        "permalink": "Permalink",
+        "categories": "Kategorien & Schlagwörter",
+        "featured": "Beitragsbild",
+        "seo": "SEO",
+        "excerpt": "Auszug"
+      },
+      "blocks": {
+        "addBlock": "Block hinzufügen",
+        "transform": "Umwandeln in",
+        "moveUp": "Nach oben verschieben",
+        "moveDown": "Nach unten verschieben",
+        "duplicate": "Duplizieren",
+        "remove": "Block löschen",
+        "paragraph": "Absatz",
+        "heading2": "Überschrift 2",
+        "heading3": "Überschrift 3",
+        "bulletList": "Aufzählung",
+        "orderedList": "Nummerierte Liste",
+        "blockquote": "Zitat",
+        "codeBlock": "Code",
+        "image": "Bild",
+        "horizontalRule": "Trenner",
+        "categories": {
+          "text": "Text",
+          "media": "Medien",
+          "layout": "Layout",
+          "embed": "Einbettungen",
+          "advanced": "Erweitert"
+        },
+        "noSettings": "Dieser Block hat keine Einstellungen.",
+        "noSelection": "Wählen Sie einen Block im Editor, um seine Optionen anzuzeigen."
+      }
+    },
+    "status": {
+      "draft": "Entwurf",
+      "online": "Online"
+    },
+    "preview": {
+      "title": "Vorschau",
+      "rendering": "Vorschau wird gerendert…",
+      "error": "Vorschau fehlgeschlagen: {{error}}",
+      "viewports": {
+        "mobile": "Mobil",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      }
+    }
+  },
+  "pages": {
+    "title": "Seiten",
+    "newPage": "Neue Seite",
+    "noPages": "Noch keine Seiten.",
+    "homeBadge": "Startseite",
+    "homeBadgeTooltip": "Wird als Startseite der Website verwendet"
+  },
+  "taxonomies": {
+    "title": "Kategorien & Schlagwörter",
+    "categories": "Kategorien",
+    "tags": "Schlagwörter",
+    "newCategory": "Neue Kategorie",
+    "newTag": "Neues Schlagwort",
+    "noCategories": "Noch keine Kategorien.",
+    "noTags": "Noch keine Schlagwörter.",
+    "slugCollision": "Dieser Slug wird bereits von \"{{label}}\" verwendet."
+  },
+  "media": {
+    "title": "Medienbibliothek",
+    "upload": "Hochladen",
+    "uploading": "Lädt hoch…",
+    "finalizing": "Wird abgeschlossen…",
+    "uploadFailed": "Hochladen fehlgeschlagen",
+    "retry": "Erneut versuchen",
+    "noMedia": "Noch keine Medien.",
+    "alt": "Alt-Text",
+    "caption": "Bildunterschrift",
+    "filename": "Dateiname",
+    "size": "Größe",
+    "type": "Typ"
+  },
+  "themes": {
+    "title": "Themes",
+    "active": "Aktiv",
+    "activate": "Aktivieren",
+    "syncAssets": "Theme-Assets synchronisieren",
+    "regenerateSite": "Website neu generieren",
+    "regenerating": "Generiert neu…"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "configure": "Konfigurieren",
+    "author": "Autor",
+    "learnMore": "Mehr erfahren",
+    "mustUseBadge": "Pflicht",
+    "tabs": {
+      "regular": "Plugins",
+      "mustUse": "Pflicht-Plugins"
+    }
+  },
+  "menus": {
+    "title": "Menüs",
+    "header": "Kopfzeilen-Menü",
+    "footer": "Fußzeilen-Menü",
+    "saveAndPublish": "Speichern & generieren",
+    "discard": "Verwerfen",
+    "saved": "Menüs gespeichert und veröffentlicht.",
+    "saveFailed": "Menüs konnten nicht gespeichert werden.",
+    "unsavedChanges": "Sie haben ungespeicherte Änderungen."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "tabs": {
+      "general": "Allgemein"
+    },
+    "site": {
+      "title": "Website",
+      "siteTitle": "Website-Titel",
+      "siteDescription": "Website-Beschreibung",
+      "siteLanguage": "Website-Sprache",
+      "siteLanguageHelp": "BCP-47-Sprachtag, der auf jeder veröffentlichten Seite in <html lang=\"…\"> eingefügt wird.",
+      "baseUrl": "Öffentliche Website-URL",
+      "postsPerPage": "Artikel pro Seite",
+      "homeMode": "Startseiten-Inhalt",
+      "homeLatest": "Neueste Artikel",
+      "homeStatic": "Statische Seite",
+      "homePage": "Startseite"
+    },
+    "flexweg": {
+      "title": "Flexweg-API",
+      "apiKey": "API-Schlüssel",
+      "apiKeyHelp": "Erstellt in Ihrem Flexweg-Konto → API. Wird in Firestore gespeichert.",
+      "siteUrl": "Website-URL",
+      "siteUrlHelp": "Öffentliche URL Ihrer Flexweg-Website ohne abschließenden Schrägstrich.",
+      "apiBaseUrl": "API-Basis-URL"
+    },
+    "editor": {
+      "title": "Editor",
+      "help": "Typografie für den Artikel-/Seiten-Editor. Unabhängig vom öffentlichen Theme.",
+      "fontFamily": "Schriftfamilie",
+      "bodySize": "Textgröße",
+      "h1Size": "H1-Größe",
+      "h2Size": "H2-Größe",
+      "h3Size": "H3-Größe",
+      "sizeHelp": "CSS-Länge, z. B. 16px oder 1rem. Leer lassen für Standard.",
+      "reset": "Auf Standard zurücksetzen"
+    },
+    "profile": {
+      "title": "Profil",
+      "adminLocale": "Admin-Sprache",
+      "adminLocaleHelp": "Sprache, die von der Admin-Oberfläche verwendet wird. Im Profil gespeichert.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "bio": "Biografie",
+      "bioPlaceholder": "Ein kurzer Absatz, der auf Ihrer Autorenseite und unter Ihren Artikeln angezeigt wird.",
+      "bioHelp": "Sichtbar auf der öffentlichen Website in der Autoren-Seitenleiste und auf der Autoren-Archivseite.",
+      "avatar": "Profilbild",
+      "avatarHelp": "Wählen Sie ein Bild aus Ihrer Medienbibliothek. Quadratische Bilder werden am besten dargestellt.",
+      "pickAvatar": "Aus Medien auswählen",
+      "changeAvatar": "Bild ändern",
+      "removeAvatar": "Entfernen",
+      "save": "Profil speichern"
+    }
+  },
+  "users": {
+    "title": "Benutzer",
+    "noUsers": "Noch keine Benutzer.",
+    "role": "Rolle",
+    "disabled": "Deaktiviert",
+    "editProfileTitle": "Profil bearbeiten — {{email}}",
+    "profileSaved": "Profil gespeichert.",
+    "actions": {
+      "editProfile": "Profil bearbeiten",
+      "promote": "Zum Administrator befördern",
+      "demote": "Auf Redakteur herabstufen",
+      "disable": "Deaktivieren",
+      "enable": "Aktivieren",
+      "delete": "Datensatz löschen"
+    }
+  },
+  "errors": {
+    "appError": "Anwendungsfehler",
+    "loadAccountFailed": "Konto konnte nicht geladen werden",
+    "loadAccountHint": "Wenn das Problem weiterhin besteht, melden Sie sich ab und versuchen Sie es erneut.",
+    "accountDisabled": "Konto deaktiviert",
+    "accountDisabledMessage": "Ihr Zugriff auf dieses CMS wurde deaktiviert. Wenden Sie sich an Ihren Administrator.",
+    "firebaseNotConfigured": "Firebase ist nicht konfiguriert",
+    "firebaseEnvMissing": "Die folgenden Umgebungsvariablen fehlen:\n{{vars}}\n\nKopieren Sie .env.example nach .env, tragen Sie Ihre Firebase-Projektdaten ein und starten Sie den Dev-Server neu.",
+    "adminEmailNotConfigured": "Admin-E-Mail ist nicht konfiguriert",
+    "adminEmailMessage": "VITE_ADMIN_EMAIL fehlt in .env. Setzen Sie sie auf die E-Mail-Adresse des Bootstrap-Administrators.",
+    "consoleHint": "Überprüfen Sie die Browser-Konsole und Ihre .env-Konfiguration. Siehe README für Setup-Anweisungen."
+  },
+  "flexweg": {
+    "actions": {
+      "upload": "Datei wird hochgeladen",
+      "delete": "Datei wird gelöscht",
+      "rename": "Datei wird umbenannt",
+      "get": "Datei wird gelesen",
+      "list": "Dateien werden aufgelistet",
+      "createFolder": "Ordner wird erstellt",
+      "renameFolder": "Ordner wird umbenannt",
+      "deleteFolder": "Ordner wird gelöscht"
+    },
+    "errors": {
+      "configMissing": "Flexweg-API-Schlüssel ist nicht konfiguriert. Legen Sie ihn in den Admin-Einstellungen fest, bevor Sie veröffentlichen.",
+      "network": "{{action}}: Netzwerkfehler oder CORS blockiert. Überprüfen Sie Ihre Verbindung.",
+      "auth": "{{action}}: Authentifizierung fehlgeschlagen. Überprüfen Sie Ihren Flexweg-API-Schlüssel in den Einstellungen.",
+      "notFound": "{{action}}: Ziel auf Flexweg nicht gefunden.",
+      "tooLarge": "{{action}}: Datei zu groß für Ihren Flexweg-Tarif.",
+      "rateLimited": "{{action}}: Zu viele Anfragen, bitte in Kürze erneut versuchen.",
+      "serverError": "{{action}}: Flexweg-Serverfehler ({{status}}). Bitte erneut versuchen.",
+      "generic": "{{action}} fehlgeschlagen ({{status}}){{detail}}."
+    }
+  },
+  "publish": {
+    "log": {
+      "rendering": "Seite wird gerendert…",
+      "uploading": "{{path}} wird hochgeladen…",
+      "deleting": "{{path}} wird gelöscht…",
+      "regenerating": "Listings werden neu generiert…",
+      "skipped": "{{path}} übersprungen (keine Änderungen)",
+      "done": "Veröffentlicht unter {{url}}",
+      "failed": "Fehlgeschlagen: {{error}}"
+    }
+  }
+}

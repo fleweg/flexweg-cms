@@ -101,3 +101,248 @@ export const fr: typeof en = {
     "Définissez l'URL publique du site dans Réglages → Général avant de régénérer les sitemaps.",
   uploaded: "{{count}} fichiers envoyés.",
 };
+
+export const de: typeof en = {
+  title: "Sitemaps",
+  description:
+    "Erzeugt sitemap-<Jahr>.xml-Dateien, eine sitemap-index.xml, die darauf verweist, eine optionale News-Sitemap und eine anpassbare robots.txt.",
+  sections: {
+    general: "Allgemein",
+    robots: "robots.txt",
+    actions: "Neuerzeugung",
+  },
+  xsl: {
+    help:
+      "XSL-Stylesheets stylen die Sitemaps, wenn sie im Browser geöffnet werden. Nach Änderung der öffentlichen Website-Sprache erneut hochladen.",
+    upload: "Stylesheets hochladen",
+    uploading: "Lädt hoch…",
+    uploaded: "{{count}} Stylesheet(s) hochgeladen.",
+    failed: "Stylesheet-Upload fehlgeschlagen.",
+  },
+  contentTypes: {
+    label: "Inhaltstypen in Sitemaps",
+    posts: "Nur Artikel",
+    postsPages: "Artikel und Seiten",
+  },
+  news: {
+    enabled: "sitemap-news.xml erzeugen",
+    enabledHelp: "Aktivieren, um eine Google-News-Sitemap neben dem Index zu veröffentlichen.",
+    windowDays: "News-Fenster (Tage)",
+    windowDaysHelp:
+      "Artikel, die innerhalb dieser Anzahl von Tagen geändert wurden, erscheinen in sitemap-news.xml. Google empfiehlt 2.",
+  },
+  robots: {
+    label: "Inhalt der robots.txt",
+    help:
+      "Leer lassen, um eine erzeugte Standard-Datei zu verwenden, die auf Ihre sitemap-index.xml (und sitemap-news.xml bei aktivierter News-Sitemap) verweist.",
+    resetDefault: "Standard einfügen",
+    saveAndRegenerate: "Speichern & robots.txt neu erzeugen",
+    saving: "Speichert…",
+    saved: "robots.txt gespeichert und neu erzeugt.",
+  },
+  saveSettings: "Einstellungen speichern",
+  saved: "Einstellungen gespeichert.",
+  forceRegenerate: "Sitemaps zwangsweise neu erzeugen",
+  forceRegenerating: "Neu erzeugen…",
+  regenerated: "Sitemaps neu erzeugt.",
+  regenerateFailed: "Sitemap-Neuerzeugung fehlgeschlagen.",
+  baseUrlMissing:
+    "Legen Sie die öffentliche Website-URL unter Einstellungen → Allgemein fest, bevor Sie Sitemaps neu erzeugen.",
+  uploaded: "{{count}} Dateien hochgeladen.",
+};
+
+export const es: typeof en = {
+  title: "Sitemaps",
+  description:
+    "Genera archivos sitemap-<año>.xml, un sitemap-index.xml que los referencia, un sitemap de News opcional y un robots.txt personalizable.",
+  sections: {
+    general: "General",
+    robots: "robots.txt",
+    actions: "Regeneración",
+  },
+  xsl: {
+    help:
+      "Las hojas de estilo XSL dan formato a los sitemaps cuando se abren en un navegador. Vuelve a subirlas tras cambiar el idioma del sitio público.",
+    upload: "Subir hojas de estilo",
+    uploading: "Subiendo…",
+    uploaded: "Subidas {{count}} hoja(s) de estilo.",
+    failed: "Error al subir las hojas de estilo.",
+  },
+  contentTypes: {
+    label: "Tipos de contenido en sitemaps",
+    posts: "Solo entradas",
+    postsPages: "Entradas y páginas",
+  },
+  news: {
+    enabled: "Generar sitemap-news.xml",
+    enabledHelp: "Actívalo para publicar un sitemap de Google News junto al índice.",
+    windowDays: "Ventana News (días)",
+    windowDaysHelp:
+      "Los artículos modificados en este número de días aparecen en sitemap-news.xml. Google recomienda 2.",
+  },
+  robots: {
+    label: "Contenido de robots.txt",
+    help:
+      "Déjalo vacío para usar un valor por defecto generado que apunta a tu sitemap-index.xml (y a sitemap-news.xml si News está activado).",
+    resetDefault: "Insertar por defecto",
+    saveAndRegenerate: "Guardar y regenerar robots.txt",
+    saving: "Guardando…",
+    saved: "robots.txt guardado y regenerado.",
+  },
+  saveSettings: "Guardar ajustes",
+  saved: "Ajustes guardados.",
+  forceRegenerate: "Forzar regeneración",
+  forceRegenerating: "Regenerando…",
+  regenerated: "Sitemaps regenerados.",
+  regenerateFailed: "La regeneración de sitemaps falló.",
+  baseUrlMissing:
+    "Define la URL pública del sitio en Ajustes → General antes de regenerar los sitemaps.",
+  uploaded: "{{count}} archivos subidos.",
+};
+
+export const nl: typeof en = {
+  title: "Sitemaps",
+  description:
+    "Genereert sitemap-<jaar>.xml-bestanden, een sitemap-index.xml die ze referencet, een optionele News-sitemap en een aanpasbare robots.txt.",
+  sections: {
+    general: "Algemeen",
+    robots: "robots.txt",
+    actions: "Regeneratie",
+  },
+  xsl: {
+    help:
+      "XSL-stylesheets geven sitemaps stijl wanneer ze in een browser worden geopend. Upload opnieuw na het wijzigen van de publieke sitetaal.",
+    upload: "Stylesheets uploaden",
+    uploading: "Uploaden…",
+    uploaded: "{{count}} stylesheet(s) geüpload.",
+    failed: "Stylesheet-upload mislukt.",
+  },
+  contentTypes: {
+    label: "Inhoudstypes in sitemaps",
+    posts: "Alleen berichten",
+    postsPages: "Berichten en pagina's",
+  },
+  news: {
+    enabled: "sitemap-news.xml genereren",
+    enabledHelp: "Inschakelen om een Google News-sitemap naast de index te publiceren.",
+    windowDays: "News-venster (dagen)",
+    windowDaysHelp:
+      "Artikelen die binnen dit aantal dagen zijn gewijzigd verschijnen in sitemap-news.xml. Google adviseert 2.",
+  },
+  robots: {
+    label: "Inhoud van robots.txt",
+    help:
+      "Laat leeg om een gegenereerde standaard te gebruiken die wijst naar je sitemap-index.xml (en sitemap-news.xml wanneer News is ingeschakeld).",
+    resetDefault: "Standaard invoegen",
+    saveAndRegenerate: "Opslaan & robots.txt opnieuw genereren",
+    saving: "Opslaan…",
+    saved: "robots.txt opgeslagen en opnieuw gegenereerd.",
+  },
+  saveSettings: "Instellingen opslaan",
+  saved: "Instellingen opgeslagen.",
+  forceRegenerate: "Sitemaps forceren te regenereren",
+  forceRegenerating: "Regenereren…",
+  regenerated: "Sitemaps geregenereerd.",
+  regenerateFailed: "Sitemap-regeneratie mislukt.",
+  baseUrlMissing:
+    "Stel de publieke site-URL in via Instellingen → Algemeen voordat je sitemaps regenereert.",
+  uploaded: "{{count}} bestanden geüpload.",
+};
+
+export const pt: typeof en = {
+  title: "Sitemaps",
+  description:
+    "Gera ficheiros sitemap-<ano>.xml, um sitemap-index.xml que os referencia, um sitemap News opcional e um robots.txt personalizável.",
+  sections: {
+    general: "Geral",
+    robots: "robots.txt",
+    actions: "Regeneração",
+  },
+  xsl: {
+    help:
+      "As folhas de estilo XSL formatam os sitemaps quando abertos num browser. Reenviar após alterar o idioma do site público.",
+    upload: "Enviar folhas de estilo",
+    uploading: "A enviar…",
+    uploaded: "Enviadas {{count}} folha(s) de estilo.",
+    failed: "Falha ao enviar folhas de estilo.",
+  },
+  contentTypes: {
+    label: "Tipos de conteúdo nos sitemaps",
+    posts: "Apenas artigos",
+    postsPages: "Artigos e páginas",
+  },
+  news: {
+    enabled: "Gerar sitemap-news.xml",
+    enabledHelp: "Ativa para publicar um sitemap Google News ao lado do índice.",
+    windowDays: "Janela News (dias)",
+    windowDaysHelp:
+      "Os artigos modificados neste número de dias aparecem em sitemap-news.xml. O Google recomenda 2.",
+  },
+  robots: {
+    label: "Conteúdo do robots.txt",
+    help:
+      "Deixa vazio para usar um valor predefinido gerado que aponta para o teu sitemap-index.xml (e sitemap-news.xml quando o News está ativo).",
+    resetDefault: "Inserir predefinido",
+    saveAndRegenerate: "Guardar e regenerar robots.txt",
+    saving: "A guardar…",
+    saved: "robots.txt guardado e regenerado.",
+  },
+  saveSettings: "Guardar definições",
+  saved: "Definições guardadas.",
+  forceRegenerate: "Forçar regeneração",
+  forceRegenerating: "A regenerar…",
+  regenerated: "Sitemaps regenerados.",
+  regenerateFailed: "Falha na regeneração de sitemaps.",
+  baseUrlMissing:
+    "Define o URL público do site em Definições → Geral antes de regenerar sitemaps.",
+  uploaded: "{{count}} ficheiros enviados.",
+};
+
+export const ko: typeof en = {
+  title: "사이트맵",
+  description:
+    "sitemap-<연도>.xml 파일, 이를 참조하는 sitemap-index.xml, 선택적 News 사이트맵 및 사용자 정의 가능한 robots.txt를 생성합니다.",
+  sections: {
+    general: "일반",
+    robots: "robots.txt",
+    actions: "재생성",
+  },
+  xsl: {
+    help:
+      "XSL 스타일시트는 브라우저에서 사이트맵을 열 때 스타일을 적용합니다. 공개 사이트 언어를 변경한 후 다시 업로드하세요.",
+    upload: "스타일시트 업로드",
+    uploading: "업로드 중…",
+    uploaded: "{{count}}개의 스타일시트를 업로드했습니다.",
+    failed: "스타일시트 업로드에 실패했습니다.",
+  },
+  contentTypes: {
+    label: "사이트맵에 포함할 콘텐츠 유형",
+    posts: "게시물만",
+    postsPages: "게시물 및 페이지",
+  },
+  news: {
+    enabled: "sitemap-news.xml 생성",
+    enabledHelp: "활성화하면 인덱스 옆에 Google News 사이트맵을 게시합니다.",
+    windowDays: "News 기간 (일)",
+    windowDaysHelp:
+      "지정한 일수 내에 수정된 기사는 sitemap-news.xml에 포함됩니다. Google은 2일을 권장합니다.",
+  },
+  robots: {
+    label: "robots.txt 내용",
+    help:
+      "비워 두면 sitemap-index.xml(및 News가 활성화된 경우 sitemap-news.xml)을 가리키는 기본값이 사용됩니다.",
+    resetDefault: "기본값 삽입",
+    saveAndRegenerate: "저장 및 robots.txt 재생성",
+    saving: "저장 중…",
+    saved: "robots.txt가 저장되고 재생성되었습니다.",
+  },
+  saveSettings: "설정 저장",
+  saved: "설정이 저장되었습니다.",
+  forceRegenerate: "사이트맵 강제 재생성",
+  forceRegenerating: "재생성 중…",
+  regenerated: "사이트맵이 재생성되었습니다.",
+  regenerateFailed: "사이트맵 재생성에 실패했습니다.",
+  baseUrlMissing:
+    "사이트맵을 재생성하기 전에 설정 → 일반에서 공개 사이트 URL을 설정하세요.",
+  uploaded: "{{count}}개의 파일을 업로드했습니다.",
+};

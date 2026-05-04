@@ -1,6 +1,6 @@
 import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import { PROVIDER_LIST } from "./providers";
 import { createEmbedNode, embedNodeName } from "./nodes";
 import { EmbedInspector } from "./EmbedInspector";
@@ -30,7 +30,7 @@ export const manifest: PluginManifest = {
   description:
     "Adds embed blocks (YouTube, Vimeo, Twitter/X, Spotify) to the post editor. Per-page detection injects each provider's runtime script at most once and only when at least one block of that kind is used.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   register(api) {
     // Each provider becomes one block in the registry. The Tiptap
     // Node is built per-provider through the same factory so all

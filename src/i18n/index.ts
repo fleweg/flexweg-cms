@@ -2,11 +2,29 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "./en.json";
 import fr from "./fr.json";
+import de from "./de.json";
+import es from "./es.json";
+import nl from "./nl.json";
+import pt from "./pt.json";
+import ko from "./ko.json";
 import type { AdminLocale } from "../core/types";
 
-export const SUPPORTED_LOCALES: AdminLocale[] = ["en", "fr"];
+export const SUPPORTED_LOCALES: AdminLocale[] = ["en", "fr", "de", "es", "nl", "pt", "ko"];
 export const DEFAULT_LOCALE: AdminLocale = "en";
 const STORAGE_KEY = "adminLocale";
+
+// Native-name labels (with country flag emoji) shown wherever the admin
+// renders a locale picker — Topbar's LocaleSwitcher and Settings →
+// Profile. Kept here so both consumers stay in lockstep.
+export const LOCALE_LABELS: Record<AdminLocale, string> = {
+  fr: "🇫🇷 Français",
+  en: "🇬🇧 English",
+  de: "🇩🇪 Deutsch",
+  es: "🇪🇸 Español",
+  nl: "🇳🇱 Nederlands",
+  pt: "🇵🇹 Português",
+  ko: "🇰🇷 한국어",
+};
 
 export function isSupportedLocale(value: unknown): value is AdminLocale {
   return typeof value === "string" && (SUPPORTED_LOCALES as string[]).includes(value);
@@ -49,6 +67,11 @@ void i18n
     resources: {
       en: { translation: en },
       fr: { translation: fr },
+      de: { translation: de },
+      es: { translation: es },
+      nl: { translation: nl },
+      pt: { translation: pt },
+      ko: { translation: ko },
     },
     lng: resolveInitialLocale(),
     fallbackLng: DEFAULT_LOCALE,

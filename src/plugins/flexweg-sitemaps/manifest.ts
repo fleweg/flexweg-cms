@@ -1,7 +1,7 @@
 import type { PluginManifest } from "../index";
 import type { Post } from "../../core/types";
 import type { PublishContext } from "../../services/publisher";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   DEFAULT_SITEMAPS_CONFIG,
   regenerateForPost,
@@ -53,7 +53,7 @@ export const manifest: PluginManifest<SitemapsConfig> = {
   description:
     "Generates sitemap-index.xml, per-year sitemaps, an optional Google News sitemap, and a robots.txt that points to them.",
   readme,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   settings: {
     navLabelKey: "title",
     defaultConfig: DEFAULT_SITEMAPS_CONFIG,

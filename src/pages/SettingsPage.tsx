@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
-import { setActiveLocale, SUPPORTED_LOCALES } from "../i18n";
+import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS } from "../i18n";
 import {
   DEFAULT_FLEXWEG_API_BASE_URL,
   getFlexwegConfig,
@@ -150,7 +150,7 @@ export function SettingsPage() {
           >
             {SUPPORTED_LOCALES.map((locale) => (
               <option key={locale} value={locale}>
-                {locale === "en" ? "English" : "Français"}
+                {LOCALE_LABELS[locale]}
               </option>
             ))}
           </select>

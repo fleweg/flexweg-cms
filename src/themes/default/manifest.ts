@@ -16,7 +16,7 @@ import cssText from "./theme.scss?inline";
 // uploaded via the same "Sync theme assets" flow as the CSS.
 import jsText from "./menu-loader.js?raw";
 import jsTextPosts from "./posts-loader.js?raw";
-import { en, fr } from "./i18n";
+import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import { DEFAULT_THEME_CONFIG, type DefaultThemeConfig } from "./config";
 import { DefaultThemeSettingsPage } from "./SettingsPage";
 import { buildCustomCss } from "./style";
@@ -37,7 +37,7 @@ export const manifest: ThemeManifest<DefaultThemeConfig> = {
   cssText,
   jsText,
   jsTextPosts,
-  i18n: { en, fr },
+  i18n: { en, fr, de, es, nl, pt, ko },
   settings: {
     navLabelKey: "title",
     defaultConfig: DEFAULT_THEME_CONFIG,

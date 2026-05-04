@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { User as FirebaseUser } from "firebase/auth";
 import { subscribeToAuth, signIn, signOut } from "../services/auth";
-import { ensureSelfUserRecord, USER_ROLES } from "../services/users";
+import { ensureSelfUserRecord, subscribeToUserRecord, USER_ROLES } from "../services/users";
 import { getAdminEmail } from "../services/firebase";
 import { setActiveLocale } from "../i18n";
 import type { UserRecord, UserRole } from "../core/types";
@@ -47,6 +47,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, []);
+
+  // Keep `record` in sync with Firestore after the initial fetch above.
+  // Without this, profile updates (admin locale, avatar, bio…) don't
+  // reflect in the UI until a full reload — the local state would stay
+  // pinned to the value loaded at sign-in time.
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToUserRecord(
+      user.uid,
+      (rec) => {
+        if (rec) setRecord(rec);
+      },
+      (err) => setError(err),
+    );
+  }, [user]);
 
   // Apply the user's saved admin locale only once the record is committed.
   // Calling setActiveLocale inside the auth callback above would emit an
