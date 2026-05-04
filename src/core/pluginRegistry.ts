@@ -127,15 +127,18 @@ export function listHooks(): { filters: string[]; actions: string[] } {
 // rich-content nodes) that show up in the post editor's inserter and the
 // inspector's Block tab. See core/blockRegistry.ts for the manifest shape.
 import { registerBlock as registerBlockImpl } from "./blockRegistry";
+import { registerDashboardCard as registerDashboardCardImpl } from "./dashboardCardRegistry";
 
 export interface PluginApi {
   addFilter: typeof addFilter;
   addAction: typeof addAction;
   registerBlock: typeof registerBlockImpl;
+  registerDashboardCard: typeof registerDashboardCardImpl;
 }
 
 export const pluginApi: PluginApi = {
   addFilter,
   addAction,
   registerBlock: registerBlockImpl,
+  registerDashboardCard: registerDashboardCardImpl,
 };

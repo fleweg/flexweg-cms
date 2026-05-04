@@ -33,7 +33,8 @@ type FlexwegAction =
   | "list"
   | "createFolder"
   | "renameFolder"
-  | "deleteFolder";
+  | "deleteFolder"
+  | "storageLimits";
 
 function actionLabel(action: FlexwegAction): string {
   return i18n.t(`flexweg.actions.${action}`);
@@ -271,6 +272,48 @@ export async function renameFolder(oldPath: string, newPath: string): Promise<vo
       body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
     }),
   );
+}
+
+// Response shape for GET /api/v1/files/storage-limits.
+// Documented at https://documentation.flexweg.com/api-reference/storage.
+// `_formatted` strings are human-friendly (e.g. "2.00 MB") and ready
+// for direct display; the integer fields stay available for math.
+export interface StorageLimitsResponse {
+  success: boolean;
+  plan: { name: string; type: string };
+  usage: {
+    files: {
+      current: number;
+      limit: number;
+      percentage: number;
+      available: number;
+    };
+    storage: {
+      current: number;
+      current_formatted: string;
+      limit: number;
+      limit_formatted: string;
+      percentage: number;
+      available: number;
+      available_formatted: string;
+    };
+  };
+  warnings: {
+    files_near_limit: boolean;
+    storage_near_limit: boolean;
+  };
+}
+
+export async function getStorageLimits(): Promise<StorageLimitsResponse> {
+  const config = await requireConfig();
+  const url = `${config.apiBaseUrl}/files/storage-limits`;
+  const res = await performRequest("storageLimits", () =>
+    fetch(url, {
+      method: "GET",
+      headers: { "X-API-Key": config.apiKey },
+    }),
+  );
+  return (await res.json()) as StorageLimitsResponse;
 }
 
 export async function deleteFolder(path: string): Promise<void> {

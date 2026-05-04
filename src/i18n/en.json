@@ -139,7 +139,10 @@
       "tags": "Tags",
       "heroImage": "Hero image",
       "seoTitle": "SEO title",
-      "seoDescription": "SEO description"
+      "seoDescription": "SEO description",
+      "createdAt": "Created at",
+      "updatedAt": "Last updated",
+      "publishedAt": "Published at"
     },
     "edit": {
       "newTitle": "New post",
@@ -172,7 +175,8 @@
         "categories": "Categories & tags",
         "featured": "Featured image",
         "seo": "SEO",
-        "excerpt": "Excerpt"
+        "excerpt": "Excerpt",
+        "dates": "Dates"
       },
       "blocks": {
         "addBlock": "Add block",
@@ -391,7 +395,8 @@
       "list": "Listing files",
       "createFolder": "Creating folder",
       "renameFolder": "Renaming folder",
-      "deleteFolder": "Deleting folder"
+      "deleteFolder": "Deleting folder",
+      "storageLimits": "Reading storage limits"
     },
     "errors": {
       "configMissing": "Flexweg API key is not configured. Set it in admin Settings before publishing.",

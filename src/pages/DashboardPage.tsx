@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { PageHeader } from "../components/layout/PageHeader";
 import { countPosts } from "../services/posts";
+import { listDashboardCards } from "../core/dashboardCardRegistry";
 
 interface Stats {
   posts: number;
@@ -43,8 +44,14 @@ export function DashboardPage() {
     };
   }, []);
 
+  // Snapshot the registered plugin cards once per mount. The registry
+  // can change when a plugin is toggled, but the dashboard re-mounts
+  // on navigation away/back so a cheap snapshot is enough; we don't
+  // need to subscribe.
+  const pluginCards = useMemo(() => listDashboardCards(), []);
+
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title={t("dashboard.title")}
         description={t("dashboard.welcome", { email: user?.email ?? "" })}
@@ -55,6 +62,13 @@ export function DashboardPage() {
         <StatCard label={t("dashboard.stats.online")} value={stats?.online ?? 0} />
         <StatCard label={t("dashboard.stats.drafts")} value={stats?.drafts ?? 0} />
       </div>
+      {pluginCards.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pluginCards.map(({ id, component: Card }) => (
+            <Card key={id} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

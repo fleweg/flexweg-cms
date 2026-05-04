@@ -18,6 +18,7 @@ import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
 import { resetBlocks } from "../core/blockRegistry";
+import { resetDashboardCards } from "../core/dashboardCardRegistry";
 import { MU_PLUGINS } from "../mu-plugins";
 
 // Plugins can optionally expose a settings page. When present, a navigation
@@ -111,6 +112,7 @@ loadPluginTranslations();
 export function applyPluginRegistration(enabled: Record<string, boolean>): void {
   resetRegistry();
   resetBlocks();
+  resetDashboardCards();
   // MU plugins always register, regardless of `enabled`. They run
   // first so their filters / actions sit at the bottom of priority
   // chains — regular plugins added on top can override or layer on

@@ -148,7 +148,7 @@ Default theme implementation in `src/themes/default/style.ts`:
 
 Same manifest shape and hook API as regular plugins, but **always registered** — the loader iterates `MU_PLUGINS` first on every `applyPluginRegistration()` pass without consulting `enabled`. There is no UI toggle and no entry in `settings.enabledPlugins`. The admin's `/plugins` page splits regular vs. MU into two tabs (regular plugins show the standard Enable/Disable button; MU cards show a **Must-use** badge and no toggle). `getPluginManifest(id)` searches both registries so settings routes (`/settings/plugin/<id>`) resolve transparently regardless of where the manifest lives. `loadPluginTranslations()` bundles MU plugin i18n the same way as regular ones.
 
-Currently must-use: `flexweg-favicon` (every public site benefits from favicons), `flexweg-blocks` (first-party editor blocks the post / page editor relies on — disabling would silently strip blocks from existing posts on the next render), `flexweg-custom-code` (site-wide head / body-end injection — once an admin has wired analytics or a chat widget through it, disabling the plugin would yank the script tags from every published page on the next regeneration), `flexweg-embeds` (editor blocks for YouTube / Vimeo / Twitter / Spotify — same footgun as `flexweg-blocks`: disabling would silently strip embeds from existing posts on the next render). Demoting any of them to optional opens a footgun for users.
+Currently must-use: `flexweg-favicon` (every public site benefits from favicons), `flexweg-blocks` (first-party editor blocks the post / page editor relies on — disabling would silently strip blocks from existing posts on the next render), `flexweg-custom-code` (site-wide head / body-end injection — once an admin has wired analytics or a chat widget through it, disabling the plugin would yank the script tags from every published page on the next regeneration), `flexweg-embeds` (editor blocks for YouTube / Vimeo / Twitter / Spotify — same footgun as `flexweg-blocks`: disabling would silently strip embeds from existing posts on the next render), `flexweg-metrics` (dashboard cards for Flexweg storage usage + Firestore document counts; the storage card is the only proactive nudge to upgrade the plan before hitting the wall mid-publish). Demoting any of them to optional opens a footgun for users.
 
 Hooks currently exposed by core: `post.markdown.before`, `post.html.body`, `post.template.props`, `page.head.extra` (sync only), `page.body.end` (sync only), `menu.json.resolved`, `publish.before`, `publish.after`, `publish.complete`, `post.unpublished`, `post.deleted`. The three lifecycle actions (`publish.complete`, `post.unpublished`, `post.deleted`) all receive `(post, ctx)` where `ctx` is the exported `PublishContext` from `services/publisher.ts`, **already patched** by `applyPostStatusInCtx` to reflect the just-completed transition. Plugins reading `ctx.posts` / `ctx.pages` see what the public site looks like *after* the action, never the pre-state.
 
@@ -157,6 +157,21 @@ The `page.head.extra` and `page.body.end` filters both work via sentinel replace
 `menu.json.resolved` runs inside `services/menuPublisher.ts.publishMenuJson` just before the upload, with payload `(menu: MenuJson, ctx: MenuFilterContext)` where `MenuFilterContext = { settings, posts, pages, terms }`. Plugins can append, replace, or reorder header/footer entries — everything that ends up in `/menu.json` flows through this filter. The flexweg-rss plugin uses it to inject footer entries for each RSS feed where `addToFooter === true` (no MenusPage edit required).
 
 Add more hooks by calling `applyFilters` / `doAction` in publisher or render. When extending, mirror the existing pattern: actions take `(payload, ctx)` so handlers don't need ad-hoc data fetching.
+
+#### Dashboard cards (`pluginApi.registerDashboardCard`)
+
+Plugins can contribute self-contained cards to the admin dashboard. The registry lives in [src/core/dashboardCardRegistry.ts](src/core/dashboardCardRegistry.ts) and follows the same lifecycle as plugin-registered blocks: cleared on every `applyPluginRegistration()` reset, then re-registered. `DashboardPage` snapshots the list once on mount via `listDashboardCards()` and renders the result under the four built-in stat cards in a 1 / 2 / 3-column responsive grid (mobile / `md` / `lg`). When no plugin registers a card, the second grid is omitted entirely.
+
+Manifest shape:
+```ts
+api.registerDashboardCard({
+  id: "<plugin-id>/<card>",
+  priority: 50,        // lower runs first; default 100
+  component: MyCard,   // takes no props
+});
+```
+
+Cards take **no props**. Each card fetches its own data (Firestore queries, Flexweg API calls, etc.) and manages its own loading / error / empty states. The flexweg-metrics MU plugin demonstrates two flavours: `StorageCard` (one-shot fetch with manual refresh button) and `FirestoreCard` (parallel `getCountFromServer` aggregation queries against admin collections). Neither polls — the dashboard re-mounts on navigation away/back, which is the expected refresh trigger.
 
 #### Plugin settings pages and i18n
 

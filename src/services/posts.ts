@@ -83,6 +83,11 @@ export interface UpdatePostInput {
   termIds?: string[];
   primaryTermId?: string | null;
   seo?: SeoMeta;
+  // Manual overrides for the timestamp fields. Firestore accepts JS
+  // Dates and stamps them as Timestamps. Skipped when undefined so the
+  // existing value remains untouched.
+  createdAt?: Date;
+  publishedAt?: Date;
 }
 
 export async function updatePost(id: string, patch: UpdatePostInput): Promise<void> {

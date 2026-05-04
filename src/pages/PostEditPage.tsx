@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "lucide-react";
 import type { Editor } from "@tiptap/core";
+import type { Timestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
 import { useAllPosts } from "../hooks/useAllPosts";
@@ -42,12 +43,51 @@ export function PostEditPage() {
   return <PostOrPageEditPage type="post" />;
 }
 
+// Converts a Firestore Timestamp (or undefined) into the
+// "YYYY-MM-DDTHH:mm" string expected by <input type="datetime-local">.
+// The input shows wall-clock time in the user's local timezone, so we
+// emit local-zoned components (no timezone suffix).
+function timestampToInputValue(ts: Timestamp | undefined): string {
+  if (!ts) return "";
+  const d = ts.toDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// Returns a Date when the input value differs from the existing
+// Timestamp by at least a minute (datetime-local resolution). Empty or
+// invalid input returns undefined — the patch loop in updatePost skips
+// undefined keys, leaving Firestore unchanged.
+function diffInputDate(input: string, existing: Timestamp | undefined): Date | undefined {
+  if (!input) return undefined;
+  const next = new Date(input);
+  if (Number.isNaN(next.getTime())) return undefined;
+  if (existing) {
+    // datetime-local has minute resolution — compare on the rounded
+    // millisecond to avoid spurious writes from the seconds we drop
+    // when stringifying the existing timestamp.
+    const prevRounded = Math.floor(existing.toMillis() / 60000) * 60000;
+    if (prevRounded === next.getTime()) return undefined;
+  }
+  return next;
+}
+
+// Read-only display of the updatedAt timestamp using the active i18n
+// locale's preferred date+time formatting.
+function formatTimestamp(ts: Timestamp | undefined, locale: string): string {
+  if (!ts) return "—";
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(ts.toDate());
+}
+
 interface PostOrPageEditPageProps {
   type: "post" | "page";
 }
 
 export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -77,6 +117,11 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const [heroMediaId, setHeroMediaId] = useState<string | undefined>();
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
+  // Date inputs use the "YYYY-MM-DDTHH:mm" format expected by
+  // <input type="datetime-local">. Empty string = "no override" — the
+  // existing Firestore value is left untouched on save.
+  const [createdAtInput, setCreatedAtInput] = useState("");
+  const [publishedAtInput, setPublishedAtInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [logEntries, setLogEntries] = useState<PublishLogEntry[]>([]);
   const [showHeroPicker, setShowHeroPicker] = useState(false);
@@ -113,6 +158,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     setHeroMediaId(existing.heroMediaId);
     setSeoTitle(existing.seo?.title ?? "");
     setSeoDescription(existing.seo?.description ?? "");
+    setCreatedAtInput(timestampToInputValue(existing.createdAt));
+    setPublishedAtInput(timestampToInputValue(existing.publishedAt));
     // tags is intentionally outside the deps: we re-derive tagIds when the
     // list of available tags changes (rare) but not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,6 +277,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
 
       const heroFinal = heroMediaId ?? null;
       const primaryFinal = primaryTermId || null;
+      // Only commit a date override when the input differs from the
+      // current Firestore value — keeps no-op saves from rewriting the
+      // timestamps and prevents an empty input from accidentally
+      // clearing a date.
+      const createdAtOverride = diffInputDate(createdAtInput, existing.createdAt);
+      const publishedAtOverride = diffInputDate(publishedAtInput, existing.publishedAt);
       await updatePost(existing.id, {
         title,
         slug,
@@ -244,6 +297,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
         // deleteField() sentinel — handled later if a UI affordance is
         // added.
         seo: seo ?? undefined,
+        createdAt: createdAtOverride,
+        publishedAt: publishedAtOverride,
       });
 
       // If the post is already live, regenerate its static HTML right
@@ -578,6 +633,37 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
                   onChange={(e) => setExcerpt(e.target.value)}
                 />
               </InspectorSection>
+
+              {existing && (
+                <InspectorSection title={t("posts.edit.inspector.dates")}>
+                  <div>
+                    <label className="label">{t("posts.fields.createdAt")}</label>
+                    <input
+                      type="datetime-local"
+                      className="input"
+                      value={createdAtInput}
+                      onChange={(e) => setCreatedAtInput(e.target.value)}
+                    />
+                  </div>
+                  {(existing.publishedAt || existing.status === "online") && (
+                    <div>
+                      <label className="label">{t("posts.fields.publishedAt")}</label>
+                      <input
+                        type="datetime-local"
+                        className="input"
+                        value={publishedAtInput}
+                        onChange={(e) => setPublishedAtInput(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="label">{t("posts.fields.updatedAt")}</label>
+                    <p className="text-xs text-surface-600 dark:text-surface-300">
+                      {formatTimestamp(existing.updatedAt, i18n.language)}
+                    </p>
+                  </div>
+                </InspectorSection>
+              )}
 
               <InspectorSection title={t("posts.edit.inspector.seo")}>
                 <div>

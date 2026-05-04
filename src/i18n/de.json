@@ -139,7 +139,10 @@
       "tags": "Schlagwörter",
       "heroImage": "Beitragsbild",
       "seoTitle": "SEO-Titel",
-      "seoDescription": "SEO-Beschreibung"
+      "seoDescription": "SEO-Beschreibung",
+      "createdAt": "Erstellt am",
+      "updatedAt": "Zuletzt aktualisiert",
+      "publishedAt": "Veröffentlicht am"
     },
     "edit": {
       "newTitle": "Neuer Artikel",
@@ -172,7 +175,8 @@
         "categories": "Kategorien & Schlagwörter",
         "featured": "Beitragsbild",
         "seo": "SEO",
-        "excerpt": "Auszug"
+        "excerpt": "Auszug",
+        "dates": "Datumsangaben"
       },
       "blocks": {
         "addBlock": "Block hinzufügen",
@@ -391,7 +395,8 @@
       "list": "Dateien werden aufgelistet",
       "createFolder": "Ordner wird erstellt",
       "renameFolder": "Ordner wird umbenannt",
-      "deleteFolder": "Ordner wird gelöscht"
+      "deleteFolder": "Ordner wird gelöscht",
+      "storageLimits": "Speichergrenzen werden abgerufen"
     },
     "errors": {
       "configMissing": "Flexweg-API-Schlüssel ist nicht konfiguriert. Legen Sie ihn in den Admin-Einstellungen fest, bevor Sie veröffentlichen.",

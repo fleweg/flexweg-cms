@@ -139,7 +139,10 @@
       "tags": "Tags",
       "heroImage": "Uitgelichte afbeelding",
       "seoTitle": "SEO-titel",
-      "seoDescription": "SEO-beschrijving"
+      "seoDescription": "SEO-beschrijving",
+      "createdAt": "Aangemaakt op",
+      "updatedAt": "Laatst bijgewerkt",
+      "publishedAt": "Gepubliceerd op"
     },
     "edit": {
       "newTitle": "Nieuw bericht",
@@ -172,7 +175,8 @@
         "categories": "Categorieën & tags",
         "featured": "Uitgelichte afbeelding",
         "seo": "SEO",
-        "excerpt": "Samenvatting"
+        "excerpt": "Samenvatting",
+        "dates": "Datums"
       },
       "blocks": {
         "addBlock": "Blok toevoegen",
@@ -391,7 +395,8 @@
       "list": "Bestanden lijsten",
       "createFolder": "Map aanmaken",
       "renameFolder": "Map hernoemen",
-      "deleteFolder": "Map verwijderen"
+      "deleteFolder": "Map verwijderen",
+      "storageLimits": "Opslaglimieten ophalen"
     },
     "errors": {
       "configMissing": "Flexweg API-sleutel is niet geconfigureerd. Stel deze in via de admininstellingen voordat je publiceert.",

@@ -139,7 +139,10 @@
       "tags": "태그",
       "heroImage": "대표 이미지",
       "seoTitle": "SEO 제목",
-      "seoDescription": "SEO 설명"
+      "seoDescription": "SEO 설명",
+      "createdAt": "작성일",
+      "updatedAt": "마지막 업데이트",
+      "publishedAt": "게시일"
     },
     "edit": {
       "newTitle": "새 게시물",
@@ -172,7 +175,8 @@
         "categories": "카테고리 및 태그",
         "featured": "대표 이미지",
         "seo": "SEO",
-        "excerpt": "발췌문"
+        "excerpt": "발췌문",
+        "dates": "날짜"
       },
       "blocks": {
         "addBlock": "블록 추가",
@@ -391,7 +395,8 @@
       "list": "파일 목록 조회",
       "createFolder": "폴더 생성",
       "renameFolder": "폴더 이름 변경",
-      "deleteFolder": "폴더 삭제"
+      "deleteFolder": "폴더 삭제",
+      "storageLimits": "저장 용량 한도 조회"
     },
     "errors": {
       "configMissing": "Flexweg API 키가 설정되지 않았습니다. 게시 전에 관리자 설정에서 입력하세요.",

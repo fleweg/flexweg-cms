@@ -139,7 +139,10 @@
       "tags": "Etiquetas",
       "heroImage": "Imagen destacada",
       "seoTitle": "Título SEO",
-      "seoDescription": "Descripción SEO"
+      "seoDescription": "Descripción SEO",
+      "createdAt": "Creado el",
+      "updatedAt": "Última actualización",
+      "publishedAt": "Publicado el"
     },
     "edit": {
       "newTitle": "Nueva entrada",
@@ -172,7 +175,8 @@
         "categories": "Categorías y etiquetas",
         "featured": "Imagen destacada",
         "seo": "SEO",
-        "excerpt": "Extracto"
+        "excerpt": "Extracto",
+        "dates": "Fechas"
       },
       "blocks": {
         "addBlock": "Añadir bloque",
@@ -391,7 +395,8 @@
       "list": "Listando archivos",
       "createFolder": "Creando carpeta",
       "renameFolder": "Renombrando carpeta",
-      "deleteFolder": "Eliminando carpeta"
+      "deleteFolder": "Eliminando carpeta",
+      "storageLimits": "Leyendo límites de almacenamiento"
     },
     "errors": {
       "configMissing": "La clave API de Flexweg no está configurada. Configúrala en los ajustes del admin antes de publicar.",
