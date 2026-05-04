@@ -176,6 +176,16 @@ export const en = {
       dividerOn: "with divider",
     },
   },
+
+  // Strings baked into published HTML by SingleTemplate. Resolved
+  // against the *public* site language (settings.language) — NOT the
+  // admin's UI language — so visitors see them in the language of the
+  // site they're reading.
+  publicBaked: {
+    authorBioEyebrow: "About the author",
+    relatedPostsLabel: "Continue reading",
+    relatedPostsFallbackLabel: "Latest articles",
+  },
 };
 
 export const fr: typeof en = {
@@ -347,6 +357,11 @@ export const fr: typeof en = {
       dividerOn: "avec filet",
     },
   },
+  publicBaked: {
+    authorBioEyebrow: "À propos de l'auteur",
+    relatedPostsLabel: "Lectures suggérées",
+    relatedPostsFallbackLabel: "Derniers articles",
+  },
 };
 
 export const de: typeof en = {
@@ -515,6 +530,11 @@ export const de: typeof en = {
       divider: "Einen dünnen, zentrierten Trenner anzeigen",
       dividerOn: "mit Trenner",
     },
+  },
+  publicBaked: {
+    authorBioEyebrow: "Über den Autor",
+    relatedPostsLabel: "Weiterlesen",
+    relatedPostsFallbackLabel: "Neueste Artikel",
   },
 };
 
@@ -685,6 +705,11 @@ export const es: typeof en = {
       dividerOn: "con divisor",
     },
   },
+  publicBaked: {
+    authorBioEyebrow: "Sobre el autor",
+    relatedPostsLabel: "Sigue leyendo",
+    relatedPostsFallbackLabel: "Últimos artículos",
+  },
 };
 
 export const nl: typeof en = {
@@ -853,6 +878,11 @@ export const nl: typeof en = {
       divider: "Een dunne gecentreerde scheiding tonen",
       dividerOn: "met scheiding",
     },
+  },
+  publicBaked: {
+    authorBioEyebrow: "Over de auteur",
+    relatedPostsLabel: "Verder lezen",
+    relatedPostsFallbackLabel: "Recente artikelen",
   },
 };
 
@@ -1023,6 +1053,11 @@ export const pt: typeof en = {
       dividerOn: "com separador",
     },
   },
+  publicBaked: {
+    authorBioEyebrow: "Sobre o autor",
+    relatedPostsLabel: "Continuar a ler",
+    relatedPostsFallbackLabel: "Artigos mais recentes",
+  },
 };
 
 export const ko: typeof en = {
@@ -1191,5 +1226,10 @@ export const ko: typeof en = {
       divider: "가는 중앙 구분선 표시",
       dividerOn: "구분선 포함",
     },
+  },
+  publicBaked: {
+    authorBioEyebrow: "작성자 소개",
+    relatedPostsLabel: "계속 읽기",
+    relatedPostsFallbackLabel: "최신 기사",
   },
 };

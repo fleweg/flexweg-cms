@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
-import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS } from "../i18n";
+import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS, pickPublicLocale } from "../i18n";
 import {
   DEFAULT_FLEXWEG_API_BASE_URL,
   getFlexwegConfig,
@@ -184,6 +184,16 @@ export function SettingsPage() {
           />
           <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
             {t("settings.site.siteLanguageHelp")}
+          </p>
+          {/* Live preview: shows which translation bundle the public-side
+              labels (sitemap viewer, RSS viewer, theme baked-in strings)
+              will resolve to. Helps the user understand that `fr-CA`
+              picks the `fr` bundle, while an unsupported locale falls
+              back to `en`. */}
+          <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
+            {t("settings.site.siteLanguageResolved", {
+              label: LOCALE_LABELS[pickPublicLocale(language)],
+            })}
           </p>
         </div>
         <div>

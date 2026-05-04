@@ -30,6 +30,29 @@ export function isSupportedLocale(value: unknown): value is AdminLocale {
   return typeof value === "string" && (SUPPORTED_LOCALES as string[]).includes(value);
 }
 
+// Maps a BCP-47 tag from `settings.language` (e.g. "fr", "fr-CA",
+// "pt-BR") onto one of the locales we ship translations for. The
+// public site's HTML lang attribute keeps the original tag (so screen
+// readers and Intl.* APIs see "fr-CA" intact); this helper is for
+// consumers picking strings out of a translation bundle, which need
+// the base language only.
+//
+// Resolution: lower-case the prefix (text before the first `-`); if it
+// matches a supported locale, return it; otherwise return `fallback`
+// (defaults to `en`). Reused by every public-site renderer / generator
+// that needs to localise its labels — sitemap XSL, RSS XSL, theme
+// templates baking strings into the HTML, etc.
+export function pickPublicLocale(
+  bcp47: string | undefined | null,
+  fallback: AdminLocale = DEFAULT_LOCALE,
+): AdminLocale {
+  const prefix = (bcp47 ?? "").split("-")[0]?.toLowerCase();
+  if (prefix && (SUPPORTED_LOCALES as string[]).includes(prefix)) {
+    return prefix as AdminLocale;
+  }
+  return fallback;
+}
+
 // Resolves the locale to use at boot time. Order:
 //   1. Explicit value from the user's Firestore profile (passed in by the
 //      AuthProvider once it has the record).

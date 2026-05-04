@@ -5,7 +5,12 @@
 //
 // Labels are baked at upload time from settings.language. Re-upload after
 // changing the public site language (or click Force regenerate which
-// re-uploads everything).
+// re-uploads everything). Uses the shared `pickPublicLocale` helper so a
+// BCP-47 tag with a region suffix (e.g. `pt-BR`, `fr-CA`) maps to the
+// underlying base locale's label set.
+
+import type { AdminLocale } from "../../core/types";
+import { pickPublicLocale } from "../../i18n";
 
 export const RSS_XSL_PATH = "rss.xsl";
 
@@ -20,7 +25,7 @@ interface XslLabels {
   columnDescription: string;
 }
 
-const LABELS: Record<"en" | "fr", XslLabels> = {
+const LABELS: Record<AdminLocale, XslLabels> = {
   en: {
     pageTitle: "RSS feed",
     heading: "RSS feed",
@@ -41,11 +46,60 @@ const LABELS: Record<"en" | "fr", XslLabels> = {
     columnPubdate: "Publié",
     columnDescription: "Description",
   },
+  de: {
+    pageTitle: "RSS-Feed",
+    heading: "RSS-Feed",
+    meta: "Dieser RSS-Feed ist für RSS-Reader gedacht. Abonnieren Sie ihn, indem Sie die URL dieser Seite in Ihren Reader kopieren.",
+    countBefore: "Dieser Feed enthält ",
+    countAfter: " Artikel.",
+    columnTitle: "Titel",
+    columnPubdate: "Veröffentlicht",
+    columnDescription: "Beschreibung",
+  },
+  es: {
+    pageTitle: "Feed RSS",
+    heading: "Feed RSS",
+    meta: "Este feed RSS está destinado a los lectores RSS. Suscríbete copiando la URL de esta página en tu lector.",
+    countBefore: "Este feed contiene ",
+    countAfter: " artículos.",
+    columnTitle: "Título",
+    columnPubdate: "Publicado",
+    columnDescription: "Descripción",
+  },
+  nl: {
+    pageTitle: "RSS-feed",
+    heading: "RSS-feed",
+    meta: "Deze RSS-feed is bedoeld voor RSS-lezers. Abonneer door de URL van deze pagina in je lezer te kopiëren.",
+    countBefore: "Deze feed bevat ",
+    countAfter: " artikelen.",
+    columnTitle: "Titel",
+    columnPubdate: "Gepubliceerd",
+    columnDescription: "Beschrijving",
+  },
+  pt: {
+    pageTitle: "Feed RSS",
+    heading: "Feed RSS",
+    meta: "Este feed RSS destina-se a leitores RSS. Subscreve copiando o URL desta página para o teu leitor.",
+    countBefore: "Este feed contém ",
+    countAfter: " artigos.",
+    columnTitle: "Título",
+    columnPubdate: "Publicado",
+    columnDescription: "Descrição",
+  },
+  ko: {
+    pageTitle: "RSS 피드",
+    heading: "RSS 피드",
+    meta: "이 RSS 피드는 RSS 리더를 위한 것입니다. 이 페이지의 URL을 리더에 복사하여 구독하세요.",
+    countBefore: "이 피드에는 ",
+    countAfter: "개의 기사가 포함되어 있습니다.",
+    columnTitle: "제목",
+    columnPubdate: "게시일",
+    columnDescription: "설명",
+  },
 };
 
-function pickLocale(language: string): "en" | "fr" {
-  const prefix = (language || "").split("-")[0]?.toLowerCase();
-  return prefix === "fr" ? "fr" : "en";
+function pickLocale(language: string): AdminLocale {
+  return pickPublicLocale(language);
 }
 
 const COMMON_CSS = `

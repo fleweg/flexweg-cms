@@ -3,6 +3,7 @@ import { AuthorAvatar } from "../components/AuthorAvatar";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { buildTermUrl } from "../../../core/slug";
 import { pickFormat } from "../../../core/media";
+import i18n, { pickPublicLocale } from "../../../i18n";
 
 // Editorial single-post layout: 8/4 split on desktop with the article
 // body on the left and an author/related sidebar on the right. Mobile
@@ -21,6 +22,12 @@ export function SingleTemplate({
   tags,
   site,
 }: SingleTemplateProps & { site: SiteContext }) {
+  // Strings baked into the published HTML need to be in the public
+  // site's language, not the admin's UI language. `getFixedT` pins the
+  // lookup to the resolved public locale (see settings.language → 7
+  // supported locales via prefix match, fallback EN).
+  const publicT = i18n.getFixedT(pickPublicLocale(site.settings.language), "theme-default");
+
   const breadcrumbs: { label: string; href?: string }[] = [
     { label: "Home", href: "/index.html" },
   ];
@@ -128,11 +135,7 @@ export function SingleTemplate({
             className="author-bio"
             data-cms-author-bio
             data-cms-author-id={post.authorId}
-            data-cms-eyebrow={
-              (site.settings.language || "en").toLowerCase().startsWith("fr")
-                ? "À propos de l'auteur"
-                : "About the author"
-            }
+            data-cms-eyebrow={publicT("publicBaked.authorBioEyebrow")}
             hidden
           />
         )}
@@ -149,16 +152,8 @@ export function SingleTemplate({
           data-cms-current-id={post.id}
           data-cms-term-id={post.primaryTermId ?? ""}
           data-cms-limit="3"
-          data-cms-label={
-            (site.settings.language || "en").toLowerCase().startsWith("fr")
-              ? "Lectures suggérées"
-              : "Continue reading"
-          }
-          data-cms-fallback-label={
-            (site.settings.language || "en").toLowerCase().startsWith("fr")
-              ? "Derniers articles"
-              : "Latest articles"
-          }
+          data-cms-label={publicT("publicBaked.relatedPostsLabel")}
+          data-cms-fallback-label={publicT("publicBaked.relatedPostsFallbackLabel")}
         />
       </aside>
     </div>

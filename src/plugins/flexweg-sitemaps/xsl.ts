@@ -33,9 +33,10 @@ interface XslLabels {
   columnPubdate: string;
 }
 
-type XslLocale = "en" | "fr" | "de" | "es" | "nl" | "pt" | "ko";
+import type { AdminLocale } from "../../core/types";
+import { pickPublicLocale } from "../../i18n";
 
-const LABELS: Record<XslLocale, XslLabels> = {
+const LABELS: Record<AdminLocale, XslLabels> = {
   en: {
     pageTitle: "XML Sitemap",
     heading: "XML Sitemap",
@@ -164,10 +165,8 @@ const LABELS: Record<XslLocale, XslLabels> = {
   },
 };
 
-function pickLocale(language: string): XslLocale {
-  const prefix = (language || "").split("-")[0]?.toLowerCase();
-  if (prefix && prefix in LABELS) return prefix as XslLocale;
-  return "en";
+function pickLocale(language: string): AdminLocale {
+  return pickPublicLocale(language);
 }
 
 // Embedded CSS shared by both stylesheets. Sober palette aligned with the
