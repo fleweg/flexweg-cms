@@ -17,6 +17,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     "flexweg-sitemaps": true,
     "flexweg-rss": true,
     "flexweg-archives": true,
+    // Off by default — a one-shot migration tool. Users enable it
+    // when they need to import a batch and disable it afterward.
+    "flexweg-import": false,
   },
   homeMode: "latest-posts",
   postsPerPage: 10,

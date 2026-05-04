@@ -75,6 +75,12 @@ export interface Post {
   previousPublishedPaths?: string[];
   // Hash of the rendered HTML — skip re-upload when nothing changed.
   lastPublishedHash?: string;
+  // Original public URL on the source system, when imported from
+  // an external CMS. Set by flexweg-import when consuming WordPress
+  // exports (`<link>` element) or markdown frontmatter that includes
+  // a legacy URL. Preserved as opaque metadata so a future redirect
+  // generator can consume it; not read by the publisher itself.
+  legacyUrl?: string;
 }
 
 export type TermType = "category" | "tag";
