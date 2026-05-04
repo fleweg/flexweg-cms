@@ -188,6 +188,13 @@ export function parseWordPressXml(xml: string, sourceName: string): ParseResult 
     // Skip auto-draft / revision / oembed_cache / nav_menu_item / wp_block /
     // wp_template — anything not a real post/page/attachment.
 
+    const wpStatus = readNs(item, NS.wp, "status");
+    // WordPress creates `auto-draft` placeholder posts when a user
+    // clicks "Add New Post" without saving. They have no real
+    // content and WP cleans them up itself — but they leak into
+    // exports anyway. Skip silently.
+    if (wpStatus === "auto-draft") continue;
+
     const title = readText(item, "title");
     if (!title) {
       warnings.push({
@@ -199,7 +206,6 @@ export function parseWordPressXml(xml: string, sourceName: string): ParseResult 
     }
 
     const slug = readNs(item, NS.wp, "post_name");
-    const wpStatus = readNs(item, NS.wp, "status");
     const statusMapping = mapStatus(wpStatus);
     if (statusMapping.warning) {
       warnings.push({

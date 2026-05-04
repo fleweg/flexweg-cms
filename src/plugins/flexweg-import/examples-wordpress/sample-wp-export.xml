@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sample WordPress eXtended RSS (WXR) export for testing flexweg-import.
+  Hand-crafted to exercise:
+   - posts + pages + attachments
+   - hierarchical categories (News > Tech, News > Sports)
+   - tags
+   - multi-category post (demotion warning)
+   - statuses: publish, draft, pending (→ draft + warning)
+   - _thumbnail_id (hero image resolution)
+   - inline <img> in content (image rewrite at import)
+   - dc:creator (author resolution)
+   - <link> (legacyUrl preservation)
+
+  Image URLs use picsum.photos so the import can actually fetch them.
+  If your network blocks the host, the posts still get created but
+  without hero images (warning in the dry-run / activity log).
+-->
+<rss version="2.0"
+     xmlns:wp="http://wordpress.org/export/1.2/"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Sample WordPress site</title>
+    <link>https://old.example.com</link>
+    <description>Hand-crafted fixture for the flexweg-import plugin.</description>
+    <language>en-US</language>
+
+    <!--
+      Channel-level taxonomy. The parser uses `<wp:category_parent>`
+      (a slug, not an id) to build hierarchies. News is top-level;
+      Tech and Sports declare News as their parent.
+    -->
+    <wp:category>
+      <wp:term_id>1</wp:term_id>
+      <wp:category_nicename>news</wp:category_nicename>
+      <wp:cat_name><![CDATA[News]]></wp:cat_name>
+      <wp:category_parent></wp:category_parent>
+    </wp:category>
+    <wp:category>
+      <wp:term_id>2</wp:term_id>
+      <wp:category_nicename>tech</wp:category_nicename>
+      <wp:cat_name><![CDATA[Tech]]></wp:cat_name>
+      <wp:category_parent>news</wp:category_parent>
+    </wp:category>
+    <wp:category>
+      <wp:term_id>3</wp:term_id>
+      <wp:category_nicename>sports</wp:category_nicename>
+      <wp:cat_name><![CDATA[Sports]]></wp:cat_name>
+      <wp:category_parent>news</wp:category_parent>
+    </wp:category>
+    <wp:category>
+      <wp:term_id>4</wp:term_id>
+      <wp:category_nicename>recipes</wp:category_nicename>
+      <wp:cat_name><![CDATA[Recipes]]></wp:cat_name>
+      <wp:category_parent></wp:category_parent>
+    </wp:category>
+
+    <wp:tag>
+      <wp:term_id>10</wp:term_id>
+      <wp:tag_slug>migration</wp:tag_slug>
+      <wp:tag_name><![CDATA[migration]]></wp:tag_name>
+    </wp:tag>
+    <wp:tag>
+      <wp:term_id>11</wp:term_id>
+      <wp:tag_slug>2026</wp:tag_slug>
+      <wp:tag_name><![CDATA[2026]]></wp:tag_name>
+    </wp:tag>
+    <wp:tag>
+      <wp:term_id>12</wp:term_id>
+      <wp:tag_slug>breaking</wp:tag_slug>
+      <wp:tag_name><![CDATA[breaking]]></wp:tag_name>
+    </wp:tag>
+    <wp:tag>
+      <wp:term_id>13</wp:term_id>
+      <wp:tag_slug>football</wp:tag_slug>
+      <wp:tag_name><![CDATA[football]]></wp:tag_name>
+    </wp:tag>
+    <wp:tag>
+      <wp:term_id>14</wp:term_id>
+      <wp:tag_slug>pasta</wp:tag_slug>
+      <wp:tag_name><![CDATA[pasta]]></wp:tag_name>
+    </wp:tag>
+
+    <!-- ─── Attachments (3 images) ────────────────────────────── -->
+    <item>
+      <title>cover-tech.jpg</title>
+      <wp:post_id>200</wp:post_id>
+      <wp:post_type>attachment</wp:post_type>
+      <wp:status>inherit</wp:status>
+      <wp:attachment_url>https://picsum.photos/seed/wptech/640/360</wp:attachment_url>
+      <wp:post_parent>100</wp:post_parent>
+    </item>
+    <item>
+      <title>cover-sports.jpg</title>
+      <wp:post_id>201</wp:post_id>
+      <wp:post_type>attachment</wp:post_type>
+      <wp:status>inherit</wp:status>
+      <wp:attachment_url>https://picsum.photos/seed/wpsports/640/360</wp:attachment_url>
+      <wp:post_parent>101</wp:post_parent>
+    </item>
+    <item>
+      <title>cover-recipes.jpg</title>
+      <wp:post_id>202</wp:post_id>
+      <wp:post_type>attachment</wp:post_type>
+      <wp:status>inherit</wp:status>
+      <wp:attachment_url>https://picsum.photos/seed/wprecipes/640/360</wp:attachment_url>
+      <wp:post_parent>102</wp:post_parent>
+    </item>
+
+    <!--
+      Post 100 — published, hierarchical category (Tech under News),
+      thumbnail 200, two tags.
+    -->
+    <item>
+      <title>Welcome to our new tech blog</title>
+      <link>https://old.example.com/2025/12/welcome-tech-blog/</link>
+      <pubDate>Mon, 22 Dec 2025 09:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[admin@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?p=100</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>This is the first post on our brand-new <strong>tech blog</strong>. We've migrated from a legacy stack and we're excited to share what's next.</p><h2>What changed</h2><ul><li>Faster deploys</li><li>Better content tooling</li><li>Cleaner archives</li></ul><blockquote><p>Static hosting + a smart admin = the best of both worlds.</p></blockquote><p>Stay tuned — much more coming soon.</p>]]></content:encoded>
+      <excerpt:encoded><![CDATA[Our brand-new tech blog opens with a recap of what we improved during the migration.]]></excerpt:encoded>
+      <wp:post_id>100</wp:post_id>
+      <wp:post_date>2025-12-22 10:00:00</wp:post_date>
+      <wp:post_date_gmt>2025-12-22 09:00:00</wp:post_date_gmt>
+      <wp:post_name>welcome-tech-blog</wp:post_name>
+      <wp:status>publish</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="tech"><![CDATA[Tech]]></category>
+      <category domain="post_tag" nicename="migration"><![CDATA[migration]]></category>
+      <category domain="post_tag" nicename="2026"><![CDATA[2026]]></category>
+      <wp:postmeta>
+        <wp:meta_key>_thumbnail_id</wp:meta_key>
+        <wp:meta_value>200</wp:meta_value>
+      </wp:postmeta>
+    </item>
+
+    <!--
+      Post 101 — multi-category test. Two `domain="category"` entries:
+      Sports (primary) + News (demoted to tag with warning).
+    -->
+    <item>
+      <title>World cup final — three takeaways</title>
+      <link>https://old.example.com/2026/01/world-cup-final-takeaways/</link>
+      <pubDate>Sun, 12 Jan 2026 22:30:00 +0000</pubDate>
+      <dc:creator><![CDATA[jane@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?p=101</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>What a final. Here's what stood out beyond the headline result.</p><h2>1. The midfield made the game</h2><p>Possession lopsided in the first half but the press tightened after the break.</p><h2>2. Goalkeepers were the difference</h2><p>Three world-class saves on each side kept the score tight until extra time.</p><h2>3. The winning goal — and why it matters</h2><p>Set-piece routines win tournaments. The losing side will study this for years.</p>]]></content:encoded>
+      <excerpt:encoded><![CDATA[Three observations from the world cup final that go beyond the score line.]]></excerpt:encoded>
+      <wp:post_id>101</wp:post_id>
+      <wp:post_date>2026-01-12 23:30:00</wp:post_date>
+      <wp:post_date_gmt>2026-01-12 22:30:00</wp:post_date_gmt>
+      <wp:post_name>world-cup-final-takeaways</wp:post_name>
+      <wp:status>publish</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="sports"><![CDATA[Sports]]></category>
+      <category domain="category" nicename="news"><![CDATA[News]]></category>
+      <category domain="post_tag" nicename="football"><![CDATA[football]]></category>
+      <category domain="post_tag" nicename="breaking"><![CDATA[breaking]]></category>
+      <wp:postmeta>
+        <wp:meta_key>_thumbnail_id</wp:meta_key>
+        <wp:meta_value>201</wp:meta_value>
+      </wp:postmeta>
+    </item>
+
+    <!--
+      Post 102 — inline image in body referencing the attachment URL.
+      The importer uploads the attachment then rewrites the markdown
+      body so the inline image points at the new media URL.
+    -->
+    <item>
+      <title>Pasta carbonara — the truth</title>
+      <link>https://old.example.com/2026/01/pasta-carbonara-truth/</link>
+      <pubDate>Wed, 22 Jan 2026 15:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[admin@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?p=102</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>The original recipe has four ingredients. <strong>No cream. No mushrooms. No peas.</strong></p><p><img src="https://picsum.photos/seed/wprecipes/640/360" alt="Pasta carbonara on a plate" /></p><h2>Ingredients</h2><ul><li>400 g spaghetti</li><li>200 g guanciale</li><li>4 large egg yolks + 1 whole egg</li><li>80 g Pecorino Romano, finely grated</li></ul><p>Black pepper to finish. That's it. Anyone telling you to add cream is selling you a different dish.</p>]]></content:encoded>
+      <excerpt:encoded><![CDATA[A no-cream, four-ingredient carbonara — and a quick note on why cream-loving versions miss the point.]]></excerpt:encoded>
+      <wp:post_id>102</wp:post_id>
+      <wp:post_date>2026-01-22 16:00:00</wp:post_date>
+      <wp:post_date_gmt>2026-01-22 15:00:00</wp:post_date_gmt>
+      <wp:post_name>pasta-carbonara-truth</wp:post_name>
+      <wp:status>publish</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="recipes"><![CDATA[Recipes]]></category>
+      <category domain="post_tag" nicename="pasta"><![CDATA[pasta]]></category>
+      <wp:postmeta>
+        <wp:meta_key>_thumbnail_id</wp:meta_key>
+        <wp:meta_value>202</wp:meta_value>
+      </wp:postmeta>
+    </item>
+
+    <!-- Post 103 — draft (stays draft regardless of status mode). -->
+    <item>
+      <title>Working title — half-finished thoughts</title>
+      <link>https://old.example.com/?p=103</link>
+      <pubDate>Sun, 02 Feb 2026 10:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[jane@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?p=103</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>Lorem ipsum dolor sit amet. This post is a draft — testing that the importer keeps the status as draft regardless of the import status mode.</p>]]></content:encoded>
+      <excerpt:encoded></excerpt:encoded>
+      <wp:post_id>103</wp:post_id>
+      <wp:post_date>2026-02-02 11:00:00</wp:post_date>
+      <wp:post_date_gmt>2026-02-02 10:00:00</wp:post_date_gmt>
+      <wp:post_name>working-title-half-finished</wp:post_name>
+      <wp:status>draft</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="tech"><![CDATA[Tech]]></category>
+    </item>
+
+    <!--
+      Post 104 — `pending` status. Mapped to draft, with a warning so
+      the user knows non-publish/draft statuses got reclassified.
+    -->
+    <item>
+      <title>Submitted for review</title>
+      <link>https://old.example.com/?p=104</link>
+      <pubDate>Mon, 09 Feb 2026 14:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[contributor@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?p=104</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>This post was awaiting editor review when the export was taken. The importer reclassifies it as draft (with a warning).</p>]]></content:encoded>
+      <excerpt:encoded></excerpt:encoded>
+      <wp:post_id>104</wp:post_id>
+      <wp:post_date>2026-02-09 15:00:00</wp:post_date>
+      <wp:post_date_gmt>2026-02-09 14:00:00</wp:post_date_gmt>
+      <wp:post_name>submitted-for-review</wp:post_name>
+      <wp:status>pending</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="tech"><![CDATA[Tech]]></category>
+    </item>
+
+    <!-- ─── Pages ──────────────────────────────────────────────── -->
+    <item>
+      <title>About this site</title>
+      <link>https://old.example.com/about/</link>
+      <pubDate>Mon, 01 Dec 2025 09:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[admin@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?page_id=300</guid>
+      <description></description>
+      <content:encoded><![CDATA[<h2>About</h2><p>This site started as a hand-rolled WordPress install in 2018. We've since migrated to a static stack but kept the editorial workflow.</p><p><a href="https://old.example.com/contact/">Get in touch</a> if you want to write for us.</p>]]></content:encoded>
+      <excerpt:encoded></excerpt:encoded>
+      <wp:post_id>300</wp:post_id>
+      <wp:post_date>2025-12-01 10:00:00</wp:post_date>
+      <wp:post_date_gmt>2025-12-01 09:00:00</wp:post_date_gmt>
+      <wp:post_name>about</wp:post_name>
+      <wp:status>publish</wp:status>
+      <wp:post_type>page</wp:post_type>
+    </item>
+
+    <item>
+      <title>Contact</title>
+      <link>https://old.example.com/?page_id=301</link>
+      <pubDate>Wed, 03 Dec 2025 09:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[admin@example.com]]></dc:creator>
+      <guid isPermaLink="false">https://old.example.com/?page_id=301</guid>
+      <description></description>
+      <content:encoded><![CDATA[<p>Email us at <a href="mailto:hello@example.com">hello@example.com</a>. This page is still a draft on the source site.</p>]]></content:encoded>
+      <excerpt:encoded></excerpt:encoded>
+      <wp:post_id>301</wp:post_id>
+      <wp:post_date>2025-12-03 10:00:00</wp:post_date>
+      <wp:post_date_gmt>2025-12-03 09:00:00</wp:post_date_gmt>
+      <wp:post_name>contact</wp:post_name>
+      <wp:status>draft</wp:status>
+      <wp:post_type>page</wp:post_type>
+    </item>
+
+    <!--
+      The following items are intentionally non-importable types
+      (auto-draft, revision, nav_menu_item, wp_block). The parser
+      ignores them silently — they should NOT show up in the dry-run
+      summary.
+    -->
+    <item>
+      <title>Auto Draft</title>
+      <wp:post_id>500</wp:post_id>
+      <wp:post_type>post</wp:post_type>
+      <wp:status>auto-draft</wp:status>
+    </item>
+    <item>
+      <title></title>
+      <wp:post_id>501</wp:post_id>
+      <wp:post_type>nav_menu_item</wp:post_type>
+      <wp:status>publish</wp:status>
+    </item>
+    <item>
+      <title>A Gutenberg pattern</title>
+      <wp:post_id>502</wp:post_id>
+      <wp:post_type>wp_block</wp:post_type>
+      <wp:status>publish</wp:status>
+    </item>
+
+  </channel>
+</rss>
