@@ -43,6 +43,12 @@ export interface CreatePostInput {
   termIds?: string[];
   primaryTermId?: string;
   seo?: SeoMeta;
+  // Optional creation timestamp override. Used by the import plugin
+  // to preserve the original publication date from the source file
+  // (markdown frontmatter `publishedAt:` or WP `<wp:post_date>`).
+  // When omitted, Firestore stamps the current server time.
+  createdAt?: Date;
+  publishedAt?: Date;
 }
 
 export async function createPost(input: CreatePostInput): Promise<string> {
@@ -55,13 +61,14 @@ export async function createPost(input: CreatePostInput): Promise<string> {
     authorId: input.authorId,
     termIds: input.termIds ?? [],
     status: "draft",
-    createdAt: serverTimestamp(),
+    createdAt: input.createdAt ?? serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
   if (input.excerpt) data.excerpt = input.excerpt;
   if (input.heroMediaId) data.heroMediaId = input.heroMediaId;
   if (input.primaryTermId) data.primaryTermId = input.primaryTermId;
   if (input.seo) data.seo = input.seo;
+  if (input.publishedAt) data.publishedAt = input.publishedAt;
   await setDoc(postDoc(id), data);
   invalidateAllPostsCache();
   return id;
@@ -99,11 +106,15 @@ export async function markPostOnline(
     lastPublishedPath: string;
     lastPublishedHash: string;
     previousPublishedPaths?: string[];
+    // When provided, used instead of serverTimestamp() so the import
+    // plugin can preserve the original `<wp:post_date>` /
+    // frontmatter `publishedAt` through the publish step.
+    publishedAt?: Date;
   },
 ): Promise<void> {
   await updateDoc(postDoc(id), {
     status: "online",
-    publishedAt: serverTimestamp(),
+    publishedAt: fields.publishedAt ?? serverTimestamp(),
     lastPublishedPath: fields.lastPublishedPath,
     lastPublishedHash: fields.lastPublishedHash,
     previousPublishedPaths: fields.previousPublishedPaths ?? [],

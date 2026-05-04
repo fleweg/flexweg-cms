@@ -564,6 +564,7 @@ export async function publishPost(
   postId: string,
   ctx: PublishContext,
   log: PublishLogger,
+  options?: { publishedAt?: Date },
 ): Promise<void> {
   const post = ctx.posts.find((p) => p.id === postId) ?? ctx.pages.find((p) => p.id === postId);
   if (!post) throw new Error(`Post ${postId} not found.`);
@@ -604,6 +605,7 @@ export async function publishPost(
     lastPublishedPath: newPath,
     lastPublishedHash: hash,
     previousPublishedPaths: failedDeletions,
+    publishedAt: options?.publishedAt,
   });
   // Reflect the transition locally so the listings regenerated below
   // include this post. Without this, renderHome would still see status

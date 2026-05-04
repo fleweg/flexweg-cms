@@ -682,6 +682,8 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
           entry.seoTitle || entry.seoDescription
             ? { title: entry.seoTitle, description: entry.seoDescription }
             : undefined,
+        createdAt: entry.publishedAt,
+        publishedAt: entry.publishedAt,
       });
     } catch (err) {
       result.errors.push({
@@ -710,7 +712,9 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
           settings,
           authorLookup: buildAuthorLookup(ctx.users, ctx.media),
         });
-        await publishPost(postId, publishCtx, () => {});
+        await publishPost(postId, publishCtx, () => {}, {
+          publishedAt: entry.publishedAt,
+        });
         result.publishedPostIds.push(postId);
       } catch (err) {
         result.warnings.push({
