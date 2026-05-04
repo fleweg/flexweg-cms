@@ -6,6 +6,8 @@ import {
   getDetectedColumnsStyles,
   transformColumnsHtml,
 } from "./columns/transforms";
+import { htmlBlock } from "./html/manifest";
+import { transformHtmlBlocks } from "./html/transforms";
 import { ensureAdminColumnsStyles } from "./styles";
 import readme from "./README.md?raw";
 
@@ -22,21 +24,34 @@ export const manifest: PluginManifest = {
   version: "1.0.0",
   author: "Flexweg",
   description:
-    "Layout primitives for the post editor. Currently ships a Columns block (2-4 columns, mobile-stacking).",
+    "Layout and code primitives for the post editor. Ships a Columns block (2-4 columns, mobile-stacking) and a Custom HTML block for raw HTML/JS / CSS.",
   readme,
   i18n: { en, fr },
   register(api) {
-    // Make the Columns block available in the editor's inserter.
+    // Make the Columns + HTML blocks available in the editor's
+    // inserter. Both register under the "layout" category.
     api.registerBlock(columnsBlock);
+    api.registerBlock(htmlBlock);
 
-    // Publish-time replacement. Priority 5 = runs BEFORE the
+    // Publish-time replacements. Priority 5 = runs BEFORE the
     // default theme's filter (priority 10) and flexweg-embeds'
-    // filter — our pass replaces the columns wrappers with their
-    // CSS classes but leaves nested block markers untouched, so
-    // the later filters can still process them inside the columns.
+    // filter — our pass swaps wrappers for their final markup but
+    // leaves nested block markers untouched, so the later filters
+    // can still process them inside columns.
+    //
+    // The two transforms are ORTHOGONAL — they target distinct
+    // markers and operate on independent slices of the HTML — so
+    // their relative order doesn't matter. We chain them via two
+    // filter registrations so each can short-circuit on a
+    // marker-free body.
     api.addFilter<string>(
       "post.html.body",
       (html) => transformColumnsHtml(html),
+      5,
+    );
+    api.addFilter<string>(
+      "post.html.body",
+      (html) => transformHtmlBlocks(html),
       5,
     );
 

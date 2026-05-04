@@ -28,6 +28,31 @@ On mobile (≤ 768 px) every columns layout collapses to a single stacked column
 - The block toolbar (move up/down, duplicate, delete) acts on the **whole Columns container**, not individual blocks within columns. To rearrange blocks inside a column, cut and paste them manually.
 - The 24 px gap between columns is fixed in v1 — open an issue if you need a tighter / wider option.
 
+### Custom HTML
+
+Drops raw HTML, CSS or JavaScript anywhere in a post. Whatever you type runs verbatim on the published page — no sanitisation, no transformation.
+
+**Usage**:
+
+1. Insert the block from the **Layout** category in the **+** menu.
+2. Type in the **HTML** tab.
+3. Click **Preview** to see a sandboxed render of what your code will look like once published. The sandbox isolates scripts so they can't affect the editor itself.
+
+**Common use cases**:
+
+- Embedding a third-party widget (a booking calendar, a map, an analytics pixel)
+- Including a `<style>` block that targets a specific section
+- Pasting a snippet from a service that doesn't have a dedicated embed plugin yet
+
+**Security note**:
+
+Anything in this block is **not sanitised**. `<script>` tags execute on every visitor's browser. Don't paste code from untrusted sources, and review carefully when editing. The block flags this with a warning strip below the textarea.
+
+**Limitations**:
+
+- The in-editor preview uses an `allow-scripts` sandbox — most embeds work, but anything that needs `same-origin` access (cross-window communication, cookies) won't behave the same in the editor as it does live. Always check the published page after a save.
+- Tiptap treats the block as an atom — you can't nest other blocks inside it, and the inline formatting / mention features don't apply. This is intentional: keeps your code untouched between save and publish.
+
 ## When to disable it
 
-Disable if your editorial workflow only needs single-column posts and you want a tighter inserter UI. The plugin is purely additive — disabling stops the blocks from appearing in the inserter, existing content using them keeps rendering on the public site (the publish-time transforms still process the markup).
+Disable if your editorial workflow only needs single-column posts with no custom code, and you want a tighter inserter UI. The plugin is purely additive — disabling stops the blocks from appearing in the inserter, existing content using them keeps rendering on the public site (the publish-time transforms still process the markup).

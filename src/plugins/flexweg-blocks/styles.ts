@@ -63,6 +63,39 @@ const ADMIN_EXTRAS_CSS = `
 .prose-editor .cms-column:focus-within{outline-color:rgba(59,130,246,0.6);}
 .prose-editor .cms-columns>[data-node-view-content-react],
 .prose-editor .cms-columns>[data-node-view-content-react]>.react-renderer{display:contents;}
+
+/* Custom HTML block (editor placeholder + sandboxed iframe preview;
+   actual editing happens in the inspector textarea — see below).
+   Replaced by the raw user code at publish time, so none of these
+   rules ever ship to the public site. */
+.prose-editor .cms-html-block{position:relative;margin:24px 0;border:1px solid rgba(127,127,127,0.25);border-radius:6px;overflow:hidden;background:#fafafa;}
+.prose-editor .cms-html-block.is-selected{outline:2px solid rgba(59,130,246,0.55);outline-offset:2px;}
+.prose-editor .cms-html-block-header{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(127,127,127,0.08);border-bottom:1px solid rgba(127,127,127,0.18);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:rgba(60,60,60,0.85);}
+.prose-editor .cms-html-block-header-icon{height:14px;width:14px;flex-shrink:0;}
+.prose-editor .cms-html-block-header-label{font-weight:600;}
+.prose-editor .cms-html-block-header-meta{margin-left:auto;font-variant-numeric:tabular-nums;opacity:0.7;text-transform:none;letter-spacing:0;}
+.prose-editor .cms-html-block-preview-wrap{padding:0;background:#fff;}
+.prose-editor .cms-html-block-preview{width:100%;min-height:160px;border:0;display:block;background:#fff;}
+.prose-editor .cms-html-block-empty{padding:32px 16px;text-align:center;font-size:12px;color:rgba(127,127,127,0.85);}
+
+/* Inspector-side CodeMirror editor — lives in the right sidebar
+   (NOT inside .prose-editor), so we scope these rules globally.
+   CodeMirror 6 ships its own structural styling; we just frame
+   it with the admin's input border treatment so it visually
+   matches surrounding form fields. */
+.cms-html-block-codeeditor{border:1px solid rgba(127,127,127,0.25);border-radius:6px;overflow:hidden;}
+.cms-html-block-codeeditor:focus-within{border-color:rgba(59,130,246,0.55);box-shadow:0 0 0 1px rgba(59,130,246,0.20);}
+.cms-html-block-codeeditor .cm-editor{font-size:12.5px;}
+.cms-html-block-codeeditor .cm-editor.cm-focused{outline:none;}
+.cms-html-block-codeeditor-fallback{display:flex;align-items:center;gap:8px;padding:24px;border:1px solid rgba(127,127,127,0.25);border-radius:6px;font-size:12px;color:rgba(127,127,127,0.85);justify-content:center;}
+.cms-html-block-warning{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;font-size:11px;line-height:1.4;color:rgba(180,90,0,0.95);background:rgba(255,180,40,0.10);border:1px solid rgba(255,180,40,0.30);border-radius:6px;}
+
+/* Dark mode — the prose-editor adapts via the .dark scope used
+   elsewhere in the admin. */
+.dark .prose-editor .cms-html-block{background:#1a1a1a;border-color:rgba(180,180,180,0.18);}
+.dark .prose-editor .cms-html-block-header{background:rgba(255,255,255,0.04);border-bottom-color:rgba(180,180,180,0.14);color:rgba(220,220,220,0.85);}
+.dark .prose-editor .cms-html-block-preview-wrap,.dark .prose-editor .cms-html-block-preview{background:#0d0d0d;}
+.dark .cms-html-block-warning{color:rgba(255,200,100,0.95);background:rgba(255,180,40,0.08);border-color:rgba(255,180,40,0.25);}
 `;
 
 export function ensureAdminColumnsStyles(): void {

@@ -17,6 +17,18 @@ export const en = {
       colN: "Col {{n}}",
       resetWidths: "Reset to equal",
     },
+    html: {
+      title: "Custom HTML",
+      codeLabel: "HTML / JS / CSS",
+      placeholder:
+        "Write your HTML, CSS or JavaScript here. Anything you type runs verbatim on the published page.",
+      editInSidebar: "Empty — open the right sidebar's Block tab to add code.",
+      loadingEditor: "Loading code editor…",
+      lines: "{{n}} line",
+      lines_other: "{{n}} lines",
+      warning:
+        "Code in this block runs as-is on the published page — including <script> tags. No sanitisation.",
+    },
   },
 };
 
@@ -33,6 +45,19 @@ export const fr: typeof en = {
         "Les valeurs sont proportionnelles, pas absolues — 80/20 et 50/50 fonctionnent tous les deux. L'empilement mobile ignore ces réglages.",
       colN: "Col {{n}}",
       resetWidths: "Réinitialiser",
+    },
+    html: {
+      title: "HTML libre",
+      codeLabel: "HTML / JS / CSS",
+      placeholder:
+        "Écrivez votre HTML, CSS ou JavaScript ici. Tout ce que vous tapez s'exécute tel quel sur la page publiée.",
+      editInSidebar:
+        "Vide — ouvrez l'onglet Bloc dans la barre latérale droite pour saisir du code.",
+      loadingEditor: "Chargement de l'éditeur…",
+      lines: "{{n}} ligne",
+      lines_other: "{{n}} lignes",
+      warning:
+        "Le code de ce bloc s'exécute tel quel sur la page publiée — y compris les <script>. Aucune sanitisation.",
     },
   },
 };
