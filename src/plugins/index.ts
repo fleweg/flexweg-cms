@@ -15,6 +15,7 @@ import { manifest as flexwegRssManifest } from "./flexweg-rss/manifest";
 import { manifest as flexwegFaviconManifest } from "./flexweg-favicon/manifest";
 import { manifest as flexwegEmbedsManifest } from "./flexweg-embeds/manifest";
 import { manifest as flexwegBlocksManifest } from "./flexweg-blocks/manifest";
+import { manifest as flexwegCustomCodeManifest } from "./flexweg-custom-code/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
@@ -71,6 +72,7 @@ export const PLUGINS: PluginManifest[] = [
   flexwegFaviconManifest as PluginManifest,
   flexwegEmbedsManifest,
   flexwegBlocksManifest,
+  flexwegCustomCodeManifest as PluginManifest,
 ];
 
 export function listPlugins(): PluginManifest[] {

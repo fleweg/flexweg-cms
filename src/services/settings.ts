@@ -19,6 +19,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     "flexweg-favicon": true,
     "flexweg-embeds": true,
     "flexweg-blocks": true,
+    "flexweg-custom-code": true,
   },
   homeMode: "latest-posts",
   postsPerPage: 10,

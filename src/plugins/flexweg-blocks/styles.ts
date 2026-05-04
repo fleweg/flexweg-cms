@@ -78,15 +78,12 @@ const ADMIN_EXTRAS_CSS = `
 .prose-editor .cms-html-block-preview{width:100%;min-height:160px;border:0;display:block;background:#fff;}
 .prose-editor .cms-html-block-empty{padding:32px 16px;text-align:center;font-size:12px;color:rgba(127,127,127,0.85);}
 
-/* Inspector-side CodeMirror editor — lives in the right sidebar
-   (NOT inside .prose-editor), so we scope these rules globally.
-   CodeMirror 6 ships its own structural styling; we just frame
-   it with the admin's input border treatment so it visually
-   matches surrounding form fields. */
-.cms-html-block-codeeditor{border:1px solid rgba(127,127,127,0.25);border-radius:6px;overflow:hidden;}
-.cms-html-block-codeeditor:focus-within{border-color:rgba(59,130,246,0.55);box-shadow:0 0 0 1px rgba(59,130,246,0.20);}
-.cms-html-block-codeeditor .cm-editor{font-size:12.5px;}
-.cms-html-block-codeeditor .cm-editor.cm-focused{outline:none;}
+/* Shared CodeMirror wrapper styles. The base frame (border, focus
+   ring, font-size) is handled by Tailwind utility classes inside
+   components/ui/CodeEditor.tsx; here we only add tweaks the
+   wrapper can't carry via utilities (CodeMirror's nested elements). */
+.cms-code-editor .cm-editor{font-size:12.5px;}
+.cms-code-editor .cm-editor.cm-focused{outline:none;}
 .cms-html-block-codeeditor-fallback{display:flex;align-items:center;gap:8px;padding:24px;border:1px solid rgba(127,127,127,0.25);border-radius:6px;font-size:12px;color:rgba(127,127,127,0.85);justify-content:center;}
 .cms-html-block-warning{display:flex;align-items:flex-start;gap:6px;padding:8px 10px;font-size:11px;line-height:1.4;color:rgba(180,90,0,0.95);background:rgba(255,180,40,0.10);border:1px solid rgba(255,180,40,0.30);border-radius:6px;}
 
@@ -100,10 +97,10 @@ const ADMIN_EXTRAS_CSS = `
    intrinsic content width, leaving the long-text columns truncated
    on the right side of the modal. */
 .cms-html-block-modal-body{flex:1;min-height:0;display:flex;padding:0;}
-.cms-html-block-modal-body .cms-html-block-codeeditor{flex:1;border:0;border-radius:0;display:flex;width:100%;}
-.cms-html-block-modal-body .cms-html-block-codeeditor>.cm-theme{flex:1;width:100%;height:100%;display:flex;}
-.cms-html-block-modal-body .cms-html-block-codeeditor .cm-editor{flex:1;height:100%;width:100%;}
-.cms-html-block-modal-body .cms-html-block-codeeditor:focus-within{border:0;box-shadow:none;}
+.cms-html-block-modal-body .cms-code-editor{flex:1;border:0;border-radius:0;display:flex;width:100%;}
+.cms-html-block-modal-body .cms-code-editor>.cm-theme{flex:1;width:100%;height:100%;display:flex;}
+.cms-html-block-modal-body .cms-code-editor .cm-editor{flex:1;height:100%;width:100%;}
+.cms-html-block-modal-body .cms-code-editor:focus-within{border:0;box-shadow:none;}
 
 /* Dark mode — the prose-editor adapts via the .dark scope used
    elsewhere in the admin. */

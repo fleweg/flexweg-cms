@@ -10,8 +10,12 @@ import { HTML_NODE_NAME } from "./extension";
 // only ships on demand. Most posts won't include an HTML block —
 // keeping the editor out of the boot bundle saves first-load
 // weight for everyone else.
+//
+// Imports from the shared admin component (also used by the
+// flexweg-custom-code plugin's Settings page) so both features
+// resolve to the same chunk in the production bundle.
 const CodeEditor = lazy(() =>
-  import("./CodeEditor").then((m) => ({ default: m.CodeEditor })),
+  import("../../../components/ui/CodeEditor").then((m) => ({ default: m.CodeEditor })),
 );
 
 interface HtmlInspectorProps {
