@@ -303,9 +303,15 @@ export function ThemesPage() {
             </button>
             <Dropdown
               triggerLabel={
+                // Both icons render at all times; class toggles their
+                // visibility. Avoids React's type-swap reconciliation
+                // (Loader2 ↔ RefreshCw) firing in the same commit
+                // batch as the parent's busy/log state updates,
+                // which used to trigger "Node.insertBefore" errors.
                 <>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                  {busy ? t("themes.regenerate.running") : t("themes.regenerate.button")}
+                  <Loader2 className={busy ? "h-4 w-4 animate-spin" : "hidden"} />
+                  <RefreshCw className={busy ? "hidden" : "h-4 w-4"} />
+                  <span>{busy ? t("themes.regenerate.running") : t("themes.regenerate.button")}</span>
                 </>
               }
               disabled={busy}

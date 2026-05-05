@@ -82,7 +82,18 @@ export function Dropdown({
   function handleSelect(item: DropdownItem) {
     if (item.disabled) return;
     setOpen(false);
-    if (item.onSelect) void item.onSelect();
+    if (!item.onSelect) return;
+    // Defer the work by one tick so React can commit the dropdown's
+    // unmount before the parent fires its own state updates (busy /
+    // log). Without this, React 18's reconciliation can throw
+    // "Node.insertBefore: Child to insert before is not a child of
+    // this node" when the menu button being clicked unmounts
+    // mid-handler at the same time the parent state changes trigger
+    // another render in the same batch.
+    const work = item.onSelect;
+    setTimeout(() => {
+      void work();
+    }, 0);
   }
 
   return (
@@ -95,7 +106,17 @@ export function Dropdown({
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {triggerLabel}
+        {/* Stable wrapper around the caller-controlled trigger label.
+            Prevents React 18's commit-phase reconciler from getting
+            confused when the consumer swaps an icon type AND a text
+            node inside a Fragment at the same time the parent fires
+            other state updates (busy/log) — without the wrapper,
+            the children of the <button> are reconciled by position
+            against a Fragment whose internal children change
+            structure, triggering "Node.insertBefore: Child to
+            insert before is not a child of this node" mid-commit.
+            `display: contents` makes the span layout-invisible. */}
+        <span className="contents">{triggerLabel}</span>
         <ChevronDown
           className={"h-4 w-4 transition-transform " + (open ? "rotate-180" : "")}
         />
