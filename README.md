@@ -223,7 +223,11 @@ If you want only admins to manage themes/plugins/menus, change `allow write: if 
 
 ## Firestore indexes
 
-The post and page list pages run server-side paginated queries (`orderBy("createdAt", "desc")` with cursor-based pagination + an optional `where("status", ...)` filter). These need composite indexes on the `posts` collection.
+**You only need this section if you have a very large site** and want to switch the admin to **Server-side paginated** mode in **Settings → General → Performance**.
+
+The default mode is **Standard**, which subscribes to the entire `posts` collection in one shot (`orderBy(createdAt)` on a single field — already covered by Firestore's automatic single-field index). No setup needed; works on the free Spark plan out of the box. List pages, search, dashboard counts and pickers all run from the in-memory snapshot. Recommended ceiling: ~5 000 posts before the initial fetch starts to feel slow.
+
+The **Server-side paginated** mode subscribes to one cursor-paginated page at a time. This requires the two composite indexes documented below. The admin's [`FirestoreSetupGate`](src/components/FirestoreSetupGate.tsx) detects the indexes the moment you flip the toggle and walks you through creating them with one click — so even Option 3 below (the admin-guided flow) needs no terminal access.
 
 ### Indexes to create
 
@@ -292,11 +296,11 @@ Drop the following at your project root, then run `firebase deploy --only firest
 
 ### Option 3 — let the admin guide you (zero config, recommended for non-CLI users)
 
-If you skip Options 1 and 2, the admin SPA detects the missing indexes on **first login** and shows a setup screen with direct one-click links to the Firebase Console. Each link opens the index-creation form pre-filled — you click "Create" inside Firebase, wait 1–5 minutes for the build, then click "Retry" in the admin. Once both indexes report ready, the gate disappears and the admin proceeds.
+When you flip the toggle to **Server-side paginated** in **Settings → General → Performance**, the admin SPA pings the two composite-index queries on the next render. If the indexes are missing it shows a setup screen with direct one-click links to the Firebase Console. Each link opens the index-creation form pre-filled — you click "Create" inside Firebase, wait 1–5 minutes for the build, then click "Retry" in the admin. Once both indexes report ready, the gate disappears.
 
-This works on Firestore's **free tier (Spark plan)** without any additional configuration. The detection runs only on first boot — once the indexes are confirmed ready, the result is cached in `localStorage` and the gate becomes a no-op on subsequent reloads.
+This works on Firestore's **free tier (Spark plan)** without any additional configuration. The detection result is cached in `localStorage` so subsequent reloads skip the ping.
 
-You only need to do this **once per browser** that signs into your admin (or once per `localStorage` reset). Other admins signing in from their own browsers just see a single ping that succeeds silently.
+In **Standard** mode (the default) the gate is a pure pass-through — no ping, no setup screen. You only see this flow if you actually opt into paginated mode.
 
 ### Verifying
 

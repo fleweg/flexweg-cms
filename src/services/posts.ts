@@ -28,9 +28,34 @@ function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// NOTE: the legacy `subscribeToPosts` global subscription was
-// removed in favor of `subscribeToPostsPaginated` (display use) +
-// `fetchAllPosts` (publish use). See the bottom of this file.
+// ─── Global subscription (paginationMode = "global") ──────────────
+//
+// Subscribes to the entire `posts` collection ordered by `createdAt`.
+// Single-field orderBy ⇒ covered by Firestore's automatic single-field
+// index, so this works on a fresh project with NO admin index setup.
+// Returns BOTH posts and pages — the caller filters by `type` in
+// memory; the trade-off is one extra read of the page docs (cheap
+// because pages are typically a handful of docs).
+//
+// The "paginated" mode bypasses this and uses subscribeToPostsPaginated
+// per filtered tab; that mode requires composite indexes (see below).
+export function subscribeToPosts(
+  onChange: (posts: Post[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  return onSnapshot(
+    query(postsCollection(), orderBy("createdAt", "desc")),
+    (snap) => {
+      const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+      // Keep fetchAllPosts's cache in sync so non-React consumers
+      // (publisher, plugin generators) read fresh data without an
+      // extra fetch while the global subscription is active.
+      primeAllPostsCache(posts);
+      onChange(posts);
+    },
+    onError,
+  );
+}
 
 export interface CreatePostInput {
   type: PostType;
@@ -211,10 +236,16 @@ export function subscribeToPostsPaginated(
 //
 // The publisher pipeline + the "force regenerate" buttons in plugins
 // + the various pickers (menu items, hero featured post, static-page
-// home selector) need all posts at once. With the global subscription
-// gone, they call this on demand. Results are cached for 30 s so a
-// burst of operations (publish 5 posts in a row, force regenerate
-// triggers cascading regen) doesn't fan out into 5 fetches.
+// home selector) need all posts at once. They call this on demand;
+// results are cached for 30 s so a burst of operations (publish 5
+// posts in a row, force regenerate triggers cascading regen) doesn't
+// fan out into 5 fetches.
+//
+// IMPORTANT: this query is intentionally INDEX-FREE. We fetch the
+// entire `posts` collection without a `where`/`orderBy` clause and
+// filter+sort in memory. That removes the composite index requirement
+// (`(type, createdAt)`) so this function works on a fresh project
+// regardless of paginationMode.
 //
 // Cache invalidates on every write (createPost / updatePost /
 // markPostOnline / markPostDraft / deletePost) so the next caller
@@ -223,49 +254,85 @@ export function subscribeToPostsPaginated(
 // "fresh while the user is interacting".
 
 interface CacheEntry {
-  posts: Post[];
+  // Full corpus (both posts and pages). filterFromCorpus splits per
+  // type on access — cheaper than maintaining two caches that can
+  // drift out of sync.
+  corpus: Post[];
   expiresAt: number;
+  // When fed by the global subscription (subscribeToPosts), the cache
+  // never expires — the live snapshot is always fresh. The mutation
+  // hooks still invalidate normally so post-write reads see the
+  // outgoing state without waiting for the snapshot to echo.
+  fromSubscription: boolean;
 }
 
 const CACHE_TTL_MS = 30_000;
-const allPostsCache = new Map<PostType, CacheEntry>();
+let cache: CacheEntry | null = null;
 // In-flight promise dedup: if 5 callers ask for fetchAllPosts in the
 // same tick, they all await the same Firestore read.
-const inFlight = new Map<PostType, Promise<Post[]>>();
+let inFlight: Promise<Post[]> | null = null;
+
+function filterFromCorpus(corpus: Post[], type: PostType): Post[] {
+  return corpus
+    .filter((p) => p.type === type)
+    .sort((a, b) => {
+      // Sort by createdAt desc, with millisecond resolution. Both Date
+      // and Firestore Timestamp expose toMillis()/getTime(); we coerce
+      // through `+new Date(...)` for the rare doc that lacks the field.
+      const am = a.createdAt?.toMillis?.() ?? 0;
+      const bm = b.createdAt?.toMillis?.() ?? 0;
+      return bm - am;
+    });
+}
 
 export async function fetchAllPosts(opts: { type: PostType }): Promise<Post[]> {
   const now = Date.now();
-  const cached = allPostsCache.get(opts.type);
-  if (cached && cached.expiresAt > now) {
-    return cached.posts;
+  if (cache && cache.expiresAt > now) {
+    return filterFromCorpus(cache.corpus, opts.type);
   }
-  const existing = inFlight.get(opts.type);
-  if (existing) return existing;
-  const promise = (async () => {
+  if (inFlight) {
+    const corpus = await inFlight;
+    return filterFromCorpus(corpus, opts.type);
+  }
+  inFlight = (async () => {
     try {
-      const snap = await getDocs(
-        query(
-          postsCollection(),
-          where("type", "==", opts.type),
-          orderBy("createdAt", "desc"),
-        ),
-      );
-      const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
-      allPostsCache.set(opts.type, { posts, expiresAt: Date.now() + CACHE_TTL_MS });
-      return posts;
+      // No where/orderBy on purpose — works without composite indexes.
+      // Sorting + filtering happen in filterFromCorpus on each access.
+      const snap = await getDocs(query(postsCollection()));
+      const corpus = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post);
+      cache = {
+        corpus,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+        fromSubscription: false,
+      };
+      return corpus;
     } finally {
-      inFlight.delete(opts.type);
+      inFlight = null;
     }
   })();
-  inFlight.set(opts.type, promise);
-  return promise;
+  const corpus = await inFlight;
+  return filterFromCorpus(corpus, opts.type);
 }
 
-// Invalidates both type caches. Called from every mutation in this
-// module; exposed so the import plugin / migration scripts can also
-// flush after a batch.
+// Called from subscribeToPosts to keep the cache fresh while a global
+// subscription is active. Marks the cache as "from subscription" so
+// the TTL is effectively infinite — the snapshot itself is the source
+// of truth.
+export function primeAllPostsCache(corpus: Post[]): void {
+  cache = {
+    corpus,
+    // Far-future expiry — the subscription itself owns freshness.
+    expiresAt: Number.POSITIVE_INFINITY,
+    fromSubscription: true,
+  };
+}
+
+// Invalidates the cache. Called from every mutation in this module;
+// exposed so the import plugin / migration scripts can also flush
+// after a batch. When the global subscription is active, the next
+// snapshot will re-prime the cache on its own.
 export function invalidateAllPostsCache(): void {
-  allPostsCache.clear();
+  cache = null;
 }
 
 // ─── Aggregation: count without reading the docs ───────────────────

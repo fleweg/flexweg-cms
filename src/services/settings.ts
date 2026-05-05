@@ -26,6 +26,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   menus: { header: [], footer: [] },
   pluginConfigs: {},
   themeConfigs: {},
+  paginationMode: "global",
 };
 
 export function subscribeToSettings(

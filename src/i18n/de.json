@@ -311,6 +311,16 @@
       "siteUrlHelp": "Öffentliche URL Ihrer Flexweg-Website ohne abschließenden Schrägstrich.",
       "apiBaseUrl": "API-Basis-URL"
     },
+    "performance": {
+      "title": "Leistung",
+      "help": "Wie das Admin-Backend Beiträge und Seiten lädt. Der Standardmodus funktioniert auf dem kostenlosen Firestore-Plan ohne Setup; der paginierte Modus ist für sehr große Sites und erfordert eine einmalige Index-Einrichtung.",
+      "mode": "Lademodus",
+      "modeGlobal": "Standard (keine Einrichtung erforderlich)",
+      "modePaginated": "Serverseitige Paginierung (Firestore-Indizes erforderlich)",
+      "globalHelp": "Lädt die gesamte Posts-Sammlung in einem Live-Abonnement. Sortierung, Filter und Suche im Speicher. Empfohlen für Sites mit weniger als ~5 000 Beiträgen.",
+      "paginatedHelp": "Cursor-paginierte Abonnements, eine Seite gleichzeitig. Erfordert zusammengesetzte Firestore-Indizes — siehe README. Empfohlen für sehr große Sites.",
+      "savedReload": "Gespeichert. Lade das Admin neu, um den neuen Modus anzuwenden."
+    },
     "editor": {
       "title": "Editor",
       "help": "Typografie für den Artikel-/Seiten-Editor. Unabhängig vom öffentlichen Theme.",

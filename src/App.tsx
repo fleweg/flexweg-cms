@@ -147,8 +147,8 @@ function AuthenticatedShell() {
   }
 
   return (
-    <FirestoreSetupGate>
-      <CmsDataProvider>
+    <CmsDataProvider>
+      <FirestoreSetupGate>
         <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
@@ -181,8 +181,8 @@ function AuthenticatedShell() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
-      </CmsDataProvider>
-    </FirestoreSetupGate>
+      </FirestoreSetupGate>
+    </CmsDataProvider>
   );
 }
 

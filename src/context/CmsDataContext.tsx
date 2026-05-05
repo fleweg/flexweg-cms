@@ -10,30 +10,40 @@ import { subscribeToTerms } from "../services/taxonomies";
 import { subscribeToMedia } from "../services/media";
 import { subscribeToSettings, DEFAULT_SITE_SETTINGS } from "../services/settings";
 import { subscribeToUsers } from "../services/users";
+import { subscribeToPosts } from "../services/posts";
 import { applyPluginRegistration } from "../plugins";
 import { applyThemeRegistration } from "../themes";
-import type { Media, SiteSettings, Term, UserRecord } from "../core/types";
+import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 
-// Posts + pages are NOT in this context. They live behind two
-// access patterns instead:
+// Posts + pages live behind two access patterns, gated by
+// `settings.paginationMode`:
 //
-//   • Display-side (PostsListPage, PagesListPage, hero block, …) →
-//     `usePostsPage()` + `subscribeToPostsPaginated()` for cursor-
-//     based pagination, or the search mode's `fetchAllPosts()`.
+//   • "global" (default, no Firestore index setup) — a global
+//     subscription on the entire `posts` collection populates `posts`
+//     and `pages` here. Display hooks (usePostsPage, useAllPosts) and
+//     useCountPosts read straight from the context. Best for sites
+//     under a few thousand entries.
 //
-//   • Publish-side (publisher pipeline, plugin force-regenerate
-//     buttons, importer) → `fetchAllPosts()` from
-//     `services/posts.ts` (cached for 30 s, invalidated on every
-//     write).
+//   • "paginated" (opt-in) — no global subscription; the context
+//     exposes empty arrays. Display hooks fall back to
+//     subscribeToPostsPaginated (cursor pagination) and fetchAllPosts
+//     (one-shot, cached). Requires composite indexes — see README.
 //
-// Removing posts/pages from this context lets sites with thousands
-// of posts run the admin without paying a multi-MB initial fetch
-// just to render the sidebar.
+// Either way the publish pipeline calls fetchAllPosts() in
+// services/posts.ts, which is index-free in both modes.
 interface CmsDataValue {
   terms: Term[];
   categories: Term[];
   tags: Term[];
   media: Media[];
+  // Posts + pages, populated only in paginationMode === "global".
+  // Empty arrays in "paginated" mode — display hooks bypass the
+  // context in that case. `postsLoaded` flips false → true once the
+  // first global snapshot lands so consumers can distinguish "still
+  // loading" from "actually empty".
+  posts: Post[];
+  pages: Post[];
+  postsLoaded: boolean;
   // All known user records. Used by publish callers to build an
   // authorLookup that resolves any post's authorId — not just the
   // currently-authenticated user — so AuthorBio renders for every
@@ -51,6 +61,8 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
   const [media, setMedia] = useState<Media[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [postsLoaded, setPostsLoaded] = useState(false);
   const [loadingFlags, setLoadingFlags] = useState({
     terms: true,
     media: true,
@@ -111,18 +123,45 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Global posts subscription — only active in paginationMode "global".
+  // Re-runs whenever the mode flips (toast asks the user to reload, but
+  // we still tear down cleanly if they navigate without reloading).
+  const mode = settings.paginationMode ?? "global";
+  useEffect(() => {
+    if (mode !== "global") {
+      setAllPosts([]);
+      setPostsLoaded(false);
+      return;
+    }
+    const unsub = subscribeToPosts(
+      (items) => {
+        setAllPosts(items);
+        setPostsLoaded(true);
+      },
+      reportError,
+    );
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  const posts = useMemo(() => allPosts.filter((p) => p.type === "post"), [allPosts]);
+  const pages = useMemo(() => allPosts.filter((p) => p.type === "page"), [allPosts]);
+
   const value = useMemo<CmsDataValue>(() => {
     return {
       terms,
       categories: terms.filter((t) => t.type === "category"),
       tags: terms.filter((t) => t.type === "tag"),
       media,
+      posts,
+      pages,
+      postsLoaded,
       users,
       settings,
       loading: Object.values(loadingFlags).some(Boolean),
       error,
     };
-  }, [terms, media, users, settings, loadingFlags, error]);
+  }, [terms, media, posts, pages, postsLoaded, users, settings, loadingFlags, error]);
 
   return <CmsDataContext.Provider value={value}>{children}</CmsDataContext.Provider>;
 }

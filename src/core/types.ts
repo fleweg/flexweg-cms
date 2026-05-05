@@ -207,7 +207,25 @@ export interface SiteSettings {
   // the public theme's typography. A writer can pick a comfortable
   // serif at 18px while the public site keeps its own styling.
   editorStyle?: EditorStyle;
+  // How the admin loads posts / pages.
+  //
+  //   • "global"    — single Firestore subscription on the entire posts
+  //                   collection (single-field orderBy(createdAt), covered
+  //                   by Firestore's automatic single-field index). Lists
+  //                   are filtered, paginated and searched in memory.
+  //                   Best for sites under ~5 000 entries; works with the
+  //                   free Firestore plan with NO admin index setup.
+  //   • "paginated" — cursor-based per-page subscriptions
+  //                   (subscribeToPostsPaginated). Requires composite
+  //                   indexes on (type, createdAt) and (type, status,
+  //                   createdAt). Recommended for very large sites.
+  //
+  // Default is "global" — matches the safer / setup-free path.
+  paginationMode?: "global" | "paginated";
 }
+
+export type PaginationMode = "global" | "paginated";
+export const DEFAULT_PAGINATION_MODE: PaginationMode = "global";
 
 // Site-wide editor typography. Each field is optional so the user can
 // override only what they care about; missing values fall back to the

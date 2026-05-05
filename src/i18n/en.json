@@ -311,6 +311,16 @@
       "siteUrlHelp": "Public URL of your Flexweg site without trailing slash.",
       "apiBaseUrl": "API base URL"
     },
+    "performance": {
+      "title": "Performance",
+      "help": "How the admin loads posts and pages. Default works on the free Firestore plan with no setup; the paginated mode is for very large sites and requires a one-time index setup.",
+      "mode": "Loading mode",
+      "modeGlobal": "Standard (no setup required)",
+      "modePaginated": "Server-side paginated (requires Firestore indexes)",
+      "globalHelp": "Loads the whole posts collection in one live subscription. Sorting, filtering and search happen in memory. Best for sites under ~5 000 posts.",
+      "paginatedHelp": "Cursor-paginated subscriptions, one page at a time. Requires composite Firestore indexes — see README. Recommended for very large sites.",
+      "savedReload": "Saved. Reload the admin to apply the new mode."
+    },
     "editor": {
       "title": "Editor",
       "help": "Typography used inside the post / page editor. Independent of the public theme.",

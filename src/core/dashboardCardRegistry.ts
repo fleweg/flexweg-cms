@@ -26,12 +26,31 @@ export interface DashboardCardManifest {
 }
 
 const cards = new Map<string, DashboardCardManifest>();
+const subscribers = new Set<() => void>();
+
+function notify(): void {
+  for (const cb of subscribers) cb();
+}
+
+// Subscribe to register / reset events. Components consume this via
+// the useDashboardCards hook so the dashboard re-renders when plugins
+// register their cards — the registry is populated asynchronously
+// during applyPluginRegistration() (which runs after the settings
+// Firestore snapshot lands), so a one-shot snapshot at mount would
+// miss the cards on first paint.
+export function subscribeDashboardCards(cb: () => void): () => void {
+  subscribers.add(cb);
+  return () => {
+    subscribers.delete(cb);
+  };
+}
 
 export function registerDashboardCard(manifest: DashboardCardManifest): void {
   if (cards.has(manifest.id)) {
     console.warn(`Dashboard card "${manifest.id}" already registered. Overwriting.`);
   }
   cards.set(manifest.id, manifest);
+  notify();
 }
 
 export function listDashboardCards(): DashboardCardManifest[] {
@@ -42,4 +61,5 @@ export function listDashboardCards(): DashboardCardManifest[] {
 
 export function resetDashboardCards(): void {
   cards.clear();
+  notify();
 }

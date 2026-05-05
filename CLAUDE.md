@@ -234,44 +234,49 @@ Collections: `posts` (both posts and pages, distinguished by `type`), `terms` (c
 
 ### Post / page query architecture
 
-The `posts` collection (which holds both posts and pages, type-discriminated) **does NOT have a global subscription** in `CmsDataContext`. The admin loads with zero posts in memory; data is fetched on demand via three explicit access patterns. This design means a site with 50 000 posts has the same admin boot cost as a fresh install — only the list page user-facing surface pays anything, and only for the current page.
+The admin runs in **two modes**, picked via `settings.paginationMode` in the admin's `/settings/general` → Performance section:
 
-Three patterns live in [services/posts.ts](src/services/posts.ts):
+- **`"global"` (default)** — single live subscription on the entire `posts` collection (`subscribeToPosts`, `orderBy(createdAt)` on a single field, covered by Firestore's automatic single-field index). `CmsDataContext` exposes `posts: Post[]` and `pages: Post[]` populated from this subscription. Hooks read from the context and do filter / slice / count in memory. **No composite indexes required** — works on a fresh Firestore project. Best for sites under ~5 000 entries.
+- **`"paginated"` (opt-in)** — cursor-paginated subscriptions (`subscribeToPostsPaginated`), one page at a time. `countPosts` falls back to Firestore aggregation queries. Requires composite indexes (`(type, createdAt)` and `(type, status, createdAt)`). Recommended for very large sites.
 
-- **`subscribeToPostsPaginated({ type, status?, pageSize, cursor? }, onChange, onError)`** — real-time cursor-paginated subscription. The list pages (PostsListPage / PagesListPage) use this via the [`usePostsPage`](src/hooks/usePostsPage.ts) hook. Each page maintains a stack of cursors per visited page so navigation is instant. Sort is fixed at `orderBy("createdAt", "desc")` — stable (editing a post doesn't shuffle its position).
-- **`fetchAllPosts({ type })`** — one-shot full-corpus fetch. Cached in module scope for **30 s with in-flight promise dedup**. Used by the publish pipeline (via `buildPublishContext`), all "force regenerate" buttons in plugin SettingsPages, and the menu / hero / static-home pickers (via the [`useAllPosts`](src/hooks/useAllPosts.ts) hook). Cache invalidates on every write through `createPost` / `updatePost` / `markPostOnline` / `markPostDraft` / `deletePost` so the next caller sees fresh data.
-- **`countPosts({ type, status? })`** — Firestore aggregation query (single read). Used by `DashboardPage` for stat cards.
+`fetchAllPosts({ type })` works in **both** modes. It is intentionally index-free: the Firestore query has no `where` and no `orderBy`, fetching the entire `posts` collection in one shot. Filtering by type and sorting by `createdAt desc` happen in memory (`filterFromCorpus`). Cached for 30 s with in-flight promise dedup; invalidated on every write through `createPost` / `updatePost` / `markPostOnline` / `markPostDraft` / `deletePost`. In global mode the `subscribeToPosts` listener primes this cache (`primeAllPostsCache`) on every snapshot, so non-React consumers (publisher, plugin generators) read fresh data without an extra fetch.
 
-`buildPublishContext()` in [services/publisher.ts](src/services/publisher.ts) **calls `fetchAllPosts` internally** for both posts and pages — callers don't pass them. Optional `posts` / `pages` overrides exist for the rare case of needing a pre-patched list (e.g. immediately after a write whose Firestore subscription hasn't echoed yet — though the cache-invalidation hook usually makes this unnecessary).
+The hook layer dispatches on `settings.paginationMode`:
 
-#### Composite indexes (REQUIRED in prod)
+- [`usePostsPage(opts)`](src/hooks/usePostsPage.ts) — both branches return the same `UsePostsPageResult` shape so the consuming page components don't change. Global branch reads from the context and slices in memory; paginated branch keeps a cursor stack indexed by page number.
+- [`useAllPosts(type)`](src/hooks/useAllPosts.ts) — global branch returns the context's `posts` / `pages` directly (live); paginated branch calls `fetchAllPosts` (snapshot at mount). Both branches' hooks are invoked unconditionally to keep React's hook order stable across mode flips.
+- [`useCountPosts({ type, status? })`](src/hooks/useCountPosts.ts) — global branch counts the in-memory list (free, live). Paginated branch issues a single-read `getCountFromServer` aggregation query.
 
-Two composite indexes on the `posts` collection are mandatory; without them the paginated queries fail with `failed-precondition`:
+`buildPublishContext()` in [services/publisher.ts](src/services/publisher.ts) **calls `fetchAllPosts` internally** for both posts and pages — callers don't pass them. Optional `posts` / `pages` overrides exist for the rare case of needing a pre-patched list immediately after a write.
+
+#### Composite indexes (only required in `paginated` mode)
+
+In `paginated` mode, two composite indexes on the `posts` collection are mandatory; without them the paginated queries fail with `failed-precondition`:
 
 - `(type ASC, createdAt DESC)` — covers the "all" tab
 - `(type ASC, status ASC, createdAt DESC)` — covers the "draft" / "online" tabs
 
-Three creation paths documented in the README under "Firestore indexes": gcloud CLI commands (recommended for ops folks), `firestore.indexes.json` for `firebase deploy`, OR the in-app **`FirestoreSetupGate`** which detects missing indexes on first login and surfaces one-click links to the Firebase Console (works on the free Spark plan, no admin SDK needed).
+Three creation paths documented in the README under "Firestore indexes": gcloud CLI commands, `firestore.indexes.json` for `firebase deploy`, OR the in-app **`FirestoreSetupGate`** which detects missing indexes on first login and surfaces one-click links to the Firebase Console.
 
-Single-field auto-indexes (the "Automatic index settings" panel in the Firebase Console) do NOT cover composite queries — Firestore explicitly reserves composite-index creation for project admins. Don't expect the auto-index toggle to dispense with the two composites above.
+Single-field auto-indexes (the "Automatic index settings" panel in the Firebase Console) do NOT cover composite queries — Firestore explicitly reserves composite-index creation for project admins.
 
 #### `FirestoreSetupGate`
 
-Lives at [src/components/FirestoreSetupGate.tsx](src/components/FirestoreSetupGate.tsx) and wraps `<CmsDataProvider>` in [App.tsx](src/App.tsx). On first login it pings the two paginated queries with `limit(1)`. If both succeed, caches `localStorage.flexweg.firestoreIndexesReady = "1"` and never re-checks. If either fails with `failed-precondition`, parses the auto-suggest URL out of the error message and renders a setup screen with one-click links to the Firebase Console + a Retry button. Other Firestore errors (network, rules-denied) surface as a generic error with the code, not the create-index flow.
+Lives at [src/components/FirestoreSetupGate.tsx](src/components/FirestoreSetupGate.tsx) and is rendered **inside** `<CmsDataProvider>` in [App.tsx](src/App.tsx) so it can read `settings.paginationMode` via `useCmsData()`. The gate is a **pure pass-through in `global` mode** (no ping, no setup screen). In `paginated` mode, it pings the two composite-index queries with `limit(1)`, caches success in `localStorage.flexweg.firestoreIndexesReady = "1"`, and renders a setup screen with one-click create links when either query returns `failed-precondition`. The Performance section in `/settings/general` invalidates the cache on every save (`invalidateCachedReady()`) so flipping from global → paginated re-pings against fresh truth.
 
 Cache invalidation hook: `invalidateCachedReady()` for tests / manual reset.
 
 #### Selection model with paginated lists
 
-Bulk actions in PostsListPage / PagesListPage operate on a `Set<string>` of post ids. With server-side pagination, the selected items aren't all in memory at once — to resolve them to `Post[]` for `publishPost` / `unpublishPost` / `deletePostAndUnpublish`, the components keep a `loadedPostsRef = useRef(new Map<string, Post>())` that grows as the user paginates / searches. Misses fall through to a `fetchAllPosts` fetch (rare — only happens if the user selected an item and then navigated far enough that even the cache went cold).
+Bulk actions in PostsListPage / PagesListPage operate on a `Set<string>` of post ids. With server-side pagination (paginated mode), the selected items aren't all in memory at once — to resolve them to `Post[]` for `publishPost` / `unpublishPost` / `deletePostAndUnpublish`, the components keep a `loadedPostsRef = useRef(new Map<string, Post>())` that grows as the user paginates / searches. Misses fall through to a `fetchAllPosts` fetch (rare). In global mode the in-memory list is already complete, so the fallback never fires.
 
-The "select all matching" Gmail-style banner (visible when the master checkbox of the current page is ticked AND there are more matching posts elsewhere) calls `fetchAllPosts` to resolve the full filtered set into a single Set of ids. In search mode this is free (already loaded); in browse mode it triggers one Firestore read.
+The "select all matching" Gmail-style banner (visible when the master checkbox of the current page is ticked AND there are more matching posts elsewhere) calls `fetchAllPosts` to resolve the full filtered set into a single Set of ids.
 
 #### Search mode
 
-PostsListPage / PagesListPage have a dual-mode list:
+PostsListPage / PagesListPage have a dual-mode list (orthogonal to `paginationMode`):
 
-- **Browse mode** (search input empty): real-time paginated subscription via `usePostsPage`. ~100 docs in memory at any time. Sort: `createdAt desc`. Status filter: server-side via composite index.
+- **Browse mode** (search input empty): real-time subscription via `usePostsPage`. In global mode that's an in-memory slice of the context's posts; in paginated mode that's a cursor subscription.
 - **Search mode** (search non-empty): one-shot `fetchAllPosts` of the full corpus, then **client-side** substring filter on `title + slug + excerpt` (multi-token, every token must appear, case-insensitive) + client-side pagination over the matching set. The cached corpus is reused across keystrokes. Returning to an empty search reverts to the browse subscription.
 
 Search does NOT scan `contentMarkdown` — too heavy client-side and the typical admin search-by-title use case is well covered by the three smaller fields.

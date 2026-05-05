@@ -1,14 +1,16 @@
-// Top-level gate that runs the ping helper on first admin boot
-// and blocks the routes until either:
-//   • All indexes resolve OK → renders children.
-//   • Indexes are missing → renders a setup screen with one-click
-//     create links (Firebase Console auto-suggest URLs).
-//   • A non-precondition error came back (network, rules) → renders
-//     a generic error with retry.
+// Conditional gate that runs the index ping only when
+// `settings.paginationMode === "paginated"`. In "global" mode (the
+// default) the admin doesn't query the composite indexes at all, so
+// this is a pure pass-through — no ping, no setup screen.
 //
-// On subsequent reloads of the same browser, the cache short-circuits
-// the ping — the gate renders children directly. Cache is invalidated
-// only when the user clicks "Retry" after creating an index.
+// Lives INSIDE CmsDataProvider so it can read settings via
+// useCmsData(). When the user flips paginationMode from global →
+// paginated in /settings/general, this gate runs the ping on the
+// next render; if indexes are missing the setup screen takes over.
+//
+// On subsequent reloads of the same browser (paginated mode + indexes
+// confirmed previously), the cache short-circuits the ping. Cache is
+// invalidated when the user clicks "Retry" after creating an index.
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,12 +21,16 @@ import {
   pingPaginatedQueries,
   type FirestoreSetupResult,
 } from "../services/firestoreSetup";
+import { useCmsData } from "../context/CmsDataContext";
 
 interface FirestoreSetupGateProps {
   children: ReactNode;
 }
 
 export function FirestoreSetupGate({ children }: FirestoreSetupGateProps) {
+  const { settings } = useCmsData();
+  const mode = settings.paginationMode ?? "global";
+
   const { t } = useTranslation();
   const [result, setResult] = useState<FirestoreSetupResult | null>(
     // If the indexes were proven ready in a previous session,
@@ -32,7 +38,7 @@ export function FirestoreSetupGate({ children }: FirestoreSetupGateProps) {
     // so of round-trip on every admin reload.
     getCachedReady() ? { ready: true, missingIndexes: [] } : null,
   );
-  const [running, setRunning] = useState(!getCachedReady());
+  const [running, setRunning] = useState(false);
 
   const runPing = useCallback(async () => {
     setRunning(true);
@@ -46,9 +52,15 @@ export function FirestoreSetupGate({ children }: FirestoreSetupGateProps) {
   }, []);
 
   useEffect(() => {
+    // Only ping in paginated mode. Global mode never touches the
+    // composite-index queries, so the indexes don't need to exist.
+    if (mode !== "paginated") return;
     if (!result) void runPing();
-  }, [result, runPing]);
+  }, [mode, result, runPing]);
 
+  // Global mode: pass-through. We don't even pretend there's a check —
+  // composite indexes are irrelevant in this branch.
+  if (mode !== "paginated") return <>{children}</>;
   if (result?.ready) return <>{children}</>;
 
   return (

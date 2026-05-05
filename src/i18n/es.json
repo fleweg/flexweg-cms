@@ -311,6 +311,16 @@
       "siteUrlHelp": "URL pública de tu sitio Flexweg sin barra final.",
       "apiBaseUrl": "URL base de la API"
     },
+    "performance": {
+      "title": "Rendimiento",
+      "help": "Cómo el admin carga entradas y páginas. El modo por defecto funciona en el plan gratuito de Firestore sin configuración; el modo paginado es para sitios muy grandes y requiere crear índices una vez.",
+      "mode": "Modo de carga",
+      "modeGlobal": "Estándar (sin configuración)",
+      "modePaginated": "Paginación del servidor (requiere índices de Firestore)",
+      "globalHelp": "Carga toda la colección de entradas en una suscripción en vivo. Orden, filtros y búsqueda se hacen en memoria. Recomendado para sitios con menos de ~5 000 entradas.",
+      "paginatedHelp": "Suscripciones paginadas por cursor, una página a la vez. Requiere índices compuestos de Firestore — ver README. Recomendado para sitios muy grandes.",
+      "savedReload": "Guardado. Recarga el admin para aplicar el nuevo modo."
+    },
     "editor": {
       "title": "Editor",
       "help": "Tipografía usada dentro del editor de entradas/páginas. Independiente del tema público.",

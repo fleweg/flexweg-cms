@@ -311,6 +311,16 @@
       "siteUrlHelp": "URL publique de votre site Flexweg sans slash final.",
       "apiBaseUrl": "URL de base de l'API"
     },
+    "performance": {
+      "title": "Performance",
+      "help": "Comment l'admin charge articles et pages. Le mode par défaut fonctionne sur le plan gratuit de Firestore sans configuration ; le mode paginé est destiné aux très gros sites et exige une création d'index ponctuelle.",
+      "mode": "Mode de chargement",
+      "modeGlobal": "Standard (aucune configuration requise)",
+      "modePaginated": "Pagination côté serveur (index Firestore requis)",
+      "globalHelp": "Charge toute la collection d'articles dans une subscription temps réel. Tri, filtre et recherche se font en mémoire. Recommandé pour les sites de moins de ~5 000 articles.",
+      "paginatedHelp": "Subscriptions paginées par curseur, une page à la fois. Exige des index composites Firestore — voir README. Recommandé pour les très gros sites.",
+      "savedReload": "Enregistré. Rechargez l'admin pour appliquer le nouveau mode."
+    },
     "editor": {
       "title": "Éditeur",
       "help": "Typographie utilisée dans l'éditeur d'articles / pages. Indépendante du thème public.",

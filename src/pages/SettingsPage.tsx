@@ -13,9 +13,11 @@ import {
 } from "../services/flexwegConfig";
 import { updateSettings } from "../services/settings";
 import { setUserPreferences } from "../services/users";
+import { invalidateCachedReady } from "../services/firestoreSetup";
+import { toast } from "../lib/toast";
 import { EDITOR_FONT_OPTIONS, DEFAULT_EDITOR_SIZES, SYSTEM_FONT_NAME } from "../core/editorFonts";
 import { FontSelect } from "../components/ui/FontSelect";
-import type { AdminLocale, EditorStyle } from "../core/types";
+import type { AdminLocale, EditorStyle, PaginationMode } from "../core/types";
 
 // Renders the "General" tab inside <SettingsLayout />. Outer page chrome
 // (title + tab strip) lives in the layout, so this component is just the
@@ -96,6 +98,34 @@ export function SettingsPage() {
   async function changeAdminLocale(locale: AdminLocale) {
     await setActiveLocale(locale);
     if (user && record) await setUserPreferences(user.uid, { adminLocale: locale });
+  }
+
+  // Performance — choose how the admin loads posts / pages. The
+  // default "global" requires NO Firestore composite indexes; the
+  // "paginated" opt-in requires the (type, createdAt) and (type,
+  // status, createdAt) indexes documented in the README.
+  const [paginationMode, setPaginationMode] = useState<PaginationMode>(
+    settings.paginationMode ?? "global",
+  );
+  const [savingPagination, setSavingPagination] = useState(false);
+
+  useEffect(() => {
+    setPaginationMode(settings.paginationMode ?? "global");
+  }, [settings.paginationMode]);
+
+  async function savePagination() {
+    setSavingPagination(true);
+    try {
+      // The cached "indexes ready" flag is only meaningful for paginated
+      // mode. Wipe it on every save so the gate re-pings with fresh
+      // truth — particularly important when the user flips to paginated
+      // for the first time.
+      invalidateCachedReady();
+      await updateSettings({ paginationMode });
+      toast.info(t("settings.performance.savedReload"));
+    } finally {
+      setSavingPagination(false);
+    }
   }
 
   // Editor typography. Stored alongside other site settings so the
@@ -246,6 +276,38 @@ export function SettingsPage() {
         <button type="button" className="btn-primary" onClick={saveSite} disabled={savingSite}>
           {savingSite && <Loader2 className="h-4 w-4 animate-spin" />}
           {savingSite ? t("common.saving") : t("common.save")}
+        </button>
+      </section>
+
+      <section className="card p-4 space-y-3">
+        <h2 className="font-semibold">{t("settings.performance.title")}</h2>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("settings.performance.help")}
+        </p>
+        <div>
+          <label className="label">{t("settings.performance.mode")}</label>
+          <select
+            className="input max-w-md"
+            value={paginationMode}
+            onChange={(e) => setPaginationMode(e.target.value as PaginationMode)}
+          >
+            <option value="global">{t("settings.performance.modeGlobal")}</option>
+            <option value="paginated">{t("settings.performance.modePaginated")}</option>
+          </select>
+          <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
+            {paginationMode === "global"
+              ? t("settings.performance.globalHelp")
+              : t("settings.performance.paginatedHelp")}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={savePagination}
+          disabled={savingPagination || paginationMode === (settings.paginationMode ?? "global")}
+        >
+          {savingPagination && <Loader2 className="h-4 w-4 animate-spin" />}
+          {savingPagination ? t("common.saving") : t("common.save")}
         </button>
       </section>
 

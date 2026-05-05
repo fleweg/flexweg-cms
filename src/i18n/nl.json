@@ -311,6 +311,16 @@
       "siteUrlHelp": "Publieke URL van je Flexweg-site zonder slash op het einde.",
       "apiBaseUrl": "API-basis-URL"
     },
+    "performance": {
+      "title": "Prestaties",
+      "help": "Hoe de admin berichten en pagina's laadt. De standaardmodus werkt op het gratis Firestore-plan zonder setup; de gepagineerde modus is voor zeer grote sites en vereist eenmalige index-setup.",
+      "mode": "Laadmodus",
+      "modeGlobal": "Standaard (geen setup nodig)",
+      "modePaginated": "Server-side gepagineerd (Firestore-indexen vereist)",
+      "globalHelp": "Laadt de hele berichten-collectie in één live abonnement. Sorteren, filteren en zoeken gebeurt in het geheugen. Aanbevolen voor sites met minder dan ~5 000 berichten.",
+      "paginatedHelp": "Cursor-gepagineerde abonnementen, één pagina per keer. Vereist Firestore-composite-indexen — zie README. Aanbevolen voor zeer grote sites.",
+      "savedReload": "Opgeslagen. Herlaad de admin om de nieuwe modus toe te passen."
+    },
     "editor": {
       "title": "Editor",
       "help": "Typografie binnen de bericht-/pagina-editor. Onafhankelijk van het publieke thema.",

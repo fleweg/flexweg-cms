@@ -1,22 +1,16 @@
-// Real-time paginated subscription hook for the post / page list
-// pages. Maintains a *list of cursors* — one per page already
-// visited — so navigating back to a previously-loaded page is
-// instant (we still re-subscribe so the data is fresh, but the
-// cursor is already known).
+// Page hook for the post / page list pages. Has two implementations
+// internally, dispatched on `settings.paginationMode`:
 //
-// State machine:
-//   page 1: cursor = undefined
-//   page 2: cursor = result of page 1's subscription
-//   page 3: cursor = result of page 2's subscription
-//   …
+//   • "global" (default) — reads `posts`/`pages` from CmsDataContext,
+//     filters by status, slices in memory. No Firestore round-trips
+//     beyond the global subscription that's already running.
 //
-// `nextPage` is gated on the current subscription having delivered
-// `nextCursor` — which only happens once `posts.length === pageSize`.
-// If the current page is the last (fewer docs than pageSize), the
-// hook reports `hasNext: false` and `nextPage` is a no-op.
+//   • "paginated" (opt-in) — real-time cursor pagination via
+//     subscribeToPostsPaginated + countPosts. Requires composite
+//     Firestore indexes — see README "Firestore indexes".
 //
-// Total count for "Showing X–Y of Z" comes from `countPosts()` and
-// is refreshed alongside the page subscription.
+// Both expose the same public shape so the consuming page components
+// (PostsListPage, PagesListPage) don't branch.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
@@ -25,6 +19,7 @@ import {
   subscribeToPostsPaginated,
   type PaginatedQueryResult,
 } from "../services/posts";
+import { useCmsData } from "../context/CmsDataContext";
 import type { Post, PostStatus, PostType } from "../core/types";
 
 export interface UsePostsPageOpts {
@@ -45,19 +40,71 @@ export interface UsePostsPageResult {
   // the user can see "Page 3 of 12" up-front instead of having to
   // paginate to discover the end.
   totalPages: number;
-  // True when there's data available beyond the current page (the
-  // current page returned a full pageSize of docs and a usable
-  // nextCursor exists).
+  // True when there's data available beyond the current page.
   hasNext: boolean;
   hasPrev: boolean;
   nextPage: () => void;
   prevPage: () => void;
-  // Jump to page 1 — the caller does this when the filter changes
-  // (otherwise the cursor stack may not match the new filter).
+  // Jump to page 1 — the caller does this when the filter changes.
   resetToFirst: () => void;
 }
 
 export function usePostsPage(opts: UsePostsPageOpts): UsePostsPageResult {
+  const { settings } = useCmsData();
+  const mode = settings.paginationMode ?? "global";
+  const globalResult = useGlobalPostsPage(opts, mode === "global");
+  const paginatedResult = usePaginatedPostsPage(opts, mode === "paginated");
+  return mode === "global" ? globalResult : paginatedResult;
+}
+
+// ─── Global mode (in-memory filter + slice) ─────────────────────────
+
+function useGlobalPostsPage(opts: UsePostsPageOpts, active: boolean): UsePostsPageResult {
+  const { posts, pages, postsLoaded } = useCmsData();
+  const [page, setPage] = useState(1);
+
+  const filterKey = `${opts.type}:${opts.status ?? "all"}:${opts.pageSize}`;
+  useEffect(() => {
+    setPage(1);
+  }, [filterKey]);
+
+  const filtered = useMemo(() => {
+    if (!active) return [] as Post[];
+    const source = opts.type === "post" ? posts : pages;
+    return opts.status ? source.filter((p) => p.status === opts.status) : source;
+  }, [active, opts.type, opts.status, posts, pages]);
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / opts.pageSize));
+  const safePage = Math.min(page, totalPages);
+  const sliced = useMemo(
+    () => filtered.slice((safePage - 1) * opts.pageSize, safePage * opts.pageSize),
+    [filtered, safePage, opts.pageSize],
+  );
+
+  return {
+    posts: sliced,
+    // The first global snapshot may not have landed yet — show a
+    // loading indicator until then so the page doesn't briefly say
+    // "0 results" before snapping to its real count.
+    loading: active && !postsLoaded,
+    page: safePage,
+    totalCount,
+    totalPages,
+    hasNext: safePage < totalPages,
+    hasPrev: safePage > 1,
+    nextPage: () => setPage((p) => Math.min(totalPages, p + 1)),
+    prevPage: () => setPage((p) => Math.max(1, p - 1)),
+    resetToFirst: () => setPage(1),
+  };
+}
+
+// ─── Paginated mode (cursor subscriptions, requires indexes) ────────
+
+function usePaginatedPostsPage(
+  opts: UsePostsPageOpts,
+  active: boolean,
+): UsePostsPageResult {
   const [page, setPage] = useState(1);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,18 +114,15 @@ export function usePostsPage(opts: UsePostsPageOpts): UsePostsPageResult {
   const cursorsRef = useRef<(QueryDocumentSnapshot<DocumentData> | undefined)[]>([
     undefined,
   ]);
-  // Reset cursor stack + page index whenever the filter shape
-  // changes — old cursors don't transfer to a different filter.
   const filterKey = `${opts.type}:${opts.status ?? "all"}:${opts.pageSize}`;
   useEffect(() => {
     cursorsRef.current = [undefined];
     setPage(1);
   }, [filterKey]);
 
-  // Refresh the total count whenever the filter changes. Cheap
-  // (single-read aggregation query); we do NOT refresh on every
-  // page change — the count doesn't depend on page.
+  // Refresh the total count whenever the filter changes.
   useEffect(() => {
+    if (!active) return;
     let cancelled = false;
     void countPosts({ type: opts.type, status: opts.status }).then((n) => {
       if (!cancelled) setTotalCount(n);
@@ -86,12 +130,10 @@ export function usePostsPage(opts: UsePostsPageOpts): UsePostsPageResult {
     return () => {
       cancelled = true;
     };
-  }, [opts.type, opts.status]);
+  }, [active, opts.type, opts.status]);
 
-  // Subscribe to the current page. Re-subscribes whenever `page`
-  // changes; the unsubscribe in the cleanup keeps Firestore from
-  // streaming docs we no longer care about.
   useEffect(() => {
+    if (!active) return;
     setLoading(true);
     const cursor = cursorsRef.current[page - 1];
     const unsub = subscribeToPostsPaginated(
@@ -103,13 +145,9 @@ export function usePostsPage(opts: UsePostsPageOpts): UsePostsPageResult {
       },
       (result: PaginatedQueryResult) => {
         setPosts(result.posts);
-        // Memoize the cursor for the *next* page so the user can
-        // click Next without us doing extra round-trips.
         if (result.nextCursor) {
           cursorsRef.current[page] = result.nextCursor;
         } else {
-          // No more pages — trim any stale cursor that's beyond
-          // this page (e.g. previous filter had more pages).
           cursorsRef.current = cursorsRef.current.slice(0, page);
         }
         setLoading(false);
@@ -120,7 +158,7 @@ export function usePostsPage(opts: UsePostsPageOpts): UsePostsPageResult {
       },
     );
     return unsub;
-  }, [opts.type, opts.status, opts.pageSize, page]);
+  }, [active, opts.type, opts.status, opts.pageSize, page]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(totalCount / opts.pageSize)),
