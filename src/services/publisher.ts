@@ -30,6 +30,7 @@ import { publishMenuJson } from "./menuPublisher";
 import { publishPostsJson } from "./postsJsonPublisher";
 import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { fetchAllPosts, markPostDraft, markPostOnline } from "./posts";
+import { postSortMillis } from "../core/postSort";
 import { setCurrentPublishContext } from "./publishContext";
 import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
 import { renderHero } from "../themes/default/blocks/hero/render";
@@ -250,7 +251,7 @@ async function renderHome(ctx: PublishContext): Promise<string> {
   const site = buildSiteContext(ctx);
   const onlinePosts = ctx.posts
     .filter((p) => p.status === "online")
-    .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0))
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a))
     .slice(0, ctx.settings.postsPerPage)
     .map((p) => postToCardData(p, ctx));
 
@@ -447,7 +448,7 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
   const site = buildSiteContext(ctx);
   const posts = ctx.posts
     .filter((p) => p.status === "online" && p.primaryTermId === term.id)
-    .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0))
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a))
     .map((p) => postToCardData(p, ctx));
 
   // If the flexweg-rss plugin has a feed configured for this category,
@@ -531,9 +532,7 @@ async function renderAuthor(authorId: string, ctx: PublishContext): Promise<stri
   const site = buildSiteContext(ctx);
   const posts = ctx.posts
     .filter((p) => p.status === "online" && p.authorId === authorId)
-    .sort(
-      (a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
-    )
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a))
     .map((p) => postToCardData(p, ctx));
 
   const path = buildAuthorUrl(user, ctx.users);

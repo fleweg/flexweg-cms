@@ -4,6 +4,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import type { BlockManifest } from "../../../../core/blockRegistry";
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import { useAllPosts } from "../../../../hooks/useAllPosts";
 import { blockNodeName, createBlockNode } from "../createBlockNode";
 import type { HeroAttrs } from "./render";
@@ -91,10 +92,7 @@ function HeroInspector({ editor }: HeroInspectorProps) {
   // top of the dropdown.
   const onlinePosts: Post[] = posts
     .filter((p: Post) => p.status === "online")
-    .sort(
-      (a: Post, b: Post) =>
-        (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
-    );
+    .sort((a: Post, b: Post) => postSortMillis(b) - postSortMillis(a));
 
   return (
     <div className="space-y-3">

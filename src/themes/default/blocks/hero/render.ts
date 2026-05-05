@@ -1,4 +1,5 @@
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { mediaToView, pickFormat } from "../../../../core/media";
 import { buildPostUrl, buildTermUrl } from "../../../../core/slug";
@@ -37,7 +38,7 @@ function resolveFeatured(attrs: HeroAttrs, env: RenderEnv): Post | null {
   // rendered so a Hero on a single post never points back to itself.
   const candidates = env.ctx.posts
     .filter((p) => p.status === "online" && p.id !== env.current.id)
-    .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0));
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a));
   return candidates[0] ?? null;
 }
 

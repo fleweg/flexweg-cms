@@ -1,4 +1,5 @@
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { mediaToView, pickFormat } from "../../../../core/media";
 import { buildPostUrl, buildTermUrl } from "../../../../core/slug";
@@ -74,8 +75,7 @@ export function renderLatestList(attrs: LatestListAttrs, env: RenderEnv): Latest
   const candidates = env.ctx.posts
     .filter((p) => p.status === "online" && p.id !== env.current.id && !env.used.has(p.id))
     .sort(
-      (a, b) =>
-        (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+      (a, b) => postSortMillis(b) - postSortMillis(a),
     )
     .slice(0, count);
 

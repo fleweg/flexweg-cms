@@ -1,4 +1,5 @@
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { renderPostItemHtml, wrapList, type ListVariant } from "../postCardHtml";
 import { escapeAttr, escapeText } from "../util";
@@ -53,7 +54,7 @@ function applyQuery(attrs: PostsListAttrs, env: RenderEnv): Post[] {
       break;
   }
   return filtered.sort(
-    (a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+    (a, b) => postSortMillis(b) - postSortMillis(a),
   );
 }
 

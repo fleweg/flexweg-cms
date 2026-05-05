@@ -1,5 +1,6 @@
 import i18n, { pickPublicLocale } from "../../../../i18n";
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { mediaToView, pickFormat } from "../../../../core/media";
 import { buildPostUrl, buildTermUrl } from "../../../../core/slug";
@@ -36,7 +37,7 @@ export interface MagazineHeroRenderResult {
 function sortByLatest(posts: Post[]): Post[] {
   return [...posts].sort(
     (a, b) =>
-      (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+      postSortMillis(b) - postSortMillis(a),
   );
 }
 

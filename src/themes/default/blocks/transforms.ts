@@ -1,4 +1,5 @@
 import type { Post } from "../../../core/types";
+import { postSortMillis } from "../../../core/postSort";
 import { getCurrentPublishContext } from "../../../services/publishContext";
 import type { PublishContext } from "../../../services/publisher";
 import { decodeAttrs } from "./util";
@@ -139,7 +140,7 @@ function resolveHeroPostId(attrs: HeroAttrs, env: RenderEnv): string | null {
   // rendered (so a Hero on a single post never points back at itself).
   const candidates = env.ctx.posts
     .filter((p) => p.status === "online" && p.id !== env.current.id)
-    .sort((a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0));
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a));
   return candidates[0]?.id ?? null;
 }
 

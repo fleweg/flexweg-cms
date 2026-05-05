@@ -1,6 +1,7 @@
 import { buildPostUrl, buildTermUrl } from "../core/slug";
 import { mediaToView, pickFormat } from "../core/media";
 import { markdownToPlainText } from "../core/markdown";
+import { postSortMillis } from "../core/postSort";
 import type { Media, Post, SiteSettings, Term } from "../core/types";
 import { uploadFile } from "./flexwegApi";
 
@@ -54,7 +55,8 @@ export interface PostsJson {
 
 // Pure builder. Caller passes whatever data is currently authoritative;
 // no Firestore access happens here. Combines posts + pages into a
-// single list ordered by publishedAt DESC, capped at MAX_ENTRIES.
+// single list ordered by `postSortMillis` DESC (createdAt with
+// publishedAt / updatedAt fallbacks), capped at MAX_ENTRIES.
 export function buildPostsJson(
   settings: SiteSettings,
   posts: Post[],
@@ -84,10 +86,7 @@ export function buildPostsJson(
 
   const all = [...posts, ...pages]
     .filter((p) => p.status === "online")
-    .sort(
-      (a, b) =>
-        (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
-    )
+    .sort((a, b) => postSortMillis(b) - postSortMillis(a))
     .slice(0, MAX_ENTRIES);
 
   const entries: PostsJsonEntry[] = [];

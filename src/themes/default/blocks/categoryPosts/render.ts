@@ -1,4 +1,5 @@
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { buildTermUrl } from "../../../../core/slug";
 import { renderPostItemHtml, wrapList, type ListVariant } from "../postCardHtml";
@@ -51,7 +52,7 @@ export function renderCategoryPosts(
         p.status === "online" && p.id !== env.current.id && p.primaryTermId === attrs.categoryId,
     )
     .sort(
-      (a, b) => (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+      (a, b) => postSortMillis(b) - postSortMillis(a),
     );
   const filtered = excludeUsed ? candidates.filter((p) => !env.used.has(p.id)) : candidates;
   const picked = filtered.slice(0, count);

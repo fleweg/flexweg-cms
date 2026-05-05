@@ -1,5 +1,6 @@
 import i18n, { pickPublicLocale } from "../../../../i18n";
 import type { Post } from "../../../../core/types";
+import { postSortMillis } from "../../../../core/postSort";
 import type { PublishContext } from "../../../../services/publisher";
 import { buildPostUrl } from "../../../../core/slug";
 import { escapeAttr, escapeText } from "../util";
@@ -39,8 +40,7 @@ export function renderMostRead(attrs: MostReadAttrs, env: RenderEnv): MostReadRe
   const candidates = env.ctx.posts
     .filter((p) => p.status === "online" && p.id !== env.current.id)
     .sort(
-      (a, b) =>
-        (b.publishedAt?.toMillis?.() ?? 0) - (a.publishedAt?.toMillis?.() ?? 0),
+      (a, b) => postSortMillis(b) - postSortMillis(a),
     )
     .slice(0, count);
 
