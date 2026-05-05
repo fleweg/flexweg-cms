@@ -272,6 +272,12 @@
       "everything": "Alles",
       "everythingHelp": "Thema-bestanden + alle HTML + elke plugin-uitvoer. Langzaamste optie.",
       "noPluginTargets": "Geen plugin-regeneraties — activeer een plugin die regenereren ondersteunt."
+    },
+    "confirmSwitch": {
+      "title": "Overschakelen naar {{theme}}?",
+      "body": "Wisselen van thema vereist het opnieuw uploaden van de thema-bestanden en het regenereren van elke gepubliceerde pagina zodat het nieuwe uiterlijk overal doorwerkt. Dit kan even duren.",
+      "confirm": "Overschakelen en regenereren",
+      "cancel": "Annuleren"
     }
   },
   "plugins": {

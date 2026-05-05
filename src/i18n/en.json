@@ -272,6 +272,12 @@
       "everything": "Everything",
       "everythingHelp": "Theme assets + all HTML + every plugin output. Slowest option.",
       "noPluginTargets": "No plugin regeneration targets — enable a plugin that supports regenerate."
+    },
+    "confirmSwitch": {
+      "title": "Switch to {{theme}}?",
+      "body": "Switching theme requires re-uploading the theme's assets and regenerating every published page so the new look propagates everywhere. This may take a moment.",
+      "confirm": "Switch & regenerate",
+      "cancel": "Cancel"
     }
   },
   "plugins": {

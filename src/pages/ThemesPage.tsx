@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PublishLog } from "../components/publishing/PublishLog";
+import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Dropdown, type DropdownItem, type DropdownSection } from "../components/ui/Dropdown";
 import { useCmsData } from "../context/CmsDataContext";
 import { listThemes } from "../themes";
@@ -88,9 +89,17 @@ export function ThemesPage() {
     });
   }, []);
 
-  async function handleActivate(themeId: string) {
+  // Pending theme switch — set when the user clicks an inactive
+  // card. Drives the confirmation modal. `null` = no pending switch.
+  // Switching theme requires a full regenerate (assets + every HTML
+  // page + plugin outputs) so the new look propagates everywhere
+  // without leaving stale published HTML referencing the old CSS.
+  const [pendingThemeId, setPendingThemeId] = useState<string | null>(null);
+
+  function handleActivate(themeId: string) {
     if (themeId === settings.activeThemeId) return;
-    await updateSettings({ activeThemeId: themeId });
+    if (busy) return;
+    setPendingThemeId(themeId);
   }
 
   // Helper that wraps a regen runner with the standard busy/log flow.
@@ -136,6 +145,56 @@ export function ThemesPage() {
       await syncThemeAssets(themes, settings.themeConfigs, log);
     });
   }
+
+  // Confirm path of the theme-switch modal. Persists the new theme
+  // and runs the full Everything regen — assets + all HTML +
+  // plugins. Settings is patched optimistically (we don't wait for
+  // the Firestore subscription echo) so buildPublishContext sees the
+  // new theme on the very first regen pass.
+  async function handleConfirmThemeChange() {
+    if (!pendingThemeId) return;
+    const targetId = pendingThemeId;
+    // Close the modal as soon as the work starts so the user sees
+    // the live PublishLog instead of a frozen confirm UI.
+    setPendingThemeId(null);
+    await runWithLog(async (log) => {
+      await updateSettings({ activeThemeId: targetId });
+      const patchedSettings = { ...settings, activeThemeId: targetId };
+      await syncThemeAssets(themes, patchedSettings.themeConfigs, log);
+      const ctx = await buildPublishContext({
+        terms,
+        settings: patchedSettings,
+        users,
+        authorLookup: buildAuthorLookup(users, media),
+      });
+      await regenerateAll(ctx, log);
+      // Plugins that depend on the theme (archives renders through
+      // the active theme's templates) MUST be re-run. The others
+      // (sitemap / RSS / search / favicon manifest) are theme-
+      // independent but cheap to regenerate, and a consistent
+      // "Switch & regenerate" guarantees no half-state.
+      for (const target of pluginTargets) {
+        try {
+          await target.run(ctx, log);
+        } catch (err) {
+          log({
+            level: "error",
+            message: `Plugin "${target.id}" regen failed: ${(err as Error).message}`,
+          });
+        }
+      }
+      log({ level: "success", message: "Theme switched and site regenerated." });
+    });
+  }
+
+  function handleCancelThemeChange() {
+    setPendingThemeId(null);
+  }
+
+  // Active theme manifest used by the modal copy ("Switch to ...?").
+  const pendingTheme = pendingThemeId
+    ? themes.find((t) => t.id === pendingThemeId)
+    : undefined;
 
   // Dropdown sections — built from the static built-in targets plus
   // whatever plugins have registered. Each item resolves into the
@@ -263,8 +322,9 @@ export function ThemesPage() {
               key={theme.id}
               type="button"
               onClick={() => handleActivate(theme.id)}
+              disabled={busy}
               className={
-                "card p-4 text-left ring-2 transition-colors " +
+                "card p-4 text-left ring-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
                 (active
                   ? "ring-blue-500"
                   : "ring-transparent hover:ring-surface-300 dark:hover:ring-surface-600")
@@ -289,6 +349,16 @@ export function ThemesPage() {
         })}
       </div>
       <PublishLog entries={logEntries} />
+      {pendingTheme && (
+        <ConfirmModal
+          title={t("themes.confirmSwitch.title", { theme: pendingTheme.name })}
+          description={t("themes.confirmSwitch.body")}
+          confirmLabel={t("themes.confirmSwitch.confirm")}
+          cancelLabel={t("themes.confirmSwitch.cancel")}
+          onConfirm={handleConfirmThemeChange}
+          onCancel={handleCancelThemeChange}
+        />
+      )}
     </div>
   );
 }

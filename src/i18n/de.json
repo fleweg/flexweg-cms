@@ -272,6 +272,12 @@
       "everything": "Alles",
       "everythingHelp": "Theme-Assets + alle HTML + jede Plugin-Ausgabe. Langsamste Option.",
       "noPluginTargets": "Keine Plugin-Neugenerierungen — aktivieren Sie ein Plugin, das Neugenerieren unterstützt."
+    },
+    "confirmSwitch": {
+      "title": "Zu {{theme}} wechseln?",
+      "body": "Beim Theme-Wechsel müssen die Theme-Assets erneut hochgeladen und alle veröffentlichten Seiten neu generiert werden, damit das neue Aussehen überall greift. Das kann einen Moment dauern.",
+      "confirm": "Wechseln & neu generieren",
+      "cancel": "Abbrechen"
     }
   },
   "plugins": {

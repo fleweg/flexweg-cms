@@ -272,6 +272,12 @@
       "everything": "Tout",
       "everythingHelp": "Assets thème + tous les HTML + chaque sortie plugin. Option la plus lente.",
       "noPluginTargets": "Aucune régénération de plugin — activez un plugin qui supporte la régénération."
+    },
+    "confirmSwitch": {
+      "title": "Passer à {{theme}} ?",
+      "body": "Le changement de thème nécessite de re-pousser les assets du thème et de régénérer toutes les pages publiées pour que le nouveau look se propage partout. Cela peut prendre un moment.",
+      "confirm": "Changer & régénérer",
+      "cancel": "Annuler"
     }
   },
   "plugins": {

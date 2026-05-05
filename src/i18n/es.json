@@ -272,6 +272,12 @@
       "everything": "Todo",
       "everythingHelp": "Recursos del tema + todo HTML + cada salida de plugin. Opción más lenta.",
       "noPluginTargets": "Sin regeneraciones de plugin — activa un plugin que soporte regenerar."
+    },
+    "confirmSwitch": {
+      "title": "¿Cambiar a {{theme}}?",
+      "body": "Cambiar de tema requiere volver a subir los recursos del tema y regenerar cada página publicada para que el nuevo aspecto se propague en todas partes. Puede tardar un momento.",
+      "confirm": "Cambiar y regenerar",
+      "cancel": "Cancelar"
     }
   },
   "plugins": {
