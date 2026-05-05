@@ -12,6 +12,37 @@ export interface UserPreferences {
   adminLocale: AdminLocale;
 }
 
+// Public-side social network identifiers. Curated list — extending
+// requires updating SocialIcons (the shared SVG renderer) and the
+// admin profile form's socials section.
+export type SocialNetwork =
+  | "twitter"
+  | "linkedin"
+  | "instagram"
+  | "mastodon"
+  | "bluesky"
+  | "github"
+  | "website";
+
+export const SOCIAL_NETWORKS: readonly SocialNetwork[] = [
+  "twitter",
+  "linkedin",
+  "instagram",
+  "mastodon",
+  "bluesky",
+  "github",
+  "website",
+] as const;
+
+// One social profile entry as stored in the user record. URL is
+// free-form; visible toggles whether the public-side templates
+// surface the link. URL with visible:false is a "remembered" entry
+// the user can flip back on without re-typing.
+export interface SocialEntry {
+  url: string;
+  visible: boolean;
+}
+
 export interface UserRecord {
   id: string;
   email: string;
@@ -24,11 +55,19 @@ export interface UserRecord {
   // All optional: a fresh user can publish posts before filling them in.
   firstName?: string;
   lastName?: string;
+  // Job / role title shown publicly in author cards under the name —
+  // e.g. "Journaliste", "Senior Editor". Replaces the legacy
+  // public-side display of email (which is now admin-only).
+  title?: string;
   bio?: string;
   // Reference to a media entry used as the author's profile picture.
   // Resolved through the same media pipeline as post hero images
   // (multi-variant, falls back gracefully through pickFormat).
   avatarMediaId?: string;
+  // Social profiles, keyed by SocialNetwork. Missing key = network
+  // not configured. Stored URL but hidden = `visible: false` (kept
+  // so the user can re-enable without re-entering the URL).
+  socials?: Partial<Record<SocialNetwork, SocialEntry>>;
   role: UserRole;
   disabled: boolean;
   preferences?: UserPreferences;

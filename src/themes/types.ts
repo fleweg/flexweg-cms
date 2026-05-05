@@ -6,6 +6,7 @@ import type {
   MenuItem,
   Post,
   SiteSettings,
+  SocialNetwork,
   Term,
 } from "../core/types";
 import type { ResolvedMenuItem } from "../core/menuResolver";
@@ -14,19 +15,31 @@ import type { BlockManifest } from "../core/blockRegistry";
 // Re-export so theme components can keep importing from "../types".
 export type { ResolvedMenuItem };
 
+// Public-side resolved social link. The publisher filters out
+// invisible entries before populating AuthorView, so themes only
+// ever see what the user opted to surface.
+export interface AuthorSocial {
+  network: SocialNetwork;
+  url: string;
+}
+
 // Author metadata exposed to themes. Resolved by the publisher at
 // publish time — theme components never reach back into Firestore.
 // `displayName` is the canonical label used in templates; the
 // publisher's authorLookup derives it from firstName + lastName when
-// available, falling back to the legacy displayName field, then email.
-// Avatar (when present) is a fully resolved MediaView so templates can
-// `pickFormat(avatar, "small")` like they do for hero images.
+// available, falling back to the legacy displayName field, then email
+// (admin-only — email itself is not surfaced here).
+// `title` is the job / role label shown publicly under the name
+// (e.g. "Journaliste"). `socials` carries only the visible entries.
+// Avatar (when present) is a fully resolved MediaView so templates
+// can `pickFormat(avatar, "small")` like they do for hero images.
 export interface AuthorView {
   id: string;
   displayName: string;
-  email?: string;
+  title?: string;
   bio?: string;
   avatar?: MediaView;
+  socials?: AuthorSocial[];
 }
 
 // Resolved media reference for theme consumption. The publisher resolves
@@ -121,6 +134,13 @@ export interface HomeTemplateProps {
   // props and render from `posts` directly.
   heroHtml?: string;
   listHtml?: string;
+  // Optional sidebar widgets contributed by themes that lay out a
+  // dedicated home sidebar (e.g. the magazine theme). Themes that
+  // render a single-column home ignore them. Both are pre-rendered
+  // HTML strings produced by the active theme's block renderers,
+  // so the template stays a pure props consumer.
+  mostReadHtml?: string;
+  promoCardHtml?: string;
 }
 
 export interface CategoryTemplateProps {
@@ -131,6 +151,15 @@ export interface CategoryTemplateProps {
   // button. Undefined when no feed exists for this category.
   categoryRssUrl?: string;
   archivesLink?: ArchivesLink;
+  // All categories on the site, so themes that render a sidebar
+  // navigation (magazine theme) can list every section with the
+  // current one highlighted. Default theme ignores this. Order
+  // follows whatever the publisher chose (alphabetical at the moment).
+  allCategories?: Term[];
+  // Popular tags resolved by the publisher (top N tags by usage
+  // count). Themes that render a "Popular Tags" widget consume this;
+  // others ignore it.
+  popularTags?: Term[];
 }
 
 export interface AuthorTemplateProps {

@@ -1,6 +1,7 @@
 import { mediaToView, pickFormat } from "../core/media";
 import { buildAuthorUrl } from "../core/slug";
-import type { Media, Post, UserRecord } from "../core/types";
+import type { Media, Post, SocialNetwork, UserRecord } from "../core/types";
+import { SOCIAL_NETWORKS } from "../core/types";
 import { uploadFile } from "./flexwegApi";
 import { resolveDisplayName } from "./users";
 
@@ -10,12 +11,19 @@ import { resolveDisplayName } from "./users";
 export const AUTHORS_JSON_PATH = "data/authors.json";
 
 // One row in authors.json. Pre-resolved (display name computed,
-// avatar variant URL picked) so the public-side loader never needs a
-// lookup — same philosophy as the other dynamic JSON blobs.
+// avatar variant URL picked, socials filtered to visible ones) so the
+// public-side loader never needs a lookup — same philosophy as the
+// other dynamic JSON blobs.
+//
+// `email` is intentionally NOT included: per product decision, email
+// is admin-only data and never surfaces on the public site. The
+// admin still reads it from Firestore directly when needed.
 export interface AuthorsJsonEntry {
   id: string;
   displayName: string;
-  email?: string;
+  // Job / role title (e.g. "Journaliste"). Replaces the legacy
+  // public display of email under the name.
+  title?: string;
   bio?: string;
   // Medium-variant URL of the profile picture, when one is set.
   avatar?: string;
@@ -23,6 +31,10 @@ export interface AuthorsJsonEntry {
   // slash. Loaders prefix with `/` when wiring `<a href>`. Stable
   // unless the user's display name (and therefore the slug) changes.
   url: string;
+  // Visible social profile links, ordered by SOCIAL_NETWORKS so the
+  // public output is stable across regenerations. Empty / undefined
+  // when the user hasn't configured any visible network.
+  socials?: { network: SocialNetwork; url: string }[];
 }
 
 export interface AuthorsJson {
@@ -56,13 +68,25 @@ export function buildAuthorsJson(
       ? mediaToView(mediaMap.get(user.avatarMediaId))
       : undefined;
     const avatar = heroView ? pickFormat(heroView, "medium") : "";
+    // Filter socials down to visible entries with a non-empty URL,
+    // ordered by SOCIAL_NETWORKS so the public payload is stable.
+    const socials: { network: SocialNetwork; url: string }[] = [];
+    if (user.socials) {
+      for (const network of SOCIAL_NETWORKS) {
+        const entry = user.socials[network];
+        if (!entry || !entry.visible) continue;
+        if (typeof entry.url !== "string" || !entry.url.trim()) continue;
+        socials.push({ network, url: entry.url.trim() });
+      }
+    }
     authors[user.id] = {
       id: user.id,
       displayName: resolveDisplayName(user),
-      email: user.email,
+      title: user.title,
       bio: user.bio,
       avatar: avatar || undefined,
       url: buildAuthorUrl(user, users),
+      socials: socials.length > 0 ? socials : undefined,
     };
   }
 

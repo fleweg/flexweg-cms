@@ -14,6 +14,7 @@ import { manifest as flexwegSitemapsManifest } from "./flexweg-sitemaps/manifest
 import { manifest as flexwegRssManifest } from "./flexweg-rss/manifest";
 import { manifest as flexwegArchivesManifest } from "./flexweg-archives/manifest";
 import { manifest as flexwegImportManifest } from "./flexweg-import/manifest";
+import { manifest as flexwegSearchManifest } from "./flexweg-search/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
@@ -71,6 +72,7 @@ export const PLUGINS: PluginManifest[] = [
   flexwegRssManifest as PluginManifest,
   flexwegArchivesManifest as PluginManifest,
   flexwegImportManifest as PluginManifest,
+  flexwegSearchManifest as PluginManifest,
 ];
 
 export function listPlugins(): PluginManifest[] {

@@ -5,11 +5,13 @@
   "type": "module",
   "description": "Static WordPress-like CMS that publishes pages to Flexweg via API. Admin SPA built with React + TypeScript + Firebase.",
   "scripts": {
+    "themes:tailwind": "node scripts/build-theme-tailwind.mjs",
+    "predev": "npm run themes:tailwind",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prebuild": "npm run typecheck",
+    "prebuild": "npm run typecheck && npm run themes:tailwind",
     "build": "vite build && node scripts/build-themes.mjs",
     "preview": "vite preview"
   },

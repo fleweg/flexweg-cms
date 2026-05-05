@@ -22,7 +22,30 @@ import {
   setUserRole,
 } from "../services/users";
 import { toast } from "../lib/toast";
-import type { UserRecord } from "../core/types";
+import type { SocialEntry, SocialNetwork, UserRecord } from "../core/types";
+import { SOCIAL_NETWORKS } from "../core/types";
+
+// Display labels for the curated social networks. Proper nouns —
+// not translated. Keep in sync with SOCIAL_NETWORKS.
+const SOCIAL_LABELS: Record<SocialNetwork, string> = {
+  twitter: "Twitter / X",
+  linkedin: "LinkedIn",
+  instagram: "Instagram",
+  mastodon: "Mastodon",
+  bluesky: "Bluesky",
+  github: "GitHub",
+  website: "Website",
+};
+
+const SOCIAL_PLACEHOLDERS: Record<SocialNetwork, string> = {
+  twitter: "https://twitter.com/your-handle",
+  linkedin: "https://linkedin.com/in/your-handle",
+  instagram: "https://instagram.com/your-handle",
+  mastodon: "https://mastodon.social/@your-handle",
+  bluesky: "https://bsky.app/profile/your-handle",
+  github: "https://github.com/your-handle",
+  website: "https://your-site.com",
+};
 
 // Admin-only page (gated by `<RequireAdmin>` in App.tsx). Lists every
 // known user record and lets the admin manage roles, disabled status,
@@ -146,8 +169,16 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
 
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [lastName, setLastName] = useState(user.lastName ?? "");
+  const [title, setTitle] = useState(user.title ?? "");
   const [bio, setBio] = useState(user.bio ?? "");
   const [avatarMediaId, setAvatarMediaId] = useState<string | undefined>(user.avatarMediaId);
+  // Per-network draft. Keys mirror SocialNetwork; values carry the
+  // editable URL + visibility toggle. We always render every network
+  // so the user sees the full set of options — entries with empty
+  // URLs are dropped at save time.
+  const [socials, setSocials] = useState<Partial<Record<SocialNetwork, SocialEntry>>>(
+    () => user.socials ?? {},
+  );
   const [saving, setSaving] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
@@ -157,9 +188,18 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
   useEffect(() => {
     setFirstName(user.firstName ?? "");
     setLastName(user.lastName ?? "");
+    setTitle(user.title ?? "");
     setBio(user.bio ?? "");
     setAvatarMediaId(user.avatarMediaId);
+    setSocials(user.socials ?? {});
   }, [user]);
+
+  function patchSocial(network: SocialNetwork, patch: Partial<SocialEntry>): void {
+    setSocials((prev) => {
+      const current = prev[network] ?? { url: "", visible: false };
+      return { ...prev, [network]: { ...current, ...patch } };
+    });
+  }
 
   const avatarMedia = avatarMediaId
     ? media.find((m) => m.id === avatarMediaId)
@@ -172,8 +212,13 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
       const profilePatch = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        title: title.trim(),
         bio: bio.trim(),
         avatarMediaId: avatarMediaId ?? null,
+        // setUserProfile drops entries with empty URLs and writes the
+        // map atomically — pass the raw form state, the service
+        // sanitises.
+        socials: socials,
       };
       await setUserProfile(user.id, profilePatch);
       // Refresh /authors.json on the public site so the AuthorBio
@@ -181,14 +226,25 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
       // requiring a republish of every post the author wrote. The
       // Firestore subscription hasn't echoed back yet, so we
       // optimistically merge the patch onto the local users array.
+      // Apply the same cleaning the service does — drop empty-URL
+      // entries — so the optimistic copy mirrors what's about to land
+      // in Firestore.
+      const cleanedSocials: Partial<Record<SocialNetwork, SocialEntry>> = {};
+      for (const [network, entry] of Object.entries(socials) as Array<[SocialNetwork, SocialEntry]>) {
+        if (entry && typeof entry.url === "string" && entry.url.trim()) {
+          cleanedSocials[network] = { url: entry.url.trim(), visible: !!entry.visible };
+        }
+      }
       const optimisticUsers = users.map((u) =>
         u.id === user.id
           ? {
               ...u,
               firstName: profilePatch.firstName || undefined,
               lastName: profilePatch.lastName || undefined,
+              title: profilePatch.title || undefined,
               bio: profilePatch.bio || undefined,
               avatarMediaId: profilePatch.avatarMediaId ?? undefined,
+              socials: Object.keys(cleanedSocials).length > 0 ? cleanedSocials : undefined,
             }
           : u,
       );
@@ -311,6 +367,19 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
             </div>
 
             <div>
+              <label className="label">{t("settings.profile.headline")}</label>
+              <input
+                className="input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t("settings.profile.headlinePlaceholder")}
+              />
+              <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
+                {t("settings.profile.headlineHelp")}
+              </p>
+            </div>
+
+            <div>
               <label className="label">{t("settings.profile.bio")}</label>
               <textarea
                 className="input min-h-[120px]"
@@ -321,6 +390,50 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
               <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
                 {t("settings.profile.bioHelp")}
               </p>
+            </div>
+
+            <div>
+              <label className="label">{t("settings.profile.socials")}</label>
+              <p className="text-xs text-surface-500 mb-2 dark:text-surface-400">
+                {t("settings.profile.socialsHelp")}
+              </p>
+              <div className="space-y-2">
+                {SOCIAL_NETWORKS.map((network) => {
+                  const entry = socials[network] ?? { url: "", visible: false };
+                  const hasUrl = entry.url.trim().length > 0;
+                  return (
+                    <div key={network} className="flex items-center gap-2">
+                      <span className="text-xs font-medium w-24 shrink-0 text-surface-700 dark:text-surface-200">
+                        {SOCIAL_LABELS[network]}
+                      </span>
+                      <input
+                        type="url"
+                        className="input flex-1"
+                        placeholder={SOCIAL_PLACEHOLDERS[network]}
+                        value={entry.url}
+                        onChange={(e) => patchSocial(network, { url: e.target.value })}
+                      />
+                      <label
+                        className={
+                          "flex items-center gap-1 text-xs whitespace-nowrap " +
+                          (hasUrl
+                            ? "text-surface-700 dark:text-surface-200 cursor-pointer"
+                            : "text-surface-400 dark:text-surface-500 cursor-not-allowed")
+                        }
+                        title={t("settings.profile.socialsShowHelp")}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!!entry.visible}
+                          onChange={(e) => patchSocial(network, { visible: e.target.checked })}
+                          disabled={!hasUrl}
+                        />
+                        {t("settings.profile.socialsShow")}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

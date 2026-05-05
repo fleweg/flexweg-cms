@@ -9,6 +9,7 @@
 // themes, and matches the static-only constraint of Flexweg hosting.
 
 import { manifest as defaultManifest } from "./default/manifest";
+import { manifest as magazineManifest } from "./magazine/manifest";
 import i18n from "../i18n";
 import { registerBlock } from "../core/blockRegistry";
 import { pluginApi } from "../core/pluginRegistry";
@@ -18,7 +19,10 @@ import type { ThemeManifest } from "./types";
 // as plugins/index.ts. The settings.save callback is contravariant in
 // TConfig, which TypeScript can't reconcile against `unknown` without
 // the explicit widening cast.
-export const THEMES: ThemeManifest[] = [defaultManifest as ThemeManifest];
+export const THEMES: ThemeManifest[] = [
+  defaultManifest as ThemeManifest,
+  magazineManifest as ThemeManifest,
+];
 
 export function getTheme(id: string): ThemeManifest {
   const found = THEMES.find((t) => t.id === id);

@@ -35,6 +35,12 @@ import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
 import { renderHero } from "../themes/default/blocks/hero/render";
 import { renderPostsList } from "../themes/default/blocks/postsList/render";
 import type { DefaultThemeConfig } from "../themes/default/config";
+import { renderMagazineHero } from "../themes/magazine/blocks/magazineHero/render";
+import { renderLatestList } from "../themes/magazine/blocks/latestList/render";
+import { renderMostRead } from "../themes/magazine/blocks/mostRead/render";
+import { renderPromoCard } from "../themes/magazine/blocks/promoCard/render";
+import type { MagazineThemeConfig } from "../themes/magazine/config";
+import { DEFAULT_MAGAZINE_HOME_LAYOUT } from "../themes/magazine/config";
 
 export interface PublishLogEntry {
   level: "info" | "success" | "warn" | "error";
@@ -262,6 +268,8 @@ async function renderHome(ctx: PublishContext): Promise<string> {
   // Other themes ignore heroHtml/listHtml and render from `posts`.
   let heroHtml: string | undefined;
   let listHtml: string | undefined;
+  let mostReadHtml: string | undefined;
+  let promoCardHtml: string | undefined;
   if (
     ctx.settings.activeThemeId === "default" &&
     ctx.settings.homeMode !== "static-page"
@@ -299,6 +307,79 @@ async function renderHome(ctx: PublishContext): Promise<string> {
       { ctx, current: homeStub, used },
     );
     listHtml = listResult.html;
+  } else if (
+    ctx.settings.activeThemeId === "magazine" &&
+    ctx.settings.homeMode !== "static-page"
+  ) {
+    // Magazine theme: separate hero / latest list / sidebar widgets.
+    // Each block reserves the post ids it consumed against `used` so
+    // subsequent blocks (and the latestList in particular) never
+    // duplicate items.
+    const themeConfig = (site.themeConfig as MagazineThemeConfig | undefined) ?? undefined;
+    const homeConfig = themeConfig?.home ?? DEFAULT_MAGAZINE_HOME_LAYOUT;
+    const homeStub = { id: "__home__" } as unknown as Post;
+    const used = new Set<string>();
+
+    const heroResult = renderMagazineHero(
+      {
+        featuredPostId: "latest",
+        secondary1PostId: "auto",
+        secondary2PostId: "auto",
+        showFeaturedBadge: true,
+      },
+      { ctx, current: homeStub },
+    );
+    heroHtml = heroResult.html;
+    for (const id of heroResult.consumedPostIds) used.add(id);
+
+    // "Latest Intelligence" — `postsPerPage` minus the 3 hero items,
+    // bottoming out at 1 so a tiny corpus still renders something.
+    const listResult = renderLatestList(
+      { count: Math.max(1, ctx.settings.postsPerPage - heroResult.consumedPostIds.length) },
+      { ctx, current: homeStub, used },
+    );
+    listHtml = listResult.html;
+    for (const id of listResult.consumedPostIds) used.add(id);
+
+    // Sidebar widgets, driven by the theme config.
+    const renderSidebarWidget = (variant: typeof homeConfig.sidebarTop): string => {
+      if (variant === "most-read") {
+        const result = renderMostRead(
+          { count: homeConfig.mostReadCount, showHeading: true },
+          { ctx, current: homeStub },
+        );
+        return result.html;
+      }
+      if (variant === "promo") {
+        // Skip silently when the user hasn't filled in the promo card
+        // (no image and no title). Avoids rendering an empty card slot.
+        if (!homeConfig.promoImageUrl && !homeConfig.promoTitle) return "";
+        const result = renderPromoCard(
+          {
+            imageUrl: homeConfig.promoImageUrl,
+            imageAlt: homeConfig.promoImageAlt,
+            eyebrow: homeConfig.promoEyebrow,
+            title: homeConfig.promoTitle,
+            href: homeConfig.promoHref,
+          },
+          { ctx },
+        );
+        return result.html;
+      }
+      return "";
+    };
+    const topHtml = renderSidebarWidget(homeConfig.sidebarTop);
+    const bottomHtml =
+      homeConfig.sidebarBottom !== homeConfig.sidebarTop
+        ? renderSidebarWidget(homeConfig.sidebarBottom)
+        : "";
+    // Carry both slots on `mostReadHtml` (top) + `promoCardHtml`
+    // (bottom). The HomeTemplate places them in the right column in
+    // that order — naming is historical (the most common pairing is
+    // most-read on top + promo on bottom) but the template is variant-
+    // agnostic and just renders whatever string each prop holds.
+    mostReadHtml = topHtml || undefined;
+    promoCardHtml = bottomHtml || undefined;
   }
 
   let templateProps: HomeTemplateProps & { site: SiteContext };
@@ -324,10 +405,26 @@ async function renderHome(ctx: PublishContext): Promise<string> {
         archivesLink,
       };
     } else {
-      templateProps = { site, posts: onlinePosts, archivesLink, heroHtml, listHtml };
+      templateProps = {
+        site,
+        posts: onlinePosts,
+        archivesLink,
+        heroHtml,
+        listHtml,
+        mostReadHtml,
+        promoCardHtml,
+      };
     }
   } else {
-    templateProps = { site, posts: onlinePosts, archivesLink, heroHtml, listHtml };
+    templateProps = {
+      site,
+      posts: onlinePosts,
+      archivesLink,
+      heroHtml,
+      listHtml,
+      mostReadHtml,
+      promoCardHtml,
+    };
   }
 
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
@@ -370,12 +467,36 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
 
   const archivesLink = resolveArchivesLink(ctx.settings, ctx.posts, "category");
 
+  // Sidebar data — an alphabetically sorted list of every category
+  // (so themes can render a section nav) and the top N tags by usage
+  // count (for a "Popular tags" widget). Cheap to compute on every
+  // category page since publish-time runs are sequential and the
+  // corpus is in memory anyway. Themes that don't need them ignore
+  // the props.
+  const allCategories = ctx.terms
+    .filter((t) => t.type === "category")
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const tagCounts = new Map<string, number>();
+  for (const p of ctx.posts) {
+    if (p.status !== "online") continue;
+    for (const id of p.termIds ?? []) {
+      tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
+    }
+  }
+  const popularTags = ctx.terms
+    .filter((t) => t.type === "tag" && (tagCounts.get(t.id) ?? 0) > 0)
+    .sort((a, b) => (tagCounts.get(b.id) ?? 0) - (tagCounts.get(a.id) ?? 0))
+    .slice(0, 10);
+
   const templateProps: CategoryTemplateProps & { site: SiteContext } = {
     site,
     term,
     posts,
     categoryRssUrl,
     archivesLink,
+    allCategories,
+    popularTags,
   };
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
     site,

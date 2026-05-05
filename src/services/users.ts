@@ -13,7 +13,16 @@ import {
 } from "firebase/firestore";
 import type { User as FirebaseUser } from "firebase/auth";
 import { collections, getDb } from "./firebase";
-import type { AdminLocale, Media, UserPreferences, UserRecord, UserRole } from "../core/types";
+import type {
+  AdminLocale,
+  Media,
+  SocialEntry,
+  SocialNetwork,
+  UserPreferences,
+  UserRecord,
+  UserRole,
+} from "../core/types";
+import { SOCIAL_NETWORKS } from "../core/types";
 import { mediaToView } from "../core/media";
 import type { AuthorView } from "../themes/types";
 
@@ -110,19 +119,45 @@ export async function setUserPreferences(uid: string, prefs: Partial<UserPrefere
 export interface UserProfilePatch {
   firstName?: string | null;
   lastName?: string | null;
+  // Job / role title shown publicly under the name in author cards.
+  // Empty / null clears the field entirely (deleteField).
+  title?: string | null;
   bio?: string | null;
   avatarMediaId?: string | null;
+  // Social profiles map. When set, replaces the whole `socials`
+  // object — the form sends the full state on every save so we
+  // don't have to merge per-network. Pass `null` to clear all.
+  socials?: Partial<Record<SocialNetwork, SocialEntry>> | null;
 }
 
 export async function setUserProfile(uid: string, patch: UserProfilePatch): Promise<void> {
   const update: Record<string, unknown> = {};
-  for (const key of ["firstName", "lastName", "bio", "avatarMediaId"] as const) {
+  for (const key of ["firstName", "lastName", "title", "bio", "avatarMediaId"] as const) {
     if (!(key in patch)) continue;
     const value = patch[key];
     if (value === null || value === undefined || value === "") {
       update[key] = deleteField();
     } else {
       update[key] = value;
+    }
+  }
+  if ("socials" in patch) {
+    const value = patch.socials;
+    if (value === null || value === undefined) {
+      update.socials = deleteField();
+    } else {
+      // Drop entries with empty URLs — keeping them would persist
+      // half-configured networks across saves and surface as
+      // "configured but invisible" in subsequent reads. Empty URL =
+      // user cleared the field, so we treat it as "remove this
+      // network entirely".
+      const cleaned: Partial<Record<SocialNetwork, SocialEntry>> = {};
+      for (const [network, entry] of Object.entries(value) as Array<[SocialNetwork, SocialEntry]>) {
+        if (entry && typeof entry.url === "string" && entry.url.trim().length > 0) {
+          cleaned[network] = { url: entry.url.trim(), visible: !!entry.visible };
+        }
+      }
+      update.socials = Object.keys(cleaned).length > 0 ? cleaned : deleteField();
     }
   }
   if (Object.keys(update).length === 0) return;
@@ -146,12 +181,32 @@ export async function deleteUserRecord(uid: string): Promise<void> {
   return deleteDoc(userDoc(uid));
 }
 
+// Filters the user's stored socials map down to the entries that are
+// (a) present, (b) marked visible, and (c) carry a non-empty URL.
+// Order follows SOCIAL_NETWORKS so the public output is stable.
+function visibleSocials(record: UserRecord): { network: SocialNetwork; url: string }[] {
+  const stored = record.socials;
+  if (!stored) return [];
+  const out: { network: SocialNetwork; url: string }[] = [];
+  for (const network of SOCIAL_NETWORKS) {
+    const entry = stored[network];
+    if (!entry || !entry.visible) continue;
+    if (typeof entry.url !== "string" || !entry.url.trim()) continue;
+    out.push({ network, url: entry.url.trim() });
+  }
+  return out;
+}
+
 // Builds an `authorLookup` resolver suitable for `buildPublishContext`.
 // Hits the in-memory users array (subscribed via CmsDataContext) so it
 // works for posts authored by any admin — not just the currently
 // authenticated user. Resolves the author's avatar through the same
 // media catalog the publisher already has in hand, so theme components
 // can `pickFormat(avatar, "small")` like they do for hero images.
+//
+// Email is intentionally NOT carried over to AuthorView — it's
+// admin-only data. Templates that previously read `author.email` for
+// a fallback should fall through to `bio` or stay silent.
 export function buildAuthorLookup(
   users: UserRecord[],
   media: Media[] | Map<string, Media>,
@@ -164,12 +219,14 @@ export function buildAuthorLookup(
     const avatar = record.avatarMediaId
       ? mediaToView(mediaMap.get(record.avatarMediaId))
       : undefined;
+    const socials = visibleSocials(record);
     return {
       id: record.id,
       displayName: resolveDisplayName(record),
-      email: record.email,
+      title: record.title,
       bio: record.bio,
       avatar,
+      socials: socials.length > 0 ? socials : undefined,
     };
   };
 }

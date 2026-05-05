@@ -79,9 +79,6 @@ export function SingleTemplate({
               <AuthorAvatar name={author.displayName} avatar={author.avatar} />
               <div>
                 <p className="page-single__author-name">{author.displayName}</p>
-                {author.email && (
-                  <p className="page-single__author-meta">{author.email}</p>
-                )}
               </div>
             </div>
           )}

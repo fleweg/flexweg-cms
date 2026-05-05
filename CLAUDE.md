@@ -98,10 +98,12 @@ Old media uploaded before this pipeline existed keeps the legacy `{ url, storage
 
 Each theme exports a `manifest.ts` with `id`, `version`, `scssEntry`, and a `templates` map (`base | home | single | category | author | notFound`). Themes are registered statically in `src/themes/index.ts` so they're all bundled into the admin (enables instant preview switching).
 
-The SCSS pipeline is split deliberately:
+Two CSS pipelines coexist, picked per-theme by file presence (`theme.scss` → SCSS, `tailwind.config.cjs` → Tailwind):
 
-- **Inside the admin bundle**: each theme manifest imports its SCSS via Vite's `?inline` suffix (e.g. `import cssText from "./theme.scss?inline"`). Vite compiles the SCSS at build time and exposes the resulting CSS as a string on `manifest.cssText`. This is what the **Themes → Sync theme assets** button uploads to Flexweg via the Files API — so the admin always pushes the CSS that was built alongside its current code, regardless of what's currently sitting in `/theme-assets/` on the public site.
-- **Standalone files**: `scripts/build-themes.mjs` runs after `vite build` and writes the same compiled CSS into `dist/theme-assets/<id>.css`. This folder is intended for the *first* deployment (drop it onto Flexweg's site root once), or for environments where the user wants to bypass the admin's sync button.
+- **SCSS pipeline (default theme)**: each theme manifest imports its SCSS via Vite's `?inline` suffix (e.g. `import cssText from "./theme.scss?inline"`). Vite compiles the SCSS at build time and exposes the resulting CSS as a string on `manifest.cssText`. After `vite build`, `scripts/build-themes.mjs` writes the same compiled CSS into `dist/theme-assets/<id>.css`.
+- **Tailwind pipeline (magazine theme)**: `scripts/build-theme-tailwind.mjs` runs **before** Vite (wired into `prebuild` and `predev` in `package.json`). For each theme with a `tailwind.config.cjs`, it invokes the Tailwind CLI on `theme.css` and writes `theme.compiled.css`. The manifest then `?inline`-imports that file, and `build-themes.mjs` copies it verbatim to `dist/theme-assets/<id>.css`. The local `tailwind.config.cjs` scopes the content scan to the theme directory only, so admin-bundle utility classes don't leak in. Iterative dev workflow: run `npx tailwindcss -c <config> -i <input> -o <output> --watch` in a separate terminal — Vite HMR picks up the rewritten file.
+
+`manifest.cssText` is what the **Themes → Sync theme assets** button uploads to Flexweg via the Files API — so the admin always pushes the CSS that was built alongside its current code, regardless of what's currently sitting in `/theme-assets/` on the public site.
 
 Vite outputs the admin into `dist/admin/` (set via `build.outDir` in `vite.config.ts`). Public theme CSS lives at `dist/theme-assets/`, which mirrors its target Flexweg path `/theme-assets/<id>.css` — exactly where every published page's `<link rel="stylesheet">` points. **Never** put theme CSS under `/admin/...` on the public site: published pages do not reference that path.
 
@@ -137,6 +139,17 @@ Default theme implementation in `src/themes/default/style.ts`:
 - `applyAndUploadCustomCss({ themeId, baseCssText, style })` produces the CSS and uploads to `theme-assets/<themeId>.css`. Same path as the baseline, so browsers may serve a stale copy until hard-refresh — documented in the success toast.
 
 `DefaultThemeConfig.style: StyleOverrides` carries `{ vars: Record<string, string>, fontSerif, fontSans }`. Stored in `settings.themeConfigs.default.style` like any other theme config — same Firestore subscription drives both the form rehydration and the runtime regenerator.
+
+#### Magazine theme specifics
+
+The **magazine** theme uses the Tailwind pipeline above plus a Material 3 token system. Differences from default's `compileCss` worth knowing:
+
+- Colors are stored as **RGB triplets** (`--color-primary: 0 0 0`), not hex, because Tailwind 3's `rgb(var(--color-X) / <alpha-value>)` formula needs space-separated channels for alpha-modifier syntax (`bg-primary/50`) to work. The Style settings tab still surfaces hex via `<input type="color">` — `compileCss` converts hex → triplet at upload time.
+- The override `:root` block is appended to `manifest.cssText` as-is; only `:type === "color"` specs get the hex→triplet normalization step. Length values pass through verbatim.
+- Two `@import url(...)` lines coexist in `theme.css` — Newsreader/Work Sans (the user-editable pair) and Material Symbols Outlined (the icon font, hardcoded). The font-swap regex in `compileCss` is non-global and matches the **first** `@import` only, so changing the font pair never touches Material Symbols.
+- The publisher has a per-theme branch in `renderHome` for magazine (alongside the existing default branch) that resolves four pre-rendered HTML strings — `heroHtml` (magazineHero block), `listHtml` (latestList helper), `mostReadHtml` and `promoCardHtml` (sidebar widgets driven by `MagazineThemeConfig.home.sidebarTop` / `sidebarBottom`).
+- Magazine's blocks live under the `magazine/` namespace (`magazine/hero-split`, `magazine/most-read`, `magazine/promo-card`); the marker regex in `themes/magazine/blocks/transforms.ts` hardcodes that namespace. Other themes' bodies pass through untouched.
+- **Tailwind content scan must include `.js`**. Magazine's runtime loaders (`menu-loader.js`, `posts-loader.js`) inject DOM whose class names are **only** referenced from those JS files. If `tailwind.config.cjs`'s `content` glob is limited to `{ts,tsx,html}`, Tailwind's purge step strips the matching `@layer components` rules in `theme.css` and the runtime-injected widgets (sidebar related/bio, burger logo swap) render unstyled. The fix is `content: [".../**/*.{ts,tsx,html,js}"]` — already set in the magazine config. Mirror this for any theme that ships a runtime loader contributing class names that aren't otherwise referenced from TS/TSX. The safelist is an alternative for one-off classes but doesn't scale to a whole loader's DOM.
 
 ### Plugin system
 

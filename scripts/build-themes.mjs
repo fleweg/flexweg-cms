@@ -1,12 +1,17 @@
-// Compiles every theme's SCSS entry into dist/theme-assets/<id>.css.
+// Compiles every theme's SCSS entry into dist/theme-assets/<id>.css,
+// or copies a pre-compiled `theme.compiled.css` produced by the
+// Tailwind pipeline (scripts/build-theme-tailwind.mjs).
 // Run as part of `npm run build` after Vite finishes producing dist/.
 //
-// Discovery: walks src/themes/<id>/, looks for the `scssEntry` declared in
-// its manifest.ts. We don't actually parse the manifest (would require
-// loading TS at runtime); instead we follow the convention that each
-// manifest exports `scssEntry: 'theme.scss'` (or similar) and compile any
-// .scss file listed at the top level of the theme directory. If a theme
-// uses a different entry name, add a `theme.config.json` next to manifest.ts.
+// Discovery order per theme:
+//   1. `theme.compiled.css` exists → copy it verbatim (Tailwind themes).
+//   2. `theme.scss` exists → compile via Sass (legacy SCSS themes).
+//   3. neither → log and skip.
+//
+// We don't parse the theme manifest here (would require loading TS at
+// runtime); we follow filename conventions instead. Themes using a
+// different SCSS entry name can override via `theme.config.json` next
+// to manifest.ts.
 
 import { readdir, mkdir, writeFile, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -64,19 +69,32 @@ async function main() {
     if (!entry.isDirectory()) continue;
     const id = entry.name;
     const themeDir = join(themesDir, id);
-    const scssEntry = await findScssEntry(themeDir);
-    if (!scssEntry) {
-      console.log(`[themes] ${id}: no scss entry, skipping.`);
-      continue;
-    }
-    const inputPath = join(themeDir, scssEntry);
     const outputPath = join(outDir, `${id}.css`);
-    const result = sass.compile(inputPath, {
-      style: "compressed",
-      sourceMap: false,
-    });
-    await writeFile(outputPath, result.css, "utf8");
-    console.log(`[themes] ${id}.css written (${result.css.length} bytes)`);
+
+    // Prefer the Tailwind-compiled output when present. The pre-build
+    // step (scripts/build-theme-tailwind.mjs, wired into `prebuild` in
+    // package.json) writes this file before `vite build` runs. Fall
+    // back to compiling SCSS for legacy themes that don't use Tailwind.
+    const tailwindOutput = join(themeDir, "theme.compiled.css");
+    let cssBytes;
+    if (await stat(tailwindOutput).then(() => true).catch(() => false)) {
+      cssBytes = await readFile(tailwindOutput, "utf8");
+      console.log(`[themes] ${id}.css copied from theme.compiled.css (${cssBytes.length} bytes)`);
+    } else {
+      const scssEntry = await findScssEntry(themeDir);
+      if (!scssEntry) {
+        console.log(`[themes] ${id}: no Tailwind or SCSS entry, skipping.`);
+        continue;
+      }
+      const inputPath = join(themeDir, scssEntry);
+      const result = sass.compile(inputPath, {
+        style: "compressed",
+        sourceMap: false,
+      });
+      cssBytes = result.css;
+      console.log(`[themes] ${id}.css compiled from SCSS (${cssBytes.length} bytes)`);
+    }
+    await writeFile(outputPath, cssBytes, "utf8");
 
     // Optional companion JS files — copied verbatim. Naming pattern
     // matches what `BaseLayout.tsx` and `ThemesPage.handleSyncAssets`

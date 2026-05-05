@@ -45,11 +45,13 @@ flexweg-cms/
 │   ├── components/      Admin UI building blocks
 │   ├── pages/           Admin pages (one file per route)
 │   ├── themes/          Public-site themes (one folder per theme)
-│   │   └── default/     Default theme — base/home/single/category/author/404 + components + SCSS
+│   │   ├── default/     Default theme — SCSS-based, base/home/single/category/author/404 + components
+│   │   └── magazine/    Magazine theme — Tailwind + Material 3 palette, editorial/long-form layout
 │   ├── plugins/         WordPress-style plugins, toggleable via /admin/#/plugins
 │   │   ├── core-seo/         Built-in SEO plugin (Twitter cards + generator hint)
 │   │   ├── flexweg-sitemaps/ Built-in plugin: yearly sitemaps, sitemap-index, optional News, robots.txt
-│   │   └── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
+│   │   ├── flexweg-rss/      Built-in plugin: RSS feed at /rss.xml + per-category feeds
+│   │   └── flexweg-search/   Built-in plugin: static search-index.json + runtime modal for [data-cms-search] triggers
 │   ├── mu-plugins/      Must-use plugins — same API as plugins/, but always active (cannot be disabled)
 │   │   ├── flexweg-favicon/     Favicon generator (PNG, ICO, SVG, PWA manifest)
 │   │   ├── flexweg-blocks/      Extra editor blocks (Custom HTML, Columns, …)
@@ -58,7 +60,8 @@ flexweg-cms/
 │   ├── i18n/            Admin UI translations (en + fr)
 │   └── lib/             Small utilities (date format, hashing, classnames)
 ├── scripts/
-│   └── build-themes.mjs Compiles each theme's SCSS into dist/theme-assets/<id>.css
+│   ├── build-theme-tailwind.mjs Compiles each Tailwind-based theme's CSS before vite build (prebuild + predev)
+│   └── build-themes.mjs         Copies theme.compiled.css or compiles theme.scss into dist/theme-assets/<id>.css
 └── public/
 ```
 
@@ -528,11 +531,20 @@ Media uploaded before the multi-variant pipeline keeps its original `{ url, stor
 
 ## Creating a new theme
 
-1. Copy `src/themes/default/` to `src/themes/<your-theme-id>/`.
+You can start from either built-in theme:
+
+- **`default/`** — SCSS-based pipeline. Variables + manual `@layer` blocks.
+- **`magazine/`** — Tailwind-based pipeline. `tailwind.config.cjs` + `theme.css` with `@tailwind` directives + Material 3 palette as RGB triplets.
+
+Steps:
+
+1. Copy `src/themes/default/` (SCSS) or `src/themes/magazine/` (Tailwind) to `src/themes/<your-theme-id>/`.
 2. Update `manifest.ts` with a unique `id`, `name`, `version`.
-3. Edit `templates/*.tsx` and `theme.scss` as needed. Components receive only serialisable props — don't import Firestore hooks from theme code.
+3. Edit `templates/*.tsx` and the stylesheet as needed. Components receive only serialisable props — don't import Firestore hooks from theme code.
 4. Register the theme by appending `<your-theme-id>Manifest` to `THEMES` in `src/themes/index.ts`.
-5. Run `npm run build` to compile the SCSS, then sync theme assets from the admin.
+5. Run `npm run build`, then sync theme assets from the admin.
+
+For Tailwind themes, `scripts/build-theme-tailwind.mjs` runs before Vite (wired into `prebuild` and `predev`) and compiles each theme's `tailwind.config.cjs` + `theme.css` into `theme.compiled.css`, which the manifest then `?inline`-imports. For iterative work, run `npx tailwindcss -c <config> -i <input> -o <output> --watch` in a separate terminal — Vite HMR picks up the rewritten file. SCSS themes go through the Sass pipeline in `build-themes.mjs` instead.
 
 The active theme is selected per-site in **Themes**. Switching activates a "Regenerate site" workflow that re-publishes every online post.
 
