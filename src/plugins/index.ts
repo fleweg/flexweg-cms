@@ -20,6 +20,7 @@ import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
 import { resetBlocks } from "../core/blockRegistry";
 import { resetDashboardCards } from "../core/dashboardCardRegistry";
+import { resetRegenerationTargets } from "../core/regenerationTargetRegistry";
 import { MU_PLUGINS } from "../mu-plugins";
 
 // Plugins can optionally expose a settings page. When present, a navigation
@@ -115,6 +116,7 @@ export function applyPluginRegistration(enabled: Record<string, boolean>): void 
   resetRegistry();
   resetBlocks();
   resetDashboardCards();
+  resetRegenerationTargets();
   // MU plugins always register, regardless of `enabled`. They run
   // first so their filters / actions sit at the bottom of priority
   // chains — regular plugins added on top can override or layer on

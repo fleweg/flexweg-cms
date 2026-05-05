@@ -7,6 +7,10 @@ export const en = {
   title: "Sitemaps",
   description:
     "Generates sitemap-<year>.xml files, a sitemap-index.xml referencing them, an optional News sitemap, and a customizable robots.txt.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Yearly + index sitemaps, robots.txt, XSL stylesheets",
+  },
   sections: {
     general: "General",
     robots: "robots.txt",
@@ -56,6 +60,10 @@ export const fr: typeof en = {
   title: "Sitemaps",
   description:
     "Génère les fichiers sitemap-<année>.xml, un sitemap-index.xml qui les référence, un sitemap News optionnel et un robots.txt personnalisable.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Sitemaps annuels + index, robots.txt, feuilles XSL",
+  },
   sections: {
     general: "Général",
     robots: "robots.txt",
@@ -106,6 +114,10 @@ export const de: typeof en = {
   title: "Sitemaps",
   description:
     "Erzeugt sitemap-<Jahr>.xml-Dateien, eine sitemap-index.xml, die darauf verweist, eine optionale News-Sitemap und eine anpassbare robots.txt.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Jährliche + Index-Sitemaps, robots.txt, XSL-Stylesheets",
+  },
   sections: {
     general: "Allgemein",
     robots: "robots.txt",
@@ -155,6 +167,10 @@ export const es: typeof en = {
   title: "Sitemaps",
   description:
     "Genera archivos sitemap-<año>.xml, un sitemap-index.xml que los referencia, un sitemap de News opcional y un robots.txt personalizable.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Sitemaps anuales + índice, robots.txt, hojas XSL",
+  },
   sections: {
     general: "General",
     robots: "robots.txt",
@@ -204,6 +220,10 @@ export const nl: typeof en = {
   title: "Sitemaps",
   description:
     "Genereert sitemap-<jaar>.xml-bestanden, een sitemap-index.xml die ze referencet, een optionele News-sitemap en een aanpasbare robots.txt.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Jaarlijkse + index-sitemaps, robots.txt, XSL-stylesheets",
+  },
   sections: {
     general: "Algemeen",
     robots: "robots.txt",
@@ -253,6 +273,10 @@ export const pt: typeof en = {
   title: "Sitemaps",
   description:
     "Gera ficheiros sitemap-<ano>.xml, um sitemap-index.xml que os referencia, um sitemap News opcional e um robots.txt personalizável.",
+  regenerationTarget: {
+    label: "Sitemaps",
+    description: "Sitemaps anuais + índice, robots.txt, folhas XSL",
+  },
   sections: {
     general: "Geral",
     robots: "robots.txt",
@@ -302,6 +326,10 @@ export const ko: typeof en = {
   title: "사이트맵",
   description:
     "sitemap-<연도>.xml 파일, 이를 참조하는 sitemap-index.xml, 선택적 News 사이트맵 및 사용자 정의 가능한 robots.txt를 생성합니다.",
+  regenerationTarget: {
+    label: "사이트맵",
+    description: "연도별 + 인덱스 사이트맵, robots.txt, XSL 스타일시트",
+  },
   sections: {
     general: "일반",
     robots: "robots.txt",

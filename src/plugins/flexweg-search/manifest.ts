@@ -9,7 +9,7 @@ import {
   SEARCH_RUNTIME_PATH,
   type SearchConfig,
 } from "./config";
-import { ensureRuntime, regenerateIndex } from "./generator";
+import { ensureRuntime, regenerateAll, regenerateIndex } from "./generator";
 import { FlexwegSearchSettingsPage } from "./SettingsPage";
 import type { PluginManifest } from "../index";
 import readme from "./README.md?raw";
@@ -94,6 +94,36 @@ export const manifest: PluginManifest<SearchConfig> = {
       void props;
       const tag = `<script src="/${SEARCH_RUNTIME_PATH}" defer></script>`;
       return [current, tag].filter(Boolean).join("");
+    });
+
+    // Themes ▸ Regenerate ▾ entry. Force-regenerate both the runtime
+    // (`/search.js`) and the index (`/search-index.json`) regardless
+    // of hash state — useful after switching `settings.language` or
+    // when the user suspects the public site is stale.
+    api.registerRegenerationTarget({
+      id: PLUGIN_ID,
+      labelKey: "regenerationTarget.label",
+      descriptionKey: "regenerationTarget.description",
+      priority: 220,
+      run: async (ctx, log) => {
+        if (!ctx.settings.baseUrl) {
+          log({ level: "warn", message: "[flexweg-search] skipped — site URL not set." });
+          return;
+        }
+        const config = readConfig(ctx.settings);
+        log({ level: "info", message: "Regenerating search runtime + index…" });
+        const result = await regenerateAll({
+          posts: ctx.posts,
+          pages: ctx.pages,
+          terms: ctx.terms,
+          settings: ctx.settings,
+          config,
+        });
+        if (JSON.stringify(result.nextConfig) !== JSON.stringify(config)) {
+          await updatePluginConfig(PLUGIN_ID, result.nextConfig);
+        }
+        log({ level: "success", message: "Search: runtime + index uploaded." });
+      },
     });
   },
 };

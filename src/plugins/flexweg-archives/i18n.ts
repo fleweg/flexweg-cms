@@ -13,6 +13,10 @@ export const en = {
   title: "Archives",
   description:
     "Generates static archive pages grouped by year (and optionally by month or ISO week) and adds a 'See full archives' link to home and category listings — a static-friendly alternative to pagination.",
+  regenerationTarget: {
+    label: "Archives",
+    description: "Wipe and rebuild every period page + the /archives/ index",
+  },
 
   // ─── Admin / settings page ─────────────────────────────────────
   settings: {
@@ -80,6 +84,10 @@ export const fr: typeof en = {
   title: "Archives",
   description:
     "Génère des pages d'archives statiques groupées par année (et optionnellement par mois ou semaine ISO) et ajoute un lien « Voir toutes les archives » sur la home et les listings de catégorie — alternative compatible static à la pagination.",
+  regenerationTarget: {
+    label: "Archives",
+    description: "Vide et reconstruit toutes les pages période + l'index /archives/",
+  },
   settings: {
     drillDown: "Sous-groupement",
     drillDownHelp: "Sous-groupement à l'intérieur de chaque année. L'année est toujours le niveau racine.",
@@ -143,6 +151,10 @@ export const de: typeof en = {
   title: "Archive",
   description:
     'Erzeugt statische Archivseiten gruppiert nach Jahr (und optional nach Monat oder ISO-Woche) und fügt einen Link „Alle Archive ansehen" auf der Startseite und in Kategorie-Listings hinzu — eine static-freundliche Alternative zur Paginierung.',
+  regenerationTarget: {
+    label: "Archive",
+    description: "Löscht und erstellt jede Periodenseite + den /archives/-Index neu",
+  },
   settings: {
     drillDown: "Untergliederung",
     drillDownHelp: "Untergruppierung innerhalb jedes Jahres. Jahre sind immer die oberste Ebene.",
@@ -206,6 +218,10 @@ export const es: typeof en = {
   title: "Archivos",
   description:
     "Genera páginas de archivo estáticas agrupadas por año (y opcionalmente por mes o semana ISO) y añade un enlace «Ver archivo completo» en la home y en los listados de categoría — una alternativa compatible con hosting estático a la paginación.",
+  regenerationTarget: {
+    label: "Archivos",
+    description: "Borra y reconstruye cada página de período + el índice /archives/",
+  },
   settings: {
     drillDown: "Subagrupación",
     drillDownHelp: "Subagrupación dentro de cada año. El año es siempre el nivel superior.",
@@ -269,6 +285,10 @@ export const nl: typeof en = {
   title: "Archief",
   description:
     "Genereert statische archiefpagina's gegroepeerd per jaar (en optioneel per maand of ISO-week) en voegt een link 'Volledige archief bekijken' toe aan de homepagina en categorie-overzichten — een static-vriendelijk alternatief voor paginatie.",
+  regenerationTarget: {
+    label: "Archief",
+    description: "Wist en bouwt elke periodepagina + de /archives/-index opnieuw",
+  },
   settings: {
     drillDown: "Sub-groepering",
     drillDownHelp: "Subgroepering binnen elk jaar. Jaren zijn altijd het hoogste niveau.",
@@ -332,6 +352,10 @@ export const pt: typeof en = {
   title: "Arquivos",
   description:
     "Gera páginas de arquivo estáticas agrupadas por ano (e opcionalmente por mês ou semana ISO) e adiciona um link «Ver arquivo completo» na página inicial e nas listagens de categoria — uma alternativa compatível com alojamento estático à paginação.",
+  regenerationTarget: {
+    label: "Arquivos",
+    description: "Limpa e reconstrói cada página de período + o índice /archives/",
+  },
   settings: {
     drillDown: "Subagrupamento",
     drillDownHelp: "Subagrupamento dentro de cada ano. O ano é sempre o nível superior.",
@@ -395,6 +419,10 @@ export const ko: typeof en = {
   title: "아카이브",
   description:
     "연도별로 그룹화된 정적 아카이브 페이지를 생성하며 (선택적으로 월 또는 ISO 주별로 세분화) 홈과 카테고리 목록에 '전체 아카이브 보기' 링크를 추가합니다 — 페이지네이션의 정적 호스팅 친화적 대안입니다.",
+  regenerationTarget: {
+    label: "아카이브",
+    description: "모든 기간별 페이지 + /archives/ 인덱스를 지우고 다시 빌드",
+  },
   settings: {
     drillDown: "세부 분류",
     drillDownHelp: "각 연도 내의 하위 그룹화. 연도는 항상 최상위 레벨입니다.",

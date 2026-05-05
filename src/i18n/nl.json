@@ -257,7 +257,22 @@
     "activate": "Activeren",
     "syncAssets": "Thema-bestanden synchroniseren",
     "regenerateSite": "Site opnieuw genereren",
-    "regenerating": "Opnieuw genereren…"
+    "regenerating": "Opnieuw genereren…",
+    "regenerate": {
+      "button": "Opnieuw genereren",
+      "running": "Bezig…",
+      "groupBuiltins": "Site",
+      "groupPlugins": "Plugins",
+      "home": "Alleen homepage",
+      "homeHelp": "Genereert alleen index.html opnieuw — snelste optie.",
+      "allHtml": "Alle HTML-pagina's",
+      "allHtmlHelp": "Elke post, pagina, archief en lijst — plus menu / posts / authors JSON-snapshots.",
+      "assets": "Thema-bestanden",
+      "assetsHelp": "Uploadt CSS + bijbehorende scripts van het actieve thema naar /theme-assets/.",
+      "everything": "Alles",
+      "everythingHelp": "Thema-bestanden + alle HTML + elke plugin-uitvoer. Langzaamste optie.",
+      "noPluginTargets": "Geen plugin-regeneraties — activeer een plugin die regenereren ondersteunt."
+    }
   },
   "plugins": {
     "title": "Plugins",

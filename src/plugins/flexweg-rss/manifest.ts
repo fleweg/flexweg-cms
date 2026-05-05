@@ -9,10 +9,13 @@ import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   categoryFeedPath,
   DEFAULT_RSS_CONFIG,
+  regenerateAllFeeds,
   regenerateForPost,
+  regenerateStylesheet,
   SITE_RSS_PATH,
   type RssConfig,
 } from "./generator";
+import { publishMenuJson } from "../../services/menuPublisher";
 import { FlexwegRssSettingsPage } from "./SettingsPage";
 import type { PluginManifest } from "../index";
 import readme from "./README.md?raw";
@@ -143,6 +146,55 @@ export const manifest: PluginManifest<RssConfig> = {
       const ctx = rest[0] as MenuFilterContext | undefined;
       if (!ctx) return menu;
       return appendFeedFooterItems(menu, ctx);
+    });
+
+    // Themes ▸ Regenerate ▾ entry. Mirrors the SettingsPage's Force
+    // regenerate button: re-uploads the XSL stylesheet, every feed
+    // (site + per-category), then refreshes /menu.json so the footer
+    // reflects the latest paths.
+    api.registerRegenerationTarget({
+      id: PLUGIN_ID,
+      labelKey: "regenerationTarget.label",
+      descriptionKey: "regenerationTarget.description",
+      priority: 210,
+      run: async (ctx, log) => {
+        if (!ctx.settings.baseUrl) {
+          log({ level: "warn", message: "[flexweg-rss] skipped — site URL not set." });
+          return;
+        }
+        const config = readConfig(ctx.settings);
+        log({ level: "info", message: "Regenerating RSS stylesheet…" });
+        await regenerateStylesheet({ settings: ctx.settings });
+        log({ level: "info", message: "Regenerating RSS feeds…" });
+        const out = await regenerateAllFeeds({
+          posts: ctx.posts,
+          terms: ctx.terms,
+          media: ctx.media,
+          settings: ctx.settings,
+          config,
+        });
+        // Persist regenerator's bookkeeping mutations
+        // (lastPublishedPath updates, dropped category feeds when
+        // terms were deleted).
+        if (JSON.stringify(out.nextConfig) !== JSON.stringify(config)) {
+          await updatePluginConfig(PLUGIN_ID, out.nextConfig);
+        }
+        // Refresh menu.json with the post-regen config so footer
+        // items reference the correct paths.
+        try {
+          const patchedSettings = {
+            ...ctx.settings,
+            pluginConfigs: { ...ctx.settings.pluginConfigs, [PLUGIN_ID]: out.nextConfig },
+          };
+          await publishMenuJson(patchedSettings, ctx.posts, ctx.pages, ctx.terms);
+        } catch (err) {
+          log({ level: "warn", message: `menu.json republish failed: ${(err as Error).message}` });
+        }
+        log({
+          level: "success",
+          message: `RSS: ${out.result.uploaded.length + 1} file(s) uploaded.`,
+        });
+      },
     });
   },
 };

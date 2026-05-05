@@ -257,7 +257,22 @@
     "activate": "Aktivieren",
     "syncAssets": "Theme-Assets synchronisieren",
     "regenerateSite": "Website neu generieren",
-    "regenerating": "Generiert neu…"
+    "regenerating": "Generiert neu…",
+    "regenerate": {
+      "button": "Neu generieren",
+      "running": "Wird ausgeführt…",
+      "groupBuiltins": "Website",
+      "groupPlugins": "Plugins",
+      "home": "Nur Startseite",
+      "homeHelp": "Generiert nur index.html neu — schnellste Option.",
+      "allHtml": "Alle HTML-Seiten",
+      "allHtmlHelp": "Alle Beiträge, Seiten, Archive und Listen — plus Menu / Posts / Authors JSON-Snapshots.",
+      "assets": "Theme-Assets",
+      "assetsHelp": "Lädt CSS + Begleit-Skripte des aktiven Themes nach /theme-assets/ hoch.",
+      "everything": "Alles",
+      "everythingHelp": "Theme-Assets + alle HTML + jede Plugin-Ausgabe. Langsamste Option.",
+      "noPluginTargets": "Keine Plugin-Neugenerierungen — aktivieren Sie ein Plugin, das Neugenerieren unterstützt."
+    }
   },
   "plugins": {
     "title": "Plugins",

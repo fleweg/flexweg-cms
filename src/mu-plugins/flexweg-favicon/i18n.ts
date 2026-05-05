@@ -6,6 +6,10 @@ export const en = {
   title: "Favicons",
   description:
     "Upload one square image and the plugin generates every favicon variant (PNG, ICO, Apple touch, PWA manifest) and uploads them under /favicon/ on your public site. <link> tags are injected into every published page's <head>.",
+  regenerationTarget: {
+    label: "PWA manifest",
+    description: "Re-upload site.webmanifest only (icons require a new source image)",
+  },
   upload: {
     title: "Source image",
     help:
@@ -63,6 +67,10 @@ export const fr: typeof en = {
   title: "Favicons",
   description:
     "Téléversez une image carrée et le plugin génère toutes les variantes (PNG, ICO, Apple touch, manifest PWA) puis les pousse dans /favicon/ sur votre site public. Les balises <link> sont injectées dans le <head> de chaque page publiée.",
+  regenerationTarget: {
+    label: "Manifest PWA",
+    description: "Re-uploade site.webmanifest seulement (les icônes requièrent une nouvelle image source)",
+  },
   upload: {
     title: "Image source",
     help:
@@ -120,6 +128,10 @@ export const de: typeof en = {
   title: "Favicons",
   description:
     "Laden Sie ein quadratisches Bild hoch und das Plugin erzeugt jede Favicon-Variante (PNG, ICO, Apple Touch, PWA-Manifest) und lädt sie unter /favicon/ auf Ihre öffentliche Website hoch. <link>-Tags werden in den <head> jeder veröffentlichten Seite eingefügt.",
+  regenerationTarget: {
+    label: "PWA-Manifest",
+    description: "Lädt nur site.webmanifest neu hoch (Icons benötigen ein neues Quellbild)",
+  },
   upload: {
     title: "Quellbild",
     help:
@@ -177,6 +189,10 @@ export const es: typeof en = {
   title: "Favicons",
   description:
     "Sube una imagen cuadrada y el plugin genera todas las variantes (PNG, ICO, Apple touch, manifest PWA) y las sube a /favicon/ en tu sitio público. Las etiquetas <link> se inyectan en el <head> de cada página publicada.",
+  regenerationTarget: {
+    label: "Manifest PWA",
+    description: "Vuelve a subir solo site.webmanifest (los iconos requieren una nueva imagen fuente)",
+  },
   upload: {
     title: "Imagen fuente",
     help:
@@ -234,6 +250,10 @@ export const nl: typeof en = {
   title: "Favicons",
   description:
     "Upload een vierkante afbeelding en de plugin genereert elke favicon-variant (PNG, ICO, Apple touch, PWA-manifest) en uploadt ze naar /favicon/ op je publieke site. <link>-tags worden in de <head> van elke gepubliceerde pagina geplaatst.",
+  regenerationTarget: {
+    label: "PWA-manifest",
+    description: "Upload alleen site.webmanifest opnieuw (iconen vereisen een nieuwe bronafbeelding)",
+  },
   upload: {
     title: "Bronafbeelding",
     help:
@@ -291,6 +311,10 @@ export const pt: typeof en = {
   title: "Favicons",
   description:
     "Carrega uma imagem quadrada e o plugin gera todas as variantes (PNG, ICO, Apple touch, manifest PWA) e envia-as para /favicon/ no teu site público. As tags <link> são inseridas no <head> de cada página publicada.",
+  regenerationTarget: {
+    label: "Manifest PWA",
+    description: "Reenvia apenas site.webmanifest (os ícones requerem uma nova imagem fonte)",
+  },
   upload: {
     title: "Imagem fonte",
     help:
@@ -348,6 +372,10 @@ export const ko: typeof en = {
   title: "파비콘",
   description:
     "정사각형 이미지를 업로드하면 플러그인이 모든 파비콘 변형(PNG, ICO, Apple touch, PWA 매니페스트)을 생성하여 공개 사이트의 /favicon/ 아래에 업로드합니다. <link> 태그는 게시된 모든 페이지의 <head>에 삽입됩니다.",
+  regenerationTarget: {
+    label: "PWA 매니페스트",
+    description: "site.webmanifest만 다시 업로드 (아이콘은 새 원본 이미지가 필요함)",
+  },
   upload: {
     title: "원본 이미지",
     help:

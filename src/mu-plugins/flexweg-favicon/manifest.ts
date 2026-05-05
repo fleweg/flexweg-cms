@@ -2,6 +2,7 @@ import type { PluginManifest } from "../../plugins";
 import type { BaseLayoutProps } from "../../themes/types";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import { DEFAULT_FAVICON_CONFIG, FaviconSettingsPage, type FaviconConfig } from "./SettingsPage";
+import { regenerateManifest } from "./generator";
 import readme from "./README.md?raw";
 
 const PLUGIN_ID = "flexweg-favicon";
@@ -87,6 +88,48 @@ export const manifest: PluginManifest<FaviconConfig> = {
       const tags = buildHeadTags(config);
       if (!tags) return current;
       return [current, tags].filter(Boolean).join("\n");
+    });
+
+    // Themes ▸ Regenerate ▾ entry — re-uploads the PWA manifest only.
+    // The PNG/ICO/SVG icons require the user-uploaded source image
+    // which we don't store, so we can't fully regenerate them here.
+    // Re-uploading just the manifest covers the common case where
+    // the user changes theme-color / display / name in the favicon
+    // settings page and wants to push the manifest without touching
+    // the source.
+    api.registerRegenerationTarget({
+      id: PLUGIN_ID,
+      labelKey: "regenerationTarget.label",
+      descriptionKey: "regenerationTarget.description",
+      priority: 240,
+      run: async (ctx, log) => {
+        const stored = ctx.settings.pluginConfigs?.[PLUGIN_ID] as
+          | Partial<FaviconConfig>
+          | undefined;
+        const config: FaviconConfig = { ...DEFAULT_FAVICON_CONFIG, ...(stored ?? {}) };
+        if (!config.hasManifest && !config.enabled) {
+          log({
+            level: "warn",
+            message: "[flexweg-favicon] skipped — no favicons uploaded yet.",
+          });
+          return;
+        }
+        const resolvedName = config.pwaName || ctx.settings.title || "";
+        const resolvedShortName =
+          config.pwaShortName ||
+          (resolvedName.length <= 12 ? resolvedName : resolvedName.slice(0, 12));
+        log({ level: "info", message: "Regenerating PWA manifest…" });
+        await regenerateManifest({
+          pwa: {
+            name: resolvedName,
+            shortName: resolvedShortName,
+            themeColor: config.pwaThemeColor,
+            backgroundColor: config.pwaBackgroundColor,
+            display: config.pwaDisplay,
+          },
+        });
+        log({ level: "success", message: "Favicon: site.webmanifest uploaded." });
+      },
     });
   },
 };

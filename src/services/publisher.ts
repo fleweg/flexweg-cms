@@ -798,6 +798,19 @@ export async function regenerateListings(ctx: PublishContext, log: PublishLogger
   }
 }
 
+// Publishes ONLY the home page — no category archives, no JSON
+// snapshots, no posts. Surfaces the cheapest "I touched the home"
+// regeneration entry for the Themes ▸ Regenerate ▾ dropdown.
+export async function regenerateHomeOnly(
+  ctx: PublishContext,
+  log: PublishLogger,
+): Promise<void> {
+  log({ level: "info", message: "Regenerating home page…" });
+  const homeHtml = await renderHome(ctx);
+  await uploadIfChanged(HOME_PATH, homeHtml, undefined, log);
+  log({ level: "success", message: "Home page regenerated." });
+}
+
 // Re-publish the dynamic /menu.json blob the public-side burger loader
 // reads. Called as a tail-step of every publish/unpublish/delete so menu
 // items stay in sync with post slugs / category slugs even though we

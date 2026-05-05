@@ -7,6 +7,10 @@ export const en = {
   title: "RSS feeds",
   description:
     "Generates an RSS 2.0 feed at /rss.xml plus optional per-category feeds. Each feed can be added to the site footer.",
+  regenerationTarget: {
+    label: "RSS feeds",
+    description: "Site feed + per-category feeds + XSL stylesheet + footer menu refresh",
+  },
   sections: {
     site: "Site feed",
     categoryFeeds: "Category feeds",
@@ -59,6 +63,10 @@ export const fr: typeof en = {
   title: "Flux RSS",
   description:
     "Génère un flux RSS 2.0 à /rss.xml ainsi que des flux par catégorie optionnels. Chaque flux peut être ajouté au pied de page du site.",
+  regenerationTarget: {
+    label: "Flux RSS",
+    description: "Flux site + flux par catégorie + feuille XSL + rafraîchissement du menu pied de page",
+  },
   sections: {
     site: "Flux du site",
     categoryFeeds: "Flux par catégorie",
@@ -110,6 +118,10 @@ export const de: typeof en = {
   title: "RSS-Feeds",
   description:
     "Erzeugt einen RSS-2.0-Feed unter /rss.xml sowie optionale Feeds pro Kategorie. Jeder Feed kann zur Fußzeile der Website hinzugefügt werden.",
+  regenerationTarget: {
+    label: "RSS-Feeds",
+    description: "Site-Feed + Kategorie-Feeds + XSL-Stylesheet + Footer-Menü-Refresh",
+  },
   sections: {
     site: "Website-Feed",
     categoryFeeds: "Kategorie-Feeds",
@@ -161,6 +173,10 @@ export const es: typeof en = {
   title: "Feeds RSS",
   description:
     "Genera un feed RSS 2.0 en /rss.xml más feeds opcionales por categoría. Cada feed se puede añadir al pie del sitio.",
+  regenerationTarget: {
+    label: "Feeds RSS",
+    description: "Feed del sitio + feeds por categoría + hoja XSL + actualización del menú del pie",
+  },
   sections: {
     site: "Feed del sitio",
     categoryFeeds: "Feeds de categoría",
@@ -212,6 +228,10 @@ export const nl: typeof en = {
   title: "RSS-feeds",
   description:
     "Genereert een RSS 2.0-feed op /rss.xml plus optionele feeds per categorie. Elke feed kan aan de footer van de site worden toegevoegd.",
+  regenerationTarget: {
+    label: "RSS-feeds",
+    description: "Site-feed + categorie-feeds + XSL-stylesheet + footermenu-vernieuwing",
+  },
   sections: {
     site: "Site-feed",
     categoryFeeds: "Categoriefeeds",
@@ -263,6 +283,10 @@ export const pt: typeof en = {
   title: "Feeds RSS",
   description:
     "Gera um feed RSS 2.0 em /rss.xml mais feeds opcionais por categoria. Cada feed pode ser adicionado ao rodapé do site.",
+  regenerationTarget: {
+    label: "Feeds RSS",
+    description: "Feed do site + feeds por categoria + folha XSL + atualização do menu do rodapé",
+  },
   sections: {
     site: "Feed do site",
     categoryFeeds: "Feeds de categoria",
@@ -314,6 +338,10 @@ export const ko: typeof en = {
   title: "RSS 피드",
   description:
     "/rss.xml에 RSS 2.0 피드와 선택적 카테고리별 피드를 생성합니다. 각 피드는 사이트 푸터에 추가할 수 있습니다.",
+  regenerationTarget: {
+    label: "RSS 피드",
+    description: "사이트 피드 + 카테고리별 피드 + XSL 스타일시트 + 푸터 메뉴 새로고침",
+  },
   sections: {
     site: "사이트 피드",
     categoryFeeds: "카테고리 피드",

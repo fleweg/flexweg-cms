@@ -128,12 +128,17 @@ export function listHooks(): { filters: string[]; actions: string[] } {
 // inspector's Block tab. See core/blockRegistry.ts for the manifest shape.
 import { registerBlock as registerBlockImpl } from "./blockRegistry";
 import { registerDashboardCard as registerDashboardCardImpl } from "./dashboardCardRegistry";
+import { registerRegenerationTarget as registerRegenerationTargetImpl } from "./regenerationTargetRegistry";
 
 export interface PluginApi {
   addFilter: typeof addFilter;
   addAction: typeof addAction;
   registerBlock: typeof registerBlockImpl;
   registerDashboardCard: typeof registerDashboardCardImpl;
+  // Surfaces a "Force regenerate" entry for this plugin in the
+  // unified Regenerate ▾ dropdown on the Themes page. The runner
+  // owns its own bookkeeping persistence.
+  registerRegenerationTarget: typeof registerRegenerationTargetImpl;
 }
 
 export const pluginApi: PluginApi = {
@@ -141,4 +146,5 @@ export const pluginApi: PluginApi = {
   addAction,
   registerBlock: registerBlockImpl,
   registerDashboardCard: registerDashboardCardImpl,
+  registerRegenerationTarget: registerRegenerationTargetImpl,
 };

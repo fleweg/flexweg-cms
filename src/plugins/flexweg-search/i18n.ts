@@ -13,6 +13,10 @@ export const en = {
   title: "Search",
   description:
     "Builds a public search-index.json over your posts (and optionally pages) and ships a runtime that opens a search modal anywhere a [data-cms-search] trigger appears in your theme.",
+  regenerationTarget: {
+    label: "Search index",
+    description: "Force-rebuild /search-index.json + /search.js runtime",
+  },
   tabs: {
     index: "Index",
     behavior: "Behavior",
@@ -68,6 +72,10 @@ export const fr: typeof en = {
   title: "Recherche",
   description:
     "Génère un fichier search-index.json public à partir de vos articles (et optionnellement pages) et installe un runtime qui ouvre une modale de recherche partout où un déclencheur [data-cms-search] est présent dans votre thème.",
+  regenerationTarget: {
+    label: "Index de recherche",
+    description: "Reconstruit /search-index.json + le runtime /search.js",
+  },
   tabs: {
     index: "Index",
     behavior: "Comportement",
@@ -121,6 +129,10 @@ export const de: typeof en = {
   title: "Suche",
   description:
     "Erstellt eine öffentliche search-index.json über Ihre Beiträge (und optional Seiten) und liefert eine Laufzeit, die ein Suchfenster überall dort öffnet, wo ein [data-cms-search]-Trigger im Theme vorhanden ist.",
+  regenerationTarget: {
+    label: "Suchindex",
+    description: "/search-index.json + /search.js erzwungen neu erzeugen",
+  },
   tabs: {
     index: "Index",
     behavior: "Verhalten",
@@ -175,6 +187,10 @@ export const es: typeof en = {
   title: "Búsqueda",
   description:
     "Genera un archivo público search-index.json sobre tus artículos (y opcionalmente páginas) y entrega un runtime que abre una modal de búsqueda en cualquier disparador [data-cms-search] presente en tu tema.",
+  regenerationTarget: {
+    label: "Índice de búsqueda",
+    description: "Reconstruye /search-index.json + el runtime /search.js",
+  },
   tabs: {
     index: "Índice",
     behavior: "Comportamiento",
@@ -229,6 +245,10 @@ export const nl: typeof en = {
   title: "Zoeken",
   description:
     "Bouwt een openbare search-index.json over je berichten (en optioneel pagina's) en levert een runtime die een zoekvenster opent overal waar een [data-cms-search]-trigger in je thema staat.",
+  regenerationTarget: {
+    label: "Zoekindex",
+    description: "Bouwt /search-index.json + de /search.js runtime opnieuw",
+  },
   tabs: {
     index: "Index",
     behavior: "Gedrag",
@@ -283,6 +303,10 @@ export const pt: typeof en = {
   title: "Pesquisa",
   description:
     "Gera um arquivo público search-index.json sobre seus posts (e opcionalmente páginas) e entrega um runtime que abre um modal de pesquisa em qualquer gatilho [data-cms-search] do seu tema.",
+  regenerationTarget: {
+    label: "Índice de pesquisa",
+    description: "Reconstrói /search-index.json + o runtime /search.js",
+  },
   tabs: {
     index: "Índice",
     behavior: "Comportamento",
@@ -338,6 +362,10 @@ export const ko: typeof en = {
   title: "검색",
   description:
     "게시물(선택적으로 페이지 포함)에 대한 공개 search-index.json을 빌드하고 테마의 [data-cms-search] 트리거가 있는 곳에서 검색 모달을 여는 런타임을 제공합니다.",
+  regenerationTarget: {
+    label: "검색 인덱스",
+    description: "/search-index.json + /search.js 런타임 강제 재빌드",
+  },
   tabs: {
     index: "인덱스",
     behavior: "동작",

@@ -5,6 +5,9 @@ import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   DEFAULT_SITEMAPS_CONFIG,
   regenerateForPost,
+  regenerateRobotsTxt,
+  regenerateSitemaps,
+  regenerateStylesheets,
   type SitemapsConfig,
 } from "./generator";
 import { SitemapsSettingsPage } from "./SettingsPage";
@@ -72,6 +75,41 @@ export const manifest: PluginManifest<SitemapsConfig> = {
     });
     api.addAction("post.deleted", async (postRaw, ctxRaw) => {
       await regenerate(postRaw as Post, ctxRaw as PublishContext);
+    });
+
+    // Themes ▸ Regenerate ▾ entry. Mirrors the SettingsPage's Force
+    // regenerate button: re-uploads XSL stylesheets, every yearly
+    // sitemap (+ index, + News if enabled), and robots.txt. Driven
+    // by whatever config is currently persisted (no draft state —
+    // ThemesPage doesn't surface plugin config edit UI).
+    api.registerRegenerationTarget({
+      id: "flexweg-sitemaps",
+      labelKey: "regenerationTarget.label",
+      descriptionKey: "regenerationTarget.description",
+      priority: 200,
+      run: async (ctx, log) => {
+        if (!ctx.settings.baseUrl) {
+          log({ level: "warn", message: "[flexweg-sitemaps] skipped — site URL not set." });
+          return;
+        }
+        const config = readConfig(ctx);
+        log({ level: "info", message: "Regenerating sitemap stylesheets…" });
+        const xslResult = await regenerateStylesheets({ settings: ctx.settings, config });
+        log({ level: "info", message: "Regenerating sitemaps…" });
+        const sitemapResult = await regenerateSitemaps({
+          posts: ctx.posts,
+          pages: ctx.pages,
+          terms: ctx.terms,
+          settings: ctx.settings,
+          config,
+        });
+        log({ level: "info", message: "Regenerating robots.txt…" });
+        await regenerateRobotsTxt({ config, baseUrl: ctx.settings.baseUrl });
+        log({
+          level: "success",
+          message: `Sitemaps: ${xslResult.uploaded.length + sitemapResult.uploaded.length + 1} file(s) uploaded.`,
+        });
+      },
     });
   },
 };

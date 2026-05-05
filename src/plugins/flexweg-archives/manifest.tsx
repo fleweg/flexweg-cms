@@ -5,6 +5,7 @@ import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   type ArchivesConfig,
   DEFAULT_ARCHIVES_CONFIG,
+  forceRegenerate,
   PLUGIN_ID,
   regenerateForPost,
 } from "./generator";
@@ -58,6 +59,29 @@ export const manifest: PluginManifest<ArchivesConfig> = {
     });
     api.addAction("post.deleted", async (postRaw, ctxRaw) => {
       await regenerate(postRaw as Post, ctxRaw as PublishContext);
+    });
+
+    // Themes ▸ Regenerate ▾ entry. Wipes /archives/ and rebuilds
+    // every period page + the index. Same payload as the SettingsPage's
+    // Force regenerate button — minus the SettingsPage draft state.
+    api.registerRegenerationTarget({
+      id: PLUGIN_ID,
+      labelKey: "regenerationTarget.label",
+      descriptionKey: "regenerationTarget.description",
+      priority: 230,
+      run: async (ctx, log) => {
+        log({ level: "info", message: "Regenerating archive pages…" });
+        const result = await forceRegenerate({
+          posts: ctx.posts,
+          pages: ctx.pages,
+          terms: ctx.terms,
+          settings: ctx.settings,
+        });
+        log({
+          level: "success",
+          message: `Archives: ${result.uploaded.length} uploaded, ${result.deleted.length} removed.`,
+        });
+      },
     });
   },
 };

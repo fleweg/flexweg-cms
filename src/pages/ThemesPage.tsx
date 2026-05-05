@@ -1,14 +1,73 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PublishLog } from "../components/publishing/PublishLog";
+import { Dropdown, type DropdownItem, type DropdownSection } from "../components/ui/Dropdown";
 import { useCmsData } from "../context/CmsDataContext";
 import { listThemes } from "../themes";
+import type { ThemeManifest } from "../themes/types";
 import { updateSettings } from "../services/settings";
 import { uploadFile } from "../services/flexwegApi";
-import { buildPublishContext, regenerateAll, type PublishLogEntry } from "../services/publisher";
+import {
+  buildPublishContext,
+  regenerateAll,
+  regenerateHomeOnly,
+  type PublishContext,
+  type PublishLogEntry,
+  type PublishLogger,
+} from "../services/publisher";
 import { buildAuthorLookup } from "../services/users";
+import {
+  listRegenerationTargets,
+  subscribeRegenerationTargets,
+  type RegenerationTarget,
+} from "../core/regenerationTargetRegistry";
+
+// Pure helper — uploads the active theme's CSS (with `compileCss`
+// hook) plus any companion JS scripts to /theme-assets/. Extracted so
+// both the standalone "Sync theme assets" button and the dropdown's
+// "Theme assets" entry call into the same logic.
+async function syncThemeAssets(
+  themes: ThemeManifest[],
+  themeConfigs: Record<string, unknown> | undefined,
+  log: PublishLogger,
+): Promise<void> {
+  for (const theme of themes) {
+    if (!theme.cssText) {
+      log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
+    } else {
+      const cssPath = `theme-assets/${theme.id}.css`;
+      let cssContent = theme.cssText;
+      if (theme.compileCss && theme.settings) {
+        const stored = themeConfigs?.[theme.id];
+        const resolvedConfig = {
+          ...(theme.settings.defaultConfig as object),
+          ...((stored as object) ?? {}),
+        };
+        try {
+          cssContent = theme.compileCss(resolvedConfig);
+        } catch (err) {
+          console.error(`[themes] compileCss for "${theme.id}" failed:`, err);
+        }
+      }
+      log({ level: "info", message: `Uploading ${cssPath}…` });
+      await uploadFile({ path: cssPath, content: cssContent });
+    }
+    if (theme.jsText) {
+      const jsPath = `theme-assets/${theme.id}-menu.js`;
+      log({ level: "info", message: `Uploading ${jsPath}…` });
+      await uploadFile({ path: jsPath, content: theme.jsText });
+    }
+    if (theme.jsTextPosts) {
+      const jsPath = `theme-assets/${theme.id}-posts.js`;
+      log({ level: "info", message: `Uploading ${jsPath}…` });
+      await uploadFile({ path: jsPath, content: theme.jsTextPosts });
+    }
+  }
+  log({ level: "success", message: "Theme assets synced." });
+}
 
 export function ThemesPage() {
   const { t } = useTranslation();
@@ -17,69 +76,32 @@ export function ThemesPage() {
   const [logEntries, setLogEntries] = useState<PublishLogEntry[]>([]);
   const themes = listThemes();
 
+  // Subscribe to the plugin regeneration target registry — the
+  // dropdown entries change when plugins toggle on/off, so a
+  // one-shot read at mount would miss late registrations.
+  const [pluginTargets, setPluginTargets] = useState<RegenerationTarget[]>(
+    () => listRegenerationTargets(),
+  );
+  useEffect(() => {
+    return subscribeRegenerationTargets(() => {
+      setPluginTargets(listRegenerationTargets());
+    });
+  }, []);
+
   async function handleActivate(themeId: string) {
     if (themeId === settings.activeThemeId) return;
     await updateSettings({ activeThemeId: themeId });
   }
 
-  // Pushes every theme's compiled CSS to Flexweg's public root at
-  // /theme-assets/<id>.css. The CSS bytes come from the manifest's `cssText`
-  // (embedded at build time via Vite `?inline`), so this always uploads the
-  // version that was built alongside the currently deployed admin SPA — no
-  // dependency on the public /theme-assets/ folder being uploaded first.
-  async function handleSyncAssets() {
+  // Helper that wraps a regen runner with the standard busy/log flow.
+  // All dropdown items go through this so success / failure UX is
+  // consistent.
+  async function runWithLog(work: (log: PublishLogger) => Promise<void>) {
     setBusy(true);
     setLogEntries([]);
-    const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
+    const log: PublishLogger = (entry) => setLogEntries((prev) => [...prev, entry]);
     try {
-      for (const theme of themes) {
-        if (!theme.cssText) {
-          log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
-        } else {
-          const cssPath = `theme-assets/${theme.id}.css`;
-          // When the theme exposes a `compileCss` hook (e.g. the
-          // default theme bakes the user's Style overrides into the
-          // CSS), call it with the merged config. Skipping this would
-          // wipe customizations on every Sync — the bundled cssText
-          // is the *baseline*, not the live state.
-          let cssContent = theme.cssText;
-          if (theme.compileCss && theme.settings) {
-            const stored = (settings.themeConfigs as Record<string, unknown> | undefined)?.[
-              theme.id
-            ];
-            const resolvedConfig = {
-              ...(theme.settings.defaultConfig as object),
-              ...((stored as object) ?? {}),
-            };
-            try {
-              cssContent = theme.compileCss(resolvedConfig);
-            } catch (err) {
-              console.error(`[themes] compileCss for "${theme.id}" failed:`, err);
-              // Fall back to the baseline so the sync still pushes
-              // *something* coherent rather than aborting entirely.
-            }
-          }
-          log({ level: "info", message: `Uploading ${cssPath}…` });
-          await uploadFile({ path: cssPath, content: cssContent });
-        }
-        // Optional companion JS files — themes that opted in get their
-        // loaders pushed alongside the CSS at the same /theme-assets/
-        // root. We support two slots: -menu.js (header / burger) and
-        // -posts.js (sidebar widgets fed by /posts.json). Themes that
-        // don't ship one or both simply leave the corresponding
-        // manifest field undefined.
-        if (theme.jsText) {
-          const jsPath = `theme-assets/${theme.id}-menu.js`;
-          log({ level: "info", message: `Uploading ${jsPath}…` });
-          await uploadFile({ path: jsPath, content: theme.jsText });
-        }
-        if (theme.jsTextPosts) {
-          const jsPath = `theme-assets/${theme.id}-posts.js`;
-          log({ level: "info", message: `Uploading ${jsPath}…` });
-          await uploadFile({ path: jsPath, content: theme.jsTextPosts });
-        }
-      }
-      log({ level: "success", message: "Theme assets synced." });
+      await work(log);
     } catch (err) {
       log({ level: "error", message: (err as Error).message });
     } finally {
@@ -87,24 +109,128 @@ export function ThemesPage() {
     }
   }
 
-  async function handleRegenerate() {
-    setBusy(true);
-    setLogEntries([]);
-    const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
-    try {
-      const ctx = await buildPublishContext({
-        terms,
-        settings,
-        users,
-        authorLookup: buildAuthorLookup(users, media),
-      });
-      await regenerateAll(ctx, log);
-    } catch (err) {
-      log({ level: "error", message: (err as Error).message });
-    } finally {
-      setBusy(false);
-    }
+  // Resolves a plugin target's labelKey / descriptionKey against the
+  // plugin's own i18n namespace. Falls back to the raw key when the
+  // bundle is missing (e.g. plugin disabled before label was loaded).
+  function pluginLabel(target: RegenerationTarget, key: string | undefined): string {
+    if (!key) return "";
+    const resolved = i18n.t(key, { ns: target.id });
+    return resolved === key ? "" : resolved;
   }
+
+  async function buildCtx(): Promise<PublishContext> {
+    return buildPublishContext({
+      terms,
+      settings,
+      users,
+      authorLookup: buildAuthorLookup(users, media),
+    });
+  }
+
+  // Standalone "Sync theme assets" button — kept as a top-level
+  // primary action (frequent enough to warrant direct access) AND
+  // duplicated as a dropdown entry for consistency with the other
+  // regeneration targets.
+  async function handleSyncAssets() {
+    await runWithLog(async (log) => {
+      await syncThemeAssets(themes, settings.themeConfigs, log);
+    });
+  }
+
+  // Dropdown sections — built from the static built-in targets plus
+  // whatever plugins have registered. Each item resolves into the
+  // same `runWithLog` helper so the busy state + log reset is shared.
+  const sections: DropdownSection[] = useMemo(() => {
+    const builtins: DropdownItem[] = [
+      {
+        id: "home",
+        label: t("themes.regenerate.home"),
+        description: t("themes.regenerate.homeHelp"),
+        onSelect: () =>
+          runWithLog(async (log) => {
+            const ctx = await buildCtx();
+            await regenerateHomeOnly(ctx, log);
+          }),
+      },
+      {
+        id: "allHtml",
+        label: t("themes.regenerate.allHtml"),
+        description: t("themes.regenerate.allHtmlHelp"),
+        onSelect: () =>
+          runWithLog(async (log) => {
+            const ctx = await buildCtx();
+            await regenerateAll(ctx, log);
+          }),
+      },
+      {
+        id: "assets",
+        label: t("themes.regenerate.assets"),
+        description: t("themes.regenerate.assetsHelp"),
+        onSelect: () =>
+          runWithLog(async (log) => {
+            await syncThemeAssets(themes, settings.themeConfigs, log);
+          }),
+      },
+    ];
+
+    const pluginItems: DropdownItem[] = pluginTargets.map((target) => ({
+      id: target.id,
+      label: pluginLabel(target, target.labelKey) || target.id,
+      description: pluginLabel(target, target.descriptionKey) || undefined,
+      onSelect: () =>
+        runWithLog(async (log) => {
+          const ctx = await buildCtx();
+          await target.run(ctx, log);
+        }),
+    }));
+
+    const everything: DropdownItem = {
+      id: "everything",
+      label: t("themes.regenerate.everything"),
+      description: t("themes.regenerate.everythingHelp"),
+      onSelect: () =>
+        runWithLog(async (log) => {
+          // Sequential: theme assets first (so any newly published
+          // HTML can reference a fresh CSS), then full HTML pass,
+          // then every plugin in priority order.
+          await syncThemeAssets(themes, settings.themeConfigs, log);
+          const ctx = await buildCtx();
+          await regenerateAll(ctx, log);
+          for (const target of pluginTargets) {
+            try {
+              await target.run(ctx, log);
+            } catch (err) {
+              log({
+                level: "error",
+                message: `Plugin "${target.id}" regen failed: ${(err as Error).message}`,
+              });
+            }
+          }
+          log({ level: "success", message: "Everything regenerated." });
+        }),
+    };
+
+    const out: DropdownSection[] = [
+      {
+        id: "site",
+        label: t("themes.regenerate.groupBuiltins"),
+        items: builtins,
+      },
+    ];
+    if (pluginItems.length > 0) {
+      out.push({
+        id: "plugins",
+        label: t("themes.regenerate.groupPlugins"),
+        items: pluginItems,
+      });
+    }
+    out.push({
+      id: "everything",
+      items: [everything],
+    });
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t() identity is stable per render; settings.themeConfigs is the actual data dep
+  }, [pluginTargets, settings.themeConfigs, t]);
 
   return (
     <div className="p-4 md:p-6 space-y-4">
@@ -116,10 +242,16 @@ export function ThemesPage() {
               <RefreshCw className="h-4 w-4" />
               {t("themes.syncAssets")}
             </button>
-            <button type="button" className="btn-primary" onClick={handleRegenerate} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {busy ? t("themes.regenerating") : t("themes.regenerateSite")}
-            </button>
+            <Dropdown
+              triggerLabel={
+                <>
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  {busy ? t("themes.regenerate.running") : t("themes.regenerate.button")}
+                </>
+              }
+              disabled={busy}
+              sections={sections}
+            />
           </>
         }
       />

@@ -257,7 +257,22 @@
     "activate": "Activar",
     "syncAssets": "Sincronizar recursos del tema",
     "regenerateSite": "Regenerar el sitio",
-    "regenerating": "Regenerando…"
+    "regenerating": "Regenerando…",
+    "regenerate": {
+      "button": "Regenerar",
+      "running": "Ejecutando…",
+      "groupBuiltins": "Sitio",
+      "groupPlugins": "Plugins",
+      "home": "Solo página de inicio",
+      "homeHelp": "Regenera solo index.html — la opción más rápida.",
+      "allHtml": "Todas las páginas HTML",
+      "allHtmlHelp": "Cada entrada, página, archivo y listado — además de los snapshots menu / posts / authors JSON.",
+      "assets": "Recursos del tema",
+      "assetsHelp": "Sube el CSS y los scripts del tema activo a /theme-assets/.",
+      "everything": "Todo",
+      "everythingHelp": "Recursos del tema + todo HTML + cada salida de plugin. Opción más lenta.",
+      "noPluginTargets": "Sin regeneraciones de plugin — activa un plugin que soporte regenerar."
+    }
   },
   "plugins": {
     "title": "Plugins",
