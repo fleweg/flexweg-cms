@@ -424,6 +424,63 @@
     "adminEmailMessage": ".env에 VITE_ADMIN_EMAIL이 누락되었습니다. 부트스트랩 관리자의 이메일로 설정하세요.",
     "consoleHint": "브라우저 콘솔과 .env 설정을 확인하세요. 설정 방법은 README를 참조하세요."
   },
+  "setup": {
+    "title": "Flexweg CMS에 오신 것을 환영합니다",
+    "subtitle": "최초 설정",
+    "intro": "Firebase 자격 증명, 부트스트랩 관리자 계정, Flexweg API 키를 입력하세요. 값은 검증된 후 프로젝트에 저장되며(Firestore + Flexweg의 config.js 파일) 관리자가 일반 로그인 흐름으로 다시 로드됩니다. 한 번만 수행하면 됩니다.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "부트스트랩 관리자",
+      "flexweg": "Flexweg API"
+    },
+    "help": {
+      "firebase": "이 값은 Firebase 콘솔 → 프로젝트 설정 → 일반 → 내 앱 → SDK 설정 및 구성에서 찾을 수 있습니다.",
+      "admin": "Firebase Authentication의 기존 사용자를 사용하세요. 이 이메일로 로그인하는 사람은 관리자로 처리되며 사용자 레코드가 필요하지 않습니다. 사용자가 없으면 Firebase 콘솔 → Authentication에서 만드세요.",
+      "flexweg": "Flexweg 계정 → API에서 영구 API 키를 생성하세요. 사이트 URL은 Flexweg 사이트의 공개 주소입니다(예: https://your-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "API 키",
+      "authDomain": "인증 도메인",
+      "projectId": "프로젝트 ID",
+      "storageBucket": "스토리지 버킷",
+      "messagingSenderId": "메시징 발신자 ID",
+      "appId": "앱 ID",
+      "adminEmail": "이메일",
+      "adminPassword": "비밀번호",
+      "flexwegApiKey": "API 키",
+      "flexwegSiteUrl": "사이트 URL",
+      "flexwegApiBaseUrl": "API 기본 URL"
+    },
+    "submit": "저장하고 계속",
+    "submitting": "설정 중…",
+    "success": "설정 완료. 새로고침 중…",
+    "footer": "이 값은 프로젝트(Firestore + Flexweg)에 저장됩니다. 다른 곳으로 전송되지 않습니다.",
+    "steps": {
+      "signInFirebase": "Firebase에 로그인 중…",
+      "testFlexweg": "Flexweg API 테스트 중…",
+      "writeFirestore": "구성 저장 중…",
+      "uploadConfig": "config.js를 Flexweg에 업로드 중…"
+    },
+    "errors": {
+      "missingFields": "모든 필드를 입력해 주세요.",
+      "firebaseAuthGeneric": "Firebase 로그인에 실패했습니다.",
+      "firebaseAuthInvalidCredential": "Firebase 계정의 이메일 또는 비밀번호가 잘못되었습니다.",
+      "firebaseAuthUserNotFound": "이 이메일을 사용하는 Firebase 사용자가 없습니다. 먼저 Firebase 콘솔 → Authentication → Users에서 만드세요.",
+      "firebaseAuthInvalidEmail": "관리자 이메일이 유효한 주소가 아닙니다.",
+      "firebaseInvalidApiKey": "Firebase API 키가 잘못되었습니다. Firebase 콘솔에서 값을 다시 확인하세요.",
+      "firebaseNetwork": "Firebase 로그인 중 네트워크 오류가 발생했습니다. 연결을 확인하세요.",
+      "firebaseTooManyRequests": "로그인 시도가 너무 많습니다. 잠시 후 다시 시도하거나 Firebase 콘솔에서 비밀번호를 재설정하세요.",
+      "wrongAdminEmail": "로그인한 Firebase 계정이 입력한 관리자 이메일과 일치하지 않습니다. 다시 시도하세요.",
+      "flexwegAuth": "Flexweg API 키가 거부되었습니다. Flexweg 계정 → API에서 값을 확인하세요.",
+      "flexwegNetwork": "Flexweg에 연결하는 중 네트워크 오류가 발생했습니다. API 기본 URL과 연결을 확인하세요.",
+      "flexwegHttp": "Flexweg API 오류 ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "Firestore가 구성 쓰기를 거부했습니다.",
+      "firestoreRulesHint": "Firebase 콘솔 → Firestore → 규칙을 열고 부트스트랩 관리자 이메일이 '{{email}}'로 설정되어 있는지 확인하세요. README에 복사해서 붙여 넣을 수 있는 규칙 템플릿이 있습니다.",
+      "firestoreOther": "Firestore 쓰기 실패",
+      "uploadFailed": "config.js를 Flexweg에 업로드할 수 없습니다",
+      "generic": "문제가 발생했습니다."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "파일 업로드",

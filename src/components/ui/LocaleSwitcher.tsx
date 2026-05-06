@@ -1,13 +1,17 @@
 import { Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../context/AuthContext";
+import { useOptionalAuth } from "../../context/AuthContext";
 import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS } from "../../i18n";
 import { setUserPreferences } from "../../services/users";
 import type { AdminLocale } from "../../core/types";
 
 export function LocaleSwitcher() {
   const { i18n } = useTranslation();
-  const { user, record } = useAuth();
+  // Optional: SetupForm renders this component before AuthProvider is
+  // mounted (Firebase isn't configured yet). In that mode `auth` is null
+  // and we skip the Firestore persistence step — only localStorage is
+  // updated, which is fine because the user record doesn't exist yet.
+  const auth = useOptionalAuth();
   const current = (i18n.resolvedLanguage ?? i18n.language) as AdminLocale;
 
   async function handleChange(next: AdminLocale) {
@@ -15,8 +19,8 @@ export function LocaleSwitcher() {
     // Persist to Firestore so the choice follows the user across devices.
     // localStorage is updated synchronously inside setActiveLocale for snappy
     // reloads on the same device.
-    if (user && record) {
-      await setUserPreferences(user.uid, { adminLocale: next }).catch(() => {
+    if (auth?.user && auth.record) {
+      await setUserPreferences(auth.user.uid, { adminLocale: next }).catch(() => {
         // Non-fatal: localStorage already applied, the network failure will
         // resync next time the user changes language.
       });

@@ -67,6 +67,15 @@ flexweg-cms/
 
 ## Setup
 
+There are two ways to get the admin running. Pick whichever fits your workflow:
+
+- **Local build path** — clone the repo, fill `.env`, run `npm run build`, upload `dist/admin/` to Flexweg. Best when you're iterating on theme or plugin code.
+- **No-build path** — drop a pre-built `dist/admin/` on Flexweg, open `/admin/`, and fill the in-app **first-run setup form**. Best when handing the admin to a non-technical user — they don't need Node.js, npm, or a clone of the repo.
+
+Both paths converge on the same runtime: the form just writes a populated `/admin/config.js` to Flexweg so the next reload boots exactly like a build with `.env` baked in. The single command `npm run build` covers both — there is no separate "portable" build target.
+
+### Path A — Local build with `.env`
+
 1. Clone the repo and install dependencies:
 
    ```bash
@@ -98,6 +107,34 @@ flexweg-cms/
 
    - Site title, language (BCP-47, e.g. `en` or `fr-FR`), public site URL.
    - Flexweg API key + site URL. The API key is stored in `config/flexweg` in Firestore.
+
+### Path B — No-build deployment (in-app first-run setup)
+
+1. Run `npm run build` once on any machine that has Node.js — the resulting `dist/admin/` works on any Flexweg site, regardless of which Firebase project it ends up pointing at. (You can skip this step entirely if someone else has already produced the `dist/admin/` for you.)
+
+2. Upload `dist/admin/` to your Flexweg site under `/admin/`. The bundle ships with `/admin/config.js` set to a null stub.
+
+3. **Before** opening `/admin/`, configure Firestore security rules with the bootstrap admin email you'll use (see [Firestore security rules](#firestore-security-rules) below). The setup form needs to write to `config/flexweg` — without rules in place, the write fails and the form surfaces a clear "Firestore rejected the configuration write" message pointing back to this section.
+
+4. Create the bootstrap admin user from **Firebase Console → Authentication → Users → Add user** (email + password).
+
+5. Open `https://your-site.flexweg.com/admin/`. The admin renders a **first-run setup form** asking for:
+
+   - Firebase: API key, auth domain, project ID, storage bucket, messaging sender ID, app ID.
+   - Bootstrap administrator: email + password (the user from step 4).
+   - Flexweg: API key, site URL, API base URL.
+
+6. Click **Save & continue**. The form runs through five steps, surfacing errors inline at each one:
+
+   1. Sign in to Firebase with the entered credentials.
+   2. Verify the signed-in email matches the admin email.
+   3. Test the Flexweg API key (a HEAD-like ping on `/files/storage-limits`).
+   4. Write `config/flexweg` to Firestore.
+   5. Upload a populated `/admin/config.js` to Flexweg via the API.
+
+   On success the admin reloads. The freshly-uploaded `config.js` synchronously sets `window.__FLEXWEG_CONFIG__` before the bundle loads, the resolver picks the values up, and the admin boots into the normal sign-in flow. The setup form never shows again unless someone manually empties `config.js` on Flexweg.
+
+   Each failure mode has a specific error message: invalid Firebase credentials, mismatched admin email, rejected Flexweg API key, Firestore rules not yet configured (with the email to pin in the rules), and upload failure.
 
 ## Firestore security rules
 

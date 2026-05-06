@@ -424,6 +424,63 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL is missing in .env. Set it to the email of the bootstrap administrator.",
     "consoleHint": "Check the browser console and your .env configuration. See the README for setup instructions."
   },
+  "setup": {
+    "title": "Welcome to Flexweg CMS",
+    "subtitle": "First-time setup",
+    "intro": "Fill in your Firebase credentials, the bootstrap administrator account, and your Flexweg API key. The values are validated, written to your project (Firestore + a config.js file on Flexweg), and the admin reloads into the normal sign-in flow. You only do this once.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Bootstrap administrator",
+      "flexweg": "Flexweg API"
+    },
+    "help": {
+      "firebase": "Find these values in Firebase Console → Project settings → General → Your apps → SDK setup and configuration.",
+      "admin": "Use an existing user from Firebase Authentication. Anyone signing in with this email is treated as admin and bypasses the user-record check. Create the user via Firebase Console → Authentication if it doesn't exist yet.",
+      "flexweg": "Generate a permanent API key in your Flexweg account → API. The site URL is the public address of your Flexweg site (e.g. https://your-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "API key",
+      "authDomain": "Auth domain",
+      "projectId": "Project ID",
+      "storageBucket": "Storage bucket",
+      "messagingSenderId": "Messaging sender ID",
+      "appId": "App ID",
+      "adminEmail": "Email",
+      "adminPassword": "Password",
+      "flexwegApiKey": "API key",
+      "flexwegSiteUrl": "Site URL",
+      "flexwegApiBaseUrl": "API base URL"
+    },
+    "submit": "Save & continue",
+    "submitting": "Setting up…",
+    "success": "Setup complete. Reloading…",
+    "footer": "These values are saved on your project (Firestore + Flexweg). They are not sent anywhere else.",
+    "steps": {
+      "signInFirebase": "Signing in to Firebase…",
+      "testFlexweg": "Testing Flexweg API…",
+      "writeFirestore": "Saving configuration…",
+      "uploadConfig": "Uploading config.js to Flexweg…"
+    },
+    "errors": {
+      "missingFields": "Please fill every field.",
+      "firebaseAuthGeneric": "Could not sign in to Firebase.",
+      "firebaseAuthInvalidCredential": "Invalid email or password for the Firebase account.",
+      "firebaseAuthUserNotFound": "No Firebase user with this email. Create one in Firebase Console → Authentication → Users first.",
+      "firebaseAuthInvalidEmail": "The admin email is not a valid email address.",
+      "firebaseInvalidApiKey": "The Firebase API key is invalid. Double-check the value from Firebase Console.",
+      "firebaseNetwork": "Network error while signing in to Firebase. Check your connection.",
+      "firebaseTooManyRequests": "Too many sign-in attempts. Try again in a moment or reset the password from Firebase Console.",
+      "wrongAdminEmail": "The Firebase account you signed in with does not match the admin email you typed. Try again.",
+      "flexwegAuth": "Flexweg API key rejected. Check the value from your Flexweg account → API.",
+      "flexwegNetwork": "Network error while contacting Flexweg. Check the API base URL and your connection.",
+      "flexwegHttp": "Flexweg API error ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "Firestore rejected the configuration write.",
+      "firestoreRulesHint": "Open Firebase Console → Firestore → Rules and make sure the bootstrap admin email is set to '{{email}}'. The README has a copy-pastable rules template.",
+      "firestoreOther": "Firestore write failed",
+      "uploadFailed": "Could not upload config.js to Flexweg",
+      "generic": "Something went wrong."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "Uploading file",

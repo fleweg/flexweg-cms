@@ -424,6 +424,63 @@
     "adminEmailMessage": "Falta VITE_ADMIN_EMAIL en .env. Establécelo con el correo del administrador inicial.",
     "consoleHint": "Revisa la consola del navegador y tu configuración .env. Consulta el README para las instrucciones de configuración."
   },
+  "setup": {
+    "title": "Bienvenido a Flexweg CMS",
+    "subtitle": "Configuración inicial",
+    "intro": "Introduce tus credenciales de Firebase, la cuenta del administrador inicial y tu clave API de Flexweg. Los valores se validan, se guardan en tu proyecto (Firestore + un archivo config.js en Flexweg) y el admin recarga al flujo de inicio de sesión normal. Solo tienes que hacerlo una vez.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Administrador inicial",
+      "flexweg": "API de Flexweg"
+    },
+    "help": {
+      "firebase": "Encuentra estos valores en Firebase Console → Configuración del proyecto → General → Tus apps → Configuración del SDK.",
+      "admin": "Usa un usuario existente de Firebase Authentication. Cualquiera que inicie sesión con este correo es tratado como administrador y no necesita un registro de usuario. Crea el usuario en Firebase Console → Authentication si aún no existe.",
+      "flexweg": "Genera una clave API permanente en tu cuenta Flexweg → API. La URL del sitio es la dirección pública de tu sitio Flexweg (p. ej. https://tu-sitio.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "Clave API",
+      "authDomain": "Dominio de autenticación",
+      "projectId": "ID del proyecto",
+      "storageBucket": "Bucket de almacenamiento",
+      "messagingSenderId": "ID de remitente de mensajería",
+      "appId": "ID de la app",
+      "adminEmail": "Correo",
+      "adminPassword": "Contraseña",
+      "flexwegApiKey": "Clave API",
+      "flexwegSiteUrl": "URL del sitio",
+      "flexwegApiBaseUrl": "URL base de la API"
+    },
+    "submit": "Guardar y continuar",
+    "submitting": "Configurando…",
+    "success": "Configuración completada. Recargando…",
+    "footer": "Estos valores se guardan en tu proyecto (Firestore + Flexweg). No se envían a ningún otro sitio.",
+    "steps": {
+      "signInFirebase": "Iniciando sesión en Firebase…",
+      "testFlexweg": "Probando la API de Flexweg…",
+      "writeFirestore": "Guardando configuración…",
+      "uploadConfig": "Subiendo config.js a Flexweg…"
+    },
+    "errors": {
+      "missingFields": "Por favor, rellena todos los campos.",
+      "firebaseAuthGeneric": "No se pudo iniciar sesión en Firebase.",
+      "firebaseAuthInvalidCredential": "Correo o contraseña no válidos para la cuenta de Firebase.",
+      "firebaseAuthUserNotFound": "No existe un usuario de Firebase con este correo. Créalo primero en Firebase Console → Authentication → Users.",
+      "firebaseAuthInvalidEmail": "El correo del administrador no es una dirección válida.",
+      "firebaseInvalidApiKey": "La clave API de Firebase no es válida. Verifica el valor en Firebase Console.",
+      "firebaseNetwork": "Error de red al iniciar sesión en Firebase. Verifica tu conexión.",
+      "firebaseTooManyRequests": "Demasiados intentos de inicio de sesión. Inténtalo más tarde o restablece la contraseña desde Firebase Console.",
+      "wrongAdminEmail": "La cuenta de Firebase con la que iniciaste sesión no coincide con el correo de admin que has escrito. Inténtalo de nuevo.",
+      "flexwegAuth": "Clave API de Flexweg rechazada. Verifica el valor en tu cuenta Flexweg → API.",
+      "flexwegNetwork": "Error de red al contactar con Flexweg. Verifica la URL base de la API y tu conexión.",
+      "flexwegHttp": "Error de la API de Flexweg ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "Firestore rechazó la escritura de la configuración.",
+      "firestoreRulesHint": "Abre Firebase Console → Firestore → Reglas y comprueba que el correo de admin de bootstrap está fijado en '{{email}}'. El README incluye una plantilla de reglas lista para copiar.",
+      "firestoreOther": "Falló la escritura en Firestore",
+      "uploadFailed": "No se pudo subir config.js a Flexweg",
+      "generic": "Algo salió mal."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "Subiendo archivo",

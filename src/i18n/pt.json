@@ -424,6 +424,63 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL está em falta no .env. Define-o com o email do administrador inicial.",
     "consoleHint": "Verifica a consola do browser e a tua configuração .env. Consulta o README para instruções de configuração."
   },
+  "setup": {
+    "title": "Bem-vindo ao Flexweg CMS",
+    "subtitle": "Configuração inicial",
+    "intro": "Insere as tuas credenciais Firebase, a conta de administrador inicial e a tua chave API Flexweg. Os valores são validados, guardados no teu projeto (Firestore + um ficheiro config.js no Flexweg) e o admin recarrega no fluxo de início de sessão normal. Só fazes isto uma vez.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Administrador inicial",
+      "flexweg": "API Flexweg"
+    },
+    "help": {
+      "firebase": "Encontra estes valores em Firebase Console → Definições do projeto → Geral → As tuas apps → Configuração do SDK.",
+      "admin": "Usa um utilizador existente em Firebase Authentication. Quem inicie sessão com este email é tratado como administrador e não precisa de registo de utilizador. Cria o utilizador em Firebase Console → Authentication se ainda não existir.",
+      "flexweg": "Gera uma chave API permanente na tua conta Flexweg → API. O URL do site é o endereço público do teu site Flexweg (ex. https://o-teu-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "Chave API",
+      "authDomain": "Domínio de autenticação",
+      "projectId": "ID do projeto",
+      "storageBucket": "Bucket de armazenamento",
+      "messagingSenderId": "ID de remetente de mensagens",
+      "appId": "ID da app",
+      "adminEmail": "Email",
+      "adminPassword": "Palavra-passe",
+      "flexwegApiKey": "Chave API",
+      "flexwegSiteUrl": "URL do site",
+      "flexwegApiBaseUrl": "URL base da API"
+    },
+    "submit": "Guardar e continuar",
+    "submitting": "A configurar…",
+    "success": "Configuração concluída. A recarregar…",
+    "footer": "Estes valores são guardados no teu projeto (Firestore + Flexweg). Não são enviados para mais lado nenhum.",
+    "steps": {
+      "signInFirebase": "A iniciar sessão no Firebase…",
+      "testFlexweg": "A testar a API Flexweg…",
+      "writeFirestore": "A guardar a configuração…",
+      "uploadConfig": "A carregar config.js para o Flexweg…"
+    },
+    "errors": {
+      "missingFields": "Por favor, preenche todos os campos.",
+      "firebaseAuthGeneric": "Não foi possível iniciar sessão no Firebase.",
+      "firebaseAuthInvalidCredential": "Email ou palavra-passe inválidos para a conta Firebase.",
+      "firebaseAuthUserNotFound": "Não existe utilizador Firebase com este email. Cria um primeiro em Firebase Console → Authentication → Users.",
+      "firebaseAuthInvalidEmail": "O email do administrador não é um endereço válido.",
+      "firebaseInvalidApiKey": "A chave API do Firebase é inválida. Verifica o valor na Firebase Console.",
+      "firebaseNetwork": "Erro de rede ao iniciar sessão no Firebase. Verifica a tua ligação.",
+      "firebaseTooManyRequests": "Demasiadas tentativas de início de sessão. Tenta novamente mais tarde ou redefine a palavra-passe via Firebase Console.",
+      "wrongAdminEmail": "A conta Firebase com que iniciaste sessão não corresponde ao email de admin que escreveste. Tenta novamente.",
+      "flexwegAuth": "Chave API Flexweg rejeitada. Verifica o valor na tua conta Flexweg → API.",
+      "flexwegNetwork": "Erro de rede ao contactar o Flexweg. Verifica o URL base da API e a tua ligação.",
+      "flexwegHttp": "Erro da API Flexweg ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "O Firestore rejeitou a escrita da configuração.",
+      "firestoreRulesHint": "Abre Firebase Console → Firestore → Regras e confirma que o email de admin de bootstrap está definido como '{{email}}'. O README inclui um modelo de regras pronto a copiar.",
+      "firestoreOther": "Falha ao escrever no Firestore",
+      "uploadFailed": "Não foi possível carregar config.js para o Flexweg",
+      "generic": "Algo correu mal."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "A carregar ficheiro",

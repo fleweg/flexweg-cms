@@ -13,9 +13,31 @@ npx vitest run src/core/slug.test.ts    # Run a single test file
 npm run build        # Vite build → dist/admin/, then compiles each theme's SCSS into dist/theme-assets/<id>.css
 ```
 
-`.env` is required (copy `.env.example`); without `VITE_FIREBASE_*` and `VITE_ADMIN_EMAIL` the admin renders a configuration error screen instead of mounting.
+`.env` is **optional**: the admin can also be configured at runtime through the in-app first-run **SetupForm** (see "Runtime config & first-run setup" below). If the developer has `VITE_FIREBASE_*` + `VITE_ADMIN_EMAIL` filled in `.env`, Vite bakes them into the bundle and the SetupForm never shows. If `.env` is empty (typical for a fresh `dist/admin/` dropped on Flexweg by a non-developer), the admin renders the SetupForm on first load and writes a populated `/admin/config.js` to Flexweg on success.
 
 `npm install` requires `--legacy-peer-deps` because `react-i18next` declares an optional peer on TypeScript 5 while this project pins TypeScript 6 (matches the `kanban` sibling project). The peer is optional, the install is safe.
+
+## Runtime config & first-run setup
+
+The admin reads its Firebase config + admin email through one resolver that converges two sources of truth:
+
+1. **`window.__FLEXWEG_CONFIG__`** — set synchronously by `/admin/config.js` (loaded via a plain `<script>` in `index.html` *before* the main bundle). The bundled `public/config.js` ships as `window.__FLEXWEG_CONFIG__ = null;` — the SetupForm rewrites it on Flexweg with real values once the user fills the form.
+2. **`import.meta.env.VITE_FIREBASE_*`** — Vite-injected from `.env` at build time (or served live during `npm run dev`).
+
+`src/lib/runtimeConfig.ts.getRuntimeConfig()` checks (1), then (2), and caches the result. `src/services/firebase.ts` reads exclusively through this resolver — no direct `import.meta.env` access remains. `App.tsx` short-circuits to `<SetupForm />` (skipping `<AuthProvider>` etc.) when the resolver returns `null`.
+
+The SetupForm flow ([src/pages/SetupForm.tsx](src/pages/SetupForm.tsx)):
+
+1. **Init Firebase + sign in** — `initFirebaseFromSetup` from `firebase.ts` initialises the SDK with the form's values *and* sets `window.__FLEXWEG_CONFIG__` so the resolver stays consistent for the rest of the session. Then `signInWithEmailAndPassword` validates Firebase config + admin credentials in one go.
+2. **Verify admin email** — checks `auth.currentUser.email === form.adminEmail` to catch typos.
+3. **Test Flexweg API** — `testFlexwegConnection` in [src/lib/setupApi.ts](src/lib/setupApi.ts) hits `/files/storage-limits` directly (bypassing the standard `flexwegApi.ts` because that one resolves credentials from Firestore, which doesn't yet have them).
+4. **Write `config/flexweg`** to Firestore. `permission-denied` here surfaces a specific error pointing to the Firestore-rules section of the README with the admin email pinned in.
+5. **Upload populated `config.js`** via `uploadConfigJs` (also in `setupApi.ts`). The serialised content comes from `buildConfigJsSource(config)` in `runtimeConfig.ts`.
+6. Force a `window.location.reload()` so the next boot fetches the freshly-uploaded `config.js` from Flexweg, the resolver picks up the values, and the admin boots through the normal authenticated path. The SetupForm never shows again.
+
+The setup helpers in `src/lib/setupApi.ts` are intentionally separate from `services/flexwegApi.ts`: the latter funnels through `requireConfig()` which reads from Firestore, and Firestore doesn't yet have the Flexweg config when SetupForm runs. Setup helpers accept the credentials as explicit arguments and call `fetch` directly. After setup completes and the admin reloads, every Flexweg call goes through `flexwegApi.ts` again — `setupApi.ts` is dormant for the lifetime of the deployment.
+
+A single `npm run build` covers both deployment paths — there is no portable / non-portable distinction. `public/config.js` is copied verbatim into `dist/admin/config.js` by Vite's static-assets pipeline. Developers with `.env` filled never see the SetupForm because `import.meta.env` resolution wins; deployers without `.env` see it on first load and convert their bundle to a fully-configured one with one form submission.
 
 ## What this app actually is
 

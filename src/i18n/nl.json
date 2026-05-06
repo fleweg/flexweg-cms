@@ -424,6 +424,63 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL ontbreekt in .env. Stel deze in op het e-mailadres van de bootstrap-beheerder.",
     "consoleHint": "Controleer de browserconsole en je .env-configuratie. Zie de README voor instellingsinstructies."
   },
+  "setup": {
+    "title": "Welkom bij Flexweg CMS",
+    "subtitle": "Eerste configuratie",
+    "intro": "Vul je Firebase-gegevens in, het bootstrap-beheerderaccount en je Flexweg-API-sleutel. De waarden worden gevalideerd, opgeslagen in je project (Firestore + een config.js-bestand op Flexweg) en de admin laadt opnieuw met het normale aanmeldproces. Je doet dit slechts één keer.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Bootstrap-beheerder",
+      "flexweg": "Flexweg-API"
+    },
+    "help": {
+      "firebase": "Vind deze waarden in Firebase Console → Projectinstellingen → Algemeen → Je apps → SDK-installatie en configuratie.",
+      "admin": "Gebruik een bestaande gebruiker uit Firebase Authentication. Iedereen die aanmeldt met dit e-mailadres wordt als beheerder behandeld en heeft geen gebruikersrecord nodig. Maak de gebruiker via Firebase Console → Authentication als deze nog niet bestaat.",
+      "flexweg": "Genereer een permanente API-sleutel in je Flexweg-account → API. De site-URL is het publieke adres van je Flexweg-site (bijv. https://jouw-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "API-sleutel",
+      "authDomain": "Auth-domein",
+      "projectId": "Project-ID",
+      "storageBucket": "Storage-bucket",
+      "messagingSenderId": "Messaging-afzender-ID",
+      "appId": "App-ID",
+      "adminEmail": "E-mail",
+      "adminPassword": "Wachtwoord",
+      "flexwegApiKey": "API-sleutel",
+      "flexwegSiteUrl": "Site-URL",
+      "flexwegApiBaseUrl": "API-basis-URL"
+    },
+    "submit": "Opslaan en doorgaan",
+    "submitting": "Bezig met instellen…",
+    "success": "Configuratie voltooid. Herladen…",
+    "footer": "Deze waarden worden opgeslagen in je project (Firestore + Flexweg). Ze worden nergens anders heen gestuurd.",
+    "steps": {
+      "signInFirebase": "Aanmelden bij Firebase…",
+      "testFlexweg": "Flexweg-API testen…",
+      "writeFirestore": "Configuratie opslaan…",
+      "uploadConfig": "config.js uploaden naar Flexweg…"
+    },
+    "errors": {
+      "missingFields": "Vul alle velden in.",
+      "firebaseAuthGeneric": "Aanmelden bij Firebase mislukt.",
+      "firebaseAuthInvalidCredential": "Ongeldig e-mailadres of wachtwoord voor het Firebase-account.",
+      "firebaseAuthUserNotFound": "Geen Firebase-gebruiker met dit e-mailadres. Maak er eerst een aan in Firebase Console → Authentication → Users.",
+      "firebaseAuthInvalidEmail": "Het admin-e-mailadres is geen geldig e-mailadres.",
+      "firebaseInvalidApiKey": "De Firebase-API-sleutel is ongeldig. Controleer de waarde in Firebase Console.",
+      "firebaseNetwork": "Netwerkfout bij aanmelden bij Firebase. Controleer je verbinding.",
+      "firebaseTooManyRequests": "Te veel aanmeldpogingen. Probeer het later opnieuw of reset het wachtwoord via Firebase Console.",
+      "wrongAdminEmail": "Het Firebase-account waarmee je bent aangemeld komt niet overeen met het ingevoerde admin-e-mailadres. Probeer het opnieuw.",
+      "flexwegAuth": "Flexweg-API-sleutel geweigerd. Controleer de waarde in je Flexweg-account → API.",
+      "flexwegNetwork": "Netwerkfout bij contact met Flexweg. Controleer de API-basis-URL en je verbinding.",
+      "flexwegHttp": "Flexweg-API-fout ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "Firestore weigerde het schrijven van de configuratie.",
+      "firestoreRulesHint": "Open Firebase Console → Firestore → Regels en zorg dat het bootstrap-admin-e-mailadres is ingesteld op '{{email}}'. De README bevat een kant-en-klare regelsjabloon.",
+      "firestoreOther": "Schrijven naar Firestore mislukt",
+      "uploadFailed": "Kon config.js niet uploaden naar Flexweg",
+      "generic": "Er is iets misgegaan."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "Bestand uploaden",

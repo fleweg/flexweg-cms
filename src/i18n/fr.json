@@ -424,6 +424,63 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL est manquant dans .env. Renseignez l'email de l'administrateur initial.",
     "consoleHint": "Consultez la console du navigateur et votre .env. Voir le README pour la configuration."
   },
+  "setup": {
+    "title": "Bienvenue sur Flexweg CMS",
+    "subtitle": "Configuration initiale",
+    "intro": "Renseignez vos identifiants Firebase, le compte administrateur initial, et votre clé API Flexweg. Les valeurs sont validées, sauvegardées sur votre projet (Firestore + un fichier config.js sur Flexweg), puis l'admin recharge sur le flux de connexion habituel. Vous ne le faites qu'une seule fois.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Administrateur initial",
+      "flexweg": "API Flexweg"
+    },
+    "help": {
+      "firebase": "Retrouvez ces valeurs dans Firebase Console → Paramètres du projet → Général → Vos applications → Configuration du SDK.",
+      "admin": "Utilisez un utilisateur existant dans Firebase Authentication. Toute personne se connectant avec cet email est traitée comme administrateur et n'a pas besoin d'enregistrement utilisateur. Créez l'utilisateur via Firebase Console → Authentication s'il n'existe pas.",
+      "flexweg": "Générez une clé API permanente dans votre compte Flexweg → API. L'URL du site est l'adresse publique de votre site Flexweg (ex. https://votre-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "Clé API",
+      "authDomain": "Domaine d'authentification",
+      "projectId": "ID du projet",
+      "storageBucket": "Bucket de stockage",
+      "messagingSenderId": "ID expéditeur de messagerie",
+      "appId": "ID de l'application",
+      "adminEmail": "Email",
+      "adminPassword": "Mot de passe",
+      "flexwegApiKey": "Clé API",
+      "flexwegSiteUrl": "URL du site",
+      "flexwegApiBaseUrl": "URL de base de l'API"
+    },
+    "submit": "Enregistrer et continuer",
+    "submitting": "Configuration…",
+    "success": "Configuration terminée. Rechargement…",
+    "footer": "Ces valeurs sont enregistrées sur votre projet (Firestore + Flexweg). Elles ne sont envoyées nulle part ailleurs.",
+    "steps": {
+      "signInFirebase": "Connexion à Firebase…",
+      "testFlexweg": "Test de l'API Flexweg…",
+      "writeFirestore": "Sauvegarde de la configuration…",
+      "uploadConfig": "Upload de config.js sur Flexweg…"
+    },
+    "errors": {
+      "missingFields": "Veuillez remplir tous les champs.",
+      "firebaseAuthGeneric": "Impossible de se connecter à Firebase.",
+      "firebaseAuthInvalidCredential": "Email ou mot de passe invalide pour le compte Firebase.",
+      "firebaseAuthUserNotFound": "Aucun utilisateur Firebase avec cet email. Créez-le d'abord dans Firebase Console → Authentication → Users.",
+      "firebaseAuthInvalidEmail": "L'email administrateur n'est pas une adresse valide.",
+      "firebaseInvalidApiKey": "La clé API Firebase est invalide. Vérifiez la valeur dans Firebase Console.",
+      "firebaseNetwork": "Erreur réseau lors de la connexion à Firebase. Vérifiez votre connexion.",
+      "firebaseTooManyRequests": "Trop de tentatives de connexion. Réessayez dans un instant ou réinitialisez le mot de passe depuis Firebase Console.",
+      "wrongAdminEmail": "Le compte Firebase auquel vous vous êtes connecté ne correspond pas à l'email admin saisi. Réessayez.",
+      "flexwegAuth": "Clé API Flexweg refusée. Vérifiez la valeur dans votre compte Flexweg → API.",
+      "flexwegNetwork": "Erreur réseau lors du contact avec Flexweg. Vérifiez l'URL de base de l'API et votre connexion.",
+      "flexwegHttp": "Erreur API Flexweg ({{status}}) : {{detail}}",
+      "firestoreRulesTitle": "Firestore a refusé l'écriture de la configuration.",
+      "firestoreRulesHint": "Ouvrez Firebase Console → Firestore → Règles et vérifiez que l'email admin de bootstrap est bien '{{email}}'. Le README contient un modèle de règles à copier-coller.",
+      "firestoreOther": "Échec de l'écriture Firestore",
+      "uploadFailed": "Impossible d'uploader config.js sur Flexweg",
+      "generic": "Une erreur s'est produite."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "Upload du fichier",

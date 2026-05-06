@@ -25,7 +25,8 @@ import { PluginSettingsRoute } from "./pages/PluginSettingsRoute";
 import { SettingsLayout } from "./components/layout/SettingsLayout";
 import { ThemeSettingsRoute } from "./pages/ThemeSettingsRoute";
 import { UsersPage } from "./pages/UsersPage";
-import { getAdminEmail, getMissingFirebaseEnvVars } from "./services/firebase";
+import { SetupForm } from "./pages/SetupForm";
+import { getRuntimeConfig } from "./lib/runtimeConfig";
 
 interface BoundaryState {
   error: Error | null;
@@ -187,22 +188,18 @@ function AuthenticatedShell() {
 }
 
 export default function App() {
-  const { t } = useTranslation();
-  const missing = getMissingFirebaseEnvVars();
-  if (missing.length > 0) {
+  // No runtime config available means either:
+  //   - the bundle was built without a .env (portable deploy), and
+  //   - /admin/config.js on Flexweg still ships the null stub.
+  // Render the SetupForm in that case so the user can enter the values
+  // through the UI; the form uploads a populated config.js on success
+  // and reloads, after which this branch never fires.
+  if (!getRuntimeConfig()) {
     return (
-      <ErrorScreen
-        title={t("errors.firebaseNotConfigured")}
-        message={t("errors.firebaseEnvMissing", { vars: missing.join("\n") })}
-      />
-    );
-  }
-  if (!getAdminEmail()) {
-    return (
-      <ErrorScreen
-        title={t("errors.adminEmailNotConfigured")}
-        message={t("errors.adminEmailMessage")}
-      />
+      <ThemeProvider>
+        <SetupForm />
+        <ToastContainer />
+      </ThemeProvider>
     );
   }
 

@@ -21,6 +21,10 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Runtime config bootstrap — must load synchronously, before the main
+         bundle, so the Firebase resolver can read window.__FLEXWEG_CONFIG__
+         during module init. See public/config.js for details. -->
+    <script src="./config.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

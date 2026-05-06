@@ -99,3 +99,11 @@ export function useAuth(): AuthValue {
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }
+
+// Variant for components that may render before AuthProvider is mounted
+// — typically the first-run SetupForm tree, which renders before Firebase
+// is configured. Returns null when no provider is in scope so callers
+// can degrade gracefully instead of crashing.
+export function useOptionalAuth(): AuthValue | null {
+  return useContext(AuthContext);
+}

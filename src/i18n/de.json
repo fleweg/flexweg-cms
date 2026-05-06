@@ -424,6 +424,63 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL fehlt in .env. Setzen Sie sie auf die E-Mail-Adresse des Bootstrap-Administrators.",
     "consoleHint": "Überprüfen Sie die Browser-Konsole und Ihre .env-Konfiguration. Siehe README für Setup-Anweisungen."
   },
+  "setup": {
+    "title": "Willkommen bei Flexweg CMS",
+    "subtitle": "Erstkonfiguration",
+    "intro": "Geben Sie Ihre Firebase-Zugangsdaten, das Bootstrap-Administratorkonto und Ihren Flexweg-API-Schlüssel ein. Die Werte werden geprüft, in Ihrem Projekt gespeichert (Firestore + eine config.js-Datei auf Flexweg), und die Admin-Oberfläche lädt im normalen Anmeldeablauf neu. Sie machen das nur einmal.",
+    "sections": {
+      "firebase": "Firebase",
+      "admin": "Bootstrap-Administrator",
+      "flexweg": "Flexweg-API"
+    },
+    "help": {
+      "firebase": "Diese Werte finden Sie in Firebase Console → Projekteinstellungen → Allgemein → Ihre Apps → SDK-Setup und Konfiguration.",
+      "admin": "Verwenden Sie einen vorhandenen Benutzer aus Firebase Authentication. Wer sich mit dieser E-Mail anmeldet, wird als Administrator behandelt und benötigt keinen Benutzerdatensatz. Erstellen Sie den Benutzer bei Bedarf über Firebase Console → Authentication.",
+      "flexweg": "Erstellen Sie einen permanenten API-Schlüssel in Ihrem Flexweg-Konto → API. Die Site-URL ist die öffentliche Adresse Ihrer Flexweg-Site (z. B. https://ihre-site.flexweg.com)."
+    },
+    "fields": {
+      "apiKey": "API-Schlüssel",
+      "authDomain": "Auth-Domain",
+      "projectId": "Projekt-ID",
+      "storageBucket": "Storage-Bucket",
+      "messagingSenderId": "Messaging-Absender-ID",
+      "appId": "App-ID",
+      "adminEmail": "E-Mail",
+      "adminPassword": "Passwort",
+      "flexwegApiKey": "API-Schlüssel",
+      "flexwegSiteUrl": "Site-URL",
+      "flexwegApiBaseUrl": "API-Basis-URL"
+    },
+    "submit": "Speichern und fortfahren",
+    "submitting": "Konfiguration läuft…",
+    "success": "Setup abgeschlossen. Wird neu geladen…",
+    "footer": "Diese Werte werden in Ihrem Projekt gespeichert (Firestore + Flexweg). Sie werden nirgendwo anders gesendet.",
+    "steps": {
+      "signInFirebase": "Anmeldung bei Firebase…",
+      "testFlexweg": "Flexweg-API wird getestet…",
+      "writeFirestore": "Konfiguration wird gespeichert…",
+      "uploadConfig": "config.js wird zu Flexweg hochgeladen…"
+    },
+    "errors": {
+      "missingFields": "Bitte füllen Sie alle Felder aus.",
+      "firebaseAuthGeneric": "Anmeldung bei Firebase fehlgeschlagen.",
+      "firebaseAuthInvalidCredential": "Ungültige E-Mail oder ungültiges Passwort für das Firebase-Konto.",
+      "firebaseAuthUserNotFound": "Kein Firebase-Benutzer mit dieser E-Mail. Legen Sie zunächst einen in Firebase Console → Authentication → Users an.",
+      "firebaseAuthInvalidEmail": "Die Admin-E-Mail ist keine gültige E-Mail-Adresse.",
+      "firebaseInvalidApiKey": "Der Firebase-API-Schlüssel ist ungültig. Prüfen Sie den Wert in der Firebase Console.",
+      "firebaseNetwork": "Netzwerkfehler bei der Anmeldung bei Firebase. Prüfen Sie Ihre Verbindung.",
+      "firebaseTooManyRequests": "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut oder setzen Sie das Passwort über Firebase Console zurück.",
+      "wrongAdminEmail": "Das Firebase-Konto, mit dem Sie sich angemeldet haben, stimmt nicht mit der eingegebenen Admin-E-Mail überein. Bitte erneut versuchen.",
+      "flexwegAuth": "Flexweg-API-Schlüssel abgelehnt. Prüfen Sie den Wert in Ihrem Flexweg-Konto → API.",
+      "flexwegNetwork": "Netzwerkfehler beim Kontakt mit Flexweg. Prüfen Sie die API-Basis-URL und Ihre Verbindung.",
+      "flexwegHttp": "Flexweg-API-Fehler ({{status}}): {{detail}}",
+      "firestoreRulesTitle": "Firestore hat das Schreiben der Konfiguration abgelehnt.",
+      "firestoreRulesHint": "Öffnen Sie Firebase Console → Firestore → Regeln und stellen Sie sicher, dass die Bootstrap-Admin-E-Mail auf '{{email}}' gesetzt ist. Im README finden Sie eine kopierfertige Regelvorlage.",
+      "firestoreOther": "Firestore-Schreibvorgang fehlgeschlagen",
+      "uploadFailed": "config.js konnte nicht zu Flexweg hochgeladen werden",
+      "generic": "Etwas ist schiefgelaufen."
+    }
+  },
   "flexweg": {
     "actions": {
       "upload": "Datei wird hochgeladen",
