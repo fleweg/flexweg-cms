@@ -10,6 +10,7 @@
 
 import { manifest as defaultManifest } from "./default/manifest";
 import { manifest as magazineManifest } from "./magazine/manifest";
+import { manifest as corporateManifest } from "./corporate/manifest";
 import i18n from "../i18n";
 import { registerBlock } from "../core/blockRegistry";
 import { pluginApi } from "../core/pluginRegistry";
@@ -22,6 +23,7 @@ import type { ThemeManifest } from "./types";
 export const THEMES: ThemeManifest[] = [
   defaultManifest as ThemeManifest,
   magazineManifest as ThemeManifest,
+  corporateManifest as ThemeManifest,
 ];
 
 export function getTheme(id: string): ThemeManifest {

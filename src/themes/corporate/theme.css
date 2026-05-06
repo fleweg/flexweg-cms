@@ -1,0 +1,629 @@
+/*
+ * Corporate theme — Tailwind entry.
+ *
+ * Compiled to theme.compiled.css by scripts/build-theme-tailwind.mjs,
+ * then bundled into the admin via the manifest's
+ * `import cssText from "./theme.compiled.css?inline"` and written to
+ * dist/theme-assets/corporate.css by build-themes.mjs.
+ *
+ * The :root block defines the navy + indigo Material 3 baseline.
+ * Theme Settings → Style overrides these CSS variables at upload time
+ * via the manifest's compileCss(config) hook.
+ */
+
+/* Editable Google Fonts. compileCss() rewrites this single @import line
+   when the user picks a different sans family. Inter is the default —
+   the mockup is monotype Inter, and changing the font is a one-line
+   regen rather than an HTML republish. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* Material Symbols Outlined — used by the theme's icons. Hardcoded
+   second so the font-pair regex in compileCss never touches it. */
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Material 3 baseline — navy primary, indigo secondary, sky-blue
+       tertiary. RGB triplets so the Tailwind
+       `rgb(var(--color-X) / <alpha-value>)` formula keeps working
+       (alpha modifier syntax `bg-primary/50` etc.). */
+    --color-primary: 9 20 38;
+    --color-on-primary: 255 255 255;
+    --color-primary-container: 30 41 59;
+    --color-on-primary-container: 133 144 166;
+    --color-primary-fixed: 216 227 251;
+    --color-primary-fixed-dim: 188 199 222;
+    --color-on-primary-fixed: 17 28 45;
+    --color-on-primary-fixed-variant: 60 71 90;
+
+    --color-secondary: 75 65 225;
+    --color-on-secondary: 255 255 255;
+    --color-secondary-container: 100 94 251;
+    --color-on-secondary-container: 255 251 255;
+    --color-secondary-fixed: 226 223 255;
+    --color-secondary-fixed-dim: 195 192 255;
+
+    --color-tertiary: 0 22 36;
+    --color-on-tertiary: 255 255 255;
+    --color-tertiary-container: 0 44 66;
+    --color-on-tertiary-container: 0 153 217;
+    --color-tertiary-fixed: 201 230 255;
+    --color-tertiary-fixed-dim: 137 206 255;
+
+    --color-background: 247 249 251;
+    --color-surface: 247 249 251;
+    --color-surface-bright: 247 249 251;
+    --color-surface-container-lowest: 255 255 255;
+    --color-surface-container-low: 242 244 246;
+    --color-surface-container: 236 238 240;
+    --color-surface-container-high: 230 232 234;
+    --color-surface-container-highest: 224 227 229;
+    --color-on-surface: 25 28 30;
+    --color-on-surface-variant: 69 71 76;
+
+    --color-outline: 117 119 125;
+    --color-outline-variant: 197 198 205;
+
+    --color-error: 186 26 26;
+    --color-on-error: 255 255 255;
+
+    --font-sans: "Inter";
+  }
+
+  body {
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-surface));
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  /* ---------- Body prose ---------- */
+  /* Single-post body container. Wraps the rendered Markdown. The
+     primary type is body-lg (1.125rem / 1.75 line-height) — generous
+     for long-form reading per the DESIGN.md. */
+  .corporate-prose {
+    font-size: 1.125rem;
+    line-height: 1.75;
+    color: rgb(var(--color-on-surface-variant));
+  }
+  .corporate-prose > p { margin-bottom: 1.5rem; }
+  .corporate-prose > h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: rgb(var(--color-primary));
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .corporate-prose > h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgb(var(--color-primary));
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .corporate-prose > blockquote {
+    margin: 2rem 0;
+    border-left: 4px solid rgb(var(--color-secondary));
+    padding: 1rem 1.5rem;
+    font-style: italic;
+    color: rgb(var(--color-primary));
+    background: rgb(var(--color-surface-container-low));
+    border-radius: 0 0.5rem 0.5rem 0;
+  }
+  .corporate-prose > ul,
+  .corporate-prose > ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .corporate-prose > ul { list-style-type: disc; }
+  .corporate-prose > ol { list-style-type: decimal; }
+  .corporate-prose > ul > li,
+  .corporate-prose > ol > li { margin-bottom: 0.5rem; }
+  .corporate-prose img,
+  .corporate-prose figure img {
+    border-radius: 0.75rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
+  }
+  .corporate-prose a {
+    color: rgb(var(--color-secondary));
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .corporate-prose a:hover {
+    text-decoration-thickness: 2px;
+  }
+  .corporate-prose code {
+    background: rgb(var(--color-surface-container));
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.95em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .corporate-prose pre {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-primary));
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  .corporate-prose pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+  }
+
+  /* ---------- Scroll snap helpers ---------- */
+  /* Hides the native scrollbar on horizontal snap sliders (e.g. the
+     home's featured-posts track). Chevron buttons remain the only
+     navigation affordance — matches the mockup's clean look without
+     a scrollbar peeking under the cards. */
+  .corporate-no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .corporate-no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Featured-posts slide. flex-basis sized so exactly 3 cards fit on
+     md+ accounting for the 2 × 2rem gaps between them; full width on
+     mobile so each card snaps to a clean 1-card-per-page slider.
+     Tailwind's arbitrary `basis-[calc(...)]` choked on the nested
+     percentage maths in production builds — explicit CSS is more
+     reliable. */
+  .corporate-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+  @media (min-width: 768px) {
+    .corporate-slide {
+      flex: 0 0 calc((100% - 4rem) / 3);
+    }
+  }
+
+  /* ---------- Glass card ---------- */
+  /* Used by testimonials block and any "frosted" surface on
+     light backgrounds. Light backdrop-blur + soft border, identical
+     to the mockup. */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+  }
+
+  /* ---------- Off-canvas burger menu ---------- */
+  /* Wired up at runtime by menu-loader.js. Static markup ships an
+     empty container; the loader injects close button + backdrop and
+     toggles `.is-open`. Same lifecycle as magazine and default. */
+  .burger-toggle {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 0;
+  }
+  .burger-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(360px, 80vw);
+    background: rgb(var(--color-background));
+    border-right: 1px solid rgb(var(--color-outline-variant));
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 60;
+    padding: 4rem 1.5rem 1.5rem;
+    overflow-y: auto;
+  }
+  .burger-menu.is-open { transform: translateX(0); }
+  .burger-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .burger-menu a {
+    display: block;
+    padding: 0.625rem 0;
+    color: rgb(var(--color-on-surface));
+    font-size: 1.125rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .burger-menu a:hover { color: rgb(var(--color-secondary)); }
+  .burger-menu a[aria-current="page"] {
+    color: rgb(var(--color-secondary));
+    font-weight: 700;
+  }
+  .burger-menu .menu-children { margin-left: 1rem; margin-top: 0.25rem; }
+  .burger-menu .menu-children a { font-size: 1rem; font-weight: 400; }
+  .burger-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: 0;
+    color: rgb(var(--color-on-surface));
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  .burger-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 55;
+  }
+  .burger-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  body.burger-open { overflow: hidden; }
+
+  /* Material Symbols Outlined glyph normalization. The font face is
+     loaded by an `@import` at the top of this file. Vertical-align
+     keeps icons inline with surrounding text. */
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+
+  /* ---------- Floating-label form group ---------- */
+  /* Used by the contact-form block. The label sits inside the input
+     when empty and floats above it on focus / when filled. */
+  .floating-label-group {
+    position: relative;
+  }
+  .floating-label-group input,
+  .floating-label-group select,
+  .floating-label-group textarea {
+    background: rgb(var(--color-surface-container-lowest));
+  }
+  .floating-label-group label {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    color: rgb(var(--color-outline));
+    background: rgb(var(--color-surface-container-lowest));
+    padding: 0 0.25rem;
+  }
+  .floating-label-group input:focus ~ label,
+  .floating-label-group input:not(:placeholder-shown) ~ label,
+  .floating-label-group textarea:focus ~ label,
+  .floating-label-group textarea:not(:placeholder-shown) ~ label,
+  .floating-label-group.is-filled label {
+    top: -0.5rem;
+    left: 0.75rem;
+    font-size: 0.75rem;
+    color: rgb(var(--color-secondary));
+  }
+
+  /* ---------- Sidebar widgets (single-post sidebar) ---------- */
+  /* Populated at runtime by posts-loader.js, mirroring the magazine
+     and default theme conventions. The static HTML ships empty
+     containers; the loader fetches /data/posts.json + /data/authors.json
+     and writes inner DOM. The class names below match what the loader
+     emits and match the mockup. */
+
+  /* Author bio card */
+  .corporate-bio-card {
+    background: rgb(var(--color-surface-container-lowest));
+    border: 1px solid rgb(var(--color-outline-variant) / 0.4);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  }
+  .corporate-bio-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgb(var(--color-secondary));
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .corporate-bio-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .corporate-bio-avatar {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+  .corporate-bio-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: rgb(var(--color-primary));
+  }
+  .corporate-bio-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgb(var(--color-on-surface-variant));
+    text-transform: uppercase;
+  }
+  .corporate-bio-bio {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgb(var(--color-on-surface-variant));
+    margin-bottom: 1rem;
+  }
+  .corporate-bio-socials {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .corporate-bio-social {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    color: rgb(var(--color-on-surface-variant));
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+  .corporate-bio-social:hover {
+    color: rgb(var(--color-secondary));
+    background: rgb(var(--color-secondary-fixed));
+  }
+
+  /* Popular / related articles list */
+  .corporate-related-card {
+    background: rgb(var(--color-surface-container-lowest));
+    border: 1px solid rgb(var(--color-outline-variant) / 0.3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+  .corporate-related-heading {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgb(var(--color-primary));
+    margin-bottom: 1.5rem;
+  }
+  .corporate-related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .corporate-related-item {
+    display: block;
+    padding: 0.75rem 0;
+  }
+  .corporate-related-item + .corporate-related-item {
+    border-top: 1px solid rgb(var(--color-outline-variant) / 0.2);
+  }
+  .corporate-related-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgb(var(--color-secondary));
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+  }
+  .corporate-related-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgb(var(--color-primary));
+    transition: color 0.15s ease;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .corporate-related-item:hover .corporate-related-title {
+    color: rgb(var(--color-secondary));
+  }
+  .corporate-related-meta {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgb(var(--color-on-surface-variant));
+    margin-top: 0.25rem;
+  }
+
+  /* Sidebar CTA card (dark navy) */
+  .corporate-cta-card {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-primary));
+    border-radius: 0.75rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.2);
+  }
+  .corporate-cta-card::after {
+    content: "";
+    position: absolute;
+    bottom: -2.5rem;
+    right: -2.5rem;
+    width: 10rem;
+    height: 10rem;
+    background: rgb(var(--color-secondary));
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  /* ---------- Archives plugin styles ---------- */
+  /* The flexweg-archives plugin emits BEM-style classes outside this
+     theme's content scan, so the safelist regex above keeps the
+     matching @layer rules from being purged. Mirrors the default and
+     magazine themes for consistency, adapted to corporate tokens. */
+  .archives {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 2.5rem 0;
+  }
+  .archives__header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgb(var(--color-outline-variant) / 0.5);
+  }
+  .archives__title {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: rgb(var(--color-primary));
+  }
+  .archives__subtitle {
+    font-size: 1.125rem;
+    color: rgb(var(--color-on-surface-variant));
+    margin-top: 0.75rem;
+  }
+  .archives__years,
+  .archives__groups {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .archives__year {
+    border-radius: 0.75rem;
+    background: rgb(var(--color-surface-container-lowest));
+    border: 1px solid rgb(var(--color-outline-variant) / 0.3);
+    padding: 1.5rem 2rem;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
+  }
+  .archives__year-heading,
+  .archives__group-heading {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgb(var(--color-primary));
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgb(var(--color-outline-variant) / 0.4);
+  }
+  .archives__year-link,
+  .archives__group-link {
+    color: inherit;
+    text-decoration: none;
+  }
+  .archives__year-link:hover,
+  .archives__group-link:hover {
+    color: rgb(var(--color-secondary));
+  }
+  .archives__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .archives__item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+  .archives__item + .archives__item {
+    border-top: 1px solid rgb(var(--color-outline-variant) / 0.2);
+  }
+  .archives__item-date {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: rgb(var(--color-on-surface-variant));
+    text-transform: uppercase;
+    min-width: 5rem;
+  }
+  .archives__item-link {
+    color: rgb(var(--color-on-surface));
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+  .archives__item-link:hover {
+    color: rgb(var(--color-secondary));
+  }
+  .archives__count {
+    color: rgb(var(--color-on-surface-variant));
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: 0.5rem;
+  }
+  .archives__drilldown {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .archives__drilldown-item {
+    list-style: none;
+  }
+  .archives__drilldown-link {
+    display: inline-block;
+    padding: 0.375rem 0.875rem;
+    background: rgb(var(--color-surface-container-low));
+    border: 1px solid rgb(var(--color-outline-variant) / 0.4);
+    border-radius: 9999px;
+    color: rgb(var(--color-on-surface));
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .archives__drilldown-link:hover {
+    background: rgb(var(--color-secondary));
+    color: rgb(var(--color-on-secondary));
+  }
+  .archives__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: rgb(var(--color-secondary));
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .archives__back:hover {
+    text-decoration: underline;
+  }
+  .archives__empty {
+    color: rgb(var(--color-on-surface-variant));
+    font-style: italic;
+    padding: 2rem 0;
+    text-align: center;
+  }
+  .archives-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 1.5rem;
+    color: rgb(var(--color-secondary));
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .archives-link:hover {
+    text-decoration: underline;
+  }
+}
