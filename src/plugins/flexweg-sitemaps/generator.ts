@@ -42,9 +42,34 @@ export const DEFAULT_SITEMAPS_CONFIG: SitemapsConfig = {
   robotsTxt: "",
 };
 
-export const SITEMAP_INDEX_PATH = "sitemap-index.xml";
-export const SITEMAP_NEWS_PATH = "sitemap-news.xml";
+// All sitemap files live under /sitemaps/ so they're easy to find on
+// the Flexweg file manager (and out of the way of crawler-facing
+// page URLs at the root). robots.txt stays at the root because that's
+// where every web crawler expects it. URLs inside robots.txt point
+// to the new sitemaps/ location automatically via pathToPublicUrl.
+const SITEMAPS_FOLDER = "sitemaps";
+export const SITEMAP_INDEX_PATH = `${SITEMAPS_FOLDER}/sitemap-index.xml`;
+export const SITEMAP_NEWS_PATH = `${SITEMAPS_FOLDER}/sitemap-news.xml`;
 export const ROBOTS_PATH = "robots.txt";
+
+function yearlySitemapPath(year: number): string {
+  return `${SITEMAPS_FOLDER}/sitemap-${year}.xml`;
+}
+
+// Legacy root-level filenames left over from an earlier version of
+// the plugin that uploaded sitemaps at the site root. The migration
+// sweep below tries to delete them on every regen so a one-off click
+// of "Force regenerate" is enough to cleanly transition. 404s are
+// silent so the sweep is idempotent.
+const LEGACY_ROOT_STATIC = [
+  "sitemap-index.xml",
+  "sitemap-news.xml",
+  "sitemap.xsl",
+  "sitemap-news.xsl",
+];
+function legacyYearlyPath(year: number): string {
+  return `sitemap-${year}.xml`;
+}
 
 export function defaultRobotsTxt(baseUrl: string, newsEnabled: boolean): string {
   const lines = ["User-agent: *", "Allow: /", ""];
@@ -185,7 +210,7 @@ function buildSitemapIndex(
   const date = isoDateOnly(lastmodMs);
   for (const year of [...years].sort((a, b) => a - b)) {
     lines.push("  <sitemap>");
-    lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, `sitemap-${year}.xml`))}</loc>`);
+    lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, yearlySitemapPath(year)))}</loc>`);
     lines.push(`    <lastmod>${date}</lastmod>`);
     lines.push("  </sitemap>");
   }
@@ -269,6 +294,27 @@ export async function regenerateSitemaps(args: {
   const uploaded: string[] = [];
   const deleted: string[] = [];
 
+  // Migration sweep — clean up legacy root-level files left by an
+  // earlier version of the plugin that uploaded sitemaps at the site
+  // root. 404s are silent so this is idempotent (free to run on
+  // every full regen). Skipped on per-post incremental regens
+  // (`scope` truthy) so the lifecycle hooks don't pay the deleteFile
+  // overhead on every publish.
+  if (!scope) {
+    const legacyPaths = [
+      ...LEGACY_ROOT_STATIC,
+      ...allYears.map((y) => legacyYearlyPath(y)),
+    ];
+    for (const path of legacyPaths) {
+      try {
+        await deleteFile(path);
+        deleted.push(path);
+      } catch {
+        // 404 / not-present — swallow, idempotent.
+      }
+    }
+  }
+
   // Stylesheet hrefs are absolute (baseUrl-rooted) so the rendered HTML
   // works the same way crawlers and humans see the file. Both yearly
   // sitemaps and the index reference the same generic XSL — the XSL's
@@ -281,7 +327,7 @@ export async function regenerateSitemaps(args: {
   // don't leave a stale sitemap pointing at nothing.
   for (const year of targetYears) {
     const list = yearMap.get(year) ?? [];
-    const path = `sitemap-${year}.xml`;
+    const path = yearlySitemapPath(year);
     if (list.length === 0) {
       try {
         await deleteFile(path);
@@ -367,6 +413,19 @@ export async function regenerateStylesheets(args: {
 }): Promise<RegenerateResult> {
   const uploaded: string[] = [];
   const deleted: string[] = [];
+
+  // Migration sweep — see regenerateSitemaps for the rationale.
+  // Limited to the static legacy filenames (sitemap.xsl /
+  // sitemap-news.xsl at root); the yearly sweep happens inside
+  // regenerateSitemaps where the corpus year set is available.
+  for (const path of LEGACY_ROOT_STATIC) {
+    try {
+      await deleteFile(path);
+      deleted.push(path);
+    } catch {
+      // 404 / not-present — swallow, idempotent.
+    }
+  }
 
   await uploadFile({
     path: SITEMAP_XSL_PATH,

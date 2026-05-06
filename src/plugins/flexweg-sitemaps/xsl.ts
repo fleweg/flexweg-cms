@@ -1,16 +1,17 @@
 // XSL stylesheets uploaded alongside the sitemap XML files. When a browser
-// loads /sitemap-index.xml, /sitemap-<year>.xml or /sitemap-news.xml,
-// the stylesheet referenced in the file's <?xml-stylesheet?> processing
-// instruction transforms the raw XML into a styled HTML table — much
-// nicer to look at than a raw-XML dump for SEO checks and dev work.
+// loads /sitemaps/sitemap-index.xml, /sitemaps/sitemap-<year>.xml or
+// /sitemaps/sitemap-news.xml, the stylesheet referenced in the file's
+// <?xml-stylesheet?> processing instruction transforms the raw XML into a
+// styled HTML table — much nicer to look at than a raw-XML dump for SEO
+// checks and dev work.
 //
 // The labels embedded in the XSL are baked at upload time from the site's
 // public language (settings.language). When the user changes that
 // language, they re-click "Upload stylesheets" to refresh the labels —
 // same trigger as for any other static asset on the public site.
 
-export const SITEMAP_XSL_PATH = "sitemap.xsl";
-export const SITEMAP_NEWS_XSL_PATH = "sitemap-news.xsl";
+export const SITEMAP_XSL_PATH = "sitemaps/sitemap.xsl";
+export const SITEMAP_NEWS_XSL_PATH = "sitemaps/sitemap-news.xsl";
 
 interface XslLabels {
   pageTitle: string;

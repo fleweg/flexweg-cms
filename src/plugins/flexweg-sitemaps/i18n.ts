@@ -6,10 +6,10 @@
 export const en = {
   title: "Sitemaps",
   description:
-    "Generates sitemap-<year>.xml files, a sitemap-index.xml referencing them, an optional News sitemap, and a customizable robots.txt.",
+    "Generates sitemaps/sitemap-<year>.xml files, a sitemaps/sitemap-index.xml referencing them, an optional sitemaps/sitemap-news.xml, and a customizable robots.txt at the site root.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Yearly + index sitemaps, robots.txt, XSL stylesheets",
+    description: "Yearly + index sitemaps under /sitemaps/, robots.txt, XSL stylesheets",
   },
   sections: {
     general: "General",
@@ -39,7 +39,7 @@ export const en = {
   robots: {
     label: "robots.txt content",
     help:
-      "Leave empty to use a generated default that points to your sitemap-index.xml (and sitemap-news.xml when News is enabled).",
+      "Leave empty to use a generated default that points to your sitemaps/sitemap-index.xml (and sitemaps/sitemap-news.xml when News is enabled).",
     resetDefault: "Insert default",
     saveAndRegenerate: "Save & regenerate robots.txt",
     saving: "Saving…",
@@ -59,10 +59,10 @@ export const en = {
 export const fr: typeof en = {
   title: "Sitemaps",
   description:
-    "Génère les fichiers sitemap-<année>.xml, un sitemap-index.xml qui les référence, un sitemap News optionnel et un robots.txt personnalisable.",
+    "Génère les fichiers sitemaps/sitemap-<année>.xml, un sitemaps/sitemap-index.xml qui les référence, un sitemaps/sitemap-news.xml optionnel, et un robots.txt personnalisable à la racine du site.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Sitemaps annuels + index, robots.txt, feuilles XSL",
+    description: "Sitemaps annuels + index sous /sitemaps/, robots.txt, feuilles XSL",
   },
   sections: {
     general: "Général",
@@ -93,7 +93,7 @@ export const fr: typeof en = {
   robots: {
     label: "Contenu de robots.txt",
     help:
-      "Laissez vide pour utiliser un robots.txt par défaut généré, qui pointe vers votre sitemap-index.xml (et sitemap-news.xml si News est activé).",
+      "Laissez vide pour utiliser un robots.txt par défaut généré, qui pointe vers votre sitemaps/sitemap-index.xml (et sitemaps/sitemap-news.xml si News est activé).",
     resetDefault: "Insérer le défaut",
     saveAndRegenerate: "Enregistrer & régénérer robots.txt",
     saving: "Enregistrement…",
@@ -113,10 +113,10 @@ export const fr: typeof en = {
 export const de: typeof en = {
   title: "Sitemaps",
   description:
-    "Erzeugt sitemap-<Jahr>.xml-Dateien, eine sitemap-index.xml, die darauf verweist, eine optionale News-Sitemap und eine anpassbare robots.txt.",
+    "Erzeugt sitemaps/sitemap-<Jahr>.xml-Dateien, eine sitemaps/sitemap-index.xml, die darauf verweist, eine optionale sitemaps/sitemap-news.xml und eine anpassbare robots.txt im Site-Root.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Jährliche + Index-Sitemaps, robots.txt, XSL-Stylesheets",
+    description: "Jährliche + Index-Sitemaps unter /sitemaps/, robots.txt, XSL-Stylesheets",
   },
   sections: {
     general: "Allgemein",
@@ -146,7 +146,7 @@ export const de: typeof en = {
   robots: {
     label: "Inhalt der robots.txt",
     help:
-      "Leer lassen, um eine erzeugte Standard-Datei zu verwenden, die auf Ihre sitemap-index.xml (und sitemap-news.xml bei aktivierter News-Sitemap) verweist.",
+      "Leer lassen, um eine erzeugte Standard-Datei zu verwenden, die auf Ihre sitemaps/sitemap-index.xml (und sitemaps/sitemap-news.xml bei aktivierter News-Sitemap) verweist.",
     resetDefault: "Standard einfügen",
     saveAndRegenerate: "Speichern & robots.txt neu erzeugen",
     saving: "Speichert…",
@@ -166,10 +166,10 @@ export const de: typeof en = {
 export const es: typeof en = {
   title: "Sitemaps",
   description:
-    "Genera archivos sitemap-<año>.xml, un sitemap-index.xml que los referencia, un sitemap de News opcional y un robots.txt personalizable.",
+    "Genera archivos sitemaps/sitemap-<año>.xml, un sitemaps/sitemap-index.xml que los referencia, un sitemaps/sitemap-news.xml opcional y un robots.txt personalizable en la raíz del sitio.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Sitemaps anuales + índice, robots.txt, hojas XSL",
+    description: "Sitemaps anuales + índice bajo /sitemaps/, robots.txt, hojas XSL",
   },
   sections: {
     general: "General",
@@ -199,7 +199,7 @@ export const es: typeof en = {
   robots: {
     label: "Contenido de robots.txt",
     help:
-      "Déjalo vacío para usar un valor por defecto generado que apunta a tu sitemap-index.xml (y a sitemap-news.xml si News está activado).",
+      "Déjalo vacío para usar un valor por defecto generado que apunta a tu sitemaps/sitemap-index.xml (y a sitemaps/sitemap-news.xml si News está activado).",
     resetDefault: "Insertar por defecto",
     saveAndRegenerate: "Guardar y regenerar robots.txt",
     saving: "Guardando…",
@@ -219,10 +219,10 @@ export const es: typeof en = {
 export const nl: typeof en = {
   title: "Sitemaps",
   description:
-    "Genereert sitemap-<jaar>.xml-bestanden, een sitemap-index.xml die ze referencet, een optionele News-sitemap en een aanpasbare robots.txt.",
+    "Genereert sitemaps/sitemap-<jaar>.xml-bestanden, een sitemaps/sitemap-index.xml die ernaar verwijst, een optionele sitemaps/sitemap-news.xml en een aanpasbare robots.txt in de site-root.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Jaarlijkse + index-sitemaps, robots.txt, XSL-stylesheets",
+    description: "Jaarlijkse + index-sitemaps onder /sitemaps/, robots.txt, XSL-stylesheets",
   },
   sections: {
     general: "Algemeen",
@@ -252,7 +252,7 @@ export const nl: typeof en = {
   robots: {
     label: "Inhoud van robots.txt",
     help:
-      "Laat leeg om een gegenereerde standaard te gebruiken die wijst naar je sitemap-index.xml (en sitemap-news.xml wanneer News is ingeschakeld).",
+      "Laat leeg om een gegenereerde standaard te gebruiken die wijst naar je sitemaps/sitemap-index.xml (en sitemaps/sitemap-news.xml wanneer News is ingeschakeld).",
     resetDefault: "Standaard invoegen",
     saveAndRegenerate: "Opslaan & robots.txt opnieuw genereren",
     saving: "Opslaan…",
@@ -272,10 +272,10 @@ export const nl: typeof en = {
 export const pt: typeof en = {
   title: "Sitemaps",
   description:
-    "Gera ficheiros sitemap-<ano>.xml, um sitemap-index.xml que os referencia, um sitemap News opcional e um robots.txt personalizável.",
+    "Gera ficheiros sitemaps/sitemap-<ano>.xml, um sitemaps/sitemap-index.xml que os referencia, um sitemaps/sitemap-news.xml opcional e um robots.txt personalizável na raiz do site.",
   regenerationTarget: {
     label: "Sitemaps",
-    description: "Sitemaps anuais + índice, robots.txt, folhas XSL",
+    description: "Sitemaps anuais + índice em /sitemaps/, robots.txt, folhas XSL",
   },
   sections: {
     general: "Geral",
@@ -305,7 +305,7 @@ export const pt: typeof en = {
   robots: {
     label: "Conteúdo do robots.txt",
     help:
-      "Deixa vazio para usar um valor predefinido gerado que aponta para o teu sitemap-index.xml (e sitemap-news.xml quando o News está ativo).",
+      "Deixa vazio para usar um valor predefinido gerado que aponta para o teu sitemaps/sitemap-index.xml (e sitemaps/sitemap-news.xml quando o News está ativo).",
     resetDefault: "Inserir predefinido",
     saveAndRegenerate: "Guardar e regenerar robots.txt",
     saving: "A guardar…",
@@ -325,10 +325,10 @@ export const pt: typeof en = {
 export const ko: typeof en = {
   title: "사이트맵",
   description:
-    "sitemap-<연도>.xml 파일, 이를 참조하는 sitemap-index.xml, 선택적 News 사이트맵 및 사용자 정의 가능한 robots.txt를 생성합니다.",
+    "sitemaps/sitemap-<연도>.xml 파일, 이를 참조하는 sitemaps/sitemap-index.xml, 선택적 sitemaps/sitemap-news.xml 및 사이트 루트의 사용자 정의 가능한 robots.txt를 생성합니다.",
   regenerationTarget: {
     label: "사이트맵",
-    description: "연도별 + 인덱스 사이트맵, robots.txt, XSL 스타일시트",
+    description: "/sitemaps/ 아래의 연도별 + 인덱스 사이트맵, robots.txt, XSL 스타일시트",
   },
   sections: {
     general: "일반",
@@ -358,7 +358,7 @@ export const ko: typeof en = {
   robots: {
     label: "robots.txt 내용",
     help:
-      "비워 두면 sitemap-index.xml(및 News가 활성화된 경우 sitemap-news.xml)을 가리키는 기본값이 사용됩니다.",
+      "비워 두면 sitemaps/sitemap-index.xml(및 News가 활성화된 경우 sitemaps/sitemap-news.xml)을 가리키는 기본값이 사용됩니다.",
     resetDefault: "기본값 삽입",
     saveAndRegenerate: "저장 및 robots.txt 재생성",
     saving: "저장 중…",

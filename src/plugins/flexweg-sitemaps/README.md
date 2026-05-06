@@ -4,15 +4,19 @@ Generates and maintains XML sitemaps for search engine discovery. Also produces 
 
 ## What it does
 
-Every time a post or page is published, unpublished or deleted, the plugin **incrementally** regenerates only the sitemap files affected by the change — never the whole catalog. Output files (uploaded to your Flexweg site root):
+Every time a post or page is published, unpublished or deleted, the plugin **incrementally** regenerates only the sitemap files affected by the change — never the whole catalog. Output files (uploaded to your Flexweg site, all sitemap XML/XSL files grouped under `/sitemaps/` for tidiness; `robots.txt` stays at the site root because that's where crawlers expect it):
 
-- **`sitemap-<year>.xml`** — one per year, listing every published URL whose `createdAt` falls in that year.
-- **`sitemap-index.xml`** — top-level index referencing every yearly sitemap. This is the URL you submit to Google Search Console.
-- **`sitemap-news.xml`** — optional Google News sitemap, scoped to posts published in a configurable rolling window (default: last 2 days).
-- **`robots.txt`** — editable text file pointing crawlers at the sitemap index.
-- **`sitemap.xsl` / `sitemap-news.xsl`** — XSLT stylesheets that turn the raw XML into a styled HTML table when a human opens the URL directly. Invisible to crawlers.
+- **`sitemaps/sitemap-<year>.xml`** — one per year, listing every published URL whose `createdAt` falls in that year.
+- **`sitemaps/sitemap-index.xml`** — top-level index referencing every yearly sitemap. This is the URL you submit to Google Search Console.
+- **`sitemaps/sitemap-news.xml`** — optional Google News sitemap, scoped to posts published in a configurable rolling window (default: last 2 days).
+- **`robots.txt`** (at site root) — editable text file pointing crawlers at the sitemap index.
+- **`sitemaps/sitemap.xsl` / `sitemaps/sitemap-news.xsl`** — XSLT stylesheets that turn the raw XML into a styled HTML table when a human opens the URL directly. Invisible to crawlers.
 
 When a yearly sitemap empties out (every post in that year gets deleted or unpublished), the file is removed from your Flexweg site so the index never points at a 404.
+
+### Migration from the previous root-level layout
+
+Earlier versions of this plugin uploaded every sitemap file to the site root (`sitemap-index.xml`, `sitemap-<year>.xml`, …). On the next **Force regenerate** the plugin sweeps those legacy paths and deletes them silently — old files are removed, new ones land under `/sitemaps/`. The sweep is idempotent (404 is treated as already-gone). After migration, re-submit `https://your-site.com/sitemaps/sitemap-index.xml` in Google Search Console; the old URL will deindex naturally as Google sees the 404.
 
 ## Settings
 
