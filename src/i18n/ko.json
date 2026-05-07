@@ -430,16 +430,52 @@
     "intro": "Firebase 자격 증명, 부트스트랩 관리자 계정, Flexweg API 키를 입력하세요. 값은 검증된 후 프로젝트에 저장되며(Firestore + Flexweg의 config.js 파일) 관리자가 일반 로그인 흐름으로 다시 로드됩니다. 한 번만 수행하면 됩니다.",
     "stepper": {
       "welcome": "환영",
+      "terms": "약관",
       "configuration": "구성"
     },
     "welcome": {
       "heading": "Flexweg CMS에 오신 것을 환영합니다!",
-      "intro": "Flexweg CMS는 Flexweg 호스팅에 페이지를 게시하는 정적 사이트 CMS입니다. 작동하려면 무료 Firebase 프로젝트(Auth + Firestore)가 필요합니다 — 게시물, 미디어 메타데이터, 설정이 그곳에 저장됩니다.",
+      "intro": "Flexweg CMS는 Flexweg가 무료로 제공하는 도구로, Flexweg 호스팅에 페이지를 게시할 수 있게 해줍니다 — Flexweg는 CMS 사용에 대해 비용을 청구하지 않습니다. 작동하려면 무료 Firebase 프로젝트(Auth + Firestore)가 필요합니다 — 게시물, 미디어 메타데이터, 설정이 그곳에 저장됩니다.",
       "firebaseTitle": "Firebase는 필수이며 무료입니다",
       "firebaseBody": "Firebase 프로젝트 생성은 무료이며 약 5분이면 완료됩니다: Firebase 콘솔을 열고, 새 프로젝트를 만들고, Authentication(이메일/비밀번호)과 Firestore를 활성화하세요. Spark 요금제는 일반적인 사이트에 충분합니다. 저희 튜토리얼이 클릭별로 안내해 드립니다.",
       "tutorialUrl": "https://firebase.google.com/docs/web/setup",
       "tutorialButton": "Firebase 설정 튜토리얼",
       "haveAccountButton": "Firebase 프로젝트를 만들었습니다"
+    },
+    "terms": {
+      "title": "이용 약관",
+      "intro": "Flexweg CMS를 사용하기 전에 아래 약관을 읽고 동의해 주세요. 빠르게 읽을 수 있도록 평이한 언어로 작성되었습니다.",
+      "section1": {
+        "title": "1. 무료 서비스",
+        "body": "Flexweg CMS는 Flexweg가 무료로 제공합니다. Flexweg 호스팅과 함께 무제한으로 사용할 수 있으며 — Flexweg는 CMS 자체의 사용에 대해 결코 청구하지 않습니다. Flexweg 호스팅 요금제와 Firebase 요금제의 일반 요금은 각각 해당 계정에 적용됩니다."
+      },
+      "section2": {
+        "title": "2. \"있는 그대로\" 제공, 무보증",
+        "body": "CMS는 있는 그대로 제공됩니다. 안정적으로 유지하고 시간이 지남에 따라 개선하기 위해 노력하지만, 버그, 결함 또는 중단이 없음을 보장할 수는 없습니다. 직접 작성하지 않은 도구를 사용할 때와 동일한 주의를 기울여 사용하세요: 중요한 콘텐츠는 백업을 보관하세요."
+      },
+      "section3": {
+        "title": "3. 귀하의 콘텐츠, 귀하의 책임",
+        "body": "귀하는 CMS를 통해 게시하는 콘텐츠 — 텍스트, 이미지, 비디오, 양식, 코드 임베드 및 기타 미디어 — 에 대해 단독 책임을 집니다. 귀하의 관할권(및 대상으로 하는 관할권)에서 적용되는 법률, 저작권, 초상권 및 인격권, 개인정보 보호 규칙, 그리고 사용하는 모든 제3자 서비스의 약관(임베드된 폰트, 비디오 등)을 준수해야 합니다. Flexweg는 CMS 사용자가 게시한 콘텐츠에 대해 책임지지 않습니다."
+      },
+      "section4": {
+        "title": "4. 귀하의 Firebase 계정, 귀하의 보안",
+        "body": "CMS는 데이터를 귀하의 Firebase 프로젝트에 저장합니다. 해당 프로젝트의 보안은 귀하의 책임입니다: 부트스트랩 관리자 계정에 강력한 비밀번호를 선택하고, 문서에 따라 Firestore 보안 규칙을 설정하고, 필요할 때 API 키를 교체하고, 누가 접근할 수 있는지 검토하세요. Flexweg는 어떠한 경우에도 귀하의 Firebase 계정의 잘못된 구성이나 침해로 인한 무단 접근, 데이터 유출, 해킹 또는 손실에 대해 책임지지 않습니다."
+      },
+      "section5": {
+        "title": "5. 책임의 제한",
+        "body": "Flexweg는 CMS의 사용, 오용 또는 사용 불가로 인한 수익 손실, 데이터 손실, 비즈니스 기회 손실 또는 직간접적인 손해에 대해 책임지지 않습니다. 적용 법률이 Flexweg에 일정 책임을 부과하는 경우, 그 책임은 지난 12개월 동안 CMS에 대해 Flexweg에 실제로 지불된 금액으로 제한됩니다 — CMS가 무료이므로 0입니다."
+      },
+      "section6": {
+        "title": "6. 귀하의 데이터는 귀하의 것",
+        "body": "CMS로 만든 콘텐츠는 귀하의 Firebase 프로젝트(텍스트, 설정, 미디어 메타데이터)와 귀하의 Flexweg 호스팅(게시된 HTML, 이미지, 테마 에셋)에 저장됩니다. CMS 자체는 귀하의 콘텐츠를 어떤 제3자 서비스로도 전송하지 않습니다. 활성화하기로 선택한 플러그인이나 테마는 자체 동작을 가질 수 있습니다 — 활성화하기 전에 무엇을 하는지 확인하세요."
+      },
+      "section7": {
+        "title": "7. 공정한 사용",
+        "body": "CMS를 불법, 사기 또는 유해한 활동에 사용하거나 Flexweg의 일반 이용 약관에 위배되는 방식으로 사용하면 Flexweg 호스팅 액세스가 정지될 수 있습니다. 또한 시간이 지남에 따라 이러한 CMS 약관을 업데이트할 수 있으며, 중요한 변경 사항은 관리자 또는 이메일을 통해 전달됩니다."
+      },
+      "accept": "이용 약관을 읽고 동의합니다.",
+      "continue": "구성으로 계속",
+      "back": "뒤로"
     },
     "sections": {
       "firebase": "Firebase",

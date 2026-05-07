@@ -430,16 +430,52 @@
     "intro": "Geben Sie Ihre Firebase-Zugangsdaten, das Bootstrap-Administratorkonto und Ihren Flexweg-API-Schlüssel ein. Die Werte werden geprüft, in Ihrem Projekt gespeichert (Firestore + eine config.js-Datei auf Flexweg), und die Admin-Oberfläche lädt im normalen Anmeldeablauf neu. Sie machen das nur einmal.",
     "stepper": {
       "welcome": "Willkommen",
+      "terms": "AGB",
       "configuration": "Konfiguration"
     },
     "welcome": {
       "heading": "Willkommen bei Flexweg CMS!",
-      "intro": "Flexweg CMS ist ein Static-Site-CMS, das Seiten auf Ihrem Flexweg-Hosting veröffentlicht. Es benötigt ein kostenloses Firebase-Projekt (Auth + Firestore) — dort werden Ihre Beiträge, Medienmetadaten und Einstellungen gespeichert.",
+      "intro": "Flexweg CMS ist ein kostenloses Tool, das Flexweg Ihnen zur Verfügung stellt, um Seiten auf Ihrem Flexweg-Hosting zu veröffentlichen — Flexweg wird Ihnen die Nutzung des CMS niemals in Rechnung stellen. Es benötigt ein kostenloses Firebase-Projekt (Auth + Firestore) — dort werden Ihre Beiträge, Medienmetadaten und Einstellungen gespeichert.",
       "firebaseTitle": "Firebase wird benötigt — und ist kostenlos",
       "firebaseBody": "Ein Firebase-Projekt anzulegen ist kostenlos und dauert etwa 5 Minuten: Firebase Console öffnen, neues Projekt erstellen, Authentication (E-Mail/Passwort) und Firestore aktivieren. Der Spark-Plan reicht für eine typische Website. Unser Tutorial führt Sie durch jeden Klick.",
       "tutorialUrl": "https://firebase.google.com/docs/web/setup",
       "tutorialButton": "Firebase-Setup-Tutorial",
       "haveAccountButton": "Ich habe mein Firebase-Projekt erstellt"
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "intro": "Bitte lesen und akzeptieren Sie die folgenden Bedingungen, bevor Sie Flexweg CMS verwenden. Sie sind in einfacher Sprache verfasst, um schnell lesbar zu sein.",
+      "section1": {
+        "title": "1. Kostenloser Service",
+        "body": "Flexweg CMS wird Ihnen von Flexweg kostenlos zur Verfügung gestellt. Sie können es ohne Einschränkungen mit Ihrem Flexweg-Hosting nutzen — Flexweg wird Ihnen die Nutzung des CMS selbst niemals in Rechnung stellen. Die üblichen Gebühren Ihres Flexweg-Hosting-Plans und Ihres Firebase-Plans bleiben weiterhin anwendbar, jeweils auf dem entsprechenden Konto."
+      },
+      "section2": {
+        "title": "2. Bereitstellung „wie besehen“, ohne Garantie",
+        "body": "Das CMS wird wie besehen bereitgestellt. Wir arbeiten daran, es stabil zu halten und im Laufe der Zeit zu verbessern, können jedoch nicht garantieren, dass es frei von Bugs, Mängeln oder Unterbrechungen ist. Verwenden Sie es mit derselben Vorsicht wie bei jedem Tool, das Sie nicht selbst geschrieben haben: Bewahren Sie Backups wichtiger Inhalte auf."
+      },
+      "section3": {
+        "title": "3. Ihre Inhalte, Ihre Verantwortung",
+        "body": "Sie sind allein verantwortlich für die Inhalte, die Sie über das CMS veröffentlichen — Texte, Bilder, Videos, Formulare, Code-Einbettungen und alle anderen Medien. Sie müssen das anwendbare Recht in Ihrer Jurisdiktion (und in den von Ihnen anvisierten Jurisdiktionen) einhalten, ebenso wie Urheberrechte, Bild- und Persönlichkeitsrechte, Datenschutzbestimmungen sowie die Bedingungen jeglicher Drittanbieterdienste (z. B. eingebettete Schriften oder Videos). Flexweg ist nicht verantwortlich für die von den Nutzern des CMS veröffentlichten Inhalte."
+      },
+      "section4": {
+        "title": "4. Ihr Firebase-Konto, Ihre Sicherheit",
+        "body": "Das CMS speichert seine Daten in Ihrem eigenen Firebase-Projekt. Sie sind für die Sicherheit dieses Projekts verantwortlich: Wählen Sie ein starkes Passwort für das Bootstrap-Administratorkonto, konfigurieren Sie die Firestore-Sicherheitsregeln wie dokumentiert, rotieren Sie Ihre API-Schlüssel bei Bedarf und prüfen Sie, wer Zugriff hat. Flexweg kann in keinem Fall für unbefugten Zugriff, Datenlecks, Hacks oder Verluste haftbar gemacht werden, die durch Fehlkonfiguration oder Kompromittierung Ihres Firebase-Kontos entstehen."
+      },
+      "section5": {
+        "title": "5. Haftungsbeschränkung",
+        "body": "Flexweg kann nicht haftbar gemacht werden für Einnahmeverluste, Datenverluste, entgangene Geschäftsmöglichkeiten oder direkte oder indirekte Schäden, die aus der Nutzung, dem Missbrauch oder der Nichtverfügbarkeit des CMS entstehen. Soweit das anwendbare Recht eine Haftung von Flexweg vorschreibt, ist diese auf den Betrag beschränkt, der tatsächlich in den letzten 12 Monaten an Flexweg für das CMS gezahlt wurde — also null, da das CMS kostenlos ist."
+      },
+      "section6": {
+        "title": "6. Ihre Daten bleiben bei Ihnen",
+        "body": "Inhalte, die Sie mit dem CMS erstellen, werden in Ihrem eigenen Firebase-Projekt (Texte, Einstellungen, Medienmetadaten) und auf Ihrem eigenen Flexweg-Hosting (veröffentlichtes HTML, Bilder, Theme-Assets) gespeichert. Das CMS selbst übermittelt Ihre Inhalte an keinen Drittanbieterdienst. Plugins oder Themes, die Sie aktivieren, können ihr eigenes Verhalten haben — prüfen Sie, was sie tun, bevor Sie sie aktivieren."
+      },
+      "section7": {
+        "title": "7. Faire Nutzung",
+        "body": "Die Nutzung des CMS für rechtswidrige, betrügerische oder schädliche Aktivitäten oder auf eine Weise, die gegen die allgemeinen Nutzungsbedingungen von Flexweg verstößt, kann zur Sperrung Ihres Zugriffs auf das Flexweg-Hosting führen. Wir können diese CMS-Bedingungen auch im Laufe der Zeit aktualisieren; wesentliche Änderungen werden über das Admin-Panel oder per E-Mail kommuniziert."
+      },
+      "accept": "Ich habe die Nutzungsbedingungen gelesen und akzeptiere sie.",
+      "continue": "Weiter zur Konfiguration",
+      "back": "Zurück"
     },
     "sections": {
       "firebase": "Firebase",

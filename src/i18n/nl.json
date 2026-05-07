@@ -430,16 +430,52 @@
     "intro": "Vul je Firebase-gegevens in, het bootstrap-beheerderaccount en je Flexweg-API-sleutel. De waarden worden gevalideerd, opgeslagen in je project (Firestore + een config.js-bestand op Flexweg) en de admin laadt opnieuw met het normale aanmeldproces. Je doet dit slechts één keer.",
     "stepper": {
       "welcome": "Welkom",
+      "terms": "Voorwaarden",
       "configuration": "Configuratie"
     },
     "welcome": {
       "heading": "Welkom bij Flexweg CMS!",
-      "intro": "Flexweg CMS is een CMS voor statische sites dat pagina's publiceert op je Flexweg-hosting. Het heeft een gratis Firebase-project nodig (Auth + Firestore) — daar worden je berichten, media-metadata en instellingen opgeslagen.",
+      "intro": "Flexweg CMS is een gratis tool die Flexweg ter beschikking stelt om pagina's op je Flexweg-hosting te publiceren — Flexweg zal je het gebruik van het CMS nooit in rekening brengen. Het heeft een gratis Firebase-project nodig (Auth + Firestore) — daar worden je berichten, media-metadata en instellingen opgeslagen.",
       "firebaseTitle": "Firebase is vereist — en gratis",
       "firebaseBody": "Een Firebase-project aanmaken is gratis en duurt ongeveer 5 minuten: open de Firebase Console, maak een nieuw project, activeer Authentication (e-mail/wachtwoord) en Firestore. Het Spark-plan is genoeg voor een doorsnee site. Onze tutorial leidt je klik voor klik.",
       "tutorialUrl": "https://firebase.google.com/docs/web/setup",
       "tutorialButton": "Firebase-instellings­tutorial",
       "haveAccountButton": "Ik heb mijn Firebase-project aangemaakt"
+    },
+    "terms": {
+      "title": "Gebruiksvoorwaarden",
+      "intro": "Lees en accepteer de onderstaande voorwaarden voordat je Flexweg CMS gebruikt. Ze zijn in eenvoudige taal geschreven zodat ze snel te lezen zijn.",
+      "section1": {
+        "title": "1. Gratis dienst",
+        "body": "Flexweg CMS wordt door Flexweg gratis aangeboden. Je kunt het zonder beperking gebruiken met je Flexweg-hosting — Flexweg zal je het gebruik van het CMS zelf nooit in rekening brengen. De gebruikelijke kosten van je Flexweg-hostingplan en je Firebase-plan blijven van toepassing op de respectieve accounts."
+      },
+      "section2": {
+        "title": "2. Geleverd „as-is“, zonder garantie",
+        "body": "Het CMS wordt as-is geleverd. We werken eraan om het stabiel te houden en in de loop van de tijd te verbeteren, maar we kunnen niet garanderen dat het vrij is van bugs, defecten of onderbrekingen. Gebruik het met dezelfde voorzichtigheid als bij elke tool die je niet zelf hebt geschreven: bewaar back-ups van belangrijke content."
+      },
+      "section3": {
+        "title": "3. Jouw content, jouw verantwoordelijkheid",
+        "body": "Jij bent als enige verantwoordelijk voor de content die je via het CMS publiceert — tekst, afbeeldingen, video's, formulieren, code-embeds en alle andere media. Je moet de toepasselijke wetgeving in jouw rechtsgebied (en in de rechtsgebieden waarop je je richt) naleven, evenals auteursrechten, beeld- en persoonlijkheidsrechten, regels voor de bescherming van persoonsgegevens en de voorwaarden van eventuele derde-diensten die je gebruikt (ingebedde fonts, video's, enz.). Flexweg is niet verantwoordelijk voor content die door gebruikers van het CMS wordt gepubliceerd."
+      },
+      "section4": {
+        "title": "4. Jouw Firebase-account, jouw beveiliging",
+        "body": "Het CMS slaat zijn data op in jouw eigen Firebase-project. Jij bent verantwoordelijk voor de beveiliging van dat project: kies een sterk wachtwoord voor het bootstrap-beheerderaccount, stel de Firestore-beveiligingsregels in zoals gedocumenteerd, rouleer je API-sleutels wanneer nodig en controleer wie toegang heeft. Flexweg kan in geen geval verantwoordelijk worden gehouden voor ongeautoriseerde toegang, datalekken, hacks of verlies als gevolg van verkeerde configuratie of compromittering van jouw Firebase-account."
+      },
+      "section5": {
+        "title": "5. Beperking van aansprakelijkheid",
+        "body": "Flexweg kan niet aansprakelijk worden gesteld voor enige inkomstenderving, dataverlies, gemiste zakelijke kansen of enige directe of indirecte schade voortvloeiend uit het gebruik, misbruik of de onbeschikbaarheid van het CMS. Wanneer de toepasselijke wet Flexweg verplicht enige aansprakelijkheid op zich te nemen, is deze beperkt tot het bedrag dat in de afgelopen 12 maanden daadwerkelijk aan Flexweg voor het CMS is betaald — dat is nul, aangezien het CMS gratis is."
+      },
+      "section6": {
+        "title": "6. Jouw data blijft van jou",
+        "body": "Content die je met het CMS aanmaakt wordt opgeslagen in je eigen Firebase-project (tekst, instellingen, media-metadata) en op je eigen Flexweg-hosting (gepubliceerde HTML, afbeeldingen, theme-assets). Het CMS zelf stuurt je content niet door naar enige derde-dienst. Plugins of themes die je activeert kunnen hun eigen gedrag hebben — controleer wat ze doen voordat je ze activeert."
+      },
+      "section7": {
+        "title": "7. Eerlijk gebruik",
+        "body": "Gebruik van het CMS voor onwettige, frauduleuze of schadelijke activiteiten, of op een manier die in strijd is met de algemene voorwaarden van Flexweg, kan leiden tot opschorting van je toegang tot Flexweg-hosting. We kunnen deze CMS-voorwaarden in de loop van de tijd ook bijwerken; significante wijzigingen worden gecommuniceerd via de admin of per e-mail."
+      },
+      "accept": "Ik heb de Gebruiksvoorwaarden gelezen en ga ermee akkoord.",
+      "continue": "Door naar configuratie",
+      "back": "Terug"
     },
     "sections": {
       "firebase": "Firebase",

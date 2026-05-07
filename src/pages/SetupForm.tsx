@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { ArrowRight, BookOpen, CheckCircle2, Loader2, Settings } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import flexwegLogo from "../assets/flexweg-logo.png";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { LocaleSwitcher } from "../components/ui/LocaleSwitcher";
@@ -91,14 +92,15 @@ function authErrorTranslationKey(err: unknown): string {
   }
 }
 
-type WizardStep = "welcome" | "form";
+type WizardStep = "welcome" | "terms" | "form";
 
 export function SetupForm() {
   const { t } = useTranslation();
-  // Two-step wizard: welcome screen with Firebase tutorial CTA, then the
-  // actual configuration form. The welcome step is mostly informative —
-  // it primes the user on the (free) Firebase prerequisite before
-  // throwing 11 form fields at them.
+  // Three-step wizard: welcome screen with Firebase tutorial CTA, then
+  // the terms-of-use acceptance, then the actual configuration form.
+  // The welcome and terms steps prime the user on the (free) Firebase
+  // prerequisite + their responsibilities before throwing 11 form
+  // fields at them.
   const [wizardStep, setWizardStep] = useState<WizardStep>("welcome");
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
@@ -359,9 +361,11 @@ export function SetupForm() {
       )}
       <div className="w-full max-w-2xl relative z-10">
         <div className="flex items-center gap-2.5 justify-center mb-6">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-card">
-            <Settings className="h-5 w-5 text-white" />
-          </div>
+          <img
+            src={flexwegLogo}
+            alt="Flexweg"
+            className="h-10 w-10 rounded-xl shadow-card object-cover"
+          />
           <div className="text-center">
             <p className="text-base font-semibold leading-none">
               {t("setup.title")}
@@ -375,7 +379,12 @@ export function SetupForm() {
         <Stepper currentStep={wizardStep} />
 
         {wizardStep === "welcome" ? (
-          <WelcomeStep onContinue={() => setWizardStep("form")} />
+          <WelcomeStep onContinue={() => setWizardStep("terms")} />
+        ) : wizardStep === "terms" ? (
+          <TermsStep
+            onAccept={() => setWizardStep("form")}
+            onBack={() => setWizardStep("welcome")}
+          />
         ) : (
         <div className="card p-6">
           <p className="text-sm text-surface-600 dark:text-surface-300">
@@ -536,6 +545,7 @@ function Stepper({ currentStep }: StepperProps) {
   const { t } = useTranslation();
   const steps: Array<{ id: WizardStep; label: string }> = [
     { id: "welcome", label: t("setup.stepper.welcome") },
+    { id: "terms", label: t("setup.stepper.terms") },
     { id: "form", label: t("setup.stepper.configuration") },
   ];
   const activeIndex = steps.findIndex((s) => s.id === currentStep);
@@ -631,6 +641,76 @@ function WelcomeStep({ onContinue }: WelcomeStepProps) {
           className="btn-primary flex-1 justify-center"
         >
           {t("setup.welcome.haveAccountButton")}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface TermsStepProps {
+  onAccept: () => void;
+  onBack: () => void;
+}
+
+// 7 sections of plain-language terms. Keys live under setup.terms.section{N}
+// so we can index over them in a stable order and translate once per locale.
+const TERMS_SECTION_COUNT = 7;
+
+function TermsStep({ onAccept, onBack }: TermsStepProps) {
+  const { t } = useTranslation();
+  const [accepted, setAccepted] = useState(false);
+  return (
+    <div className="card p-6">
+      <h2 className="text-lg font-semibold text-surface-900 dark:text-surface-50">
+        {t("setup.terms.title")}
+      </h2>
+      <p className="text-sm text-surface-600 dark:text-surface-300 mt-3">
+        {t("setup.terms.intro")}
+      </p>
+
+      <div className="mt-5 max-h-80 overflow-y-auto pr-2 space-y-4 rounded-lg border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900/40">
+        {Array.from({ length: TERMS_SECTION_COUNT }, (_, i) => i + 1).map(
+          (n) => (
+            <section key={n}>
+              <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-50">
+                {t(`setup.terms.section${n}.title`)}
+              </h3>
+              <p className="text-xs text-surface-600 dark:text-surface-300 mt-1.5 leading-relaxed">
+                {t(`setup.terms.section${n}.body`)}
+              </p>
+            </section>
+          ),
+        )}
+      </div>
+
+      <label className="mt-5 flex items-start gap-2.5 cursor-pointer">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-surface-300 text-blue-600 focus:ring-blue-500 dark:border-surface-600 dark:bg-surface-800"
+          checked={accepted}
+          onChange={(e) => setAccepted(e.target.checked)}
+        />
+        <span className="text-sm text-surface-700 dark:text-surface-200">
+          {t("setup.terms.accept")}
+        </span>
+      </label>
+
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="btn-secondary flex-1 justify-center"
+        >
+          {t("setup.terms.back")}
+        </button>
+        <button
+          type="button"
+          onClick={onAccept}
+          disabled={!accepted}
+          className="btn-primary flex-1 justify-center"
+        >
+          {t("setup.terms.continue")}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

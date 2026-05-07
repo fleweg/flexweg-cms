@@ -1,7 +1,8 @@
-import { LayoutDashboard, Menu as MenuIcon } from "lucide-react";
+import { Menu as MenuIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { LocaleSwitcher } from "../ui/LocaleSwitcher";
+import flexwegLogo from "../../assets/flexweg-logo.png";
 
 interface TopbarProps {
   // Click handler for the mobile burger button. Opens the sidebar
@@ -29,9 +30,11 @@ export function Topbar({ onOpenMobileNav }: TopbarProps) {
             <MenuIcon className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2 min-w-0 md:hidden">
-            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shrink-0">
-              <LayoutDashboard className="h-3.5 w-3.5 text-white" />
-            </div>
+            <img
+              src={flexwegLogo}
+              alt="Flexweg"
+              className="h-7 w-7 rounded-md object-cover shrink-0"
+            />
             <p className="text-sm font-semibold truncate">{t("common.appName")}</p>
           </div>
         </div>

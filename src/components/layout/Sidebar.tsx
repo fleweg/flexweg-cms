@@ -24,6 +24,7 @@ import { useCmsData } from "../../context/CmsDataContext";
 import { useTheme } from "../../context/ThemeContext";
 import { getActiveTheme } from "../../themes";
 import { signOut } from "../../services/auth";
+import flexwegLogo from "../../assets/flexweg-logo.png";
 
 interface NavItem {
   to: string;
@@ -102,9 +103,11 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         aria-hidden={!mobileOpen}
       >
       <div className="px-5 h-16 flex items-center gap-2.5 border-b border-surface-200 dark:border-surface-800">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-card">
-          <LayoutDashboard className="h-4 w-4 text-white" />
-        </div>
+        <img
+          src={flexwegLogo}
+          alt="Flexweg"
+          className="h-8 w-8 rounded-lg shadow-card object-cover shrink-0"
+        />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold leading-none">{t("common.appName")}</p>
           <p className="text-[11px] text-surface-500 mt-0.5 dark:text-surface-400">Static publisher</p>

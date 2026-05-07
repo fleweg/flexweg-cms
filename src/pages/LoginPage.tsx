@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { LayoutDashboard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { signIn, sendResetEmail, authErrorKey } from "../services/auth";
 import { LocaleSwitcher } from "../components/ui/LocaleSwitcher";
+import flexwegLogo from "../assets/flexweg-logo.png";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -52,9 +53,11 @@ export function LoginPage() {
       </div>
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 justify-center mb-6">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-card">
-            <LayoutDashboard className="h-5 w-5 text-white" />
-          </div>
+          <img
+            src={flexwegLogo}
+            alt="Flexweg"
+            className="h-10 w-10 rounded-xl shadow-card object-cover"
+          />
           <div>
             <p className="text-base font-semibold leading-none">{t("common.appName")}</p>
             <p className="text-[11px] text-surface-500 mt-0.5 dark:text-surface-400">Static publisher</p>
