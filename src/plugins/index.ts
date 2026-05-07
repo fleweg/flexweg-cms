@@ -22,6 +22,7 @@ import { resetBlocks } from "../core/blockRegistry";
 import { resetDashboardCards } from "../core/dashboardCardRegistry";
 import { resetRegenerationTargets } from "../core/regenerationTargetRegistry";
 import { MU_PLUGINS } from "../mu-plugins";
+import { listExternalPlugins } from "../services/externalRegistry";
 
 // Plugins can optionally expose a settings page. When present, a navigation
 // entry appears under /settings/plugin/<id> and the plugins list shows a
@@ -76,15 +77,24 @@ export const PLUGINS: PluginManifest[] = [
   flexwegSearchManifest as PluginManifest,
 ];
 
+// Returns built-in plugins + any externally-loaded ones. The admin's
+// /plugins page, settings tabs and config-resolver all read through
+// this so external entries show up everywhere a built-in does.
 export function listPlugins(): PluginManifest[] {
-  return PLUGINS;
+  const externals = listExternalPlugins();
+  if (externals.length === 0) return PLUGINS;
+  return [...PLUGINS, ...externals];
 }
 
-// Resolves a manifest by id across both regular and MU registries.
-// Used by routes (settings page, README modal lookups) that don't
-// care which registry a plugin lives in.
+// Resolves a manifest by id across all registries: regular built-ins,
+// must-use, and externals. Used by routes (settings page, README modal
+// lookups) that don't care where a plugin lives.
 export function getPluginManifest(id: string): PluginManifest | undefined {
-  return PLUGINS.find((p) => p.id === id) ?? MU_PLUGINS.find((p) => p.id === id);
+  return (
+    PLUGINS.find((p) => p.id === id) ??
+    MU_PLUGINS.find((p) => p.id === id) ??
+    listExternalPlugins().find((p) => p.id === id)
+  );
 }
 
 // Translation bundles ship inline in each manifest. Loading them at module
@@ -104,6 +114,18 @@ function loadPluginTranslations(): void {
 }
 
 loadPluginTranslations();
+
+// Same as loadPluginTranslations() but for externally-loaded plugins.
+// Called by the external loader after each successful import so a
+// freshly-loaded plugin's i18n is available before its settings page
+// or any t() call referencing the namespace.
+export function loadExternalPluginTranslations(plugin: PluginManifest): void {
+  if (!plugin.i18n) return;
+  for (const [locale, resources] of Object.entries(plugin.i18n)) {
+    if (!resources) continue;
+    i18n.addResourceBundle(locale, plugin.id, resources, true, true);
+  }
+}
 
 // Re-evaluates the registry against the given enabled flags. Call this on
 // app boot (after settings load) and any time the user toggles a plugin.
@@ -137,6 +159,17 @@ export function applyPluginRegistration(enabled: Record<string, boolean>): void 
       // log and skip. Re-throwing during a re-toggle would leave the
       // registry in an inconsistent state.
       console.error(`Plugin "${plugin.id}" failed to register:`, err);
+    }
+  }
+  // Externals come last so any filter they add layers on top of the
+  // built-ins. Same enable-flag check applies — an external plugin
+  // can be disabled from the same UI.
+  for (const plugin of listExternalPlugins()) {
+    if (enabled[plugin.id] === false) continue;
+    try {
+      plugin.register(pluginApi);
+    } catch (err) {
+      console.error(`External plugin "${plugin.id}" failed to register:`, err);
     }
   }
 }

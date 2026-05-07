@@ -184,6 +184,55 @@ The **corporate** theme follows the same Tailwind + M3 pipeline as magazine but 
 - **Header has 2 menu hosts.** The corporate header includes both an inline horizontal nav (`data-cms-menu-inline`, visible md+) and the standard burger overlay (`[data-cms-menu="header"]`, every viewport). The shared `menu-loader.js` reads the `data-cms-menu-inline` flag and emits flat `<a>` links instead of `<ul>/<li>` for that host — same `/menu.json`, two visual presentations.
 - **Hardcoded `/contact.html` CTA.** The header's `Get Started` button always points at `/contact.html`. Document this in onboarding or replace via theme code if a site doesn't want a contact page.
 
+### External plugins / themes (runtime-loaded packages)
+
+Beyond the in-tree plugins/themes (under `src/plugins/`, `src/mu-plugins/`, `src/themes/`), the admin supports **externally-installed** plugins and themes that ship as a `.zip`, get uploaded into Flexweg, and load at runtime via dynamic `import()` — no admin rebuild required. The runtime layer is additive: in-tree entries keep working unchanged, externals augment the same registries.
+
+**Architecture pieces** (read these together to understand the boot flow):
+
+- [src/core/flexwegRuntime.ts](src/core/flexwegRuntime.ts) — populates `window.__FLEXWEG_RUNTIME__` with React + family + the `pluginApi`. Side-effect imported by [main.tsx](src/main.tsx) **before any other code**.
+- [public/runtime/](public/runtime/) — six static stub files (`react.js`, `react-dom.js`, `react-dom-client.js`, `react-jsx-runtime.js`, `react-i18next.js`, `cms-runtime.js`) that re-export from `window.__FLEXWEG_RUNTIME__`. Served at stable URLs (no Vite hashing) so the import-map in `index.html` can target them by relative path.
+- [index.html](index.html) — declares the `<script type="importmap">` redirecting bare specifiers (`react`, `react/jsx-runtime`, `react-dom`, `react-dom/client`, `react-i18next`, `@flexweg/cms-runtime`) to `./runtime/*.js`. Plugin/theme bundles externalise these at build time; the import-map resolves them to the admin's live instances at runtime → one React copy in the page (required for hook integrity).
+- [src/services/externalRegistry.ts](src/services/externalRegistry.ts) — in-memory list of imported external manifests. Mutable: bundles call `registerExternalPlugin` / `registerExternalTheme` on import; the upload flow calls `unregister*` on uninstall. Subscribers (e.g. theme/plugin pages) get notified.
+- [src/services/externalLoader.ts](src/services/externalLoader.ts) — at boot, fetches `/admin/external.json` (the runtime manifest of installed externals). For each entry, validates `apiVersion` against `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]`, dynamic-imports the bundle's `bundle.js`, and registers the default export. Per-entry errors are caught + logged + grouped into a single toast — never abort boot.
+- [src/services/externalUpload.ts](src/services/externalUpload.ts) — handles install/uninstall via the upload UI. `installFromZip(kind, file)` extracts via JSZip (handles macOS-style wrapping folders), validates `manifest.json` (id sanitised + apiVersion + entry presence), uploads every file under `/admin/<kind>/<id>/` via `flexwegApi`, then appends to `/admin/external.json`. `uninstallExternal(kind, id)` removes the entry from `external.json` first (so a partial cleanup never leaves the admin trying to load a deleted folder), then `deleteFolder` on Flexweg, then `unregister*` in-memory.
+- [src/components/plugins/ExternalInstallModal.tsx](src/components/plugins/ExternalInstallModal.tsx) — shared modal mounted by both `PluginsPage` and `ThemesPage`. ZIP picker + install button + uninstall list of currently-installed externals.
+
+**Boot order** (the contract `loadAllExternalEntries` depends on):
+
+1. `main.tsx` runs — first import is `./core/flexwegRuntime` which sets `window.__FLEXWEG_RUNTIME__`.
+2. React mounts; `<App />` renders — if no Firebase config, branches to SetupForm; otherwise mounts `<AuthProvider>` + `<CmsDataProvider>`.
+3. `CmsDataProvider`'s first `useEffect` calls `loadAllExternalEntries()`, sets `externalsLoaded = true` regardless of success.
+4. The Firestore subscription `useEffect` is gated on `externalsLoaded` — so `applyPluginRegistration` runs ONCE with the complete plugin set (built-ins + externals). Otherwise external entries would register late, after `applyPluginRegistration`'s `resetRegistry()` already executed without them.
+
+**Registry integration**: [`listPlugins()`](src/plugins/index.ts) returns `[...PLUGINS, ...listExternalPlugins()]`; [`listThemes()`](src/themes/index.ts) does the same. Every consumer (PluginsPage, ThemesPage, publisher's theme resolver, `getPluginManifest`, `getActiveTheme`) goes through these so externals appear identically to built-ins. `applyPluginRegistration` iterates externals after built-ins so any external filter layers on top.
+
+**Storage layout** (on Flexweg):
+
+```
+/admin/
+├── external.json                  # { plugins: [...], themes: [...] } — runtime manifest
+├── plugins/<id>/manifest.json     # installation metadata (read at install + at boot)
+├── plugins/<id>/bundle.js         # ESM, default-exports the PluginManifest
+├── themes/<id>/manifest.json
+├── themes/<id>/bundle.js          # ESM, default-exports the ThemeManifest
+├── themes/<id>/theme.css          # uploaded as /theme-assets/<id>.css via Sync theme assets
+├── runtime/{react,react-dom,...}.js  # stable runtime stubs (Vite copies from public/runtime/)
+```
+
+**Authoring** lives outside this repo:
+
+- [examples/external-plugin/](examples/external-plugin/) — minimal plugin scaffold with `vite.config.ts` showing the externalised dependencies and the `inlineDynamicImports: true` that's required (the admin only loads `bundle.js`; separate chunks would 404).
+- [examples/external-theme/](examples/external-theme/) — minimal theme scaffold with six templates + hand-written CSS imported via `?raw`.
+- [docs/creating-a-plugin.md](docs/creating-a-plugin.md), [docs/creating-a-theme.md](docs/creating-a-theme.md), [docs/runtime-api-reference.md](docs/runtime-api-reference.md) — full authoring guides in English.
+
+**Common gotchas** when extending the runtime:
+
+- New built-in modules that external bundles want to consume need: (1) added to `flexwegRuntime`, (2) a stub in `public/runtime/`, (3) added to the import-map in `index.html`, (4) added to the example bundles' `external` Vite list.
+- The example scaffolds keep a local `src/types/cms-runtime.d.ts` — they don't depend on a published `@flexweg/cms-runtime` npm package. If we ever publish one, examples should switch to the public types and drop the local stub.
+- Theme bundle.js MUST default-export an object whose `id` matches `manifest.json`'s `id`. The loader cross-checks; mismatched bundles are rejected to prevent slot hijacking.
+- The boot blocks on external loading. If a remote `external.json` fetch hangs (very unlikely), the admin spinner would too. Acceptable for now — the fetch has `cache: no-store` but no explicit timeout.
+
 ### Plugin system
 
 `core/pluginRegistry.ts` is a WordPress-style filter/action registry. Filters mutate values in priority order; actions are side effects that all run. Plugins live in `src/plugins/<id>/`, register through a `manifest.register(api)` callback, and are listed in `src/plugins/index.ts`.

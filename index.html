@@ -24,6 +24,27 @@
         } catch (e) {}
       })();
     </script>
+    <!--
+      Import-map redirecting bare specifiers used by externally-loaded
+      plugins/themes to small stub files in /admin/runtime/. Each stub
+      reads the live React / i18n / cms-runtime instances out of
+      window.__FLEXWEG_RUNTIME__ (populated by src/core/flexwegRuntime.ts)
+      so an external bundle and the admin SPA share the SAME module
+      instance — required for React hooks integrity and i18next state.
+      Native browser support: Chrome 89+, Firefox 108+, Safari 16.4+.
+    -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "./runtime/react.js",
+          "react/jsx-runtime": "./runtime/react-jsx-runtime.js",
+          "react-dom": "./runtime/react-dom.js",
+          "react-dom/client": "./runtime/react-dom-client.js",
+          "react-i18next": "./runtime/react-i18next.js",
+          "@flexweg/cms-runtime": "./runtime/cms-runtime.js"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

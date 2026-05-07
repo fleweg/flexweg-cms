@@ -255,6 +255,8 @@
     "title": "Thèmes",
     "active": "Actif",
     "activate": "Activer",
+    "installExternal": "Installer un thème",
+    "uninstallDisabledTitle": "Activez un autre thème avant de désinstaller celui-ci.",
     "syncAssets": "Synchroniser le thème",
     "regenerateSite": "Régénérer le site",
     "regenerating": "Régénération…",
@@ -290,10 +292,38 @@
     "author": "auteur",
     "learnMore": "En savoir plus",
     "mustUseBadge": "Indispensable",
+    "installExternal": "Installer un plugin",
     "tabs": {
       "regular": "Plugins",
       "mustUse": "Indispensables"
     }
+  },
+  "externalInstall": {
+    "titlePlugin": "Installer un plugin",
+    "titleTheme": "Installer un thème",
+    "labelPlugin": "plugin",
+    "labelTheme": "thème",
+    "intro": "Déposez un fichier ZIP contenant un bundle de {{label}} (manifest.json + bundle.js à la racine). Le {{label}} sera uploadé sur votre site Flexweg et enregistré après un rechargement.",
+    "zipField": "Fichier ZIP du bundle",
+    "install": "Installer",
+    "installing": "Installation…",
+    "installSuccess": "{{name}} installé ({{count}} fichiers uploadés). Rechargement…",
+    "installedTitle": "Déjà installé",
+    "uninstall": "Désinstaller",
+    "uninstallSuccess": "{{id}} désinstallé. Rechargement…",
+    "confirmUninstall": "Désinstaller {{id}} ? Les fichiers seront supprimés de Flexweg.",
+    "errors": {
+      "no-manifest": "Le ZIP n'a pas de manifest.json à sa racine.",
+      "invalid-manifest": "Le manifest.json est invalide (champ requis manquant ou JSON cassé).",
+      "incompatible-api": "Le bundle a été buildé pour une version d'API runtime incompatible.",
+      "duplicate-id": "Déjà installé — désinstallez-le d'abord si vous voulez réinstaller.",
+      "no-bundle": "Le ZIP ne contient pas le fichier d'entrée déclaré dans le manifest.",
+      "fetch-manifest": "Impossible de lire le external.json actuel sur Flexweg.",
+      "upload-failed": "Échec de l'upload — vérifiez votre clé API Flexweg et votre connexion."
+    }
+  },
+  "externalLoader": {
+    "someFailed": "{{count}} bundle(s) externe(s) ont échoué au chargement. Voir la console du navigateur."
   },
   "menus": {
     "title": "Menus",
@@ -438,7 +468,7 @@
       "intro": "Flexweg CMS est un outil gratuit mis à votre disposition par Flexweg pour publier des pages sur votre hébergement Flexweg — Flexweg ne vous facturera jamais l'utilisation du CMS. Pour fonctionner, il a besoin d'un projet Firebase gratuit (Auth + Firestore) — c'est là qu'il stocke vos articles, les métadonnées des médias et les réglages.",
       "firebaseTitle": "Firebase est requis — et gratuit",
       "firebaseBody": "Créer un projet Firebase est gratuit et prend environ 5 minutes : ouvrir la Firebase Console, créer un nouveau projet, activer Authentication (email/mot de passe) et Firestore. Le plan Spark suffit pour un site typique. Notre tuto vous accompagne clic par clic.",
-      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
       "tutorialButton": "Tuto création du projet Firebase",
       "haveAccountButton": "J'ai créé mon projet Firebase"
     },

@@ -255,6 +255,8 @@
     "title": "Themes",
     "active": "Active",
     "activate": "Activate",
+    "installExternal": "Install theme",
+    "uninstallDisabledTitle": "Switch to another theme before uninstalling this one.",
     "syncAssets": "Sync theme assets",
     "regenerateSite": "Regenerate site",
     "regenerating": "Regenerating…",
@@ -290,10 +292,38 @@
     "author": "author",
     "learnMore": "Learn more",
     "mustUseBadge": "Must-use",
+    "installExternal": "Install plugin",
     "tabs": {
       "regular": "Plugins",
       "mustUse": "Must-use"
     }
+  },
+  "externalInstall": {
+    "titlePlugin": "Install a plugin",
+    "titleTheme": "Install a theme",
+    "labelPlugin": "plugin",
+    "labelTheme": "theme",
+    "intro": "Drop a ZIP file containing a {{label}} bundle (manifest.json + bundle.js at the ZIP root). The {{label}} will be uploaded to your Flexweg site and registered after a reload.",
+    "zipField": "Bundle ZIP file",
+    "install": "Install",
+    "installing": "Installing…",
+    "installSuccess": "{{name}} installed ({{count}} files uploaded). Reloading…",
+    "installedTitle": "Already installed",
+    "uninstall": "Uninstall",
+    "uninstallSuccess": "{{id}} uninstalled. Reloading…",
+    "confirmUninstall": "Uninstall {{id}}? Files will be deleted from Flexweg.",
+    "errors": {
+      "no-manifest": "ZIP is missing manifest.json at its root.",
+      "invalid-manifest": "manifest.json is invalid (missing required fields or not valid JSON).",
+      "incompatible-api": "The bundle was built against an incompatible runtime API version.",
+      "duplicate-id": "Already installed — uninstall it first if you want to re-install.",
+      "no-bundle": "ZIP does not contain the entry file declared in the manifest.",
+      "fetch-manifest": "Could not read the current external.json on Flexweg.",
+      "upload-failed": "Upload failed — check your Flexweg API key + connection."
+    }
+  },
+  "externalLoader": {
+    "someFailed": "{{count}} external bundle(s) failed to load. Check the browser console."
   },
   "menus": {
     "title": "Menus",
@@ -438,7 +468,7 @@
       "intro": "Flexweg CMS is a free tool offered by Flexweg to publish pages on your Flexweg hosting — no extra fees from Flexweg, ever. To run, it needs a free Firebase project (Auth + Firestore) — that's where it stores your posts, media metadata and settings.",
       "firebaseTitle": "Firebase is required — and free",
       "firebaseBody": "Creating a Firebase project is free and takes about 5 minutes: open the Firebase Console, create a new project, enable Authentication (email/password) and Firestore. The Spark plan is enough for the typical site. Our tutorial walks you through every click.",
-      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
       "tutorialButton": "Firebase setup tutorial",
       "haveAccountButton": "I've created my Firebase project"
     },

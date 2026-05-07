@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { Info, Lock, Settings as SettingsIcon } from "lucide-react";
+import { Info, Loader2, Lock, Plus, Settings as SettingsIcon, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { ReadmeModal } from "../components/plugins/ReadmeModal";
+import { ExternalInstallModal } from "../components/plugins/ExternalInstallModal";
 import { useCmsData } from "../context/CmsDataContext";
 import { listPlugins, type PluginManifest } from "../plugins";
 import { listMuPlugins } from "../mu-plugins";
+import { listExternalPlugins } from "../services/externalRegistry";
+import { uninstallExternal } from "../services/externalUpload";
 import { updateSettings } from "../services/settings";
 import { cn } from "../lib/utils";
+import { toast } from "../lib/toast";
 
 type Tab = "regular" | "mustUse";
 
@@ -21,8 +25,29 @@ export function PluginsPage() {
   // modal can render even when the plugin gets re-listed under a
   // different id later.
   const [readmePlugin, setReadmePlugin] = useState<PluginManifest | null>(null);
+  // Drives the install/uninstall modal for external (uploaded) plugins.
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+  // Tracks the id of the plugin currently being uninstalled (drives
+  // the per-card spinner + disables the trash button).
+  const [uninstallingId, setUninstallingId] = useState<string | null>(null);
 
   const visiblePlugins = tab === "regular" ? listPlugins() : listMuPlugins();
+  const externals = listExternalPlugins();
+  const externalIds = new Set(externals.map((p) => p.id));
+
+  async function handleUninstall(id: string) {
+    if (uninstallingId) return;
+    if (!window.confirm(t("externalInstall.confirmUninstall", { id }))) return;
+    setUninstallingId(id);
+    try {
+      await uninstallExternal("plugins", id);
+      toast.success(t("externalInstall.uninstallSuccess", { id }));
+      window.setTimeout(() => window.location.reload(), 600);
+    } catch (err) {
+      toast.error((err as Error).message);
+      setUninstallingId(null);
+    }
+  }
 
   async function toggle(id: string, current: boolean) {
     await updateSettings({
@@ -32,7 +57,19 @@ export function PluginsPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <PageHeader title={t("plugins.title")} />
+      <PageHeader
+        title={t("plugins.title")}
+        actions={
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setInstallModalOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            {t("plugins.installExternal")}
+          </button>
+        }
+      />
       <nav
         className="flex flex-wrap gap-1 border-b border-surface-200 dark:border-surface-800"
         aria-label={t("plugins.title")}
@@ -115,6 +152,24 @@ export function PluginsPage() {
                       {t("plugins.configure")}
                     </Link>
                   )}
+                  {/* Uninstall is only offered on externally-installed
+                      plugins — built-ins live in the bundle and can't
+                      be removed at runtime. */}
+                  {!isMustUse && externalIds.has(plugin.id) && (
+                    <button
+                      type="button"
+                      className="btn-ghost text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                      onClick={() => handleUninstall(plugin.id)}
+                      disabled={uninstallingId === plugin.id}
+                    >
+                      {uninstallingId === plugin.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      {t("externalInstall.uninstall")}
+                    </button>
+                  )}
                 </div>
               </div>
               {/* Toggle on the right edge for sm+. Hidden on mobile —
@@ -142,6 +197,16 @@ export function PluginsPage() {
           onClose={() => setReadmePlugin(null)}
         />
       )}
+      <ExternalInstallModal
+        kind="plugins"
+        open={installModalOpen}
+        onClose={() => setInstallModalOpen(false)}
+        existing={externals.map((p) => ({
+          id: p.id,
+          name: p.name,
+          version: p.version,
+        }))}
+      />
     </div>
   );
 }

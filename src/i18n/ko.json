@@ -438,7 +438,7 @@
       "intro": "Flexweg CMS는 Flexweg가 무료로 제공하는 도구로, Flexweg 호스팅에 페이지를 게시할 수 있게 해줍니다 — Flexweg는 CMS 사용에 대해 비용을 청구하지 않습니다. 작동하려면 무료 Firebase 프로젝트(Auth + Firestore)가 필요합니다 — 게시물, 미디어 메타데이터, 설정이 그곳에 저장됩니다.",
       "firebaseTitle": "Firebase는 필수이며 무료입니다",
       "firebaseBody": "Firebase 프로젝트 생성은 무료이며 약 5분이면 완료됩니다: Firebase 콘솔을 열고, 새 프로젝트를 만들고, Authentication(이메일/비밀번호)과 Firestore를 활성화하세요. Spark 요금제는 일반적인 사이트에 충분합니다. 저희 튜토리얼이 클릭별로 안내해 드립니다.",
-      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
       "tutorialButton": "Firebase 설정 튜토리얼",
       "haveAccountButton": "Firebase 프로젝트를 만들었습니다"
     },

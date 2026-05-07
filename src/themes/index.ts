@@ -14,6 +14,7 @@ import { manifest as corporateManifest } from "./corporate/manifest";
 import i18n from "../i18n";
 import { registerBlock } from "../core/blockRegistry";
 import { pluginApi } from "../core/pluginRegistry";
+import { listExternalThemes } from "../services/externalRegistry";
 import type { ThemeManifest } from "./types";
 
 // Cast each typed manifest to the unknown-config base — same pattern
@@ -26,18 +27,24 @@ export const THEMES: ThemeManifest[] = [
   corporateManifest as ThemeManifest,
 ];
 
+// Returns built-in themes + any externally-loaded ones. Used by
+// ThemesPage, the publisher, and the active-theme resolver — every
+// caller therefore sees externals on equal footing with built-ins.
+export function listThemes(): ThemeManifest[] {
+  const externals = listExternalThemes();
+  if (externals.length === 0) return THEMES;
+  return [...THEMES, ...externals];
+}
+
 export function getTheme(id: string): ThemeManifest {
-  const found = THEMES.find((t) => t.id === id);
+  const found = listThemes().find((t) => t.id === id);
   if (!found) throw new Error(`Unknown theme: ${id}`);
   return found;
 }
 
 export function getActiveTheme(activeId: string): ThemeManifest {
-  return THEMES.find((t) => t.id === activeId) ?? THEMES[0];
-}
-
-export function listThemes(): ThemeManifest[] {
-  return THEMES;
+  const all = listThemes();
+  return all.find((t) => t.id === activeId) ?? all[0];
 }
 
 // Translation bundles ship inline on each manifest. Loaded at module
@@ -56,6 +63,18 @@ function loadThemeTranslations(): void {
 }
 
 loadThemeTranslations();
+
+// Loads i18n bundles for an externally-imported theme. Called by the
+// external loader after import so the theme's settings page can
+// resolve its keys without a reload.
+export function loadExternalThemeTranslations(theme: ThemeManifest): void {
+  if (!theme.i18n) return;
+  const ns = `theme-${theme.id}`;
+  for (const [locale, resources] of Object.entries(theme.i18n)) {
+    if (!resources) continue;
+    i18n.addResourceBundle(locale, ns, resources, true, true);
+  }
+}
 
 // Registers every block contributed by the currently-active theme and
 // runs the theme's optional `register(api)` callback so theme-side

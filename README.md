@@ -905,6 +905,26 @@ At publish time the publisher rewrites each marker into the provider's actual if
 
 Adding a new provider = one entry in [src/mu-plugins/flexweg-embeds/providers.ts](src/mu-plugins/flexweg-embeds/providers.ts) + one i18n key pair. Disabling this plugin would silently strip embeds from existing posts on the next render — must-use to prevent that footgun.
 
+## External plugins & themes
+
+In addition to in-tree plugins (committed under `src/plugins/`) and in-tree themes (under `src/themes/`), the admin supports **external** packages that ship as a `.zip`, install via an in-admin upload UI (or by dropping a folder directly via Flexweg), and load at runtime — no rebuild of the admin required.
+
+- **Install** — admin **Plugins** / **Themes** → click **Install plugin** / **Install theme** → pick a `.zip`. The admin extracts client-side, uploads the contents to `/admin/plugins/<id>/` or `/admin/themes/<id>/` on Flexweg, appends an entry to `/admin/external.json`, and reloads. The new entry appears alongside the built-ins.
+- **Uninstall** — same modal lists installed external entries with an **Uninstall** button. Files are deleted from Flexweg + the entry is removed from `external.json`.
+- **Manual install** (no upload UI) — drop the unzipped folder under `/admin/<kind>/<id>/` via Flexweg's file manager, then add an entry to `/admin/external.json` (or create the file if it doesn't exist).
+
+External bundles use the **same hook API and manifest shapes** as in-tree plugins/themes. The admin's `index.html` ships an [import-map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) that redirects `react`, `react-dom`, `react-i18next`, and `@flexweg/cms-runtime` to runtime stubs in `/admin/runtime/` — bundles externalise these specifiers at build time and at runtime get redirected to the live admin instance, guaranteeing one React copy across admin and bundle (required for hooks integrity).
+
+Authoring docs and ready-to-build scaffolds:
+
+- [docs/creating-a-plugin.md](docs/creating-a-plugin.md) — full guide for external plugin authoring.
+- [docs/creating-a-theme.md](docs/creating-a-theme.md) — full guide for external theme authoring.
+- [docs/runtime-api-reference.md](docs/runtime-api-reference.md) — public API surface (`@flexweg/cms-runtime` exports, hook list, manifest shapes).
+- [examples/external-plugin/](examples/external-plugin/) — minimal plugin scaffold (head meta tag + dashboard card).
+- [examples/external-theme/](examples/external-theme/) — minimal theme scaffold (six templates + hand-written CSS).
+
+Compatibility: external bundles declare an `apiVersion` in their `manifest.json`; the admin checks it against `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]` at install + at every boot, and skips out-of-range bundles with a console warning. Browser support: import-maps are native in Chrome 89+, Firefox 108+, Safari 16.4+ (covers virtually every admin user).
+
 ## Tests
 
 ```bash

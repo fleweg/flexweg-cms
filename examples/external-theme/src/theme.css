@@ -1,0 +1,62 @@
+/* Minimal theme stylesheet. Hand-written so the example stays
+   buildable without Tailwind or SCSS. Ship whatever you like — the
+   admin uploads this file verbatim to /theme-assets/<id>.css. */
+
+:root {
+  --mt-bg: #ffffff;
+  --mt-fg: #1a1a1a;
+  --mt-muted: #6b7280;
+  --mt-accent: #2563eb;
+  --mt-max-w: 720px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--mt-bg);
+  color: var(--mt-fg);
+  line-height: 1.6;
+}
+
+main {
+  max-width: var(--mt-max-w);
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+a {
+  color: var(--mt-accent);
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.25;
+}
+
+article header h1 {
+  margin-top: 0;
+  font-size: 2rem;
+}
+
+.mt-meta {
+  color: var(--mt-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.mt-list {
+  list-style: none;
+  padding: 0;
+}
+
+.mt-list li {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem 0;
+}
+
+.mt-list li:first-child {
+  border-top: 0;
+}

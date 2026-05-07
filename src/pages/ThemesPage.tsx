@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, RefreshCw } from "lucide-react";
+import { Check, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PublishLog } from "../components/publishing/PublishLog";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
+import { ExternalInstallModal } from "../components/plugins/ExternalInstallModal";
 import { Dropdown, type DropdownItem, type DropdownSection } from "../components/ui/Dropdown";
 import { useCmsData } from "../context/CmsDataContext";
 import { listThemes } from "../themes";
+import { listExternalThemes } from "../services/externalRegistry";
+import { uninstallExternal } from "../services/externalUpload";
 import { updateSettings } from "../services/settings";
 import { syncThemeAssets } from "../services/themeSync";
+import { toast } from "../lib/toast";
 import {
   buildPublishContext,
   regenerateAll,
@@ -50,6 +54,26 @@ export function ThemesPage() {
   // page + plugin outputs) so the new look propagates everywhere
   // without leaving stale published HTML referencing the old CSS.
   const [pendingThemeId, setPendingThemeId] = useState<string | null>(null);
+  // Drives the install/uninstall modal for external (uploaded) themes.
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+  // id of the theme currently being uninstalled (drives per-card spinner).
+  const [uninstallingId, setUninstallingId] = useState<string | null>(null);
+  const externalThemes = listExternalThemes();
+  const externalThemeIds = new Set(externalThemes.map((th) => th.id));
+
+  async function handleUninstallTheme(id: string) {
+    if (uninstallingId) return;
+    if (!window.confirm(t("externalInstall.confirmUninstall", { id }))) return;
+    setUninstallingId(id);
+    try {
+      await uninstallExternal("themes", id);
+      toast.success(t("externalInstall.uninstallSuccess", { id }));
+      window.setTimeout(() => window.location.reload(), 600);
+    } catch (err) {
+      toast.error((err as Error).message);
+      setUninstallingId(null);
+    }
+  }
 
   function handleActivate(themeId: string) {
     if (themeId === settings.activeThemeId) return;
@@ -252,6 +276,14 @@ export function ThemesPage() {
         title={t("themes.title")}
         actions={
           <>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setInstallModalOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              {t("themes.installExternal")}
+            </button>
             <button type="button" className="btn-secondary" onClick={handleSyncAssets} disabled={busy}>
               <RefreshCw className="h-4 w-4" />
               {t("themes.syncAssets")}
@@ -278,14 +310,12 @@ export function ThemesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {themes.map((theme) => {
           const active = theme.id === settings.activeThemeId;
+          const isExternal = externalThemeIds.has(theme.id);
           return (
-            <button
+            <div
               key={theme.id}
-              type="button"
-              onClick={() => handleActivate(theme.id)}
-              disabled={busy}
               className={
-                "card p-4 text-left ring-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed " +
+                "card p-4 ring-2 transition-colors flex flex-col " +
                 (active
                   ? "ring-blue-500"
                   : "ring-transparent hover:ring-surface-300 dark:hover:ring-surface-600")
@@ -305,7 +335,43 @@ export function ThemesPage() {
                   {theme.description}
                 </p>
               )}
-            </button>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {!active && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => handleActivate(theme.id)}
+                    disabled={busy}
+                  >
+                    {t("themes.activate")}
+                  </button>
+                )}
+                {/* Uninstall on external themes only — built-ins live in
+                    the bundle. Disabled when the theme is active so a
+                    user can't pull the rug out from under the public
+                    site without switching to a different theme first. */}
+                {isExternal && (
+                  <button
+                    type="button"
+                    className="btn-ghost text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                    onClick={() => handleUninstallTheme(theme.id)}
+                    disabled={
+                      busy || active || uninstallingId === theme.id
+                    }
+                    title={
+                      active ? t("themes.uninstallDisabledTitle") : undefined
+                    }
+                  >
+                    {uninstallingId === theme.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    {t("externalInstall.uninstall")}
+                  </button>
+                )}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -320,6 +386,16 @@ export function ThemesPage() {
           onCancel={handleCancelThemeChange}
         />
       )}
+      <ExternalInstallModal
+        kind="themes"
+        open={installModalOpen}
+        onClose={() => setInstallModalOpen(false)}
+        existing={externalThemes.map((th) => ({
+          id: th.id,
+          name: th.name,
+          version: th.version,
+        }))}
+      />
     </div>
   );
 }

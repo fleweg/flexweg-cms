@@ -438,7 +438,7 @@
       "intro": "O Flexweg CMS é uma ferramenta gratuita disponibilizada pelo Flexweg para publicar páginas no teu alojamento Flexweg — o Flexweg nunca te vai cobrar pelo uso do CMS. Para funcionar precisa de um projeto Firebase gratuito (Auth + Firestore) — é onde guarda os teus posts, os metadados dos media e as definições.",
       "firebaseTitle": "Firebase é necessário — e é gratuito",
       "firebaseBody": "Criar um projeto Firebase é gratuito e demora cerca de 5 minutos: abre a Firebase Console, cria um novo projeto, ativa Authentication (email/palavra-passe) e Firestore. O plano Spark é suficiente para um site típico. O nosso tutorial guia-te clique a clique.",
-      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
       "tutorialButton": "Tutorial de configuração do Firebase",
       "haveAccountButton": "Já criei o meu projeto Firebase"
     },

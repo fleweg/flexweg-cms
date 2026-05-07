@@ -13,6 +13,7 @@ import { subscribeToUsers } from "../services/users";
 import { subscribeToPosts } from "../services/posts";
 import { applyPluginRegistration } from "../plugins";
 import { applyThemeRegistration } from "../themes";
+import { loadAllExternalEntries } from "../services/externalLoader";
 import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 
 // Posts + pages live behind two access patterns, gated by
@@ -80,7 +81,31 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
     setError(err);
   }
 
+  // Tracks the boot-time external plugin/theme load. We block the
+  // settings-driven applyPluginRegistration until externals are
+  // imported so the registry runs ONCE with the complete plugin set —
+  // otherwise external entries register later, after the regen
+  // targets / blocks lists have already been built without them.
+  const [externalsLoaded, setExternalsLoaded] = useState(false);
+
   useEffect(() => {
+    let cancelled = false;
+    loadAllExternalEntries()
+      .catch((err) => {
+        // The loader catches per-entry failures internally; a thrown
+        // here means a manifest parse error or similar global issue.
+        console.error("[CmsData] external bundles loader threw:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setExternalsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!externalsLoaded) return;
     const unsubs = [
       subscribeToTerms(
         (items) => {
@@ -121,7 +146,7 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
     ];
     return () => unsubs.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [externalsLoaded]);
 
   // Global posts subscription — only active in paginationMode "global".
   // Re-runs whenever the mode flips (toast asks the user to reload, but

@@ -438,7 +438,7 @@
       "intro": "Flexweg CMS ist ein kostenloses Tool, das Flexweg Ihnen zur Verfügung stellt, um Seiten auf Ihrem Flexweg-Hosting zu veröffentlichen — Flexweg wird Ihnen die Nutzung des CMS niemals in Rechnung stellen. Es benötigt ein kostenloses Firebase-Projekt (Auth + Firestore) — dort werden Ihre Beiträge, Medienmetadaten und Einstellungen gespeichert.",
       "firebaseTitle": "Firebase wird benötigt — und ist kostenlos",
       "firebaseBody": "Ein Firebase-Projekt anzulegen ist kostenlos und dauert etwa 5 Minuten: Firebase Console öffnen, neues Projekt erstellen, Authentication (E-Mail/Passwort) und Firestore aktivieren. Der Spark-Plan reicht für eine typische Website. Unser Tutorial führt Sie durch jeden Klick.",
-      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
       "tutorialButton": "Firebase-Setup-Tutorial",
       "haveAccountButton": "Ich habe mein Firebase-Projekt erstellt"
     },

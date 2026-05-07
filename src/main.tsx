@@ -3,8 +3,12 @@ import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
 import "./i18n";
-// Side-effect import: registers built-in editor blocks into the global
-// block registry. Must run before any editor is mounted.
+// Side-effect imports — order matters. flexwegRuntime must run BEFORE
+// any external bundle could be evaluated, so that window.__FLEXWEG_RUNTIME__
+// is populated when /admin/runtime/*.js stubs read from it. The other
+// two register editor blocks; they're independent of each other but
+// both must run before the editor mounts.
+import "./core/flexwegRuntime";
 import "./core/coreBlocks";
 import "./index.css";
 

@@ -1,0 +1,21 @@
+{
+  "name": "flexweg-cms-hello-plugin",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Example external plugin for Flexweg CMS — appends a meta tag to every published page and adds a dashboard card.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && node scripts/pack.mjs",
+    "pack": "node scripts/pack.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@vitejs/plugin-react": "^4.3.3",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^15.2.0",
+    "typescript": "^6.0.3",
+    "vite": "^5.4.10"
+  }
+}
