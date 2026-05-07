@@ -544,6 +544,8 @@
     },
     "errors": {
       "missingFields": "Please fill every field.",
+      "rootDeploymentTitle": "The admin must live in a subfolder, not at the site root.",
+      "rootDeploymentHint": "Move the admin files (index.html, config.js, runtime/, …) into a subfolder on Flexweg — for example /admin/ or any random name like /erf34f654GH3/ for obscurity. Then reload the admin from that subfolder URL and re-run the setup.",
       "firebaseAuthGeneric": "Could not sign in to Firebase.",
       "firebaseAuthInvalidCredential": "Invalid email or password for the Firebase account.",
       "firebaseAuthUserNotFound": "No Firebase user with this email. Create one in Firebase Console → Authentication → Users first.",

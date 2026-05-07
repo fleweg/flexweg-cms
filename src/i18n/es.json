@@ -514,6 +514,8 @@
     },
     "errors": {
       "missingFields": "Por favor, rellena todos los campos.",
+      "rootDeploymentTitle": "El admin debe estar en una subcarpeta, no en la raíz del sitio.",
+      "rootDeploymentHint": "Mueve los archivos del admin (index.html, config.js, runtime/, …) a una subcarpeta en Flexweg — por ejemplo /admin/ o un nombre aleatorio como /erf34f654GH3/ para mayor discreción. Luego recarga el admin desde la URL de la subcarpeta y vuelve a ejecutar la configuración.",
       "firebaseAuthGeneric": "No se pudo iniciar sesión en Firebase.",
       "firebaseAuthInvalidCredential": "Correo o contraseña no válidos para la cuenta de Firebase.",
       "firebaseAuthUserNotFound": "No existe un usuario de Firebase con este correo. Créalo primero en Firebase Console → Authentication → Users.",

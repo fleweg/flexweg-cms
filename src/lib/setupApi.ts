@@ -8,6 +8,8 @@
 // is a single POST) — no need to share the toast funnel from flexwegApi.ts;
 // the SetupForm renders its own inline error states.
 
+import { withAdminBase } from "./adminBase";
+
 export interface SetupFlexwegConfig {
   apiKey: string;
   siteUrl: string;
@@ -66,7 +68,9 @@ export async function uploadConfigJs(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      path: "admin/config.js",
+      // Auto-detected from window.location so the admin can live under
+      // any folder name on Flexweg, not just /admin/. See lib/adminBase.ts.
+      path: withAdminBase("config.js"),
       content: source,
       encoding: "utf-8",
     }),

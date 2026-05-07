@@ -33,6 +33,7 @@ import {
   FLEXWEG_API_MIN_VERSION,
   FLEXWEG_API_VERSION,
 } from "../core/flexwegRuntime";
+import { withAdminBase } from "../lib/adminBase";
 
 export type ExternalKind = "plugins" | "themes";
 
@@ -102,18 +103,14 @@ function safeId(id: string): string {
   return id.replace(/[^a-z0-9-]/gi, "").toLowerCase();
 }
 
-// Flexweg API paths are absolute from the site root, but the admin SPA
-// lives under /admin/ — every plugin/theme file and the external.json
-// manifest must therefore be uploaded to `admin/<rest-of-path>`. The
-// browser-side loader fetches them via relative URLs (`./external.json`,
-// `./plugins/<id>/bundle.js`) which resolve against /admin/index.html
-// to the same locations, but only AFTER we've prefixed the API path
-// with "admin/". Without this prefix, files end up at the public site
-// root (e.g. /plugins/<id>/bundle.js) where the admin doesn't look.
-const ADMIN_PREFIX = "admin/";
-
+// Flexweg API paths are absolute from the site root. The admin SPA
+// lives under a folder on the site (conventionally /admin/, but the
+// user can rename it for obscurity). Plugin / theme files and the
+// external.json manifest must be uploaded to `<adminFolder>/<rest>`
+// to match where the runtime loader fetches them. The folder name is
+// auto-detected from window.location — see lib/adminBase.ts.
 function adminPath(relative: string): string {
-  return ADMIN_PREFIX + relative.replace(/^\/+/, "");
+  return withAdminBase(relative);
 }
 
 // Reads the current external.json from Flexweg. Returns the empty

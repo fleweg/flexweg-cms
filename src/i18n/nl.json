@@ -514,6 +514,8 @@
     },
     "errors": {
       "missingFields": "Vul alle velden in.",
+      "rootDeploymentTitle": "De admin moet in een submap staan, niet in de hoofdmap van de site.",
+      "rootDeploymentHint": "Verplaats de admin-bestanden (index.html, config.js, runtime/, …) naar een submap op Flexweg — bijvoorbeeld /admin/ of een willekeurige naam zoals /erf34f654GH3/ voor extra onopvallendheid. Herlaad de admin vervolgens vanuit de URL van de submap en voer de configuratie opnieuw uit.",
       "firebaseAuthGeneric": "Aanmelden bij Firebase mislukt.",
       "firebaseAuthInvalidCredential": "Ongeldig e-mailadres of wachtwoord voor het Firebase-account.",
       "firebaseAuthUserNotFound": "Geen Firebase-gebruiker met dit e-mailadres. Maak er eerst een aan in Firebase Console → Authentication → Users.",

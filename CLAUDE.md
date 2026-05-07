@@ -184,6 +184,20 @@ The **corporate** theme follows the same Tailwind + M3 pipeline as magazine but 
 - **Header has 2 menu hosts.** The corporate header includes both an inline horizontal nav (`data-cms-menu-inline`, visible md+) and the standard burger overlay (`[data-cms-menu="header"]`, every viewport). The shared `menu-loader.js` reads the `data-cms-menu-inline` flag and emits flat `<a>` links instead of `<ul>/<li>` for that host — same `/menu.json`, two visual presentations.
 - **Hardcoded `/contact.html` CTA.** The header's `Get Started` button always points at `/contact.html`. Document this in onboarding or replace via theme code if a site doesn't want a contact page.
 
+### Admin folder name auto-detection
+
+The admin SPA is conventionally deployed to `/admin/` on Flexweg, but the folder name is not hardcoded — users can rename it (e.g. to a random `/erf34f654GH3/` for obscurity). The admin auto-detects its current folder from `window.location.pathname` via [src/lib/adminBase.ts](src/lib/adminBase.ts):
+
+- `getAdminFolder()` returns the path segments up to (but excluding) `index.html` — e.g. `/erf34f654GH3/index.html` → `"erf34f654GH3"`. Returns `""` when the admin is at the site root.
+- `withAdminBase(relativePath)` prepends the detected folder to a Flexweg API upload path. Used by every site that writes admin assets to Flexweg:
+  - [src/lib/setupApi.ts](src/lib/setupApi.ts) — `config.js` upload during SetupForm
+  - [src/services/externalUpload.ts](src/services/externalUpload.ts) — `external.json` + plugin / theme folders
+- `isRootDeployment()` returns true when `getAdminFolder() === ""`. The SetupForm checks this and refuses to submit, surfacing a translated error pointing the user to put the admin in a subfolder. Without this guard, uploads would land at the site root and pollute the public HTML pages.
+
+The runtime loader ([src/services/externalLoader.ts](src/services/externalLoader.ts)) does NOT use `withAdminBase` — it uses URLs relative to `document.baseURI` (`fetch("./external.json")`, `new URL(relative, document.baseURI).href`) which auto-resolve against whatever folder served the admin. Only the upload side needs the explicit prefix because Flexweg API paths are absolute from the site root.
+
+When extending: any new code path that uploads admin assets via the Flexweg API MUST go through `withAdminBase()`. Any new code path that fetches admin assets via the browser (`fetch`, dynamic `import`) should use a relative URL — no helper needed.
+
 ### External plugins / themes (runtime-loaded packages)
 
 Beyond the in-tree plugins/themes (under `src/plugins/`, `src/mu-plugins/`, `src/themes/`), the admin supports **externally-installed** plugins and themes that ship as a `.zip`, get uploaded into Flexweg, and load at runtime via dynamic `import()` — no admin rebuild required. The runtime layer is additive: in-tree entries keep working unchanged, externals augment the same registries.

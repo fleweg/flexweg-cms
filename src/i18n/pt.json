@@ -514,6 +514,8 @@
     },
     "errors": {
       "missingFields": "Por favor, preenche todos os campos.",
+      "rootDeploymentTitle": "O admin deve estar numa subpasta, não na raiz do site.",
+      "rootDeploymentHint": "Move os ficheiros do admin (index.html, config.js, runtime/, …) para uma subpasta no Flexweg — por exemplo /admin/ ou um nome aleatório como /erf34f654GH3/ por discrição. Em seguida recarrega o admin a partir do URL da subpasta e volta a executar a configuração.",
       "firebaseAuthGeneric": "Não foi possível iniciar sessão no Firebase.",
       "firebaseAuthInvalidCredential": "Email ou palavra-passe inválidos para a conta Firebase.",
       "firebaseAuthUserNotFound": "Não existe utilizador Firebase com este email. Cria um primeiro em Firebase Console → Authentication → Users.",

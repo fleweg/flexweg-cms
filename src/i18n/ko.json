@@ -514,6 +514,8 @@
     },
     "errors": {
       "missingFields": "모든 필드를 입력해 주세요.",
+      "rootDeploymentTitle": "관리자는 사이트 루트가 아닌 하위 폴더에 있어야 합니다.",
+      "rootDeploymentHint": "관리자 파일(index.html, config.js, runtime/, …)을 Flexweg의 하위 폴더로 이동하세요 — 예를 들어 /admin/ 또는 보안을 위한 무작위 이름인 /erf34f654GH3/ 등으로. 그런 다음 해당 하위 폴더 URL에서 관리자를 다시 로드하고 설정을 다시 실행하세요.",
       "firebaseAuthGeneric": "Firebase 로그인에 실패했습니다.",
       "firebaseAuthInvalidCredential": "Firebase 계정의 이메일 또는 비밀번호가 잘못되었습니다.",
       "firebaseAuthUserNotFound": "이 이메일을 사용하는 Firebase 사용자가 없습니다. 먼저 Firebase 콘솔 → Authentication → Users에서 만드세요.",

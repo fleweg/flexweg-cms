@@ -937,6 +937,19 @@ Critical units have unit tests:
 - `core/slug` — URL building, slugification, validation.
 - `core/pluginRegistry` — filter/action ordering, sync vs. async semantics.
 
+## Renaming the admin folder for obscurity
+
+By default the admin SPA is deployed to `/admin/` on Flexweg. You can rename that folder to anything you want — for example a random-looking string like `/erf34f654GH3/` — to make it slightly harder for crawlers and casual scanners to find it.
+
+The admin auto-detects its folder name from the URL on every load (via `window.location.pathname`) and uses it as the prefix for every Flexweg API upload (`config.js`, `external.json`, `plugins/<id>/`, `themes/<id>/`). No code change, no rebuild — just rename the folder via Flexweg's file manager and re-open the admin from the new URL. All install / uninstall / setup operations work transparently.
+
+Two rules:
+
+- **Don't deploy at the site root.** The setup form refuses to run if the admin is being served at `/`. Mixing admin assets (`config.js`, plugin folders, theme bundles) with the public site's HTML pages is a footgun that's easier to prevent than to recover from. Always put the admin under a subfolder, even if you don't care about obscurity.
+- **Rename atomically.** Use Flexweg's file-manager "rename folder" action so all the admin files move together. If you copy + delete instead, you risk leaving orphaned files at the old path that the loader would then ignore — but they'd still be reachable via direct URL.
+
+Note that this is **security through obscurity** — the random folder name only stops naive HTTP-level crawlers. The real protection of the admin is still: the `<meta name="robots">` tag, `Disallow: /admin/` in `robots.txt`, the bootstrap admin email + password, and the Firestore security rules. Adjust your `robots.txt` to match the new folder name when renaming, otherwise crawlers ignore the disallow rule.
+
 ## Admin privacy
 
 The admin SPA at `/admin/` is internal-only — it should not appear in search results. Two layers keep it out of indexes:

@@ -544,6 +544,8 @@
     },
     "errors": {
       "missingFields": "Veuillez remplir tous les champs.",
+      "rootDeploymentTitle": "L'admin doit être dans un sous-dossier, pas à la racine du site.",
+      "rootDeploymentHint": "Déplacez les fichiers de l'admin (index.html, config.js, runtime/, …) dans un sous-dossier sur Flexweg — par exemple /admin/ ou un nom aléatoire comme /erf34f654GH3/ pour plus de discrétion. Puis rechargez l'admin depuis l'URL du sous-dossier et relancez la configuration.",
       "firebaseAuthGeneric": "Impossible de se connecter à Firebase.",
       "firebaseAuthInvalidCredential": "Email ou mot de passe invalide pour le compte Firebase.",
       "firebaseAuthUserNotFound": "Aucun utilisateur Firebase avec cet email. Créez-le d'abord dans Firebase Console → Authentication → Users.",

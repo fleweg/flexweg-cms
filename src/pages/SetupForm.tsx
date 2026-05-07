@@ -24,6 +24,7 @@ import {
 } from "../services/firebase";
 import { DEFAULT_FLEXWEG_API_BASE_URL } from "../services/flexwegConfig";
 import { syncThemeAssets } from "../services/themeSync";
+import { isRootDeployment } from "../lib/adminBase";
 
 interface FormState {
   apiKey: string;
@@ -55,6 +56,7 @@ const INITIAL_STATE: FormState = {
 
 type ErrorKind =
   | "missingFields"
+  | "rootDeployment"
   | "firebaseAuth"
   | "wrongAdminEmail"
   | "flexwegAuth"
@@ -158,6 +160,15 @@ export function SetupForm() {
     e.preventDefault();
     if (submitting) return;
     setError(null);
+
+    // Refuse to set up at the site root — uploading config.js,
+    // external.json and plugin/theme folders to the public root would
+    // mix admin assets with the published site. The user must put
+    // dist/admin/'s contents inside a subfolder on Flexweg first.
+    if (isRootDeployment()) {
+      setError({ kind: "rootDeployment" });
+      return;
+    }
 
     const state = trimmed();
     if (!validate(state)) {
@@ -377,6 +388,17 @@ export function SetupForm() {
         </div>
 
         <Stepper currentStep={wizardStep} />
+
+        {isRootDeployment() && (
+          <div className="mb-4 rounded-lg bg-amber-50 text-amber-800 ring-1 ring-amber-200 px-4 py-3 text-sm dark:bg-amber-900/30 dark:text-amber-200 dark:ring-amber-700/50">
+            <p className="font-semibold">
+              {t("setup.errors.rootDeploymentTitle")}
+            </p>
+            <p className="text-xs mt-1.5 leading-relaxed">
+              {t("setup.errors.rootDeploymentHint")}
+            </p>
+          </div>
+        )}
 
         {wizardStep === "welcome" ? (
           <WelcomeStep onContinue={() => setWizardStep("terms")} />
@@ -761,6 +783,13 @@ function ErrorMessage({ error }: { error: ErrorState }) {
   switch (error.kind) {
     case "missingFields":
       return <span>{t("setup.errors.missingFields")}</span>;
+    case "rootDeployment":
+      return (
+        <div className="space-y-1.5">
+          <p>{t("setup.errors.rootDeploymentTitle")}</p>
+          <p className="text-xs">{t("setup.errors.rootDeploymentHint")}</p>
+        </div>
+      );
     case "firebaseAuth":
       return <span>{error.detail ?? t("setup.errors.firebaseAuthGeneric")}</span>;
     case "wrongAdminEmail":

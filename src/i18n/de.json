@@ -514,6 +514,8 @@
     },
     "errors": {
       "missingFields": "Bitte füllen Sie alle Felder aus.",
+      "rootDeploymentTitle": "Die Admin-Oberfläche muss in einem Unterordner liegen, nicht im Stammverzeichnis der Site.",
+      "rootDeploymentHint": "Verschieben Sie die Admin-Dateien (index.html, config.js, runtime/, …) in einen Unterordner auf Flexweg — zum Beispiel /admin/ oder einen zufälligen Namen wie /erf34f654GH3/ aus Tarngründen. Laden Sie die Admin-Oberfläche dann von der URL des Unterordners neu und führen Sie das Setup erneut aus.",
       "firebaseAuthGeneric": "Anmeldung bei Firebase fehlgeschlagen.",
       "firebaseAuthInvalidCredential": "Ungültige E-Mail oder ungültiges Passwort für das Firebase-Konto.",
       "firebaseAuthUserNotFound": "Kein Firebase-Benutzer mit dieser E-Mail. Legen Sie zunächst einen in Firebase Console → Authentication → Users an.",
