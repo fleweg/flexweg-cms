@@ -212,11 +212,21 @@ export async function renameFile(oldPath: string, newPath: string): Promise<void
 
 export async function getFile(path: string): Promise<string> {
   const config = await requireConfig();
-  const url = `${config.apiBaseUrl}/files/get?${new URLSearchParams({ path })}`;
+  // Cache-bust both layers: `_t` query param defeats CDN / proxy
+  // caching, `cache: "no-store"` defeats the browser cache. Files on
+  // Flexweg can change at any time (especially admin manifests like
+  // /admin/external.json which is read + written on every install /
+  // uninstall), and a stale read here cascades into data loss when the
+  // caller writes back the result. Always read fresh.
+  const url = `${config.apiBaseUrl}/files/get?${new URLSearchParams({
+    path,
+    _t: String(Date.now()),
+  })}`;
   const res = await performRequest("get", () =>
     fetch(url, {
       method: "GET",
       headers: { "X-API-Key": config.apiKey },
+      cache: "no-store",
     }),
   );
   return res.text();
