@@ -168,3 +168,59 @@
   background-clip: padding-box;
   border: 2px solid transparent;
 }
+
+/* Floating-blobs background — used by the first-run SetupForm to match
+   the visual identity of flexweg.com's home page. Three large
+   colour-blurred circles drift across the viewport behind the card.
+   `pointer-events: none` so they never intercept input. */
+.flexweg-blobs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+  /* 0.35 in light mode keeps the form card highly readable; the dark
+     mode rule below bumps to 0.5 to match flexweg.com's home density. */
+  opacity: 0.35;
+}
+.dark .flexweg-blobs {
+  opacity: 0.5;
+}
+.flexweg-blob {
+  position: absolute;
+  border-radius: 50%;
+  animation: flexweg-blob-move 25s infinite alternate ease-in-out;
+}
+.flexweg-blob-1 {
+  width: 600px;
+  height: 600px;
+  background: #1d4ed8;
+  top: -150px;
+  left: -150px;
+}
+.flexweg-blob-2 {
+  width: 500px;
+  height: 500px;
+  background: #6366f1;
+  bottom: -100px;
+  right: -100px;
+  animation-duration: 35s;
+  animation-delay: -5s;
+}
+.flexweg-blob-3 {
+  width: 400px;
+  height: 400px;
+  background: #9333ea;
+  top: 30%;
+  left: 20%;
+  animation-duration: 20s;
+}
+@keyframes flexweg-blob-move {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(150px, 150px) scale(1.1);
+  }
+}

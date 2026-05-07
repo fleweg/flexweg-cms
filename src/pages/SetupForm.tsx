@@ -338,7 +338,15 @@ export function SetupForm() {
   }
 
   return (
-    <div className="relative min-h-full flex items-center justify-center p-6 bg-surface-50 dark:bg-surface-950">
+    <div className="relative min-h-full flex items-center justify-center p-6 bg-surface-50 dark:bg-surface-950 overflow-hidden">
+      {/* Floating colour blobs — branding accent reused from
+          flexweg.com's home. Lives behind the form (z-index: 0) and
+          ignores pointer events. CSS in src/index.css. */}
+      <div className="flexweg-blobs" aria-hidden="true">
+        <div className="flexweg-blob flexweg-blob-1"></div>
+        <div className="flexweg-blob flexweg-blob-2"></div>
+        <div className="flexweg-blob flexweg-blob-3"></div>
+      </div>
       <div className="absolute top-4 right-4 z-10">
         <LocaleSwitcher />
       </div>
@@ -349,7 +357,7 @@ export function SetupForm() {
           done={done}
         />
       )}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl relative z-10">
         <div className="flex items-center gap-2.5 justify-center mb-6">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-card">
             <Settings className="h-5 w-5 text-white" />
