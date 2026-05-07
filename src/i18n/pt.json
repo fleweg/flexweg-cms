@@ -428,6 +428,19 @@
     "title": "Bem-vindo ao Flexweg CMS",
     "subtitle": "Configuração inicial",
     "intro": "Insere as tuas credenciais Firebase, a conta de administrador inicial e a tua chave API Flexweg. Os valores são validados, guardados no teu projeto (Firestore + um ficheiro config.js no Flexweg) e o admin recarrega no fluxo de início de sessão normal. Só fazes isto uma vez.",
+    "stepper": {
+      "welcome": "Bem-vindo",
+      "configuration": "Configuração"
+    },
+    "welcome": {
+      "heading": "Bem-vindo ao Flexweg CMS!",
+      "intro": "O Flexweg CMS é um CMS de sites estáticos que publica páginas no teu alojamento Flexweg. Para funcionar precisa de um projeto Firebase gratuito (Auth + Firestore) — é onde guarda os teus posts, os metadados dos media e as definições.",
+      "firebaseTitle": "Firebase é necessário — e é gratuito",
+      "firebaseBody": "Criar um projeto Firebase é gratuito e demora cerca de 5 minutos: abre a Firebase Console, cria um novo projeto, ativa Authentication (email/palavra-passe) e Firestore. O plano Spark é suficiente para um site típico. O nosso tutorial guia-te clique a clique.",
+      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialButton": "Tutorial de configuração do Firebase",
+      "haveAccountButton": "Já criei o meu projeto Firebase"
+    },
     "sections": {
       "firebase": "Firebase",
       "admin": "Administrador inicial",
@@ -453,13 +466,15 @@
     },
     "submit": "Guardar e continuar",
     "submitting": "A configurar…",
-    "success": "Configuração concluída. A recarregar…",
+    "success": "Configuração concluída!",
+    "reloadingHint": "O admin vai recarregar daqui a um instante — aguarda.",
     "footer": "Estes valores são guardados no teu projeto (Firestore + Flexweg). Não são enviados para mais lado nenhum.",
     "steps": {
       "signInFirebase": "A iniciar sessão no Firebase…",
       "testFlexweg": "A testar a API Flexweg…",
       "writeFirestore": "A guardar a configuração…",
-      "uploadConfig": "A carregar config.js para o Flexweg…"
+      "uploadConfig": "A carregar config.js para o Flexweg…",
+      "syncThemes": "A sincronizar assets do tema para o Flexweg…"
     },
     "errors": {
       "missingFields": "Por favor, preenche todos os campos.",

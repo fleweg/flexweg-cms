@@ -428,6 +428,19 @@
     "title": "Welcome to Flexweg CMS",
     "subtitle": "First-time setup",
     "intro": "Fill in your Firebase credentials, the bootstrap administrator account, and your Flexweg API key. The values are validated, written to your project (Firestore + a config.js file on Flexweg), and the admin reloads into the normal sign-in flow. You only do this once.",
+    "stepper": {
+      "welcome": "Welcome",
+      "configuration": "Configuration"
+    },
+    "welcome": {
+      "heading": "Welcome to Flexweg CMS!",
+      "intro": "Flexweg CMS is a static-site CMS that publishes pages to your Flexweg hosting. To run, it needs a free Firebase project (Auth + Firestore) — that's where it stores your posts, media metadata and settings.",
+      "firebaseTitle": "Firebase is required — and free",
+      "firebaseBody": "Creating a Firebase project is free and takes about 5 minutes: open the Firebase Console, create a new project, enable Authentication (email/password) and Firestore. The Spark plan is enough for the typical site. Our tutorial walks you through every click.",
+      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialButton": "Firebase setup tutorial",
+      "haveAccountButton": "I've created my Firebase project"
+    },
     "sections": {
       "firebase": "Firebase",
       "admin": "Bootstrap administrator",
@@ -453,13 +466,15 @@
     },
     "submit": "Save & continue",
     "submitting": "Setting up…",
-    "success": "Setup complete. Reloading…",
+    "success": "Setup complete!",
+    "reloadingHint": "Reloading the admin in a moment — sit tight.",
     "footer": "These values are saved on your project (Firestore + Flexweg). They are not sent anywhere else.",
     "steps": {
       "signInFirebase": "Signing in to Firebase…",
       "testFlexweg": "Testing Flexweg API…",
       "writeFirestore": "Saving configuration…",
-      "uploadConfig": "Uploading config.js to Flexweg…"
+      "uploadConfig": "Uploading config.js to Flexweg…",
+      "syncThemes": "Syncing theme assets to Flexweg…"
     },
     "errors": {
       "missingFields": "Please fill every field.",

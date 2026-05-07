@@ -72,7 +72,11 @@ function legacyYearlyPath(year: number): string {
 }
 
 export function defaultRobotsTxt(baseUrl: string, newsEnabled: boolean): string {
-  const lines = ["User-agent: *", "Allow: /", ""];
+  // Disallow /admin/ so crawlers that honour robots.txt don't index the
+  // admin SPA, its config.js, or its asset bundle. The admin's index.html
+  // also carries `<meta name="robots" content="noindex">` for crawlers
+  // that ignore robots.txt — belt + braces.
+  const lines = ["User-agent: *", "Allow: /", "Disallow: /admin/", ""];
   if (baseUrl) {
     lines.push(`Sitemap: ${pathToPublicUrl(baseUrl, SITEMAP_INDEX_PATH)}`);
     if (newsEnabled) lines.push(`Sitemap: ${pathToPublicUrl(baseUrl, SITEMAP_NEWS_PATH)}`);

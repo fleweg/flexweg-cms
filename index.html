@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f172a" />
     <meta name="google" content="notranslate" />
+    <!-- The admin SPA is internal-only — block search-engine indexing of
+         /admin/ and any sub-resource under it (config.js, asset bundle,
+         …). Pair this with a `Disallow: /admin/` line in your public
+         robots.txt for crawlers that honour that hint. -->
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="googlebot" content="noindex, nofollow, noarchive" />
     <title>Flexweg CMS — Admin</title>
     <script>
       // Anti-FOUC: apply the saved theme synchronously, before React renders.

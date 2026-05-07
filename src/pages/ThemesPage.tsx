@@ -8,9 +8,8 @@ import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { Dropdown, type DropdownItem, type DropdownSection } from "../components/ui/Dropdown";
 import { useCmsData } from "../context/CmsDataContext";
 import { listThemes } from "../themes";
-import type { ThemeManifest } from "../themes/types";
 import { updateSettings } from "../services/settings";
-import { uploadFile } from "../services/flexwegApi";
+import { syncThemeAssets } from "../services/themeSync";
 import {
   buildPublishContext,
   regenerateAll,
@@ -25,50 +24,6 @@ import {
   subscribeRegenerationTargets,
   type RegenerationTarget,
 } from "../core/regenerationTargetRegistry";
-
-// Pure helper — uploads the active theme's CSS (with `compileCss`
-// hook) plus any companion JS scripts to /theme-assets/. Extracted so
-// both the standalone "Sync theme assets" button and the dropdown's
-// "Theme assets" entry call into the same logic.
-async function syncThemeAssets(
-  themes: ThemeManifest[],
-  themeConfigs: Record<string, unknown> | undefined,
-  log: PublishLogger,
-): Promise<void> {
-  for (const theme of themes) {
-    if (!theme.cssText) {
-      log({ level: "warn", message: `Theme "${theme.id}" has no embedded CSS, skipping.` });
-    } else {
-      const cssPath = `theme-assets/${theme.id}.css`;
-      let cssContent = theme.cssText;
-      if (theme.compileCss && theme.settings) {
-        const stored = themeConfigs?.[theme.id];
-        const resolvedConfig = {
-          ...(theme.settings.defaultConfig as object),
-          ...((stored as object) ?? {}),
-        };
-        try {
-          cssContent = theme.compileCss(resolvedConfig);
-        } catch (err) {
-          console.error(`[themes] compileCss for "${theme.id}" failed:`, err);
-        }
-      }
-      log({ level: "info", message: `Uploading ${cssPath}…` });
-      await uploadFile({ path: cssPath, content: cssContent });
-    }
-    if (theme.jsText) {
-      const jsPath = `theme-assets/${theme.id}-menu.js`;
-      log({ level: "info", message: `Uploading ${jsPath}…` });
-      await uploadFile({ path: jsPath, content: theme.jsText });
-    }
-    if (theme.jsTextPosts) {
-      const jsPath = `theme-assets/${theme.id}-posts.js`;
-      log({ level: "info", message: `Uploading ${jsPath}…` });
-      await uploadFile({ path: jsPath, content: theme.jsTextPosts });
-    }
-  }
-  log({ level: "success", message: "Theme assets synced." });
-}
 
 export function ThemesPage() {
   const { t } = useTranslation();

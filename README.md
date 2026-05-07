@@ -807,7 +807,7 @@ Files produced on the public site (relative to your `baseUrl`):
 - `sitemap-<year>.xml` — one per year that has at least one online post (and page, when configured). Built from `createdAt`; `<lastmod>` reflects `updatedAt`.
 - `sitemap-index.xml` — index referencing every yearly sitemap that's currently populated, plus the News sitemap when enabled.
 - `sitemap-news.xml` — Google News urlset of articles modified within the configured window (default 2 days, range 1–30). Optional.
-- `robots.txt` — user-supplied; defaults to `User-agent: *` + `Allow: /` + a `Sitemap:` line per generated sitemap.
+- `robots.txt` — user-supplied; defaults to `User-agent: *` + `Allow: /` + `Disallow: /admin/` + a `Sitemap:` line per generated sitemap. The `Disallow: /admin/` line keeps the admin SPA out of search-engine indexes (the admin's `index.html` also ships with `<meta name="robots" content="noindex, nofollow, noarchive">` as a fallback for crawlers that ignore robots.txt).
 - `sitemap.xsl` and `sitemap-news.xsl` — XSL stylesheets referenced by every sitemap file via an `<?xml-stylesheet?>` processing instruction. When a browser opens a sitemap URL, these transform the raw XML into a styled HTML table for human inspection. Crawlers ignore the PI entirely. Labels honor `settings.language` (English / French baked in).
 
 Configuration options:
@@ -916,6 +916,17 @@ Critical units have unit tests:
 
 - `core/slug` — URL building, slugification, validation.
 - `core/pluginRegistry` — filter/action ordering, sync vs. async semantics.
+
+## Admin privacy
+
+The admin SPA at `/admin/` is internal-only — it should not appear in search results. Two layers keep it out of indexes:
+
+1. **`/admin/index.html` ships with three meta tags**: `<meta name="robots" content="noindex, nofollow, noarchive">`, the same with `name="googlebot"`, and `<meta name="google" content="notranslate">`. These cover crawlers that read meta but ignore robots.txt.
+2. **`robots.txt` defaults to `Disallow: /admin/`** when the bundled `flexweg-sitemaps` plugin generates it. Crawlers that honour robots.txt skip the path entirely.
+
+If you've customised `robots.txt`, make sure to keep the `Disallow: /admin/` line. The plugin's **Insert default** button re-injects it.
+
+`/admin/config.js` carries the Firebase web config — which is **public by design** (security comes from Firestore rules + the auth-domain allowlist in Firebase Console, not from the secrecy of these values) — plus the bootstrap admin email. The Flexweg API key is **not** in `config.js`; it lives in Firestore at `config/flexweg`, readable only after a successful Firebase Auth sign-in.
 
 ## Limitations
 

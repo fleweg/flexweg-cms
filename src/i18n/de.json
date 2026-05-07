@@ -428,6 +428,19 @@
     "title": "Willkommen bei Flexweg CMS",
     "subtitle": "Erstkonfiguration",
     "intro": "Geben Sie Ihre Firebase-Zugangsdaten, das Bootstrap-Administratorkonto und Ihren Flexweg-API-Schlüssel ein. Die Werte werden geprüft, in Ihrem Projekt gespeichert (Firestore + eine config.js-Datei auf Flexweg), und die Admin-Oberfläche lädt im normalen Anmeldeablauf neu. Sie machen das nur einmal.",
+    "stepper": {
+      "welcome": "Willkommen",
+      "configuration": "Konfiguration"
+    },
+    "welcome": {
+      "heading": "Willkommen bei Flexweg CMS!",
+      "intro": "Flexweg CMS ist ein Static-Site-CMS, das Seiten auf Ihrem Flexweg-Hosting veröffentlicht. Es benötigt ein kostenloses Firebase-Projekt (Auth + Firestore) — dort werden Ihre Beiträge, Medienmetadaten und Einstellungen gespeichert.",
+      "firebaseTitle": "Firebase wird benötigt — und ist kostenlos",
+      "firebaseBody": "Ein Firebase-Projekt anzulegen ist kostenlos und dauert etwa 5 Minuten: Firebase Console öffnen, neues Projekt erstellen, Authentication (E-Mail/Passwort) und Firestore aktivieren. Der Spark-Plan reicht für eine typische Website. Unser Tutorial führt Sie durch jeden Klick.",
+      "tutorialUrl": "https://firebase.google.com/docs/web/setup",
+      "tutorialButton": "Firebase-Setup-Tutorial",
+      "haveAccountButton": "Ich habe mein Firebase-Projekt erstellt"
+    },
     "sections": {
       "firebase": "Firebase",
       "admin": "Bootstrap-Administrator",
@@ -453,13 +466,15 @@
     },
     "submit": "Speichern und fortfahren",
     "submitting": "Konfiguration läuft…",
-    "success": "Setup abgeschlossen. Wird neu geladen…",
+    "success": "Setup abgeschlossen!",
+    "reloadingHint": "Die Admin-Oberfläche wird gleich neu geladen — bitte warten.",
     "footer": "Diese Werte werden in Ihrem Projekt gespeichert (Firestore + Flexweg). Sie werden nirgendwo anders gesendet.",
     "steps": {
       "signInFirebase": "Anmeldung bei Firebase…",
       "testFlexweg": "Flexweg-API wird getestet…",
       "writeFirestore": "Konfiguration wird gespeichert…",
-      "uploadConfig": "config.js wird zu Flexweg hochgeladen…"
+      "uploadConfig": "config.js wird zu Flexweg hochgeladen…",
+      "syncThemes": "Theme-Assets werden zu Flexweg synchronisiert…"
     },
     "errors": {
       "missingFields": "Bitte füllen Sie alle Felder aus.",
