@@ -553,6 +553,8 @@
       "firebaseInvalidApiKey": "The Firebase API key is invalid. Double-check the value from Firebase Console.",
       "firebaseNetwork": "Network error while signing in to Firebase. Check your connection.",
       "firebaseTooManyRequests": "Too many sign-in attempts. Try again in a moment or reset the password from Firebase Console.",
+      "firebaseOperationNotAllowed": "Email/password sign-in is not enabled on this Firebase project. Open Firebase Console → Authentication → Sign-in method and enable the Email/Password provider.",
+      "firebaseUserDisabled": "This Firebase user account is disabled. Re-enable it from Firebase Console → Authentication → Users.",
       "wrongAdminEmail": "The Firebase account you signed in with does not match the admin email you typed. Try again.",
       "flexwegAuth": "Flexweg API key rejected. Check the value from your Flexweg account → API.",
       "flexwegNetwork": "Network error while contacting Flexweg. Check the API base URL and your connection.",

@@ -59,13 +59,19 @@ export function getAuthClient(): Auth {
 // (which we set here as a side effect so the rest of the codebase stays
 // in sync without a reload).
 export function initFirebaseFromSetup(config: FlexwegRuntimeConfig): void {
-  if (cachedApp) {
-    throw new Error("Firebase is already initialised — cannot re-init from setup.");
-  }
+  // Idempotent: if Firebase was already initialised (e.g. on a
+  // retry after the previous submit hit a sign-in / Firestore error
+  // and surfaced its own message), reuse the cached app silently.
+  // Throwing here would make the SetupForm's catch block flip
+  // submitting back to false BEFORE React commits the initial render
+  // — and the user would never see the spinner overlay on retries.
+  // For users who need to genuinely swap Firebase creds (rare —
+  // typo on the very first attempt), a page refresh resets cachedApp.
   if (typeof window !== "undefined") {
     window.__FLEXWEG_CONFIG__ = config;
   }
   resetRuntimeConfigCache();
+  if (cachedApp) return;
   cachedApp = initializeApp(config.firebase);
 }
 

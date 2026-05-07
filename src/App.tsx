@@ -195,11 +195,19 @@ export default function App() {
   // through the UI; the form uploads a populated config.js on success
   // and reloads, after which this branch never fires.
   if (!getRuntimeConfig()) {
+    // Wrap the SetupForm in the same boundary as the authenticated
+    // shell. Without it, transient "Node.insertBefore" / "removeChild"
+    // DOM errors triggered by browser extensions during the SetupForm's
+    // re-renders crash the whole tree (the user sees nothing past the
+    // first submit). The boundary auto-resets within 80ms for those
+    // errors, so the SetupForm comes back automatically.
     return (
-      <ThemeProvider>
-        <SetupForm />
-        <ToastContainer />
-      </ThemeProvider>
+      <AppErrorBoundary>
+        <ThemeProvider>
+          <SetupForm />
+          <ToastContainer />
+        </ThemeProvider>
+      </AppErrorBoundary>
     );
   }
 

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { ArrowRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import flexwegLogo from "../assets/flexweg-logo.png";
@@ -89,6 +90,10 @@ function authErrorTranslationKey(err: unknown): string {
       return "setup.errors.firebaseNetwork";
     case "auth/too-many-requests":
       return "setup.errors.firebaseTooManyRequests";
+    case "auth/operation-not-allowed":
+      return "setup.errors.firebaseOperationNotAllowed";
+    case "auth/user-disabled":
+      return "setup.errors.firebaseUserDisabled";
     default:
       return "setup.errors.firebaseAuthGeneric";
   }
@@ -159,7 +164,17 @@ export function SetupForm() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (submitting) return;
+    // Mark the submission state up front so the overlay shows on the
+    // very next render. We deliberately avoid flushSync here — forcing
+    // a sync commit during React's reconciliation has been observed to
+    // throw "Node.insertBefore: Child to insert before is not a child"
+    // when overlapping with browser-extension DOM mutations. The
+    // batched render at the next microtask (after sync work below) is
+    // fast enough in practice; the inline boot spinner in index.html
+    // covers any remaining gap.
+    setSubmitting(true);
     setError(null);
+    setProgressLog([]);
 
     // Refuse to set up at the site root — uploading config.js,
     // external.json and plugin/theme folders to the public root would
@@ -167,12 +182,14 @@ export function SetupForm() {
     // dist/admin/'s contents inside a subfolder on Flexweg first.
     if (isRootDeployment()) {
       setError({ kind: "rootDeployment" });
+      setSubmitting(false);
       return;
     }
 
     const state = trimmed();
     if (!validate(state)) {
       setError({ kind: "missingFields" });
+      setSubmitting(false);
       return;
     }
 
@@ -193,25 +210,19 @@ export function SetupForm() {
       apiBaseUrl: state.flexwegApiBaseUrl,
     };
 
-    setSubmitting(true);
-    setProgressLog([]);
+    // submitting + progressLog were already initialised at the top of
+    // this handler — see the early-bail comment above. We only need
+    // the per-step logger here.
     const logDone = (label: string) => setProgressLog((prev) => [...prev, label]);
     try {
       // 1. Initialise Firebase + sign in. Validates the Firebase config
-      // (fails immediately with auth/api-key-not-valid otherwise) and
+      // (fails on the first auth call if the config is bad) and
       // produces an authenticated session for the Firestore write.
+      // initFirebaseFromSetup is now idempotent — calling it again
+      // after a retry no-ops if Firebase was already cached, so the
+      // overlay stays mounted across retries.
       setStep(t("setup.steps.signInFirebase"));
-      try {
-        initFirebaseFromSetup(runtimeConfig);
-      } catch (err) {
-        // initFirebaseFromSetup throws if Firebase is already initialised
-        // — happens when the user retries after a partial failure. Reset
-        // is intentionally not exposed; reload to recover.
-        setError({ kind: "generic", detail: (err as Error).message });
-        setSubmitting(false);
-        setStep(null);
-        return;
-      }
+      initFirebaseFromSetup(runtimeConfig);
       try {
         await signInWithEmailAndPassword(
           getAuthClient(),
@@ -220,7 +231,19 @@ export function SetupForm() {
         );
       } catch (err) {
         const detailKey = authErrorTranslationKey(err);
-        setError({ kind: "firebaseAuth", detail: t(detailKey) });
+        const fbErr = err as { code?: string; message?: string };
+        let detail = t(detailKey);
+        // For unmapped Firebase error codes the translated message is
+        // a generic "could not sign in" — append the raw code +
+        // message so the user can see what Firebase actually returned
+        // (e.g. auth/internal-error, auth/configuration-not-found).
+        // The mapped cases stay clean; only the generic branch
+        // gets the technical detail tail.
+        if (detailKey === "setup.errors.firebaseAuthGeneric") {
+          if (fbErr.code) detail += ` [${fbErr.code}]`;
+          if (fbErr.message) detail += `: ${fbErr.message}`;
+        }
+        setError({ kind: "firebaseAuth", detail });
         setSubmitting(false);
         setStep(null);
         return;
@@ -332,14 +355,20 @@ export function SetupForm() {
       }
       logDone(t("setup.steps.syncThemes"));
 
-      // Success. Force a full page reload so the next boot picks up the
-      // freshly-uploaded config.js from Flexweg and goes through the
-      // normal authenticated path. 2 s leaves enough time to read the
-      // success message; modern browsers do a no-cache reload of the
-      // top-level URL so the new config.js is fetched fresh.
+      // Success. Force a fresh navigation by appending a unique query
+      // param to the current URL — this guarantees both index.html
+      // AND the cache-busted config.js are fetched fresh, bypassing
+      // any CDN / browser cache that might otherwise serve a stale
+      // version. `replace` (vs. `assign`) keeps the history clean so
+      // pressing Back after setup doesn't return to the form. 2 s
+      // leaves time to read the success message.
       setDone(true);
       setStep(null);
-      window.setTimeout(() => window.location.reload(), 2000);
+      window.setTimeout(() => {
+        const next = new URL(window.location.href);
+        next.searchParams.set("_setup", String(Date.now()));
+        window.location.replace(next.toString());
+      }, 2000);
     } catch (err) {
       setError({
         kind: "generic",
@@ -363,13 +392,24 @@ export function SetupForm() {
       <div className="absolute top-4 right-4 z-10">
         <LocaleSwitcher />
       </div>
-      {(submitting || done) && (
-        <SetupProgressOverlay
-          step={step}
-          progressLog={progressLog}
-          done={done}
-        />
-      )}
+      {/* Render the overlay through a portal on <body> so its mount /
+          unmount doesn't shuffle siblings inside the form tree. The
+          form's card and the overlay used to be siblings of the same
+          parent, and the conditional mount triggered "Node.insertBefore"
+          DOM errors when browser extensions (Grammarly, translators,
+          password managers) had injected nodes into the form area —
+          React's diff couldn't reconcile the unexpected children. With
+          a portal, the overlay's DOM lives on document.body, isolated
+          from whatever the extensions are doing inside the form. */}
+      {(submitting || done) &&
+        createPortal(
+          <SetupProgressOverlay
+            step={step}
+            progressLog={progressLog}
+            done={done}
+          />,
+          document.body,
+        )}
       <div className="w-full max-w-2xl relative z-10">
         <div className="flex items-center gap-2.5 justify-center mb-6">
           <img
@@ -524,29 +564,34 @@ export function SetupForm() {
               </div>
             </fieldset>
 
-            {error && (
-              <div className="rounded-lg bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 text-sm dark:bg-red-900/30 dark:text-red-300 dark:ring-red-700/50">
-                <ErrorMessage error={error} />
-              </div>
-            )}
+            {/* Stable-shape error container — always rendered, content
+                conditional. Mounting/unmounting an entire DOM subtree
+                here on every error / clear caused React's diff to
+                clash with browser-extension DOM mutations
+                (password-manager icons attached to nearby form fields)
+                and threw "Node.insertBefore" on Firefox. Keeping the
+                outer div mounted lets React only swap the inner text. */}
+            <div aria-live="polite" aria-atomic="true">
+              {error ? (
+                <div className="rounded-lg bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 text-sm dark:bg-red-900/30 dark:text-red-300 dark:ring-red-700/50">
+                  <ErrorMessage error={error} />
+                </div>
+              ) : null}
+            </div>
 
-            {done ? (
-              <div className="rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 px-3 py-2 text-sm flex items-start gap-2 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-700/50">
-                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{t("setup.success")}</span>
-              </div>
-            ) : (
-              <button
-                type="submit"
-                className="btn-primary w-full"
-                disabled={submitting}
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {submitting
-                  ? step ?? t("setup.submitting")
-                  : t("setup.submit")}
-              </button>
-            )}
+            {/* Submit button content is intentionally stable: same
+                text + no spinner inside, regardless of submitting /
+                done state. The overlay portal on document.body shows
+                the spinner + per-step status, so the button doesn't
+                need to. Reducing button DOM churn keeps password
+                managers from getting confused on retries. */}
+            <button
+              type="submit"
+              className="btn-primary w-full"
+              disabled={submitting || done}
+            >
+              {t("setup.submit")}
+            </button>
           </form>
         </div>
         )}

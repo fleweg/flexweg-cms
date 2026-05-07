@@ -45,13 +45,70 @@
         }
       }
     </script>
+    <style>
+      /* Boot loader — visible from the moment the HTML is parsed until
+         React mounts and replaces #root's contents. Without this, the
+         page after a hard reload (e.g. after the SetupForm completes)
+         shows a blank/dark void for a few hundred ms while the bundle
+         loads + executes — users perceive that as a "frozen blue page".
+         The loader is plain CSS so it works without the bundle. */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+      }
+      html.dark,
+      html.dark body {
+        background: #020617;
+      }
+      .flexweg-boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      .flexweg-boot-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(100, 116, 139, 0.25);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: flexweg-boot-spin 0.85s linear infinite;
+      }
+      @keyframes flexweg-boot-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <!-- Runtime config bootstrap — must load synchronously, before the main
-         bundle, so the Firebase resolver can read window.__FLEXWEG_CONFIG__
-         during module init. See public/config.js for details. -->
-    <script src="./config.js"></script>
+    <div id="root">
+      <div class="flexweg-boot" aria-hidden="true">
+        <div class="flexweg-boot-spinner"></div>
+      </div>
+    </div>
+    <!-- Runtime config bootstrap — must load synchronously, before the
+         main bundle, so the Firebase resolver can read
+         window.__FLEXWEG_CONFIG__ during module init.
+
+         document.write injects a cache-busted script tag during HTML
+         parsing; the browser processes it synchronously before the
+         next <script>. A plain `<script src="./config.js">` would be
+         subject to HTTP / CDN caching, and after the first-run setup
+         uploads a populated config.js to Flexweg, the very next
+         reload could serve the stale (null-stub) version from cache
+         — re-displaying the SetupForm instead of the authenticated
+         admin. The ?_t timestamp forces a fresh fetch on every load.
+         See public/config.js for the file contents. -->
+    <script>
+      document.write(
+        '<script src="./config.js?_t=' + Date.now() + '"><\/script>'
+      );
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
