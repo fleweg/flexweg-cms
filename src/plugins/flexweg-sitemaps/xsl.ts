@@ -34,8 +34,7 @@ interface XslLabels {
   columnPubdate: string;
 }
 
-import type { AdminLocale } from "../../core/types";
-import { pickPublicLocale } from "../../i18n";
+import { pickPublicLocale, type AdminLocale } from "@flexweg/cms-runtime";
 
 const LABELS: Record<AdminLocale, XslLabels> = {
   en: {

@@ -905,6 +905,24 @@ At publish time the publisher rewrites each marker into the provider's actual if
 
 Adding a new provider = one entry in [src/mu-plugins/flexweg-embeds/providers.ts](src/mu-plugins/flexweg-embeds/providers.ts) + one i18n key pair. Disabling this plugin would silently strip embeds from existing posts on the next render — must-use to prevent that footgun.
 
+## Plugin / theme architecture
+
+The CMS now ships every plugin (except mu-plugins) and every theme except `default` as **separate ESM bundles** loaded at runtime — same mechanism as user-installed externals. This means admins can uninstall any of the bundled plugins/themes they don't want, with the same UI used for third-party installs.
+
+**Three categories**:
+
+- **Mu-plugins** (`src/mu-plugins/`) — bundled into the admin SPA, always-on. These are foundational pieces (favicon, custom code injection, embeds, blocks, metrics, **flexweg-import**) that the admin can't meaningfully run without. Cannot be uninstalled or disabled.
+- **In-tree externalised plugins / themes** — source lives in `src/plugins/<id>/` and `src/themes/<id>/`. At `npm run build` time, [scripts/build-bundled-externals.mjs](scripts/build-bundled-externals.mjs) compiles each into its own ESM bundle under `dist/admin/plugins/<id>/` (or `dist/admin/themes/<id>/`) and lists them in `dist/admin/external.json`. The admin loads them at boot via the runtime loader. Includes: `core-seo`, `flexweg-sitemaps`, `flexweg-rss`, `flexweg-archives`, `flexweg-search`, `magazine` theme, `corporate` theme.
+- **User-uploaded externals** — third-party plugins/themes installed via the admin's upload UI (or by dropping a folder into `/admin/<kind>/<id>/` on Flexweg). Same runtime mechanism.
+
+The **`default` theme** stays bundled inside the admin SPA as a fallback — when a user uninstalls every external theme, the admin falls back to `default` so the public site never ends up unrendered.
+
+**Restoring bundled defaults**: if a user uninstalls a plugin/theme that was bundled with their admin version (e.g. `core-seo`) and later wants it back, the **Plugins / Themes → Install** modal shows a "Bundled defaults available" section with a one-click **Restore** button. This reads `dist/admin/external.default.json` (a build-time snapshot of what shipped) and re-adds the missing entries to the runtime registry. Only the registry is touched; the bundle files are already on Flexweg from the most recent admin deploy.
+
+**Where the runtime registry lives**: the **list of currently-loaded externals** is stored in Firestore at `settings/externalRegistry`, NOT as a file on Flexweg. This means the entire `dist/admin/` folder is fully re-deployable — re-uploading the build (e.g. for an admin upgrade) never overwrites the user's install/uninstall state. The on-disk `external.default.json` is the immutable baseline (what shipped with the build); the legacy on-disk `external.json` is read-only-from-the-CMS and exists only as a one-time migration source for installs that pre-date the Firestore move.
+
+**Boot fallback chain**: on every cold load, the registry resolves in this order — Firestore → legacy `/admin/external.json` → `/admin/external.default.json`. The first non-empty result is materialised back into Firestore so subsequent boots short-circuit at the Firestore step.
+
 ## External plugins & themes
 
 In addition to in-tree plugins (committed under `src/plugins/`) and in-tree themes (under `src/themes/`), the admin supports **external** packages that ship as a `.zip`, install via an in-admin upload UI (or by dropping a folder directly via Flexweg), and load at runtime — no rebuild of the admin required.

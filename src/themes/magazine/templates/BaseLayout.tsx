@@ -1,4 +1,4 @@
-import type { BaseLayoutProps } from "../../types";
+import type { BaseLayoutProps } from "@flexweg/cms-runtime";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 

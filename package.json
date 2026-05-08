@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prebuild": "npm run typecheck && npm run themes:tailwind",
-    "build": "vite build && node scripts/build-themes.mjs",
+    "build": "vite build && node scripts/build-themes.mjs && node scripts/build-bundled-externals.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

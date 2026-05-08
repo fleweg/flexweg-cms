@@ -21,14 +21,22 @@
 // information the rest of the publisher exposes.
 
 import type { ComponentType } from "react";
-import i18nInstance, { pickPublicLocale } from "../../i18n";
-import { renderPageToHtml } from "../../core/render";
-import { getActiveTheme } from "../../themes";
-import type { Post, SiteSettings, Term } from "../../core/types";
-import type { BaseLayoutProps, SiteContext } from "../../themes/types";
-import type { PublishContext } from "../../services/publisher";
-import { buildSiteContext } from "../../services/publisher";
-import { deleteFile, deleteFolder, uploadFile } from "../../services/flexwegApi";
+import {
+  i18n as i18nInstance,
+  pickPublicLocale,
+  renderPageToHtml,
+  getActiveTheme,
+  buildSiteContext,
+  deleteFile,
+  deleteFolder,
+  uploadFile,
+  type Post,
+  type SiteSettings,
+  type Term,
+  type BaseLayoutProps,
+  type SiteContext,
+  type PublishContext,
+} from "@flexweg/cms-runtime";
 import {
   type ArchivePeriod,
   type DrillDown,

@@ -1,8 +1,8 @@
-import type { Post } from "../../../../core/types";
-import { postSortMillis } from "../../../../core/postSort";
-import type { PublishContext } from "../../../../services/publisher";
-import { mediaToView, pickFormat } from "../../../../core/media";
-import { buildPostUrl, buildTermUrl } from "../../../../core/slug";
+import type { Post } from "@flexweg/cms-runtime";
+import { postSortMillis } from "@flexweg/cms-runtime";
+import type { PublishContext } from "@flexweg/cms-runtime";
+import { mediaToView, pickFormat } from "@flexweg/cms-runtime";
+import { buildPostUrl, buildTermUrl } from "@flexweg/cms-runtime";
 import { escapeAttr, escapeText } from "../util";
 
 export interface LatestListAttrs {

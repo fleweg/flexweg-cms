@@ -21,10 +21,18 @@ import type { ThemeManifest } from "./types";
 // as plugins/index.ts. The settings.save callback is contravariant in
 // TConfig, which TypeScript can't reconcile against `unknown` without
 // the explicit widening cast.
+//
+// `default` is ALWAYS bundled — fallback theme when a user uninstalls
+// every externally-loaded theme. magazine + corporate are bundled in
+// dev only; in prod they're emitted as separate ESM bundles under
+// `dist/admin/themes/<id>/` by scripts/build-bundled-externals.mjs and
+// loaded at runtime through services/externalLoader.ts.
+const DEV_THEMES: ThemeManifest[] = import.meta.env.DEV
+  ? [magazineManifest as ThemeManifest, corporateManifest as ThemeManifest]
+  : [];
 export const THEMES: ThemeManifest[] = [
   defaultManifest as ThemeManifest,
-  magazineManifest as ThemeManifest,
-  corporateManifest as ThemeManifest,
+  ...DEV_THEMES,
 ];
 
 // Returns built-in themes + any externally-loaded ones. Used by

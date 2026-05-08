@@ -18,10 +18,18 @@
 // the manifest's action handlers always do, so slug renames clean up
 // orphans on the very next post publish.
 
-import { buildPostUrl, buildTermUrl, pathToPublicUrl } from "../../core/slug";
-import { markdownToPlainText } from "../../core/markdown";
-import { deleteFile, uploadFile } from "../../services/flexwegApi";
-import type { Media, Post, SiteSettings, Term } from "../../core/types";
+import {
+  buildPostUrl,
+  buildTermUrl,
+  pathToPublicUrl,
+  markdownToPlainText,
+  deleteFile,
+  uploadFile,
+  type Media,
+  type Post,
+  type SiteSettings,
+  type Term,
+} from "@flexweg/cms-runtime";
 import { buildRssXsl, RSS_XSL_PATH } from "./xsl";
 
 export const SITE_RSS_PATH = "rss.xml";

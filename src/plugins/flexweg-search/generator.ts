@@ -15,12 +15,17 @@
 // `lastIndexedAt` to Firestore. The manifest does that on every
 // successful regeneration.
 
-import i18n, { pickPublicLocale } from "../../i18n";
-import { buildPostUrl } from "../../core/slug";
-import { markdownToPlainText } from "../../core/markdown";
-import { sha256Hex } from "../../lib/utils";
-import { uploadFile } from "../../services/flexwegApi";
-import type { Post, SiteSettings, Term } from "../../core/types";
+import {
+  i18n,
+  pickPublicLocale,
+  buildPostUrl,
+  markdownToPlainText,
+  sha256Hex,
+  uploadFile,
+  type Post,
+  type SiteSettings,
+  type Term,
+} from "@flexweg/cms-runtime";
 import {
   DEFAULT_SEARCH_CONFIG,
   PLUGIN_ID,

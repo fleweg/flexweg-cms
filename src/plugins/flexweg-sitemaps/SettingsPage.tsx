@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { FileCode2, Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCmsData } from "../../context/CmsDataContext";
-import { fetchAllPosts } from "../../services/posts";
-import { toast } from "../../lib/toast";
+import { useCmsData, fetchAllPosts, toast } from "@flexweg/cms-runtime";
 import {
   defaultRobotsTxt,
   regenerateRobotsTxt,
@@ -11,7 +9,7 @@ import {
   regenerateStylesheets,
   type SitemapsConfig,
 } from "./generator";
-import type { PluginSettingsPageProps } from "../index";
+import type { PluginSettingsPageProps } from "@flexweg/cms-runtime";
 
 // Settings page rendered at /settings/plugin/flexweg-sitemaps. The wrapping
 // PluginSettingsRoute already merges the manifest's defaultConfig with the

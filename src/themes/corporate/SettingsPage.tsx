@@ -8,20 +8,20 @@ import {
   Upload,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCmsData } from "../../context/CmsDataContext";
-import { toast } from "../../lib/toast";
-import { publishMenuJson } from "../../services/menuPublisher";
-import { fetchAllPosts } from "../../services/posts";
-import { FontSelect, type FontOption } from "../../components/ui/FontSelect";
-import { MediaPicker } from "../../components/editor/MediaPicker";
-import { pickMediaUrl } from "../../core/media";
-import type { ThemeSettingsPageProps } from "../types";
+import { useCmsData } from "@flexweg/cms-runtime";
+import { toast } from "@flexweg/cms-runtime";
+import { publishMenuJson } from "@flexweg/cms-runtime";
+import { fetchAllPosts } from "@flexweg/cms-runtime";
+import { FontSelect, type FontOption } from "@flexweg/cms-runtime";
+import { MediaPicker } from "@flexweg/cms-runtime";
+import { pickMediaUrl } from "@flexweg/cms-runtime";
+import type { ThemeSettingsPageProps } from "@flexweg/cms-runtime";
 import { manifest } from "./manifest";
 // The default theme owns the shared logo upload helpers
 // (logoPath / uploadThemeLogo / removeThemeLogo). Both magazine and
 // corporate reuse them — single canonical implementation, themed
 // callers just pass their own theme id.
-import { logoPath, removeThemeLogo, uploadThemeLogo } from "../default/logo";
+import { logoPath, removeThemeLogo, uploadThemeLogo } from "@flexweg/cms-runtime";
 import {
   applyAndUploadCustomCss,
   buildAllFontsPreviewUrl,

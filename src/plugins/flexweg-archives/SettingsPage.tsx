@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCmsData } from "../../context/CmsDataContext";
-import { fetchAllPosts } from "../../services/posts";
-import { toast } from "../../lib/toast";
+import {
+  useCmsData,
+  fetchAllPosts,
+  toast,
+  type PluginSettingsPageProps,
+} from "@flexweg/cms-runtime";
 import {
   type ArchivesConfig,
   forceRegenerate as runForceRegenerate,
 } from "./generator";
 import type { DrillDown } from "./periods";
-import type { PluginSettingsPageProps } from "../index";
 
 // Settings page rendered at /settings/plugin/flexweg-archives. The
 // wrapping PluginSettingsRoute already merges the manifest's

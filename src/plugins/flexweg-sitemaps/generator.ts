@@ -12,9 +12,15 @@
 // blank, a sensible default is generated that points to sitemap-index.xml
 // (and sitemap-news.xml if News is enabled).
 
-import { buildPostUrl, pathToPublicUrl } from "../../core/slug";
-import { deleteFile, uploadFile } from "../../services/flexwegApi";
-import type { Post, SiteSettings, Term } from "../../core/types";
+import {
+  buildPostUrl,
+  pathToPublicUrl,
+  deleteFile,
+  uploadFile,
+  type Post,
+  type SiteSettings,
+  type Term,
+} from "@flexweg/cms-runtime";
 import {
   buildNewsSitemapXsl,
   buildSitemapXsl,

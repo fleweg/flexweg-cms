@@ -18,6 +18,7 @@ import { manifest as flexwegBlocksManifest } from "./flexweg-blocks/manifest";
 import { manifest as flexwegCustomCodeManifest } from "./flexweg-custom-code/manifest";
 import { manifest as flexwegEmbedsManifest } from "./flexweg-embeds/manifest";
 import { manifest as flexwegMetricsManifest } from "./flexweg-metrics/manifest";
+import { manifest as flexwegImportManifest } from "./flexweg-import/manifest";
 
 export const MU_PLUGINS: PluginManifest[] = [
   flexwegFaviconManifest as PluginManifest,
@@ -25,6 +26,7 @@ export const MU_PLUGINS: PluginManifest[] = [
   flexwegCustomCodeManifest as PluginManifest,
   flexwegEmbedsManifest,
   flexwegMetricsManifest,
+  flexwegImportManifest as PluginManifest,
 ];
 
 export function listMuPlugins(): PluginManifest[] {

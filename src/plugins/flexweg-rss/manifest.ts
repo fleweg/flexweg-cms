@@ -1,10 +1,16 @@
-import i18n from "../../i18n";
-import { buildTermUrl, pathToPublicUrl } from "../../core/slug";
-import type { ResolvedMenuItem } from "../../core/menuResolver";
-import type { Post } from "../../core/types";
-import type { MenuFilterContext, MenuJson } from "../../services/menuPublisher";
-import type { PublishContext } from "../../services/publisher";
-import { updatePluginConfig } from "../../services/settings";
+import {
+  i18n,
+  buildTermUrl,
+  pathToPublicUrl,
+  updatePluginConfig,
+  publishMenuJson,
+  type ResolvedMenuItem,
+  type Post,
+  type MenuFilterContext,
+  type MenuJson,
+  type PublishContext,
+  type PluginManifest,
+} from "@flexweg/cms-runtime";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   categoryFeedPath,
@@ -15,9 +21,7 @@ import {
   SITE_RSS_PATH,
   type RssConfig,
 } from "./generator";
-import { publishMenuJson } from "../../services/menuPublisher";
 import { FlexwegRssSettingsPage } from "./SettingsPage";
-import type { PluginManifest } from "../index";
 import readme from "./README.md?raw";
 
 const PLUGIN_ID = "flexweg-rss";

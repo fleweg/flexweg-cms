@@ -1,7 +1,7 @@
-import type { AuthorTemplateProps, SiteContext } from "../../types";
-import { pickFormat } from "../../../core/media";
-import { SocialIcon, socialLabel } from "../../../core/socialIcons";
-import i18n, { pickPublicLocale } from "../../../i18n";
+import type { AuthorTemplateProps, SiteContext } from "@flexweg/cms-runtime";
+import { pickFormat } from "@flexweg/cms-runtime";
+import { SocialIcon, socialLabel } from "@flexweg/cms-runtime";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 
 // Editorial author archive (mockup-faithful):
 //

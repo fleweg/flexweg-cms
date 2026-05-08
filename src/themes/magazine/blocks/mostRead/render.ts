@@ -1,8 +1,8 @@
-import i18n, { pickPublicLocale } from "../../../../i18n";
-import type { Post } from "../../../../core/types";
-import { postSortMillis } from "../../../../core/postSort";
-import type { PublishContext } from "../../../../services/publisher";
-import { buildPostUrl } from "../../../../core/slug";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
+import type { Post } from "@flexweg/cms-runtime";
+import { postSortMillis } from "@flexweg/cms-runtime";
+import type { PublishContext } from "@flexweg/cms-runtime";
+import { buildPostUrl } from "@flexweg/cms-runtime";
 import { escapeAttr, escapeText } from "../util";
 
 export interface MostReadAttrs {

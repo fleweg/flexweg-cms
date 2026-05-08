@@ -1,4 +1,4 @@
-import type { ThemeManifest } from "../types";
+import type { ThemeManifest } from "@flexweg/cms-runtime";
 import { BaseLayout } from "./templates/BaseLayout";
 import { HomeTemplate } from "./templates/HomeTemplate";
 import { SingleTemplate } from "./templates/SingleTemplate";

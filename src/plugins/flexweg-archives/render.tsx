@@ -8,7 +8,7 @@
 // pickPublicLocale(settings.language), "flexweg-archives") — NOT the
 // admin's UI language.
 
-import type { Post } from "../../core/types";
+import { buildPostUrl, type Post } from "@flexweg/cms-runtime";
 import type { TFunction } from "i18next";
 import {
   type ArchivePeriod,
@@ -23,7 +23,6 @@ import {
   periodHref,
   periodKey,
 } from "./periods";
-import { buildPostUrl } from "../../core/slug";
 
 // Group a flat list of posts into the periods they belong to. Used by
 // the year page when drill-down is enabled (groups posts by month or

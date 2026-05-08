@@ -6,7 +6,7 @@
 // posts created before this field landed) we fall back to
 // `updatedAt` then `createdAt`. The same chain RSS and sitemaps use.
 
-import type { Post } from "../../core/types";
+import type { Post } from "@flexweg/cms-runtime";
 
 export type DrillDown = "none" | "month" | "week";
 

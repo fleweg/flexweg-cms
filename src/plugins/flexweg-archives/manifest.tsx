@@ -1,6 +1,8 @@
-import type { PluginManifest } from "../index";
-import type { Post } from "../../core/types";
-import type { PublishContext } from "../../services/publisher";
+import type {
+  PluginManifest,
+  Post,
+  PublishContext,
+} from "@flexweg/cms-runtime";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   type ArchivesConfig,

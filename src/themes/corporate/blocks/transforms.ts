@@ -1,4 +1,4 @@
-import type { Post } from "../../../core/types";
+import type { Post } from "@flexweg/cms-runtime";
 import { decodeAttrs } from "./util";
 import { renderHeroOverlay, type HeroOverlayAttrs } from "./heroOverlay/render";
 import { renderHeroSplit, type HeroSplitAttrs } from "./heroSplit/render";

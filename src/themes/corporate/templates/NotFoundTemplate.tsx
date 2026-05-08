@@ -1,5 +1,5 @@
-import type { NotFoundTemplateProps, SiteContext } from "../../types";
-import i18n, { pickPublicLocale } from "../../../i18n";
+import type { NotFoundTemplateProps, SiteContext } from "@flexweg/cms-runtime";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 
 // Minimal 404. Centered text + CTA back to home. Aligns with the
 // corporate aesthetic (h1 in primary navy, button in secondary

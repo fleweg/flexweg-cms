@@ -1,4 +1,4 @@
-import type { PluginManifest } from "../index";
+import type { PluginManifest } from "../../plugins";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   DEFAULT_IMPORT_CONFIG,

@@ -1,5 +1,5 @@
-import i18n, { pickPublicLocale } from "../../../../i18n";
-import type { PublishContext } from "../../../../services/publisher";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
+import type { PublishContext } from "@flexweg/cms-runtime";
 import { escapeAttr, escapeText } from "../util";
 
 export interface PromoCardAttrs {

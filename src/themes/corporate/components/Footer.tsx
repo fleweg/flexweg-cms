@@ -1,4 +1,4 @@
-import type { SiteContext } from "../../types";
+import type { SiteContext } from "@flexweg/cms-runtime";
 
 // Corporate footer — dark navy bar with the wordmark + tagline on the
 // left and a runtime-populated menu on the right. Items are loaded by

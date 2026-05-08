@@ -1,7 +1,7 @@
-import type { SingleTemplateProps, SiteContext } from "../../types";
-import { pickFormat } from "../../../core/media";
-import { buildTermUrl } from "../../../core/slug";
-import i18n, { pickPublicLocale } from "../../../i18n";
+import type { SingleTemplateProps, SiteContext } from "@flexweg/cms-runtime";
+import { pickFormat } from "@flexweg/cms-runtime";
+import { buildTermUrl } from "@flexweg/cms-runtime";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 
 // Editorial single-post layout (mockup-faithful):
 //

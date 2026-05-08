@@ -48,7 +48,7 @@ import {
   type SourceFileInput,
   type StatusMode,
 } from "./importer";
-import type { PluginSettingsPageProps } from "../index";
+import type { PluginSettingsPageProps } from "../../plugins";
 
 export interface ImportConfig {
   options: ImportOptions;

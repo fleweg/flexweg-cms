@@ -1,10 +1,11 @@
 // Boot-time loader for externally-installed plugins and themes.
 //
-// Reads /admin/external.json (the runtime manifest of external entries),
-// dynamically imports each declared bundle, validates its apiVersion,
-// and registers the resolved manifest into the in-memory external
-// registry. Errors per entry are caught + logged + toasted but never
-// abort the loop — a single bad bundle cannot crash the admin.
+// Reads the registry from Firestore (settings/externalRegistry) via
+// services/externalRegistryStore, dynamically imports each declared
+// bundle, validates its apiVersion, and registers the resolved
+// manifest into the in-memory external registry. Errors per entry are
+// caught + logged + toasted but never abort the loop — a single bad
+// bundle cannot crash the admin.
 //
 // Called once during boot from CmsDataContext, before plugin/theme
 // registration kicks in. The await means any external entries are
@@ -17,14 +18,13 @@ import {
   FLEXWEG_API_VERSION,
 } from "../core/flexwegRuntime";
 import {
-  EMPTY_EXTERNAL_MANIFEST,
   clearExternalPlugins,
   clearExternalThemes,
   registerExternalPlugin,
   registerExternalTheme,
   type ExternalEntry,
-  type ExternalManifest,
 } from "./externalRegistry";
+import { readRegistry } from "./externalRegistryStore";
 import {
   loadExternalPluginTranslations,
   type PluginManifest,
@@ -33,10 +33,6 @@ import {
   loadExternalThemeTranslations,
 } from "../themes";
 import type { ThemeManifest } from "../themes/types";
-
-// Path of the external manifest file on Flexweg, relative to the admin
-// root. Same place every browser fetches it from.
-export const EXTERNAL_MANIFEST_PATH = "external.json";
 
 // Compares two semver-like strings ("1.2.3" → [1,2,3]). Returns -1, 0, 1
 // the way Array.sort expects. Tolerant of missing components: "1.2"
@@ -93,33 +89,9 @@ function resolveBundleUrl(
   return new URL(relative, document.baseURI).href;
 }
 
-// Fetches /admin/external.json. Returns an empty manifest when the file
-// doesn't exist (the typical case for fresh installs) — we treat 404 as
-// "no external entries" rather than an error.
-export async function fetchExternalManifest(): Promise<ExternalManifest> {
-  try {
-    // Cache-busting query: the manifest is updated by the upload UI and
-    // we want fresh content on every reload, even if the CDN cached it.
-    const res = await fetch(`./${EXTERNAL_MANIFEST_PATH}?v=${Date.now()}`, {
-      cache: "no-store",
-    });
-    if (res.status === 404) return EMPTY_EXTERNAL_MANIFEST;
-    if (!res.ok) {
-      console.warn(`[external] manifest fetch failed: HTTP ${res.status}`);
-      return EMPTY_EXTERNAL_MANIFEST;
-    }
-    const data = (await res.json()) as Partial<ExternalManifest>;
-    return {
-      plugins: Array.isArray(data?.plugins) ? data.plugins : [],
-      themes: Array.isArray(data?.themes) ? data.themes : [],
-    };
-  } catch (err) {
-    // Network error / parse error / etc. Don't abort boot — log and
-    // continue with no externals.
-    console.warn("[external] manifest fetch threw:", err);
-    return EMPTY_EXTERNAL_MANIFEST;
-  }
-}
+// Read the registry through services/externalRegistryStore. The store
+// transparently handles the Firestore → legacy file → defaults file
+// fallback chain and migrates older deployments on first read.
 
 // Imports a single external bundle and registers its default-exported
 // manifest. Returns true on success, false on any failure (logged).
@@ -135,22 +107,32 @@ async function loadOneEntry(
     return false;
   }
   const url = resolveBundleUrl(type, entry);
-  let mod: { default?: PluginManifest | ThemeManifest };
+  let mod: {
+    default?: PluginManifest | ThemeManifest;
+    manifest?: PluginManifest | ThemeManifest;
+  };
   try {
     // The /* @vite-ignore */ comment tells Vite not to try to analyse
     // this URL at build time — we genuinely don't know it ahead of
     // time. The bundle is fetched and evaluated by the browser.
     mod = (await import(/* @vite-ignore */ url)) as {
       default?: PluginManifest | ThemeManifest;
+      manifest?: PluginManifest | ThemeManifest;
     };
   } catch (err) {
     console.error(`[external] failed to import ${url}:`, err);
     return false;
   }
-  const manifest = mod.default;
+  // Accept both `export default manifest` (the convention for
+  // user-authored external bundles, see examples/external-plugin/) AND
+  // `export const manifest = ...` (the in-tree convention used by
+  // plugins/themes that get packaged as externals at build time —
+  // changing every in-tree manifest.ts to `export default` would be
+  // churn for no gain). The first non-null lookup wins.
+  const manifest = mod.default ?? mod.manifest;
   if (!manifest || typeof manifest !== "object" || !("id" in manifest)) {
     console.error(
-      `[external] ${type}/${entry.id} bundle did not default-export a valid manifest`,
+      `[external] ${type}/${entry.id} bundle did not export a valid manifest (default or named "manifest")`,
     );
     return false;
   }
@@ -186,7 +168,7 @@ export async function loadAllExternalEntries(): Promise<{
   loaded: number;
   failed: number;
 }> {
-  const manifest = await fetchExternalManifest();
+  const manifest = await readRegistry();
   clearExternalPlugins();
   clearExternalThemes();
   let loaded = 0;

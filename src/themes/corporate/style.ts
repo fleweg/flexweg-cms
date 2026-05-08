@@ -1,4 +1,4 @@
-import { uploadFile } from "../../services/flexwegApi";
+import { uploadFile } from "@flexweg/cms-runtime";
 
 // Corporate theme — runtime style customization. Mirrors the magazine
 // theme's style.ts but tailored for a single-font system: the

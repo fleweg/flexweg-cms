@@ -2,10 +2,10 @@ import { Newspaper } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
-import type { BlockManifest } from "../../../../core/blockRegistry";
-import type { Post } from "../../../../core/types";
-import { postSortMillis } from "../../../../core/postSort";
-import { useAllPosts } from "../../../../hooks/useAllPosts";
+import type { BlockManifest } from "@flexweg/cms-runtime";
+import type { Post } from "@flexweg/cms-runtime";
+import { postSortMillis } from "@flexweg/cms-runtime";
+import { useAllPosts } from "@flexweg/cms-runtime";
 import { blockNodeName, createBlockNode } from "../createBlockNode";
 import type { MagazineHeroAttrs } from "./render";
 

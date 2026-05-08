@@ -1,5 +1,5 @@
-import type { NotFoundTemplateProps, SiteContext } from "../../types";
-import i18n, { pickPublicLocale } from "../../../i18n";
+import type { NotFoundTemplateProps, SiteContext } from "@flexweg/cms-runtime";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 
 // Sober editorial 404 — display-xl serif numeral + lede + CTA. Same
 // breathing room as the other templates so the page doesn't feel

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Loader2, RefreshCw, Save } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCmsData } from "../../context/CmsDataContext";
-import { toast } from "../../lib/toast";
-import { fetchAllPosts } from "../../services/posts";
-import { formatDateTime } from "../../lib/utils";
+import {
+  useCmsData,
+  toast,
+  fetchAllPosts,
+  formatDateTime,
+  type PluginSettingsPageProps,
+} from "@flexweg/cms-runtime";
 import { regenerateAll, type RegenerateIndexInput } from "./generator";
 import type { SearchConfig } from "./config";
-import type { PluginSettingsPageProps } from "../index";
 
 // Settings page rendered at /settings/plugin/flexweg-search. The
 // wrapping PluginSettingsRoute already merges the manifest's

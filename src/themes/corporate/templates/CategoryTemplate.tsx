@@ -1,7 +1,7 @@
-import type { CategoryTemplateProps, SiteContext } from "../../types";
-import { pickFormat } from "../../../core/media";
-import { buildTermUrl } from "../../../core/slug";
-import i18n, { pickPublicLocale } from "../../../i18n";
+import type { CategoryTemplateProps, SiteContext } from "@flexweg/cms-runtime";
+import { pickFormat } from "@flexweg/cms-runtime";
+import { buildTermUrl } from "@flexweg/cms-runtime";
+import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 
 // Corporate category archive — closely follows the Stitch mockup.
 //

@@ -2,7 +2,7 @@ import { BarChart3, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
-import type { BlockManifest } from "../../../../core/blockRegistry";
+import type { BlockManifest } from "@flexweg/cms-runtime";
 import { blockNodeName, createBlockNode } from "../createBlockNode";
 import type { StatItem, StatsGridAttrs } from "./render";
 

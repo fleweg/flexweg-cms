@@ -1,7 +1,7 @@
-import type { Post } from "../../../core/types";
-import { postSortMillis } from "../../../core/postSort";
-import { getCurrentPublishContext } from "../../../services/publishContext";
-import type { PublishContext } from "../../../services/publisher";
+import type { Post } from "@flexweg/cms-runtime";
+import { postSortMillis } from "@flexweg/cms-runtime";
+import { getCurrentPublishContext } from "@flexweg/cms-runtime";
+import type { PublishContext } from "@flexweg/cms-runtime";
 import { decodeAttrs } from "./util";
 import { renderMagazineHero, type MagazineHeroAttrs } from "./magazineHero/render";
 import { renderMostRead, type MostReadAttrs } from "./mostRead/render";

@@ -14,21 +14,18 @@
 // funneled through the standard toast UX.
 
 import JSZip from "jszip";
+import { deleteFolder, uploadFile } from "./flexwegApi";
 import {
-  deleteFolder,
-  getFile,
-  uploadFile,
-} from "./flexwegApi";
-import {
-  EXTERNAL_MANIFEST_PATH,
-} from "./externalLoader";
-import {
-  EMPTY_EXTERNAL_MANIFEST,
   unregisterExternalPlugin,
   unregisterExternalTheme,
   type ExternalEntry,
   type ExternalManifest,
 } from "./externalRegistry";
+import {
+  readRegistry,
+  writeRegistry,
+  readDefaults,
+} from "./externalRegistryStore";
 import {
   FLEXWEG_API_MIN_VERSION,
   FLEXWEG_API_VERSION,
@@ -113,37 +110,24 @@ function adminPath(relative: string): string {
   return withAdminBase(relative);
 }
 
-// Reads the current external.json from Flexweg. Returns the empty
-// manifest when the file doesn't yet exist (first install). 404 is
-// silently mapped to empty by getFile's underlying performRequest.
+// Registry read/write goes through services/externalRegistryStore which
+// stores state in Firestore (settings/externalRegistry). The on-disk
+// JSON files are now read-only — external.default.json ships with the
+// build as the baseline; the legacy external.json is migrated on first
+// read. Local thin wrappers below preserve the existing call shape.
 async function readManifest(): Promise<ExternalManifest> {
   try {
-    const text = await getFile(adminPath(EXTERNAL_MANIFEST_PATH));
-    const parsed = JSON.parse(text) as Partial<ExternalManifest>;
-    return {
-      plugins: Array.isArray(parsed?.plugins) ? parsed.plugins : [],
-      themes: Array.isArray(parsed?.themes) ? parsed.themes : [],
-    };
+    return await readRegistry();
   } catch (err) {
-    // 404 → file doesn't exist yet → start from an empty manifest.
-    // Any other error means we genuinely couldn't read the file; fail
-    // hard so we don't accidentally overwrite a healthy manifest with
-    // an empty one.
-    if ((err as { status?: number })?.status === 404) {
-      return { ...EMPTY_EXTERNAL_MANIFEST };
-    }
     throw new ExternalUploadError(
-      `Could not read ${EXTERNAL_MANIFEST_PATH}`,
+      `Could not read external registry: ${(err as Error).message}`,
       "fetch-manifest",
     );
   }
 }
 
 async function writeManifest(manifest: ExternalManifest): Promise<void> {
-  await uploadFile({
-    path: adminPath(EXTERNAL_MANIFEST_PATH),
-    content: JSON.stringify(manifest, null, 2),
-  });
+  await writeRegistry(manifest);
 }
 
 // base64-encodes an ArrayBuffer for use with flexwegApi's base64 upload.
@@ -348,4 +332,56 @@ export async function uninstallExternal(
 
   if (kind === "plugins") unregisterExternalPlugin(id);
   else unregisterExternalTheme(id);
+}
+
+// Reads the build-time defaults manifest (admin/external.default.json,
+// shipped with the admin deploy) + the current runtime manifest
+// (Firestore via externalRegistryStore), and returns the entries
+// present in defaults but missing from current. Used by the
+// "Reinstall bundled defaults" UI to surface what would be restored.
+export async function listMissingBundledDefaults(): Promise<{
+  plugins: ExternalEntry[];
+  themes: ExternalEntry[];
+}> {
+  const [current, defaults] = await Promise.all([
+    readManifest(),
+    readDefaults(),
+  ]);
+  if (!defaults.plugins.length && !defaults.themes.length) {
+    return { plugins: [], themes: [] };
+  }
+  const currentPluginIds = new Set(current.plugins.map((e) => e.id));
+  const currentThemeIds = new Set(current.themes.map((e) => e.id));
+  return {
+    plugins: defaults.plugins.filter((e) => !currentPluginIds.has(e.id)),
+    themes: defaults.themes.filter((e) => !currentThemeIds.has(e.id)),
+  };
+}
+
+// Restores every entry from external.default.json that's currently
+// missing from external.json. Idempotent — re-running adds nothing if
+// nothing was missing. Does NOT touch entries the user installed via
+// the upload UI; those stay regardless.
+//
+// The bundle files for the restored defaults are already on Flexweg
+// from the most recent admin deploy (they live under
+// admin/<kind>/<id>/ on the published site). We only update
+// external.json so the runtime loader picks them up again on the
+// next reload.
+export async function reinstallBundledDefaults(): Promise<{
+  pluginsRestored: number;
+  themesRestored: number;
+}> {
+  const missing = await listMissingBundledDefaults();
+  if (missing.plugins.length === 0 && missing.themes.length === 0) {
+    return { pluginsRestored: 0, themesRestored: 0 };
+  }
+  const current = await readManifest();
+  current.plugins.push(...missing.plugins);
+  current.themes.push(...missing.themes);
+  await writeManifest(current);
+  return {
+    pluginsRestored: missing.plugins.length,
+    themesRestored: missing.themes.length,
+  };
 }

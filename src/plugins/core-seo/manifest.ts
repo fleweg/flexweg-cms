@@ -1,5 +1,4 @@
-import type { PluginManifest } from "../index";
-import type { BaseLayoutProps } from "../../themes/types";
+import type { PluginManifest, BaseLayoutProps } from "@flexweg/cms-runtime";
 import readme from "./README.md?raw";
 
 // Built-in SEO plugin. Scope is intentionally tiny — it adds extra

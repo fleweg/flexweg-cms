@@ -13,7 +13,6 @@ import { manifest as coreSeoManifest } from "./core-seo/manifest";
 import { manifest as flexwegSitemapsManifest } from "./flexweg-sitemaps/manifest";
 import { manifest as flexwegRssManifest } from "./flexweg-rss/manifest";
 import { manifest as flexwegArchivesManifest } from "./flexweg-archives/manifest";
-import { manifest as flexwegImportManifest } from "./flexweg-import/manifest";
 import { manifest as flexwegSearchManifest } from "./flexweg-search/manifest";
 import i18n from "../i18n";
 import type { AdminLocale } from "../core/types";
@@ -68,14 +67,28 @@ export interface PluginManifest<TConfig = unknown> {
   i18n?: Partial<Record<AdminLocale, Record<string, unknown>>>;
 }
 
-export const PLUGINS: PluginManifest[] = [
+// In dev (`npm run dev`), plugins are bundled into the admin SPA via
+// the static imports above and listed here. In prod (`npm run build`),
+// each plugin is emitted as a separate ESM bundle under
+// `dist/admin/plugins/<id>/` by scripts/build-bundled-externals.mjs,
+// listed in `dist/admin/external.json`, and loaded at runtime through
+// services/externalLoader.ts — same path as user-installed externals.
+// PLUGINS is therefore empty in prod, so plugin lifecycle and i18n
+// flow exclusively through the external mechanism in deployed admins.
+//
+// Vite replaces `import.meta.env.DEV` with `false` at prod build time;
+// Rollup tree-shakes the unused manifest imports above, keeping the
+// admin bundle free of plugin code that's already in the externals.
+const BUILTINS_DEV: PluginManifest[] = [
   coreSeoManifest,
   flexwegSitemapsManifest as PluginManifest,
   flexwegRssManifest as PluginManifest,
   flexwegArchivesManifest as PluginManifest,
-  flexwegImportManifest as PluginManifest,
   flexwegSearchManifest as PluginManifest,
 ];
+export const PLUGINS: PluginManifest[] = import.meta.env.DEV
+  ? BUILTINS_DEV
+  : [];
 
 // Returns built-in plugins + any externally-loaded ones. The admin's
 // /plugins page, settings tabs and config-resolver all read through

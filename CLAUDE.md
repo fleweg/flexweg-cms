@@ -198,6 +198,43 @@ The runtime loader ([src/services/externalLoader.ts](src/services/externalLoader
 
 When extending: any new code path that uploads admin assets via the Flexweg API MUST go through `withAdminBase()`. Any new code path that fetches admin assets via the browser (`fetch`, dynamic `import`) should use a relative URL — no helper needed.
 
+### In-tree plugins / themes are built as externals
+
+Every in-tree plugin (under `src/plugins/`) and every non-`default` theme (under `src/themes/`) is compiled at `npm run build` time into a SEPARATE ESM bundle under `dist/admin/{plugins,themes}/<id>/` and listed in `dist/admin/external.json` — same loading path as user-uploaded externals. Their source code is **not** part of the main admin bundle in prod.
+
+Mechanism:
+
+- `src/plugins/index.ts` and `src/themes/index.ts` keep static imports of every in-tree manifest, but the resulting `PLUGINS` / `THEMES` arrays are gated on `import.meta.env.DEV`. In dev (`npm run dev`), the static imports populate the array — no external loading needed, HMR works as usual. In prod, the array is empty and Rollup tree-shakes the unused manifests; the admin relies entirely on the external loader for plugin/theme registration.
+- `default` theme is the exception — it always stays in the THEMES array as the fallback when a user uninstalls every external theme.
+- Each in-tree plugin/theme imports admin internals through `@flexweg/cms-runtime` (TS path alias to [src/core/flexwegRuntime.ts](src/core/flexwegRuntime.ts)). The build script externalises this specifier per bundle, so at runtime the import-map redirects to `/admin/runtime/cms-runtime.js` which reads from `window.__FLEXWEG_RUNTIME__` — same instances as the admin.
+
+The full set of admin internals exposed via `@flexweg/cms-runtime`:
+
+- React + family (already there)
+- Plugin API + registries: `pluginApi`, `registerBlock`, `registerDashboardCard`, `registerExternalPlugin`, `registerExternalTheme`
+- core helpers: `slugify`, `isValidSlug`, `findAvailableSlug`, `buildPostUrl`, `buildTermUrl`, `pathToPublicUrl`, `detectPathCollision`, `detectTermSlugCollision`, `normalizeMediaSlug`, `mediaToView`, `pickFormat`, `pickMediaUrl`, `markdownToPlainText`, `renderMarkdown`, `SocialIcon`, `socialLabel`, `postSortMillis`, `renderPageToHtml`
+- Flexweg Files API: `uploadFile`, `deleteFile`, `deleteFolder`, `renameFile`, `renameFolder`, `createFolder`, `getFile`, `listFiles`, `publicUrlFor`, `fileToBase64`, `getStorageLimits`, `FlexwegApiError`
+- Firestore CRUD: `fetchAllPosts`, `createPost`, `updatePost`, `uploadMedia`, `createTerm`, `buildAuthorLookup`
+- Publisher: `publishPost`, `buildPublishContext`, `buildSiteContext`, `publishMenuJson`
+- Settings: `updatePluginConfig`, `updateThemeConfig`
+- Lib: `toast`, `sha256Hex`, `formatDateTime`, `cn`
+- Hooks + contexts: `useCmsData`, `useAuth`, `useAllPosts`
+- i18n: `i18n` (instance), `pickPublicLocale`, `setActiveLocale`
+- UI components: `EntityCombobox`, `FontSelect`, `MediaPicker`
+- Theme support: `getActiveTheme`, `getCurrentPublishContext`, `logoPath`, `uploadThemeLogo`, `removeThemeLogo`
+
+When adding new admin internals that plugins/themes consume, add them here AND to [public/runtime/cms-runtime.js](public/runtime/cms-runtime.js) so the runtime stub re-exports them.
+
+**Runtime registry storage** ([src/services/externalRegistryStore.ts](src/services/externalRegistryStore.ts)): the live list of installed externals lives in Firestore at `settings/externalRegistry`, NOT as a file on Flexweg. The on-disk `dist/admin/external.default.json` is the immutable build-time baseline used by the "Reinstall bundled defaults" UI and as the seed for fresh installs. There's no longer a mutable `dist/admin/external.json`.
+
+`readRegistry()` resolves in this order: Firestore → legacy `external.json` (one-time migration source for pre-Firestore deployments) → `external.default.json` (fresh install). The first non-null result is materialised back into Firestore so subsequent boots hit the Firestore branch directly.
+
+`writeRegistry()` only writes to Firestore. Install / uninstall / reinstall flows in `services/externalUpload.ts` all funnel through this. Bundle files themselves (the `bundle.js` / `manifest.json` / `theme.css` per entry) still live under `/admin/<kind>/<id>/` on Flexweg — they're written by `installFromZip` and deleted by `uninstallExternal` via the regular `flexwegApi`. Only the manifest moved.
+
+**Reinstalling bundled defaults**: the Plugins / Themes install modal exposes a **Restore** button when there's a delta between `external.default.json` and the live Firestore registry. Clicking merges the missing entries back. The bundle files don't move; they're already on Flexweg from the latest admin deploy.
+
+**Deploy semantics**: `dist/admin/` is fully re-deployable now. Re-uploading the entire folder is safe — the registry lives in Firestore so admin upgrades never overwrite the user's uninstall state. Only the bundle files (in `plugins/<id>/`, `themes/<id>/`) and `external.default.json` are intended to be refreshed by deploys.
+
 ### External plugins / themes (runtime-loaded packages)
 
 Beyond the in-tree plugins/themes (under `src/plugins/`, `src/mu-plugins/`, `src/themes/`), the admin supports **externally-installed** plugins and themes that ship as a `.zip`, get uploaded into Flexweg, and load at runtime via dynamic `import()` — no admin rebuild required. The runtime layer is additive: in-tree entries keep working unchanged, externals augment the same registries.

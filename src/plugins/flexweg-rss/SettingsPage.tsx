@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileCode2, Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useCmsData } from "../../context/CmsDataContext";
-import { EntityCombobox, type ComboboxOption } from "../../components/ui/EntityCombobox";
-import { toast } from "../../lib/toast";
+import {
+  useCmsData,
+  EntityCombobox,
+  toast,
+  publishMenuJson,
+  fetchAllPosts,
+  type ComboboxOption,
+  type PluginSettingsPageProps,
+} from "@flexweg/cms-runtime";
 import { categoryFeedPath } from "./generator";
 import {
   cleanupRemovedFeeds,
@@ -12,9 +18,6 @@ import {
   type CategoryFeedConfig,
   type RssConfig,
 } from "./generator";
-import { publishMenuJson } from "../../services/menuPublisher";
-import { fetchAllPosts } from "../../services/posts";
-import type { PluginSettingsPageProps } from "../index";
 
 // Settings page rendered at /settings/plugin/flexweg-rss. The wrapping
 // PluginSettingsRoute already merges the manifest's defaultConfig with

@@ -1,7 +1,10 @@
-import type { BaseLayoutProps } from "../../themes/types";
-import type { Post } from "../../core/types";
-import type { PublishContext } from "../../services/publisher";
-import { updatePluginConfig } from "../../services/settings";
+import {
+  updatePluginConfig,
+  type BaseLayoutProps,
+  type Post,
+  type PublishContext,
+  type PluginManifest,
+} from "@flexweg/cms-runtime";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
 import {
   DEFAULT_SEARCH_CONFIG,
@@ -11,7 +14,6 @@ import {
 } from "./config";
 import { ensureRuntime, regenerateAll, regenerateIndex } from "./generator";
 import { FlexwegSearchSettingsPage } from "./SettingsPage";
-import type { PluginManifest } from "../index";
 import readme from "./README.md?raw";
 
 // Resolves the live config from a publish-time context. Falls back to

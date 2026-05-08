@@ -1,10 +1,18 @@
-import { useState, type ChangeEvent } from "react";
-import { AlertCircle, Loader2, Upload, X } from "lucide-react";
+import { useEffect, useState, type ChangeEvent } from "react";
+import {
+  AlertCircle,
+  Loader2,
+  RotateCcw,
+  Upload,
+  X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "../../lib/toast";
 import {
   ExternalUploadError,
   installFromZip,
+  listMissingBundledDefaults,
+  reinstallBundledDefaults,
   uninstallExternal,
   type ExternalKind,
 } from "../../services/externalUpload";
@@ -31,6 +39,34 @@ export function ExternalInstallModal({
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uninstallingId, setUninstallingId] = useState<string | null>(null);
+  // Bundled defaults the user has previously uninstalled and could
+  // restore. Populated lazily when the modal opens. Filtered to the
+  // current `kind` so the plugins modal only shows missing plugins.
+  const [missingDefaults, setMissingDefaults] = useState<
+    Array<{ id: string; version: string }>
+  >([]);
+  const [restoring, setRestoring] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    listMissingBundledDefaults()
+      .then((res) => {
+        if (cancelled) return;
+        setMissingDefaults(
+          (kind === "plugins" ? res.plugins : res.themes).map((e) => ({
+            id: e.id,
+            version: e.version,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setMissingDefaults([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, kind]);
 
   if (!open) return null;
 
@@ -171,6 +207,53 @@ export function ExternalInstallModal({
             </button>
           </div>
         </div>
+
+        {missingDefaults.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-surface-200 dark:border-surface-800">
+            <h3 className="text-sm font-semibold text-surface-900 dark:text-surface-50">
+              {t("externalInstall.bundledDefaultsTitle")}
+            </h3>
+            <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+              {t("externalInstall.bundledDefaultsHint", {
+                count: missingDefaults.length,
+              })}
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <ul className="text-xs text-surface-600 dark:text-surface-300 truncate">
+                {missingDefaults.map((d) => d.id).join(", ")}
+              </ul>
+              <button
+                type="button"
+                disabled={restoring}
+                onClick={async () => {
+                  if (restoring) return;
+                  setRestoring(true);
+                  try {
+                    const res = await reinstallBundledDefaults();
+                    toast.success(
+                      t("externalInstall.bundledDefaultsRestored", {
+                        plugins: res.pluginsRestored,
+                        themes: res.themesRestored,
+                      }),
+                    );
+                    window.setTimeout(() => window.location.reload(), 600);
+                  } catch (err) {
+                    toast.error((err as Error).message);
+                    setRestoring(false);
+                  }
+                }}
+                className="btn-secondary"
+              >
+                {restoring ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                {t("externalInstall.bundledDefaultsRestore")}
+              </button>
+            </div>
+          </div>
+        )}
 
         {existing.length > 0 && (
           <div className="mt-6 pt-5 border-t border-surface-200 dark:border-surface-800">

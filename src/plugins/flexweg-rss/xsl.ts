@@ -9,8 +9,7 @@
 // BCP-47 tag with a region suffix (e.g. `pt-BR`, `fr-CA`) maps to the
 // underlying base locale's label set.
 
-import type { AdminLocale } from "../../core/types";
-import { pickPublicLocale } from "../../i18n";
+import { pickPublicLocale, type AdminLocale } from "@flexweg/cms-runtime";
 
 export const RSS_XSL_PATH = "rss.xsl";
 

@@ -1,4 +1,4 @@
-import { uploadFile } from "../../services/flexwegApi";
+import { uploadFile } from "@flexweg/cms-runtime";
 
 // Magazine theme — runtime style customization. Mirrors the default
 // theme's style.ts but adapted to Tailwind: colors are stored as RGB
