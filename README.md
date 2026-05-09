@@ -984,3 +984,11 @@ If you've customised `robots.txt`, make sure to keep the `Disallow: /admin/` lin
 - The Flexweg API key sits in Firestore. Any signed-in admin can read it via devtools — fine for an internal tool, do not deploy this pattern to a multi-tenant or public-facing app.
 - The publisher serialises uploads to avoid hitting API rate limits; very large sites (hundreds of pages) take a while when "Regenerate site" runs.
 - Content is single-language per site (the public language). Admins choose their own UI language separately. Multi-language content can be added later as a plugin.
+
+## License
+
+Source-available under the [PolyForm Noncommercial License 1.0.0](./LICENSE). Personal, hobbyist, educational, research, and other noncommercial use is permitted free of charge; you can fork, modify, and redistribute under the same terms.
+
+**Commercial use — including selling the software or hosting it as a paid service — requires explicit written authorization.** For commercial licensing inquiries, contact: contact@flexweg.com
+
+See [LICENSE](./LICENSE) for the full terms.

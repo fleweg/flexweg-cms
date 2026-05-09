@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Static WordPress-like CMS that publishes pages to Flexweg via API. Admin SPA built with React + TypeScript + Firebase.",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "themes:tailwind": "node scripts/build-theme-tailwind.mjs",
     "predev": "npm run themes:tailwind",
