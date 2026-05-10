@@ -498,15 +498,17 @@ A failed menu.json publish toasts an error (the same Flexweg error funnel as eve
 
 ## Image handling
 
-When a user uploads an image, the admin runs the file entirely through a browser-side pipeline (no server, no original kept):
+When a user uploads an image, the admin runs the file entirely through a browser-side pipeline (no server):
 
 1. Validates the extension against the active theme's `inputFormats`.
 2. Decodes the file via `createImageBitmap`.
-3. For each variant declared by the active theme **plus** two admin-only formats (`admin-thumb`, `admin-preview`), renders a resized canvas and re-encodes it as WebP (or whatever `outputFormat` the theme picked).
+3. For each variant declared by the active theme **plus** three admin-only formats (`admin-thumb`, `admin-preview`, `admin-original`), renders a resized canvas and re-encodes it as WebP (or whatever `outputFormat` the theme picked).
 4. Uploads each variant to Flexweg under `media/<yyyy>/<mm>/<slug>-<hex>/<variant>.webp`.
 5. Persists a single `media/{id}` Firestore document referencing every variant by name.
 
-The original file is **never stored** — disk and bandwidth are saved at the cost of being unable to regenerate a perfect copy after a theme switch.
+The uploaded source file is **not stored verbatim**. Instead, the pipeline produces an `admin-original` variant: the source resized so the longest axis is capped at 2000 px (no crop, ratio preserved, never upscaled) and re-encoded at quality 90 — purpose-built as a high-fidelity source for future re-crops, not for display. This keeps storage bounded while preserving enough resolution that adding a new theme variant later can regenerate from `admin-original` rather than upscaling a smaller display variant.
+
+A single `ImageFormat` may carry an optional `quality` override on the 0..100 scale. The `admin-original` format uses this to bump from the theme's global quality (default 80) to 90 without affecting display variants. Other variants honour the override transparently if they want it.
 
 ### Declaring image formats in a theme
 
@@ -544,7 +546,7 @@ import { pickFormat } from "../../../core/media";
 <img src={pickFormat(hero)} />          // uses defaultFormat (e.g. "medium")
 ```
 
-`pickFormat` falls back through a chain: requested format → `defaultFormat` → largest available → empty string. This means switching to a theme that asks for a format an old upload doesn't have still renders the image at the next-best size, never broken.
+`pickFormat` falls back through a chain: requested format → `defaultFormat` → largest available → empty string. This means switching to a theme that asks for a format an old upload doesn't have still renders the image at the next-best size, never broken. For new uploads the chain naturally lands on `admin-original` (2000 px) when nothing else fits — so re-cropping headroom exists for any theme variant up to that bound.
 
 ### Storage layout & cleanup
 
@@ -555,6 +557,7 @@ media/
       photo-de-vacances-a3f7b2/
         admin-thumb.webp
         admin-preview.webp
+        admin-original.webp
         small.webp
         medium.webp
         large.webp
@@ -565,6 +568,8 @@ Filenames are normalised (lower-case ASCII, dash-separated) and suffixed with a 
 ### Backward compatibility
 
 Media uploaded before the multi-variant pipeline keeps its original `{ url, storagePath }` shape. The helpers (`pickFormat`, `pickMediaUrl`, `mediaToView`) read either shape transparently — no migration step required.
+
+Media uploaded between the multi-variant rollout and the `admin-original` addition will not have the `admin-original` key in their `formats` map; nothing breaks (the existing fallback chain handles it) but those assets cannot be re-cropped at full headroom — only the variants that exist on disk are available.
 
 ## Creating a new theme
 

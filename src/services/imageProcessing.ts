@@ -132,7 +132,7 @@ export async function processImage(
 ): Promise<ProcessedVariant[]> {
   const bitmap = await createImageBitmap(file);
   try {
-    const quality = normalizeQuality(opts.quality);
+    const globalQuality = normalizeQuality(opts.quality);
     const variants: ProcessedVariant[] = [];
 
     for (const [name, format] of Object.entries(opts.formats)) {
@@ -155,7 +155,9 @@ export async function processImage(
         plan.drawWidth,
         plan.drawHeight,
       );
-      const blob = await canvasToBlob(canvas, opts.outputMime, quality);
+      const variantQuality =
+        format.quality !== undefined ? normalizeQuality(format.quality) : globalQuality;
+      const blob = await canvasToBlob(canvas, opts.outputMime, variantQuality);
       if (!blob) throw new Error(`Failed to encode variant "${name}".`);
       variants.push({
         name,

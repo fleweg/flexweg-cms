@@ -189,6 +189,12 @@ export interface ImageFormat {
   width: number;
   height: number;
   fit?: ImageFit;
+  // Per-format quality override on the same 0..100 scale as the global
+  // `ImageFormatConfig.quality`. Used when a single variant needs a
+  // different fidelity than the rest — e.g. the `admin-original` variant
+  // bumps to 90 because it's a source for future re-crops, not a display
+  // surface. Falls back to the global quality when omitted.
+  quality?: number;
 }
 
 // Output configuration for the image-processing pipeline. Declared by a

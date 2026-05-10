@@ -106,11 +106,16 @@ When adding a new theme that wants its own menu UX: declare `jsText` on the mani
 
 ### Image pipeline
 
-Uploads go through a browser-only multi-variant pipeline (`services/imageProcessing.ts` + `services/media.ts`). Per asset, the canvas API resizes to every format declared by the active theme **plus** two admin-only formats (`admin-thumb`, `admin-preview` from `services/imageFormats.ts`). All variants are encoded as WebP (or whatever `outputFormat` the theme chose), uploaded under `media/<yyyy>/<mm>/<slug>-<hex>/<variant>.<ext>`, and recorded under a single `media/{id}` Firestore doc with a `formats` map.
+Uploads go through a browser-only multi-variant pipeline (`services/imageProcessing.ts` + `services/media.ts`). Per asset, the canvas API resizes to every format declared by the active theme **plus** three admin-only formats (`admin-thumb`, `admin-preview`, `admin-original` from `services/imageFormats.ts`). All variants are encoded as WebP (or whatever `outputFormat` the theme chose), uploaded under `media/<yyyy>/<mm>/<slug>-<hex>/<variant>.<ext>`, and recorded under a single `media/{id}` Firestore doc with a `formats` map.
 
-The original file is never stored. Implications:
+The uploaded source file is **not stored** — what we keep instead is `admin-original`, a high-fidelity preserved-ratio variant: 2000×2000 `contain` fit (so the long axis is capped at 2000 px, ratio preserved, never upscaled, never cropped) encoded at quality 90. Its purpose isn't display — it's a re-crop source for any theme variant that gets added later. `pickFormat`'s "largest by area" fallback also picks it up automatically when a requested format doesn't exist, so templates degrade gracefully.
 
-- Switching to a theme that asks for a larger format than was generated cannot regenerate from the original. The `pickFormat(view, name)` helper in `core/media.ts` falls back through requested → default → largest available → empty string, so templates stay safe.
+`ImageFormat` supports an optional per-format `quality` override on the same 0..100 scale — used by `admin-original` to bump from the global default (80) to 90 without affecting display variants. `processImage` reads `format.quality ?? opts.quality` per variant.
+
+Implications:
+
+- Switching to a theme whose largest format is **smaller than 2000 px** cannot lose source — `admin-original` covers the gap. A theme asking for something **larger than 2000 px** still cannot regenerate at full source resolution; document that 2000 px is the upper bound for re-crops.
+- Old media uploaded before `admin-original` shipped do not have it; the existing fallback chain in `pickFormat` (requested → default → largest available → empty) keeps them working but they cannot be re-cropped.
 - The slug normaliser (`normalizeMediaSlug` in `core/slug.ts`) appends a 6-char random hex suffix to every upload — collisions are impossible by construction, so we never overwrite another asset's variant folder.
 - Deletion uses `DELETE /files/delete-folder` (the whole asset folder) instead of per-file calls.
 
