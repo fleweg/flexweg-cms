@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Loader2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
 import { useCmsData } from "../../context/CmsDataContext";
 import { ADMIN_THUMB_KEY } from "../../services/imageFormats";
+import { uploadMedia } from "../../services/media";
 import { pickMediaUrl } from "../../core/media";
+import { toast } from "../../lib/toast";
 import type { Media } from "../../core/types";
 
 interface MediaPickerProps {
@@ -12,12 +16,37 @@ interface MediaPickerProps {
 
 export function MediaPicker({ onPick, onClose }: MediaPickerProps) {
   const { t } = useTranslation();
-  const { media } = useCmsData();
+  const { user } = useAuth();
+  const { media, settings } = useCmsData();
   const [search, setSearch] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = search
     ? media.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     : media;
+
+  // Inline upload — uploads sequentially, picks the LAST committed media
+  // automatically so the user lands back in their post with the new
+  // image already inserted. Failures toast through the standard funnel.
+  async function handleFiles(files: FileList | null) {
+    if (!files || !user || files.length === 0) return;
+    setUploading(true);
+    let lastUploaded: Media | undefined;
+    try {
+      for (const file of Array.from(files)) {
+        try {
+          lastUploaded = await uploadMedia(file, user.uid, settings);
+        } catch (err) {
+          toast.error((err as Error).message);
+        }
+      }
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+    if (lastUploaded) onPick(lastUploaded);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in">
@@ -31,6 +60,27 @@ export function MediaPicker({ onPick, onClose }: MediaPickerProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            {uploading ? t("media.uploading") : t("media.upload")}
+          </button>
           <button type="button" className="btn-ghost" onClick={onClose}>
             {t("common.close")}
           </button>
