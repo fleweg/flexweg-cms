@@ -23,8 +23,9 @@ import {
   registerExternalPlugin,
   registerExternalTheme,
   type ExternalEntry,
+  type ExternalManifest,
 } from "./externalRegistry";
-import { readRegistry } from "./externalRegistryStore";
+import { readRegistry, writeRegistry } from "./externalRegistryStore";
 import {
   loadExternalPluginTranslations,
   type PluginManifest,
@@ -93,18 +94,45 @@ function resolveBundleUrl(
 // transparently handles the Firestore → legacy file → defaults file
 // fallback chain and migrates older deployments on first read.
 
+// Outcome of a single bundle load attempt. `missing` distinguishes
+// "file not on Flexweg" (HTTP 404 or non-JS content-type — typically the
+// SPA fallback returning HTML) from "bundle present but broken". Only
+// `missing` failures auto-prune the registry; transient or evaluation
+// errors keep the entry so a later boot or a fix can recover.
+type LoadOutcome =
+  | { ok: true }
+  | { ok: false; missing: boolean };
+
+// Probes whether the bundle URL actually serves a JS module. Flexweg's
+// static host falls back to index.html for unknown paths, so a "missing"
+// bundle returns 200 with text/html — that's the classic MIME error the
+// dynamic import surfaces. We treat 404 OR a non-JS content-type as
+// "missing on Flexweg".
+async function probeBundleMissing(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: "GET", cache: "no-store" });
+    if (res.status === 404) return true;
+    if (!res.ok) return false;
+    const ct = res.headers.get("content-type") ?? "";
+    if (/javascript|ecmascript|module/i.test(ct)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Imports a single external bundle and registers its default-exported
-// manifest. Returns true on success, false on any failure (logged).
+// manifest.
 async function loadOneEntry(
   type: "plugins" | "themes",
   entry: ExternalEntry,
-): Promise<boolean> {
+): Promise<LoadOutcome> {
   if (!isCompatibleApi(entry.apiVersion)) {
     console.warn(
       `[external] skipping ${type}/${entry.id}: apiVersion ${entry.apiVersion} ` +
         `outside [${FLEXWEG_API_MIN_VERSION}, ${FLEXWEG_API_VERSION}]`,
     );
-    return false;
+    return { ok: false, missing: false };
   }
   const url = resolveBundleUrl(type, entry);
   let mod: {
@@ -121,7 +149,8 @@ async function loadOneEntry(
     };
   } catch (err) {
     console.error(`[external] failed to import ${url}:`, err);
-    return false;
+    const missing = await probeBundleMissing(url);
+    return { ok: false, missing };
   }
   // Accept both `export default manifest` (the convention for
   // user-authored external bundles, see examples/external-plugin/) AND
@@ -134,7 +163,7 @@ async function loadOneEntry(
     console.error(
       `[external] ${type}/${entry.id} bundle did not export a valid manifest (default or named "manifest")`,
     );
-    return false;
+    return { ok: false, missing: false };
   }
   // Cross-check: the manifest's id must match the entry id. Mismatch
   // would let a swapped bundle hijack a different entry slot.
@@ -142,7 +171,7 @@ async function loadOneEntry(
     console.error(
       `[external] ${type}/${entry.id} manifest.id mismatch: got "${(manifest as { id: string }).id}"`,
     );
-    return false;
+    return { ok: false, missing: false };
   }
   try {
     if (type === "plugins") {
@@ -156,34 +185,79 @@ async function loadOneEntry(
     }
   } catch (err) {
     console.error(`[external] register failed for ${type}/${entry.id}:`, err);
-    return false;
+    return { ok: false, missing: false };
   }
-  return true;
+  return { ok: true };
 }
 
 // Loads every external entry declared in the manifest. Resets the
 // in-memory list first so a re-run (after uninstall/reinstall) reflects
 // the current state. Resolves once every entry has been processed.
+//
+// Self-healing: any entry whose bundle is genuinely missing on Flexweg
+// (404 or HTML fallback served instead of JS) gets pruned from the
+// Firestore registry automatically. This unsticks the common "I renamed
+// a theme but the old id is still referenced" scenario without forcing
+// the user into devtools. Entries that fail for other reasons (network
+// blip, broken bundle code) are left in place — they may recover later
+// or need explicit user action.
 export async function loadAllExternalEntries(): Promise<{
   loaded: number;
   failed: number;
+  pruned: number;
 }> {
   const manifest = await readRegistry();
   clearExternalPlugins();
   clearExternalThemes();
   let loaded = 0;
   let failed = 0;
-  // Plugins first, then themes — order is incidental but stable.
+  const missingPlugins = new Set<string>();
+  const missingThemes = new Set<string>();
   for (const entry of manifest.plugins) {
-    const ok = await loadOneEntry("plugins", entry);
-    if (ok) loaded++;
-    else failed++;
+    const outcome = await loadOneEntry("plugins", entry);
+    if (outcome.ok) loaded++;
+    else {
+      failed++;
+      if (outcome.missing) missingPlugins.add(entry.id);
+    }
   }
   for (const entry of manifest.themes) {
-    const ok = await loadOneEntry("themes", entry);
-    if (ok) loaded++;
-    else failed++;
+    const outcome = await loadOneEntry("themes", entry);
+    if (outcome.ok) loaded++;
+    else {
+      failed++;
+      if (outcome.missing) missingThemes.add(entry.id);
+    }
   }
+
+  let pruned = 0;
+  if (missingPlugins.size > 0 || missingThemes.size > 0) {
+    const cleaned: ExternalManifest = {
+      plugins: manifest.plugins.filter((e) => !missingPlugins.has(e.id)),
+      themes: manifest.themes.filter((e) => !missingThemes.has(e.id)),
+    };
+    pruned = missingPlugins.size + missingThemes.size;
+    try {
+      await writeRegistry(cleaned);
+      const ids = [...missingPlugins, ...missingThemes].join(", ");
+      console.warn(
+        `[external] auto-pruned ${pruned} stale registry entr${pruned === 1 ? "y" : "ies"}: ${ids}`,
+      );
+      toast.info(
+        i18n.t("externalLoader.autoPruned", {
+          count: pruned,
+          ids,
+          defaultValue: `${pruned} stale external entr${pruned === 1 ? "y" : "ies"} removed from registry: ${ids}`,
+        }),
+      );
+      // Pruned entries are no longer "failures" the user should worry
+      // about — collapse them out of the failed count.
+      failed -= pruned;
+    } catch (err) {
+      console.warn("[external] auto-prune failed to write registry:", err);
+    }
+  }
+
   if (failed > 0) {
     // Surface a single grouped toast so the user knows something went
     // wrong without us spamming one toast per failure. Specifics live
@@ -192,5 +266,5 @@ export async function loadAllExternalEntries(): Promise<{
       i18n.t("externalLoader.someFailed", { count: failed, defaultValue: `${failed} external bundle(s) failed to load. Check the browser console.` }),
     );
   }
-  return { loaded, failed };
+  return { loaded, failed, pruned };
 }
