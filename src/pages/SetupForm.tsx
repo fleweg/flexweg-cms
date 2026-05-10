@@ -44,6 +44,31 @@ interface FormState {
   flexwegApiBaseUrl: string;
 }
 
+// Derives a sensible default for the Flexweg site URL by stripping the
+// path off the page's current origin. The admin is conventionally
+// deployed at `<site>/admin/`, so the page hosting the SetupForm lives
+// under the very URL the user wants to type in. Pre-filling saves the
+// copy/paste — they can still edit if their public site URL differs
+// from the admin host (e.g. admin on a separate subdomain).
+//
+// Skipped on localhost — `http://localhost:4173` is never a useful
+// default for a Flexweg public site URL during local testing.
+function defaultSiteUrl(): string {
+  if (typeof window === "undefined") return "";
+  const h = window.location.hostname;
+  if (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "[::1]" ||
+    h === "::1" ||
+    h === "0.0.0.0" ||
+    h.endsWith(".localhost")
+  ) {
+    return "";
+  }
+  return window.location.origin;
+}
+
 const INITIAL_STATE: FormState = {
   apiKey: "",
   authDomain: "",
@@ -54,7 +79,7 @@ const INITIAL_STATE: FormState = {
   adminEmail: "",
   adminPassword: "",
   flexwegApiKey: "",
-  flexwegSiteUrl: "",
+  flexwegSiteUrl: defaultSiteUrl(),
   flexwegApiBaseUrl: DEFAULT_FLEXWEG_API_BASE_URL,
 };
 
