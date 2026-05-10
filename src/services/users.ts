@@ -72,24 +72,39 @@ export function subscribeToUserRecord(
   );
 }
 
-// Self-create record on first login. New users default to the editor role
-// and English admin locale. Bootstrap admin status is derived from the env
-// var, not from this record (so the very first login has admin powers even
-// before this record exists).
+// Self-create record on first login. Tries `role: "admin"` first —
+// the Firestore rules accept this only when the user matches the
+// pinned bootstrap admin (verified email + pinned address); for
+// everyone else the rules reject the admin attempt and we fall back to
+// `role: "editor"`. This makes the bootstrap detection self-healing
+// without needing the email in the public client config — the rules
+// are the single source of truth and the record reflects them.
 export async function ensureSelfUserRecord(authUser: FirebaseUser): Promise<UserRecord> {
   const ref = userDoc(authUser.uid);
   const snap = await getDoc(ref);
   if (snap.exists()) return { id: snap.id, ...snap.data() } as UserRecord;
-  const data = {
+  const baseData = {
     email: (authUser.email ?? "").toLowerCase(),
-    role: USER_ROLES.editor,
     disabled: false,
     preferences: { adminLocale: "en" as AdminLocale },
     createdAt: serverTimestamp(),
     createdBy: authUser.uid,
   };
-  await setDoc(ref, data);
-  return { id: authUser.uid, ...data } as unknown as UserRecord;
+  const adminData = { ...baseData, role: USER_ROLES.admin };
+  try {
+    await setDoc(ref, adminData);
+    return { id: authUser.uid, ...adminData } as unknown as UserRecord;
+  } catch (err) {
+    // Only fall back when Firestore rejects with permission-denied —
+    // any other error (network, etc.) should propagate so the caller
+    // can decide. The rules deny admin self-create for non-bootstrap
+    // users, so this branch is the expected path for editors.
+    const code = (err as { code?: string })?.code ?? "";
+    if (code !== "permission-denied") throw err;
+    const editorData = { ...baseData, role: USER_ROLES.editor };
+    await setDoc(ref, editorData);
+    return { id: authUser.uid, ...editorData } as unknown as UserRecord;
+  }
 }
 
 export async function setUserRole(uid: string, role: UserRole): Promise<void> {

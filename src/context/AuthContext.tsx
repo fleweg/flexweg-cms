@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { User as FirebaseUser } from "firebase/auth";
-import { subscribeToAuth, signIn, signOut } from "../services/auth";
+import {
+  probeBootstrapAdmin,
+  signIn,
+  signOut,
+  subscribeToAuth,
+} from "../services/auth";
 import { ensureSelfUserRecord, subscribeToUserRecord, USER_ROLES } from "../services/users";
 import { getAdminEmail } from "../services/firebase";
 import { setActiveLocale } from "../i18n";
@@ -25,6 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [record, setRecord] = useState<UserRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  // Result of the rules-based bootstrap-admin probe. `null` means
+  // "not yet probed" (or signed-out); after the probe runs once for a
+  // given session, this stays sticky so we don't re-probe on every
+  // user-record change.
+  const [probeResult, setProbeResult] = useState<boolean | null>(null);
 
   useEffect(() => {
     const unsub = subscribeToAuth(async (fbUser) => {
@@ -32,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!fbUser) {
         setUser(null);
         setRecord(null);
+        setProbeResult(null);
         setLoading(false);
         return;
       }
@@ -47,6 +58,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, []);
+
+  // Probe the rules-protected `config/admin` doc once per signed-in
+  // session. This is the new (no-email-in-config.js) bootstrap-admin
+  // detection: rules grant read only to the user whose token matches
+  // `bootstrapAdminEmail()` AND has `email_verified == true`.
+  // Permission-denied = "not bootstrap admin" (recorded as false).
+  // Anything else (network) is logged + treated as "unknown" (left
+  // null) so the legacy email-comparison fallback in the value memo
+  // can still take over for backward-compat deployments.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    probeBootstrapAdmin()
+      .then((isBootstrap) => {
+        if (!cancelled) setProbeResult(isBootstrap);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn("[auth] bootstrap-admin probe failed:", err);
+          setProbeResult(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   // Keep `record` in sync with Firestore after the initial fetch above.
   // Without this, profile updates (admin locale, avatar, bio…) don't
@@ -75,7 +112,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthValue>(() => {
     const email = (user?.email ?? "").toLowerCase();
-    const isBootstrapAdmin = email !== "" && email === getAdminEmail();
+    // Bootstrap-admin detection prefers the rules probe (no email in
+    // config.js, fully server-side). Falls back to the legacy
+    // email-comparison only when an `adminEmail` is still present in
+    // the runtime config — covers existing deployments mid-migration.
+    // The probe is sticky: once it resolves true/false we trust it; we
+    // only consider the legacy path while the probe is null (not yet
+    // run, or threw a non-permission error).
+    const legacyAdminEmail = getAdminEmail();
+    const legacyMatches =
+      legacyAdminEmail !== "" && email !== "" && email === legacyAdminEmail;
+    const isBootstrapAdmin =
+      probeResult === true || (probeResult === null && legacyMatches);
     const role: UserRole | null = isBootstrapAdmin ? USER_ROLES.admin : record?.role ?? null;
     const disabled = !isBootstrapAdmin && record?.disabled === true;
     return {
@@ -89,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
     };
-  }, [user, record, loading, error]);
+  }, [user, record, loading, error, probeResult]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

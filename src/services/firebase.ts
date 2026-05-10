@@ -86,6 +86,12 @@ export const collections = {
 
 export const configDocs = {
   flexweg: "flexweg",
+  // Empty placeholder doc whose Firestore rules grant read ONLY to the
+  // bootstrap admin (the email pinned in `bootstrapAdminEmail()` of the
+  // rules). The client probes this doc to detect bootstrap-admin status
+  // without needing to know the email itself — keeps the email out of
+  // the public `/admin/config.js`.
+  admin: "admin",
 } as const;
 
 export const settingsDocs = {

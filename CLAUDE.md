@@ -30,6 +30,7 @@ The SetupForm flow ([src/pages/SetupForm.tsx](src/pages/SetupForm.tsx)):
 
 1. **Init Firebase + sign in** — `initFirebaseFromSetup` from `firebase.ts` initialises the SDK with the form's values *and* sets `window.__FLEXWEG_CONFIG__` so the resolver stays consistent for the rest of the session. Then `signInWithEmailAndPassword` validates Firebase config + admin credentials in one go.
 2. **Verify admin email** — checks `auth.currentUser.email === form.adminEmail` to catch typos.
+2b. **Require email verification** — checks `auth.currentUser.emailVerified`. If false, calls `sendEmailVerification(currentUser)` and surfaces the `emailNotVerified` error kind asking the user to click the Firebase verification link before re-submitting. Required because the Firestore rules pin `email_verified == true` on `isBootstrapAdmin()` — an unverified token cannot pass the bootstrap probe nor self-create a user record with `role: "admin"`.
 3. **Test Flexweg API** — `testFlexwegConnection` in [src/lib/setupApi.ts](src/lib/setupApi.ts) hits `/files/storage-limits` directly (bypassing the standard `flexwegApi.ts` because that one resolves credentials from Firestore, which doesn't yet have them).
 4. **Write `config/flexweg`** to Firestore. `permission-denied` here surfaces a specific error pointing to the Firestore-rules section of the README with the admin email pinned in.
 5. **Upload populated `config.js`** via `uploadConfigJs` (also in `setupApi.ts`). The serialised content comes from `buildConfigJsSource(config)` in `runtimeConfig.ts`.
@@ -383,7 +384,9 @@ The `EditorInspector` auto-switches to the Block tab when the active block has i
 
 Collections: `posts` (both posts and pages, distinguished by `type`), `terms` (categories + tags), `media`, `users`, `settings/site` (singleton), `config/flexweg` (singleton with API key, separate from settings so the rules can be stricter on it).
 
-`users/{uid}.preferences.adminLocale` holds each user's admin language preference. New users are created with `role: "editor"`, `adminLocale: "en"` by `ensureSelfUserRecord`. The bootstrap admin (matching `VITE_ADMIN_EMAIL`) is treated as admin without needing the role field — Firestore rules must mirror this.
+`users/{uid}.preferences.adminLocale` holds each user's admin language preference. `ensureSelfUserRecord` is **try-admin-first**: it attempts to write `role: "admin"` and falls back to `role: "editor"` on `permission-denied`. The Firestore rules let the admin-write through only for the bootstrap admin (verified email + matching pinned address), so editors land on the fallback automatically. This way the bootstrap admin's record reflects `role: "admin"` from first login, the rules are the single source of truth, and the admin email never needs to live in client config.
+
+Bootstrap-admin detection at runtime is **rules-driven**: [src/services/auth.ts](src/services/auth.ts) exposes `probeBootstrapAdmin()` which attempts a `getDoc("config/admin")`. The rules grant read on that doc only when `isBootstrapAdmin()` is true (signed-in + email-verified + matching pinned address), so the boolean result of the probe IS the answer. [src/context/AuthContext.tsx](src/context/AuthContext.tsx) caches the probe per session and merges it with a legacy email-comparison fallback (only kicks in when an old `adminEmail` is still present in `window.__FLEXWEG_CONFIG__` from a pre-migration `config.js`). New SetupForm runs strip the email from the uploaded `config.js` so fresh deployments are entirely probe-driven.
 
 ### Post / page query architecture
 

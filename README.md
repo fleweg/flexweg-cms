@@ -91,7 +91,7 @@ Both paths converge on the same runtime: the form just writes a populated `/admi
    Required variables:
 
    - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`
-   - `VITE_ADMIN_EMAIL` — email of the bootstrap administrator. Anyone signing in with this address is treated as admin without needing a record in the `users` collection. Mirror this value in your Firestore security rules.
+   - `VITE_ADMIN_EMAIL` (**optional, legacy**) — email of the bootstrap administrator. The current bootstrap-admin flow detects the admin via a Firestore rules probe (`config/admin`), so this env var is no longer written into `/admin/config.js` and is not required. Existing dev environments that have it set continue to work as a backward-compat fallback. The pinned admin email **must** still be set in your Firestore security rules.
 
 3. Start the dev server:
 
@@ -128,6 +128,7 @@ Both paths converge on the same runtime: the form just writes a populated `/admi
 
    1. Sign in to Firebase with the entered credentials.
    2. Verify the signed-in email matches the admin email.
+   2b. Verify the signed-in email is verified (`emailVerified == true`). If not, the form sends a Firebase verification email to the admin address and surfaces a clear "click the link, then submit again" message — required because the Firestore rules pin `email_verified == true` on the bootstrap admin.
    3. Test the Flexweg API key (a HEAD-like ping on `/files/storage-limits`).
    4. Write `config/flexweg` to Firestore.
    5. Upload a populated `/admin/config.js` to Flexweg via the API.
@@ -138,7 +139,7 @@ Both paths converge on the same runtime: the form just writes a populated `/admi
 
 ## Firestore security rules
 
-Paste the following into **Firebase Console → Firestore → Rules** and replace `you@example.com` with the same value you set in `VITE_ADMIN_EMAIL` (rules cannot read env vars, the email must be duplicated):
+Paste the following into **Firebase Console → Firestore → Rules** and replace `you@example.com` with the address you'll use as bootstrap administrator. The rules are now the **only** place the admin email lives — the SetupForm no longer writes it into `/admin/config.js`, and `VITE_ADMIN_EMAIL` is a deprecated legacy fallback only used by older deployments mid-migration.
 
 ```
 rules_version = '2';
@@ -147,7 +148,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─── Helpers ──────────────────────────────────────────────────────────
-    // Bootstrap admin: email pinned here. MUST match VITE_ADMIN_EMAIL in .env.
+    // Bootstrap admin: email pinned here. The single source of truth.
     function bootstrapAdminEmail() {
       return "you@example.com";
     }
@@ -156,9 +157,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Bootstrap admin: signed in, email matches the pinned address,
+    // AND email is verified. The email_verified check matters because
+    // Firebase Email/Password sign-in returns `email_verified: false`
+    // by default — the SetupForm enforces verification on first run,
+    // and these rules pin it server-side so an unverified token can
+    // never sign in as bootstrap admin (defends against future bypass).
     function isBootstrapAdmin() {
       return isSignedIn()
         && request.auth.token.email != null
+        && request.auth.token.email_verified == true
         && request.auth.token.email.lower() == bootstrapAdminEmail();
     }
 
@@ -193,11 +201,20 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isEditor();
 
+      // Self-create on first login. Regular users may only create
+      // themselves with role "editor". The bootstrap admin (verified
+      // email + matching pinned address) may self-create with role
+      // "admin" so the UI shows admin features immediately, no manual
+      // promotion step needed. Either branch enforces email match and
+      // disabled=false.
       allow create: if isSignedIn()
         && request.auth.uid == uid
         && request.resource.data.email == request.auth.token.email.lower()
-        && request.resource.data.role == "editor"
-        && request.resource.data.disabled == false;
+        && request.resource.data.disabled == false
+        && (
+          (isBootstrapAdmin() && request.resource.data.role == "admin")
+          || (!isBootstrapAdmin() && request.resource.data.role == "editor")
+        );
 
       allow update: if isAdmin()
         || (
@@ -236,11 +253,24 @@ service cloud.firestore {
       allow write: if isEditor();
     }
 
-    // ─── config/flexweg ───────────────────────────────────────────────────
-    // API key — read by every editor (publisher needs it), write admin-only.
-    match /config/{docId} {
-      allow read: if isEditor();
+    // ─── config/admin ─────────────────────────────────────────────────────
+    // Empty placeholder probed by the admin client to detect bootstrap-
+    // admin status WITHOUT carrying the email in /admin/config.js. The
+    // doc itself doesn't need to exist — what matters is the rule: a
+    // get() succeeds only when isBootstrapAdmin() returns true.
+    match /config/admin {
+      allow read: if isBootstrapAdmin();
       allow write: if isAdmin();
+    }
+
+    // ─── config/flexweg + other config docs ──────────────────────────────
+    // API key — read by every editor (publisher needs it), write admin-only.
+    // The `docId != "admin"` guard ensures editors do not read the probe
+    // doc above (Firestore rules OR-merge across all matching paths, so
+    // without this guard editors would silently pass the bootstrap probe).
+    match /config/{docId} {
+      allow read: if docId != "admin" && isEditor();
+      allow write: if docId != "admin" && isAdmin();
     }
 
     // ─── Default deny ─────────────────────────────────────────────────────
@@ -982,7 +1012,9 @@ The admin SPA at `/admin/` is internal-only — it should not appear in search r
 
 If you've customised `robots.txt`, make sure to keep the `Disallow: /admin/` line. The plugin's **Insert default** button re-injects it.
 
-`/admin/config.js` carries the Firebase web config — which is **public by design** (security comes from Firestore rules + the auth-domain allowlist in Firebase Console, not from the secrecy of these values) — plus the bootstrap admin email. The Flexweg API key is **not** in `config.js`; it lives in Firestore at `config/flexweg`, readable only after a successful Firebase Auth sign-in.
+`/admin/config.js` carries the Firebase web config — which is **public by design** (security comes from Firestore rules + the auth-domain allowlist in Firebase Console, not from the secrecy of these values). The bootstrap admin email is **no longer written into `config.js`**; the client detects bootstrap-admin status via a Firestore probe on `config/admin` whose rule grants read access only to the matching pinned email with `email_verified == true`. The pinned email lives only in the Firestore rules. The Flexweg API key is **not** in `config.js` either; it lives in Firestore at `config/flexweg`, readable only after a successful Firebase Auth sign-in.
+
+Legacy deployments may still have an `adminEmail` field in their `/admin/config.js` (older builds wrote it there). The current admin reads it as an opt-in fallback for backward compatibility but never writes it back — re-running the SetupForm or replacing `config.js` with the new shape removes the field permanently. After updating the Firestore rules to the current template (with the `config/admin` probe rule + `email_verified` check), legacy callers are fully covered by the rules-driven path.
 
 ## Limitations
 

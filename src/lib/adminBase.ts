@@ -37,12 +37,35 @@ export function getAdminFolder(): string {
   return segments.join("/");
 }
 
+// Local dev hosts where root-deployment doesn't matter — Vite dev
+// (port 5173) and Vite preview (port 4173) both serve the admin at "/"
+// but uploads from there target a real Flexweg site (resolved via the
+// SetupForm's flexwegSiteUrl input), not the localhost. So the
+// "subfolder required" guard is irrelevant in dev and only confuses
+// developers testing the form locally. Treat any localhost-like
+// hostname as non-root regardless of the actual pathname.
+function isLocalhost(): boolean {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h === "[::1]" ||
+    h === "::1" ||
+    h === "0.0.0.0" ||
+    h.endsWith(".localhost")
+  );
+}
+
 // True when the admin is being served at the site root (pathname "/").
 // SetupForm consults this before letting the user submit — uploading
 // admin files (config.js, external.json, plugins/, …) at the root
 // would pollute the public site, so we ask them to move the admin
-// into a subfolder first.
+// into a subfolder first. Skipped on localhost so the form is testable
+// during local dev (`npm run dev` / `npm run preview`) without first
+// reverse-proxying or fiddling with the base path.
 export function isRootDeployment(): boolean {
+  if (isLocalhost()) return false;
   return getAdminFolder() === "";
 }
 
