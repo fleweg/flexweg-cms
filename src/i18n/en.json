@@ -462,10 +462,14 @@
     "title": "Welcome to Flexweg CMS",
     "subtitle": "First-time setup",
     "intro": "Fill in your Firebase credentials, the bootstrap administrator account, and your Flexweg API key. The values are validated, written to your project (Firestore + a config.js file on Flexweg), and the admin reloads into the normal sign-in flow. You only do this once.",
+    "introFirebase": "Step 1 — Firebase. Fill in your Firebase project credentials and the bootstrap administrator account. We'll sign in, verify the email, and check that your Firestore rules pin this admin before continuing to the Flexweg step.",
+    "introFlexweg": "Step 2 — Flexweg. Fill in your Flexweg API key and site URL. We'll test the API, save the configuration to Firestore, upload config.js to your site, and sync theme assets.",
+    "continueToFlexweg": "Validate Firebase & continue",
     "stepper": {
       "welcome": "Welcome",
       "terms": "Terms",
-      "configuration": "Configuration"
+      "firebase": "Firebase",
+      "flexweg": "Flexweg"
     },
     "welcome": {
       "heading": "Welcome to Flexweg CMS!",
@@ -519,7 +523,9 @@
     "help": {
       "firebase": "Find these values in Firebase Console → Project settings → General → Your apps → SDK setup and configuration.",
       "admin": "Use an existing user from Firebase Authentication. Anyone signing in with this email is treated as admin and bypasses the user-record check. Create the user via Firebase Console → Authentication if it doesn't exist yet.",
-      "flexweg": "Generate a permanent API key in your Flexweg account → API. The site URL is the public address of your Flexweg site (e.g. https://your-site.flexweg.com)."
+      "flexweg": "Generate a permanent API key in your Flexweg account → API. The site URL is the public address of your Flexweg site (e.g. https://your-site.flexweg.com).",
+      "flexwegApiKeyHint": "Get your API key from your Flexweg account settings.",
+      "flexwegApiKeyLink": "Open account settings"
     },
     "fields": {
       "apiKey": "API key",

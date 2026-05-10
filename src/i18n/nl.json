@@ -428,10 +428,14 @@
     "title": "Welkom bij Flexweg CMS",
     "subtitle": "Eerste configuratie",
     "intro": "Vul je Firebase-gegevens in, het bootstrap-beheerderaccount en je Flexweg-API-sleutel. De waarden worden gevalideerd, opgeslagen in je project (Firestore + een config.js-bestand op Flexweg) en de admin laadt opnieuw met het normale aanmeldproces. Je doet dit slechts één keer.",
+    "introFirebase": "Stap 1 — Firebase. Vul je Firebase-projectgegevens en het bootstrap-beheerdersaccount in. We melden je aan, verifiëren het e-mailadres en controleren of je Firestore-regels deze admin herkennen voordat we doorgaan naar de Flexweg-stap.",
+    "introFlexweg": "Stap 2 — Flexweg. Vul je Flexweg-API-sleutel en site-URL in. We testen de API, slaan de configuratie op in Firestore, uploaden config.js naar je site en synchroniseren de thema-assets.",
+    "continueToFlexweg": "Firebase valideren en doorgaan",
     "stepper": {
       "welcome": "Welkom",
       "terms": "Voorwaarden",
-      "configuration": "Configuratie"
+      "firebase": "Firebase",
+      "flexweg": "Flexweg"
     },
     "welcome": {
       "heading": "Welkom bij Flexweg CMS!",
@@ -485,7 +489,9 @@
     "help": {
       "firebase": "Vind deze waarden in Firebase Console → Projectinstellingen → Algemeen → Je apps → SDK-installatie en configuratie.",
       "admin": "Gebruik een bestaande gebruiker uit Firebase Authentication. Iedereen die aanmeldt met dit e-mailadres wordt als beheerder behandeld en heeft geen gebruikersrecord nodig. Maak de gebruiker via Firebase Console → Authentication als deze nog niet bestaat.",
-      "flexweg": "Genereer een permanente API-sleutel in je Flexweg-account → API. De site-URL is het publieke adres van je Flexweg-site (bijv. https://jouw-site.flexweg.com)."
+      "flexweg": "Genereer een permanente API-sleutel in je Flexweg-account → API. De site-URL is het publieke adres van je Flexweg-site (bijv. https://jouw-site.flexweg.com).",
+      "flexwegApiKeyHint": "Haal je API-sleutel op uit je Flexweg-accountinstellingen.",
+      "flexwegApiKeyLink": "Accountinstellingen openen"
     },
     "fields": {
       "apiKey": "API-sleutel",

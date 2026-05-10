@@ -428,10 +428,14 @@
     "title": "Willkommen bei Flexweg CMS",
     "subtitle": "Erstkonfiguration",
     "intro": "Geben Sie Ihre Firebase-Zugangsdaten, das Bootstrap-Administratorkonto und Ihren Flexweg-API-Schlüssel ein. Die Werte werden geprüft, in Ihrem Projekt gespeichert (Firestore + eine config.js-Datei auf Flexweg), und die Admin-Oberfläche lädt im normalen Anmeldeablauf neu. Sie machen das nur einmal.",
+    "introFirebase": "Schritt 1 — Firebase. Geben Sie Ihre Firebase-Projektdaten und das Bootstrap-Administratorkonto ein. Wir melden Sie an, prüfen die E-Mail und ob Ihre Firestore-Regeln diesen Admin pinnen, bevor wir zum Flexweg-Schritt weitergehen.",
+    "introFlexweg": "Schritt 2 — Flexweg. Geben Sie Ihren Flexweg-API-Schlüssel und die Site-URL ein. Wir testen die API, speichern die Konfiguration in Firestore, laden config.js auf Ihre Site hoch und synchronisieren die Theme-Assets.",
+    "continueToFlexweg": "Firebase prüfen und fortfahren",
     "stepper": {
       "welcome": "Willkommen",
       "terms": "AGB",
-      "configuration": "Konfiguration"
+      "firebase": "Firebase",
+      "flexweg": "Flexweg"
     },
     "welcome": {
       "heading": "Willkommen bei Flexweg CMS!",
@@ -485,7 +489,9 @@
     "help": {
       "firebase": "Diese Werte finden Sie in Firebase Console → Projekteinstellungen → Allgemein → Ihre Apps → SDK-Setup und Konfiguration.",
       "admin": "Verwenden Sie einen vorhandenen Benutzer aus Firebase Authentication. Wer sich mit dieser E-Mail anmeldet, wird als Administrator behandelt und benötigt keinen Benutzerdatensatz. Erstellen Sie den Benutzer bei Bedarf über Firebase Console → Authentication.",
-      "flexweg": "Erstellen Sie einen permanenten API-Schlüssel in Ihrem Flexweg-Konto → API. Die Site-URL ist die öffentliche Adresse Ihrer Flexweg-Site (z. B. https://ihre-site.flexweg.com)."
+      "flexweg": "Erstellen Sie einen permanenten API-Schlüssel in Ihrem Flexweg-Konto → API. Die Site-URL ist die öffentliche Adresse Ihrer Flexweg-Site (z. B. https://ihre-site.flexweg.com).",
+      "flexwegApiKeyHint": "Ihren API-Schlüssel finden Sie in Ihren Flexweg-Kontoeinstellungen.",
+      "flexwegApiKeyLink": "Kontoeinstellungen öffnen"
     },
     "fields": {
       "apiKey": "API-Schlüssel",

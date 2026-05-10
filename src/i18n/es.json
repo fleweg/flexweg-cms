@@ -428,10 +428,14 @@
     "title": "Bienvenido a Flexweg CMS",
     "subtitle": "Configuración inicial",
     "intro": "Introduce tus credenciales de Firebase, la cuenta del administrador inicial y tu clave API de Flexweg. Los valores se validan, se guardan en tu proyecto (Firestore + un archivo config.js en Flexweg) y el admin recarga al flujo de inicio de sesión normal. Solo tienes que hacerlo una vez.",
+    "introFirebase": "Paso 1 — Firebase. Introduce las credenciales de tu proyecto Firebase y la cuenta de administrador bootstrap. Iniciamos sesión, verificamos el correo y comprobamos que tus reglas de Firestore reconozcan a este admin antes de pasar al paso Flexweg.",
+    "introFlexweg": "Paso 2 — Flexweg. Introduce tu clave API Flexweg y la URL del sitio. Probamos la API, guardamos la configuración en Firestore, subimos config.js a tu sitio y sincronizamos los activos del tema.",
+    "continueToFlexweg": "Validar Firebase y continuar",
     "stepper": {
       "welcome": "Bienvenida",
       "terms": "Condiciones",
-      "configuration": "Configuración"
+      "firebase": "Firebase",
+      "flexweg": "Flexweg"
     },
     "welcome": {
       "heading": "¡Bienvenido a Flexweg CMS!",
@@ -485,7 +489,9 @@
     "help": {
       "firebase": "Encuentra estos valores en Firebase Console → Configuración del proyecto → General → Tus apps → Configuración del SDK.",
       "admin": "Usa un usuario existente de Firebase Authentication. Cualquiera que inicie sesión con este correo es tratado como administrador y no necesita un registro de usuario. Crea el usuario en Firebase Console → Authentication si aún no existe.",
-      "flexweg": "Genera una clave API permanente en tu cuenta Flexweg → API. La URL del sitio es la dirección pública de tu sitio Flexweg (p. ej. https://tu-sitio.flexweg.com)."
+      "flexweg": "Genera una clave API permanente en tu cuenta Flexweg → API. La URL del sitio es la dirección pública de tu sitio Flexweg (p. ej. https://tu-sitio.flexweg.com).",
+      "flexwegApiKeyHint": "Obtén tu clave API desde la configuración de tu cuenta Flexweg.",
+      "flexwegApiKeyLink": "Abrir configuración de la cuenta"
     },
     "fields": {
       "apiKey": "Clave API",

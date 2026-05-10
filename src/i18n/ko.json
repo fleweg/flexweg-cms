@@ -428,10 +428,14 @@
     "title": "Flexweg CMS에 오신 것을 환영합니다",
     "subtitle": "최초 설정",
     "intro": "Firebase 자격 증명, 부트스트랩 관리자 계정, Flexweg API 키를 입력하세요. 값은 검증된 후 프로젝트에 저장되며(Firestore + Flexweg의 config.js 파일) 관리자가 일반 로그인 흐름으로 다시 로드됩니다. 한 번만 수행하면 됩니다.",
+    "introFirebase": "1단계 — Firebase. Firebase 프로젝트 자격 증명과 부트스트랩 관리자 계정을 입력하세요. 로그인하고 이메일을 확인하며 Firestore 규칙이 이 관리자를 인식하는지 확인한 후 Flexweg 단계로 넘어갑니다.",
+    "introFlexweg": "2단계 — Flexweg. Flexweg API 키와 사이트 URL을 입력하세요. API를 테스트하고 Firestore에 구성을 저장하며 사이트에 config.js를 업로드하고 테마 자산을 동기화합니다.",
+    "continueToFlexweg": "Firebase 확인 후 계속",
     "stepper": {
       "welcome": "환영",
       "terms": "약관",
-      "configuration": "구성"
+      "firebase": "Firebase",
+      "flexweg": "Flexweg"
     },
     "welcome": {
       "heading": "Flexweg CMS에 오신 것을 환영합니다!",
@@ -485,7 +489,9 @@
     "help": {
       "firebase": "이 값은 Firebase 콘솔 → 프로젝트 설정 → 일반 → 내 앱 → SDK 설정 및 구성에서 찾을 수 있습니다.",
       "admin": "Firebase Authentication의 기존 사용자를 사용하세요. 이 이메일로 로그인하는 사람은 관리자로 처리되며 사용자 레코드가 필요하지 않습니다. 사용자가 없으면 Firebase 콘솔 → Authentication에서 만드세요.",
-      "flexweg": "Flexweg 계정 → API에서 영구 API 키를 생성하세요. 사이트 URL은 Flexweg 사이트의 공개 주소입니다(예: https://your-site.flexweg.com)."
+      "flexweg": "Flexweg 계정 → API에서 영구 API 키를 생성하세요. 사이트 URL은 Flexweg 사이트의 공개 주소입니다(예: https://your-site.flexweg.com).",
+      "flexwegApiKeyHint": "Flexweg 계정 설정에서 API 키를 받으세요.",
+      "flexwegApiKeyLink": "계정 설정 열기"
     },
     "fields": {
       "apiKey": "API 키",

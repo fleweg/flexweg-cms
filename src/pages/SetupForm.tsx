@@ -130,7 +130,7 @@ function authErrorTranslationKey(err: unknown): string {
   }
 }
 
-type WizardStep = "welcome" | "terms" | "form";
+type WizardStep = "welcome" | "terms" | "firebase" | "flexweg";
 
 export function SetupForm() {
   const { t } = useTranslation();
@@ -171,7 +171,7 @@ export function SetupForm() {
     };
   }
 
-  function validate(state: FormState): boolean {
+  function validateFirebase(state: FormState): boolean {
     const required: Array<keyof FormState> = [
       "apiKey",
       "authDomain",
@@ -180,9 +180,6 @@ export function SetupForm() {
       "messagingSenderId",
       "appId",
       "adminEmail",
-      "flexwegApiKey",
-      "flexwegSiteUrl",
-      "flexwegApiBaseUrl",
     ];
     for (const k of required) {
       if (!state[k]) return false;
@@ -192,25 +189,32 @@ export function SetupForm() {
     return true;
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  function validateFlexweg(state: FormState): boolean {
+    const required: Array<keyof FormState> = [
+      "flexwegApiKey",
+      "flexwegSiteUrl",
+      "flexwegApiBaseUrl",
+    ];
+    for (const k of required) {
+      if (!state[k]) return false;
+    }
+    return true;
+  }
+
+  // Sub-step 1: Firebase configuration. Validates the Firebase fields,
+  // initialises the SDK, signs the admin in, verifies the email match,
+  // requires email verification, and probes Firestore to confirm the
+  // rules pin this email as bootstrap admin. On success, transitions
+  // the wizard to the Flexweg sub-step. No writes to Firestore or
+  // Flexweg happen here — those are Sub-step 2's job, so the user can
+  // bail mid-setup without leaving stale state behind.
+  async function handleFirebaseSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (submitting) return;
-    // Mark the submission state up front so the overlay shows on the
-    // very next render. We deliberately avoid flushSync here — forcing
-    // a sync commit during React's reconciliation has been observed to
-    // throw "Node.insertBefore: Child to insert before is not a child"
-    // when overlapping with browser-extension DOM mutations. The
-    // batched render at the next microtask (after sync work below) is
-    // fast enough in practice; the inline boot spinner in index.html
-    // covers any remaining gap.
     setSubmitting(true);
     setError(null);
     setProgressLog([]);
 
-    // Refuse to set up at the site root — uploading config.js,
-    // external.json and plugin/theme folders to the public root would
-    // mix admin assets with the published site. The user must put
-    // dist/admin/'s contents inside a subfolder on Flexweg first.
     if (isRootDeployment()) {
       setError({ kind: "rootDeployment" });
       setSubmitting(false);
@@ -218,17 +222,130 @@ export function SetupForm() {
     }
 
     const state = trimmed();
-    if (!validate(state)) {
+    if (!validateFirebase(state)) {
       setError({ kind: "missingFields" });
       setSubmitting(false);
       return;
     }
 
-    // adminEmail is intentionally NOT carried into the runtime config
-    // anymore — the rules-based bootstrap probe replaces the legacy
-    // email-comparison so the admin email never lands in the public
-    // /admin/config.js. We still hold the typed email locally for the
-    // post-signin verification + the rules-instructions error hint.
+    const runtimeConfig: FlexwegRuntimeConfig = {
+      firebase: {
+        apiKey: state.apiKey,
+        authDomain: state.authDomain,
+        projectId: state.projectId,
+        storageBucket: state.storageBucket,
+        messagingSenderId: state.messagingSenderId,
+        appId: state.appId,
+      },
+    };
+
+    const logDone = (label: string) => setProgressLog((prev) => [...prev, label]);
+    try {
+      // 1. Initialise Firebase + sign in.
+      setStep(t("setup.steps.signInFirebase"));
+      initFirebaseFromSetup(runtimeConfig);
+      try {
+        await signInWithEmailAndPassword(
+          getAuthClient(),
+          state.adminEmail,
+          form.adminPassword,
+        );
+      } catch (err) {
+        const detailKey = authErrorTranslationKey(err);
+        const fbErr = err as { code?: string; message?: string };
+        if (detailKey === "setup.errors.firebaseAuthInvalidCredential") {
+          setError({ kind: "firebaseAuthInvalidCredential" });
+          setSubmitting(false);
+          setStep(null);
+          return;
+        }
+        let detail = t(detailKey);
+        if (detailKey === "setup.errors.firebaseAuthGeneric") {
+          if (fbErr.code) detail += ` [${fbErr.code}]`;
+          if (fbErr.message) detail += `: ${fbErr.message}`;
+        }
+        setError({ kind: "firebaseAuth", detail });
+        setSubmitting(false);
+        setStep(null);
+        return;
+      }
+      logDone(t("setup.steps.signInFirebase"));
+
+      // 2. Email match.
+      const signedInEmail = (
+        getAuthClient().currentUser?.email ?? ""
+      ).toLowerCase();
+      if (signedInEmail !== state.adminEmail) {
+        setError({ kind: "wrongAdminEmail" });
+        setSubmitting(false);
+        setStep(null);
+        return;
+      }
+
+      // 2b. Email verified.
+      const cu = getAuthClient().currentUser;
+      if (cu && !cu.emailVerified) {
+        try {
+          await sendEmailVerification(cu);
+        } catch (err) {
+          console.warn("[setup] sendEmailVerification failed:", err);
+        }
+        setError({ kind: "emailNotVerified", detail: state.adminEmail });
+        setSubmitting(false);
+        setStep(null);
+        return;
+      }
+
+      // 2c. Rules pinned (probe `config/admin`).
+      try {
+        await getDoc(doc(getDb(), collections.config, configDocs.admin));
+      } catch (err) {
+        const code = (err as { code?: string })?.code ?? "";
+        if (code === "permission-denied") {
+          setError({ kind: "rulesNotPinned", detail: state.adminEmail });
+          setSubmitting(false);
+          setStep(null);
+          return;
+        }
+        throw err;
+      }
+
+      // Firebase sub-step done — transition to the Flexweg form. Keep
+      // the progress log accumulated so the user sees the Firebase
+      // checks already completed when sub-step 2 starts.
+      setStep(null);
+      setSubmitting(false);
+      setWizardStep("flexweg");
+    } catch (err) {
+      setError({
+        kind: "generic",
+        detail: (err as Error).message,
+      });
+      setSubmitting(false);
+      setStep(null);
+    }
+  }
+
+  // Sub-step 2: Flexweg configuration. Validates the Flexweg fields,
+  // tests the API key, writes config/flexweg to Firestore, uploads
+  // the populated config.js to Flexweg, and syncs theme assets.
+  // Reaches this only after Firebase sub-step has signed in + probed
+  // the rules — the auth session is still alive, so writes are safe.
+  async function handleFlexwegSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    // Don't reset progressLog — we want to keep the Firebase check
+    // entries visible so the user sees the cumulative completion.
+
+    const state = trimmed();
+    if (!validateFlexweg(state)) {
+      setError({ kind: "missingFields" });
+      setSubmitting(false);
+      return;
+    }
+
     const runtimeConfig: FlexwegRuntimeConfig = {
       firebase: {
         apiKey: state.apiKey,
@@ -245,118 +362,9 @@ export function SetupForm() {
       apiBaseUrl: state.flexwegApiBaseUrl,
     };
 
-    // submitting + progressLog were already initialised at the top of
-    // this handler — see the early-bail comment above. We only need
-    // the per-step logger here.
     const logDone = (label: string) => setProgressLog((prev) => [...prev, label]);
     try {
-      // 1. Initialise Firebase + sign in. Validates the Firebase config
-      // (fails on the first auth call if the config is bad) and
-      // produces an authenticated session for the Firestore write.
-      // initFirebaseFromSetup is now idempotent — calling it again
-      // after a retry no-ops if Firebase was already cached, so the
-      // overlay stays mounted across retries.
-      setStep(t("setup.steps.signInFirebase"));
-      initFirebaseFromSetup(runtimeConfig);
-      try {
-        await signInWithEmailAndPassword(
-          getAuthClient(),
-          state.adminEmail,
-          form.adminPassword,
-        );
-      } catch (err) {
-        const detailKey = authErrorTranslationKey(err);
-        const fbErr = err as { code?: string; message?: string };
-        // The invalid-credential / wrong-password code gets a
-        // dedicated kind so we can render a richer hint paragraph —
-        // Firebase's email enumeration protection conflates "wrong
-        // password", "no such user", and "user signs in with a
-        // different provider" into one error code, so the user needs
-        // pointers to all three causes.
-        if (detailKey === "setup.errors.firebaseAuthInvalidCredential") {
-          setError({ kind: "firebaseAuthInvalidCredential" });
-          setSubmitting(false);
-          setStep(null);
-          return;
-        }
-        let detail = t(detailKey);
-        // For unmapped Firebase error codes the translated message is
-        // a generic "could not sign in" — append the raw code +
-        // message so the user can see what Firebase actually returned
-        // (e.g. auth/internal-error, auth/configuration-not-found).
-        // The mapped cases stay clean; only the generic branch
-        // gets the technical detail tail.
-        if (detailKey === "setup.errors.firebaseAuthGeneric") {
-          if (fbErr.code) detail += ` [${fbErr.code}]`;
-          if (fbErr.message) detail += `: ${fbErr.message}`;
-        }
-        setError({ kind: "firebaseAuth", detail });
-        setSubmitting(false);
-        setStep(null);
-        return;
-      }
-      logDone(t("setup.steps.signInFirebase"));
-
-      // 2. Verify the signed-in identity matches the configured admin
-      // email. Cheap sanity check — guards against the user typing
-      // mismatched emails in the form.
-      const signedInEmail = (
-        getAuthClient().currentUser?.email ?? ""
-      ).toLowerCase();
-      if (signedInEmail !== state.adminEmail) {
-        setError({ kind: "wrongAdminEmail" });
-        setSubmitting(false);
-        setStep(null);
-        return;
-      }
-
-      // 2b. Require email verification. The Firestore rules pin
-      // `email_verified == true` on the bootstrap-admin check, so an
-      // unverified email signs in fine but cannot read `config/admin`
-      // and cannot write the admin's user record. Sending the
-      // verification email here surfaces the requirement immediately
-      // instead of letting the user hit a confusing permission-denied
-      // later in the flow.
-      const cu = getAuthClient().currentUser;
-      if (cu && !cu.emailVerified) {
-        try {
-          await sendEmailVerification(cu);
-        } catch (err) {
-          // Non-fatal: even if the send fails (rate limit, etc.) we
-          // still want to surface the verification requirement.
-          console.warn("[setup] sendEmailVerification failed:", err);
-        }
-        setError({ kind: "emailNotVerified", detail: state.adminEmail });
-        setSubmitting(false);
-        setStep(null);
-        return;
-      }
-
-      // 2c. Probe Firestore to confirm the rules are pinned to the
-      // signed-in admin email. Reads `config/admin`, whose rule grants
-      // read only when `isBootstrapAdmin()` is true (signed in +
-      // verified email + email matches `bootstrapAdminEmail()` in the
-      // rules). Permission-denied here almost always means the user
-      // copy-pasted the rules template and forgot to replace the
-      // placeholder `you@example.com` — surface that specifically so
-      // they don't trip on a generic permission error several steps
-      // later. Other failure modes (network, etc.) propagate to the
-      // outer try/catch as "generic".
-      try {
-        await getDoc(doc(getDb(), collections.config, configDocs.admin));
-      } catch (err) {
-        const code = (err as { code?: string })?.code ?? "";
-        if (code === "permission-denied") {
-          setError({ kind: "rulesNotPinned", detail: state.adminEmail });
-          setSubmitting(false);
-          setStep(null);
-          return;
-        }
-        throw err;
-      }
-
-      // 3. Test the Flexweg API key BEFORE writing to Firestore. If the
-      // key is wrong we don't want a stale config/flexweg doc lingering.
+      // 3. Test Flexweg API.
       setStep(t("setup.steps.testFlexweg"));
       try {
         await testFlexwegConnection(flexwegConfig);
@@ -382,9 +390,7 @@ export function SetupForm() {
       }
       logDone(t("setup.steps.testFlexweg"));
 
-      // 4. Write config/flexweg to Firestore. This is where Firestore
-      // rules misconfiguration shows up — we surface a specific message
-      // so the user knows to update their rules with the admin email.
+      // 4. Write config/flexweg to Firestore.
       setStep(t("setup.steps.writeFirestore"));
       try {
         await setDoc(doc(getDb(), collections.config, configDocs.flexweg), {
@@ -411,9 +417,7 @@ export function SetupForm() {
       }
       logDone(t("setup.steps.writeFirestore"));
 
-      // 5. Upload populated config.js to Flexweg. After this lands and
-      // the user reloads, the resolver picks up the values from
-      // window.__FLEXWEG_CONFIG__ and the SetupForm never shows again.
+      // 5. Upload config.js to Flexweg.
       setStep(t("setup.steps.uploadConfig"));
       try {
         const source = buildConfigJsSource(runtimeConfig);
@@ -429,31 +433,15 @@ export function SetupForm() {
       }
       logDone(t("setup.steps.uploadConfig"));
 
-      // 6. Sync theme assets — uploads each theme's CSS bundle and
-      // companion JS files to /theme-assets/. Without this, the first
-      // published page would 404 on its stylesheet because no theme
-      // CSS exists on the public site yet. Failures here are non-fatal:
-      // the user can re-trigger the sync from Themes → Sync theme
-      // assets later, but we want the happy path to leave them with a
-      // ready-to-publish admin.
+      // 6. Sync theme assets (non-fatal).
       setStep(t("setup.steps.syncThemes"));
       try {
         await syncThemeAssets(undefined, undefined);
       } catch (err) {
-        // Non-fatal: log and continue. The form completes either way
-        // because the critical config (Firebase + Flexweg + Firestore)
-        // is already persisted.
         console.error("[setup] theme assets sync failed:", err);
       }
       logDone(t("setup.steps.syncThemes"));
 
-      // Success. Force a fresh navigation by appending a unique query
-      // param to the current URL — this guarantees both index.html
-      // AND the cache-busted config.js are fetched fresh, bypassing
-      // any CDN / browser cache that might otherwise serve a stale
-      // version. `replace` (vs. `assign`) keeps the history clean so
-      // pressing Back after setup doesn't return to the form. 2 s
-      // leaves time to read the success message.
       setDone(true);
       setStep(null);
       window.setTimeout(() => {
@@ -536,16 +524,16 @@ export function SetupForm() {
           <WelcomeStep onContinue={() => setWizardStep("terms")} />
         ) : wizardStep === "terms" ? (
           <TermsStep
-            onAccept={() => setWizardStep("form")}
+            onAccept={() => setWizardStep("firebase")}
             onBack={() => setWizardStep("welcome")}
           />
-        ) : (
+        ) : wizardStep === "firebase" ? (
         <div className="card p-6">
           <p className="text-sm text-surface-600 dark:text-surface-300">
-            {t("setup.intro")}
+            {t("setup.introFirebase")}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <form onSubmit={handleFirebaseSubmit} className="mt-6 space-y-6">
             <fieldset className="space-y-4">
               <legend className="text-sm font-semibold text-surface-900 dark:text-surface-50">
                 {t("setup.sections.firebase")}
@@ -626,6 +614,43 @@ export function SetupForm() {
               </div>
             </fieldset>
 
+            <div aria-live="polite" aria-atomic="true">
+              {error ? (
+                <div className="rounded-lg bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 text-sm dark:bg-red-900/30 dark:text-red-300 dark:ring-red-700/50">
+                  <ErrorMessage error={error} />
+                  {error.kind === "emailNotVerified" && <ResendVerificationButton />}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => setWizardStep("terms")}
+                className="btn-secondary flex-1 justify-center"
+                disabled={submitting || done}
+              >
+                {t("setup.terms.back")}
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1 justify-center"
+                disabled={submitting || done}
+              >
+                {t("setup.continueToFlexweg")}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </form>
+        </div>
+        ) : (
+        // wizardStep === "flexweg"
+        <div className="card p-6">
+          <p className="text-sm text-surface-600 dark:text-surface-300">
+            {t("setup.introFlexweg")}
+          </p>
+
+          <form onSubmit={handleFlexwegSubmit} className="mt-6 space-y-6">
             <fieldset className="space-y-4">
               <legend className="text-sm font-semibold text-surface-900 dark:text-surface-50">
                 {t("setup.sections.flexweg")}
@@ -634,12 +659,27 @@ export function SetupForm() {
                 {t("setup.help.flexweg")}
               </p>
               <div className="grid grid-cols-1 gap-3">
-                <Field
-                  label={t("setup.fields.flexwegApiKey")}
-                  value={form.flexwegApiKey}
-                  onChange={(v) => patch("flexwegApiKey", v)}
-                  required
-                />
+                <div>
+                  <Field
+                    label={t("setup.fields.flexwegApiKey")}
+                    value={form.flexwegApiKey}
+                    onChange={(v) => patch("flexwegApiKey", v)}
+                    required
+                    autoFocus
+                  />
+                  <p className="text-[11px] text-surface-500 dark:text-surface-400 mt-1">
+                    {t("setup.help.flexwegApiKeyHint")}{" "}
+                    <a
+                      href="https://www.flexweg.com/account/settings"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {t("setup.help.flexwegApiKeyLink")}
+                    </a>
+                    .
+                  </p>
+                </div>
                 <Field
                   label={t("setup.fields.flexwegSiteUrl")}
                   placeholder="https://your-site.flexweg.com"
@@ -656,35 +696,34 @@ export function SetupForm() {
               </div>
             </fieldset>
 
-            {/* Stable-shape error container — always rendered, content
-                conditional. Mounting/unmounting an entire DOM subtree
-                here on every error / clear caused React's diff to
-                clash with browser-extension DOM mutations
-                (password-manager icons attached to nearby form fields)
-                and threw "Node.insertBefore" on Firefox. Keeping the
-                outer div mounted lets React only swap the inner text. */}
             <div aria-live="polite" aria-atomic="true">
               {error ? (
                 <div className="rounded-lg bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 text-sm dark:bg-red-900/30 dark:text-red-300 dark:ring-red-700/50">
                   <ErrorMessage error={error} />
-                  {error.kind === "emailNotVerified" && <ResendVerificationButton />}
                 </div>
               ) : null}
             </div>
 
-            {/* Submit button content is intentionally stable: same
-                text + no spinner inside, regardless of submitting /
-                done state. The overlay portal on document.body shows
-                the spinner + per-step status, so the button doesn't
-                need to. Reducing button DOM churn keeps password
-                managers from getting confused on retries. */}
-            <button
-              type="submit"
-              className="btn-primary w-full"
-              disabled={submitting || done}
-            >
-              {t("setup.submit")}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setWizardStep("firebase");
+                }}
+                className="btn-secondary flex-1 justify-center"
+                disabled={submitting || done}
+              >
+                {t("setup.terms.back")}
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1 justify-center"
+                disabled={submitting || done}
+              >
+                {t("setup.submit")}
+              </button>
+            </div>
           </form>
         </div>
         )}
@@ -706,7 +745,8 @@ function Stepper({ currentStep }: StepperProps) {
   const steps: Array<{ id: WizardStep; label: string }> = [
     { id: "welcome", label: t("setup.stepper.welcome") },
     { id: "terms", label: t("setup.stepper.terms") },
-    { id: "form", label: t("setup.stepper.configuration") },
+    { id: "firebase", label: t("setup.stepper.firebase") },
+    { id: "flexweg", label: t("setup.stepper.flexweg") },
   ];
   const activeIndex = steps.findIndex((s) => s.id === currentStep);
   return (
