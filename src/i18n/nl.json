@@ -525,6 +525,8 @@
       "firebaseNetwork": "Netwerkfout bij aanmelden bij Firebase. Controleer je verbinding.",
       "firebaseTooManyRequests": "Te veel aanmeldpogingen. Probeer het later opnieuw of reset het wachtwoord via Firebase Console.",
       "wrongAdminEmail": "Het Firebase-account waarmee je bent aangemeld komt niet overeen met het ingevoerde admin-e-mailadres. Probeer het opnieuw.",
+      "rulesNotPinnedTitle": "De Firestore-regels herkennen je nog niet als bootstrap-admin.",
+      "rulesNotPinnedHint": "Open Firebase Console → Firestore → Rules en vervang de waarde van `bootstrapAdminEmail()` door: {{email}} — klik daarna op Publiceren. De regelsjabloon in de README bevat een placeholder `you@example.com` die vervangen moet worden door je echte admin-e-mailadres. Klik na het publiceren van de nieuwe regels hier opnieuw op Verzenden.",
       "emailNotVerifiedTitle": "E-mailverificatie vereist.",
       "emailNotVerifiedHint": "We hebben een verificatielink gestuurd naar {{email}}. Open de e-mail, klik op de link en kom hier terug om het formulier opnieuw in te dienen. Verificatie is verplicht omdat de Firestore-regels `email_verified == true` vereisen voor de bootstrap-admin, zodat niet-geverifieerde accounts geen admintoegang kunnen krijgen.",
       "emailNotVerifiedResend": "Verificatiemail opnieuw versturen",

@@ -525,6 +525,8 @@
       "firebaseNetwork": "Netzwerkfehler bei der Anmeldung bei Firebase. Prüfen Sie Ihre Verbindung.",
       "firebaseTooManyRequests": "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut oder setzen Sie das Passwort über Firebase Console zurück.",
       "wrongAdminEmail": "Das Firebase-Konto, mit dem Sie sich angemeldet haben, stimmt nicht mit der eingegebenen Admin-E-Mail überein. Bitte erneut versuchen.",
+      "rulesNotPinnedTitle": "Die Firestore-Regeln erkennen Sie noch nicht als Bootstrap-Admin.",
+      "rulesNotPinnedHint": "Öffnen Sie Firebase Console → Firestore → Rules und ersetzen Sie den Wert von `bootstrapAdminEmail()` durch: {{email}} — klicken Sie dann auf Veröffentlichen. Die Regelvorlage im README enthält einen Platzhalter `you@example.com`, der durch Ihre tatsächliche Admin-E-Mail ersetzt werden muss. Nachdem die aktualisierten Regeln veröffentlicht sind, klicken Sie hier erneut auf Absenden.",
       "emailNotVerifiedTitle": "E-Mail-Bestätigung erforderlich.",
       "emailNotVerifiedHint": "Wir haben einen Bestätigungslink an {{email}} gesendet. Öffnen Sie die E-Mail, klicken Sie auf den Link und senden Sie dann das Formular hier erneut ab. Die Bestätigung ist erforderlich, weil die Firestore-Regeln `email_verified == true` für den Bootstrap-Admin verlangen, damit unbestätigte Konten keinen Admin-Zugriff erhalten.",
       "emailNotVerifiedResend": "Bestätigungs-E-Mail erneut senden",

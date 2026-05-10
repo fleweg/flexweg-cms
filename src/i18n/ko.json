@@ -525,6 +525,8 @@
       "firebaseNetwork": "Firebase 로그인 중 네트워크 오류가 발생했습니다. 연결을 확인하세요.",
       "firebaseTooManyRequests": "로그인 시도가 너무 많습니다. 잠시 후 다시 시도하거나 Firebase 콘솔에서 비밀번호를 재설정하세요.",
       "wrongAdminEmail": "로그인한 Firebase 계정이 입력한 관리자 이메일과 일치하지 않습니다. 다시 시도하세요.",
+      "rulesNotPinnedTitle": "Firestore 규칙이 아직 부트스트랩 관리자로 인식하지 못합니다.",
+      "rulesNotPinnedHint": "Firebase 콘솔 → Firestore → 규칙을 열고 `bootstrapAdminEmail()`의 값을 다음으로 교체하세요: {{email}} — 그런 다음 게시를 클릭하세요. README의 규칙 템플릿에는 자리표시자 `you@example.com`이 있으며, 실제 관리자 이메일로 교체해야 합니다. 업데이트된 규칙을 게시한 후 여기에서 제출을 다시 클릭하세요.",
       "emailNotVerifiedTitle": "이메일 인증이 필요합니다.",
       "emailNotVerifiedHint": "{{email}}로 인증 링크를 보냈습니다. 이메일을 열고 링크를 클릭한 다음 여기로 돌아와 양식을 다시 제출하세요. Firestore 규칙이 부트스트랩 관리자에 대해 `email_verified == true`를 요구하기 때문에 인증이 필요합니다 — 인증되지 않은 계정이 관리자 권한을 얻지 못하도록 합니다.",
       "emailNotVerifiedResend": "인증 이메일 다시 보내기",

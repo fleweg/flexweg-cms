@@ -561,6 +561,8 @@
       "firebaseOperationNotAllowed": "Email/password sign-in is not enabled on this Firebase project. Open Firebase Console → Authentication → Sign-in method and enable the Email/Password provider.",
       "firebaseUserDisabled": "This Firebase user account is disabled. Re-enable it from Firebase Console → Authentication → Users.",
       "wrongAdminEmail": "The Firebase account you signed in with does not match the admin email you typed. Try again.",
+      "rulesNotPinnedTitle": "Firestore rules don't recognize you as bootstrap admin yet.",
+      "rulesNotPinnedHint": "Open Firebase Console → Firestore → Rules and replace the value of `bootstrapAdminEmail()` with: {{email}} — then click Publish. The rules template in the README ships with a `you@example.com` placeholder that must be replaced with your real admin email. After publishing the updated rules, click Submit here again.",
       "emailNotVerifiedTitle": "Email verification required.",
       "emailNotVerifiedHint": "We've sent a verification link to {{email}}. Open the email, click the link, then come back here and submit the form again. Verification is required because Firestore rules pin `email_verified == true` on the bootstrap admin to keep unverified accounts from gaining admin access.",
       "emailNotVerifiedResend": "Resend verification email",

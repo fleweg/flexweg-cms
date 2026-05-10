@@ -525,6 +525,8 @@
       "firebaseNetwork": "Error de red al iniciar sesión en Firebase. Verifica tu conexión.",
       "firebaseTooManyRequests": "Demasiados intentos de inicio de sesión. Inténtalo más tarde o restablece la contraseña desde Firebase Console.",
       "wrongAdminEmail": "La cuenta de Firebase con la que iniciaste sesión no coincide con el correo de admin que has escrito. Inténtalo de nuevo.",
+      "rulesNotPinnedTitle": "Las reglas de Firestore aún no te reconocen como admin bootstrap.",
+      "rulesNotPinnedHint": "Abre Firebase Console → Firestore → Reglas y sustituye el valor de `bootstrapAdminEmail()` por: {{email}} — luego haz clic en Publicar. La plantilla de reglas del README incluye un marcador `you@example.com` que debe sustituirse por tu correo de admin real. Una vez publicadas las nuevas reglas, vuelve a hacer clic en Enviar aquí.",
       "emailNotVerifiedTitle": "Verificación de correo necesaria.",
       "emailNotVerifiedHint": "Hemos enviado un enlace de verificación a {{email}}. Abre el correo, haz clic en el enlace y vuelve aquí para enviar el formulario otra vez. La verificación es obligatoria porque las reglas de Firestore exigen `email_verified == true` para el admin bootstrap, evitando que cuentas no verificadas obtengan acceso de administración.",
       "emailNotVerifiedResend": "Reenviar correo de verificación",

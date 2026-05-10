@@ -7,7 +7,7 @@ import {
   sendEmailVerification,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { LocaleSwitcher } from "../components/ui/LocaleSwitcher";
 import {
   buildConfigJsSource,
@@ -65,6 +65,7 @@ type ErrorKind =
   | "firebaseAuthInvalidCredential"
   | "emailNotVerified"
   | "wrongAdminEmail"
+  | "rulesNotPinned"
   | "flexwegAuth"
   | "flexwegNetwork"
   | "firestoreRules"
@@ -304,6 +305,29 @@ export function SetupForm() {
         setSubmitting(false);
         setStep(null);
         return;
+      }
+
+      // 2c. Probe Firestore to confirm the rules are pinned to the
+      // signed-in admin email. Reads `config/admin`, whose rule grants
+      // read only when `isBootstrapAdmin()` is true (signed in +
+      // verified email + email matches `bootstrapAdminEmail()` in the
+      // rules). Permission-denied here almost always means the user
+      // copy-pasted the rules template and forgot to replace the
+      // placeholder `you@example.com` — surface that specifically so
+      // they don't trip on a generic permission error several steps
+      // later. Other failure modes (network, etc.) propagate to the
+      // outer try/catch as "generic".
+      try {
+        await getDoc(doc(getDb(), collections.config, configDocs.admin));
+      } catch (err) {
+        const code = (err as { code?: string })?.code ?? "";
+        if (code === "permission-denied") {
+          setError({ kind: "rulesNotPinned", detail: state.adminEmail });
+          setSubmitting(false);
+          setStep(null);
+          return;
+        }
+        throw err;
       }
 
       // 3. Test the Flexweg API key BEFORE writing to Firestore. If the
@@ -892,6 +916,15 @@ function ErrorMessage({ error }: { error: ErrorState }) {
       );
     case "wrongAdminEmail":
       return <span>{t("setup.errors.wrongAdminEmail")}</span>;
+    case "rulesNotPinned":
+      return (
+        <div className="space-y-1.5">
+          <p>{t("setup.errors.rulesNotPinnedTitle")}</p>
+          <p className="text-xs leading-relaxed">
+            {t("setup.errors.rulesNotPinnedHint", { email: error.detail ?? "" })}
+          </p>
+        </div>
+      );
     case "emailNotVerified":
       return (
         <div className="space-y-1.5">
