@@ -9,13 +9,20 @@ Designed to populate a freshly-installed Flexweg CMS site running the Storefront
 ```
 storefront-flowershop/
 ├── README.md                          (this file)
-├── images/                            (30 Pexels photos, ~7.5 MB total)
+├── images/                            (40 Pexels photos, ~10 MB total)
 │   ├── 01-spring-romance.jpg
-│   ├── 02-garden-mix.jpg
-│   └── ...
-├── 01-spring-romance.md
-├── 02-garden-mix.md
-└── ... 30 .md files total
+│   ├── …
+│   └── 40-shop-counter.jpg
+│
+├── 01-spring-romance.md … 30-bimonthly-garden.md   30 product posts
+│
+├── page-about.md                      Shop story + photos
+├── page-seasonal.md                   "Seasonal blooms"
+├── page-dried.md                      "Everlasting" (dried flowers)
+├── page-subscriptions.md              "Floral rituals"
+├── page-rare.md                       "Rare & unusual"
+├── page-journal.md                    "Cultivating a meaningful life"
+└── page-contact.md                    Contact info
 ```
 
 ### 30 products across 5 categories
@@ -29,6 +36,22 @@ storefront-flowershop/
 | **Subscriptions** | 3 | Weekly, Monthly Specials, Bi-monthly Garden |
 
 The five categories are auto-created by the importer if they don't already exist.
+
+### 7 static pages (`type: page`)
+
+| Slug | Public URL | Suggested home menu label |
+|---|---|---|
+| `about` | `/about.html` | About |
+| `seasonal` | `/seasonal.html` | Seasonal blooms |
+| `dried` | `/dried.html` | Everlasting |
+| `subscriptions` | `/subscriptions.html` | Floral rituals |
+| `rare` | `/rare.html` | Rare & unusual |
+| `journal` | `/journal.html` | Cultivating a meaningful life |
+| `contact` | `/contact.html` | Contact |
+
+These are real flower-shop landing pages, not category archives. Each carries 1–4 hero/inline images. The CMS produces canonical paths like `/seasonal.html` (one file per page) — if you need them at `/seasonal/index.html` instead, that's the convention used by the URL strategy for **categories**, not pages, and would require turning these into categories with seed posts. Pages match the `<slug>.html` pattern.
+
+After import, wire them into the header / footer menus from `/admin/#/menus`.
 
 ### Product-info block
 
@@ -106,7 +129,7 @@ Tags are auto-created by the importer (`spring`, `pink`, `romantic`, `seasonal`,
 3. Open `/admin/#/settings/plugin/flexweg-import`.
 4. Switch source to **Drag and drop**.
 5. Drag the entire `storefront-flowershop/` folder (including `images/`) into the drop zone.
-6. Click **Scan** → the dry-run shows: 30 posts, 5 categories, ~25 tags, 30 images.
+6. Click **Scan** → the dry-run shows: 30 posts + 7 pages, 5 categories, ~25 tags, 40 images.
 7. Click **Confirm import** → posts created as drafts, images uploaded through the multi-variant pipeline.
 8. Open any product → click **Publish**.
 9. Repeat for whatever subset you want online — or use the bulk-publish action from the posts list (filter by category to publish whole categories at once).
