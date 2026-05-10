@@ -65,6 +65,7 @@ const PLUGINS = [
 const THEMES = [
   { id: "magazine", name: "Magazine", version: "1.0.0" },
   { id: "corporate", name: "Corporate", version: "1.0.0" },
+  { id: "storefront", name: "Storefront", version: "0.1.0" },
 ];
 
 // Picks the manifest entry file name for a given plugin/theme. Most

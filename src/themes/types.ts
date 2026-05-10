@@ -226,6 +226,17 @@ export interface ThemeManifest<TConfig = unknown> {
   // dynamic posts widget leave it undefined and get one fewer script
   // tag in their HTML output.
   jsTextPosts?: string;
+  // Optional seed markdown for new posts / pages. When set, the
+  // PostEditPage initializes the editor with this content the first
+  // time a new post / page is created — the user can still edit or
+  // delete the seeded blocks. Lets themes tied to a specific shape
+  // (e.g. a storefront seeding a product-info block) ship a
+  // sensible starting state without coupling the editor to theme
+  // internals.
+  defaultPostMarkdown?: {
+    post?: string;
+    page?: string;
+  };
   templates: {
     base: ComponentType<BaseLayoutProps>;
     home: ComponentType<HomeTemplateProps & { site: SiteContext }>;

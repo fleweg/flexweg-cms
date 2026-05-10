@@ -97,6 +97,10 @@ export const buildSiteContext = R.buildSiteContext;
 // services/menuPublisher — /menu.json upload
 export const publishMenuJson = R.publishMenuJson;
 
+// services/catalogPublisher — /data/products.json upload (storefront theme)
+export const publishProductsJson = R.publishProductsJson;
+export const deleteProductsJson = R.deleteProductsJson;
+
 // services/settings — plugin/theme config storage
 export const updatePluginConfig = R.updatePluginConfig;
 export const updateThemeConfig = R.updateThemeConfig;

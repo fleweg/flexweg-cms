@@ -153,6 +153,9 @@ import {
 // services/menuPublisher — /menu.json upload
 import { publishMenuJson } from "../services/menuPublisher";
 
+// services/catalogPublisher — /data/products.json upload (storefront theme)
+import { publishProductsJson, deleteProductsJson } from "../services/catalogPublisher";
+
 // services/settings — plugin/theme config storage
 import { updatePluginConfig, updateThemeConfig } from "../services/settings";
 
@@ -293,6 +296,9 @@ export interface FlexwegRuntime {
   buildSiteContext: typeof buildSiteContext;
   // services/menuPublisher
   publishMenuJson: typeof publishMenuJson;
+  // services/catalogPublisher
+  publishProductsJson: typeof publishProductsJson;
+  deleteProductsJson: typeof deleteProductsJson;
   // services/settings
   updatePluginConfig: typeof updatePluginConfig;
   updateThemeConfig: typeof updateThemeConfig;
@@ -377,6 +383,8 @@ const runtime: FlexwegRuntime = {
   buildPublishContext,
   buildSiteContext,
   publishMenuJson,
+  publishProductsJson,
+  deleteProductsJson,
   updatePluginConfig,
   updateThemeConfig,
   toast,
@@ -452,6 +460,8 @@ export {
   buildPublishContext,
   buildSiteContext,
   publishMenuJson,
+  publishProductsJson,
+  deleteProductsJson,
   updatePluginConfig,
   updateThemeConfig,
   toast,

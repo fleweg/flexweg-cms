@@ -59,6 +59,16 @@ export async function syncThemeAssets(
       log({ level: "info", message: `Uploading ${jsPath}…` });
       await uploadFile({ path: jsPath, content: theme.jsTextPosts });
     }
+    // Optional catalog loader (currently storefront-only). Read via
+    // an extension-property cast so we don't have to widen
+    // ThemeManifest for a single consumer — same convention as the
+    // manifest emits it.
+    const jsTextCatalog = (theme as { jsTextCatalog?: string }).jsTextCatalog;
+    if (jsTextCatalog) {
+      const jsPath = `theme-assets/${theme.id}-catalog.js`;
+      log({ level: "info", message: `Uploading ${jsPath}…` });
+      await uploadFile({ path: jsPath, content: jsTextCatalog });
+    }
   }
   log({ level: "success", message: "Theme assets synced." });
 }

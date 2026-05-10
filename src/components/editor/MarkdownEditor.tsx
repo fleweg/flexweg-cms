@@ -23,6 +23,7 @@ import {
   type BlockManifest,
 } from "../../core/blockRegistry";
 import { BlockToolbar } from "./BlockToolbar";
+import { TrailingNode } from "./TrailingNode";
 
 interface MarkdownEditorProps {
   value: string;
@@ -73,6 +74,12 @@ export function MarkdownEditor({
       StarterKit,
       Link.configure({ openOnClick: false, autolink: true }),
       Image,
+      // Auto-appends an empty paragraph at the end of the document
+      // whenever the last child isn't already one. Lets users land a
+      // cursor + see the FloatingMenu's "+" inserter directly under
+      // any atom block (product-info, embeds, hero, …) without
+      // having to click the block and press Enter first.
+      TrailingNode,
       Placeholder.configure({ placeholder: placeholder ?? t("posts.fields.content") }),
       // html: true lets atom blocks (e.g. flexweg-embeds' YouTube /
       // Twitter / Spotify nodes) round-trip through markdown as their

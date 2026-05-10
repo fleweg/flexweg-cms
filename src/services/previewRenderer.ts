@@ -3,9 +3,10 @@ import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types"
 import type { PublishContext } from "./publisher";
 import { renderPreviewHtml } from "./publisher";
 import { getActiveTheme } from "../themes";
-import { buildMenuJson } from "./menuPublisher";
+import { buildMenuJson, type MenuFilterContext, type MenuJson } from "./menuPublisher";
 import { buildPostsJson } from "./postsJsonPublisher";
 import { buildAuthorsJson } from "./authorsJsonPublisher";
+import { applyFilters } from "../core/pluginRegistry";
 
 interface RenderPostPreviewOpts {
   // The current editor draft. Required fields: id, type, title, slug,
@@ -51,7 +52,7 @@ interface RenderPostPreviewOpts {
 export async function renderPostPreview(opts: RenderPostPreviewOpts): Promise<string> {
   const ctx = buildPreviewContext(opts);
   const html = await renderPreviewHtml(opts.draft, ctx);
-  return postProcessForIframe(html, ctx, opts.settings);
+  return await postProcessForIframe(html, ctx, opts.settings);
 }
 
 // Builds the in-memory PublishContext used by the preview pipeline.
@@ -101,11 +102,11 @@ function upsert(list: Post[], item: Post): Post[] {
 // the theme JS <script src> tags with inline <script> blocks, and
 // injects a small bootstrap that pre-fills the data the loaders
 // would normally fetch.
-function postProcessForIframe(
+async function postProcessForIframe(
   html: string,
   ctx: PublishContext,
   settings: SiteSettings,
-): string {
+): Promise<string> {
   const theme = getActiveTheme(settings.activeThemeId);
   // Same resolution path as the Sync flow: defaults merged with the
   // user's stored theme config, then handed to compileCss when the
@@ -143,7 +144,7 @@ function postProcessForIframe(
   // before the </head> tag and the loaders living at the bottom of
   // body — but to be safe we wrap the bootstrap to set up the
   // override synchronously regardless of insertion point.
-  const bootstrap = buildPreviewBootstrap(ctx, settings);
+  const bootstrap = await buildPreviewBootstrap(ctx, settings);
 
   // Replace the menu / posts loader <script src> tags with their
   // inline equivalents. We match by data-attribute or by suffix.
@@ -186,8 +187,21 @@ function postProcessForIframe(
 // We patch window.fetch instead of pre-setting globals because the
 // loaders use plain fetch — leaving the loader source unchanged
 // means they keep working identically on the public site.
-function buildPreviewBootstrap(ctx: PublishContext, settings: SiteSettings): string {
-  const menuJson = buildMenuJson(settings, ctx.posts, ctx.pages, ctx.terms);
+async function buildPreviewBootstrap(ctx: PublishContext, settings: SiteSettings): Promise<string> {
+  // Build the raw menu, then apply the `menu.json.resolved` filter
+  // — same chain the real publishMenuJson uses. Without this, plugin
+  // / theme handlers that inject menu items (storefront catalog
+  // entry, flexweg-rss feed entries, …) wouldn't appear in preview
+  // even though they show up on the live site after a publish.
+  const baseMenu = buildMenuJson(settings, ctx.posts, ctx.pages, ctx.terms);
+  const filterCtx: MenuFilterContext = {
+    settings,
+    posts: ctx.posts,
+    pages: ctx.pages,
+    terms: ctx.terms,
+  };
+  const menuJson = await applyFilters<MenuJson>("menu.json.resolved", baseMenu, filterCtx);
+
   const postsJson = buildPostsJson(
     settings,
     ctx.posts,

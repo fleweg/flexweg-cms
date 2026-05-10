@@ -35,6 +35,7 @@ import {
   type PublishLogEntry,
 } from "../services/publisher";
 import { renderPostPreview } from "../services/previewRenderer";
+import { getActiveTheme } from "../themes";
 import { buildAuthorLookup } from "../services/users";
 import { toast } from "../lib/toast";
 import type { Media, Post, SeoMeta } from "../core/types";
@@ -110,7 +111,19 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [slugDirty, setSlugDirty] = useState(false);
-  const [contentMarkdown, setContentMarkdown] = useState("");
+  // Lazy initializer — for new posts, seed the editor from the
+  // active theme's `defaultPostMarkdown[type]` when set. Existing
+  // posts still load their own contentMarkdown via the hydrate
+  // useEffect below, which fires only when `existing` resolves.
+  const [contentMarkdown, setContentMarkdown] = useState<string>(() => {
+    if (id) return "";
+    try {
+      const theme = getActiveTheme(settings.activeThemeId);
+      return theme.defaultPostMarkdown?.[type] ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [excerpt, setExcerpt] = useState("");
   const [primaryTermId, setPrimaryTermId] = useState<string>("");
   const [tagIds, setTagIds] = useState<string[]>([]);

@@ -11,6 +11,7 @@
 import { manifest as defaultManifest } from "./default/manifest";
 import { manifest as magazineManifest } from "./magazine/manifest";
 import { manifest as corporateManifest } from "./corporate/manifest";
+import { manifest as storefrontManifest } from "./storefront/manifest";
 import i18n from "../i18n";
 import { registerBlock } from "../core/blockRegistry";
 import { pluginApi } from "../core/pluginRegistry";
@@ -28,7 +29,11 @@ import type { ThemeManifest } from "./types";
 // `dist/admin/themes/<id>/` by scripts/build-bundled-externals.mjs and
 // loaded at runtime through services/externalLoader.ts.
 const DEV_THEMES: ThemeManifest[] = import.meta.env.DEV
-  ? [magazineManifest as ThemeManifest, corporateManifest as ThemeManifest]
+  ? [
+      magazineManifest as ThemeManifest,
+      corporateManifest as ThemeManifest,
+      storefrontManifest as ThemeManifest,
+    ]
   : [];
 export const THEMES: ThemeManifest[] = [
   defaultManifest as ThemeManifest,

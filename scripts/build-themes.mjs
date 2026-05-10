@@ -102,6 +102,7 @@ async function main() {
     const runtimeScripts = [
       { source: "menu-loader.js", suffix: "menu" },
       { source: "posts-loader.js", suffix: "posts" },
+      { source: "catalog-loader.js", suffix: "catalog" },
     ];
     for (const { source, suffix } of runtimeScripts) {
       const found = await findScript(themeDir, source);
