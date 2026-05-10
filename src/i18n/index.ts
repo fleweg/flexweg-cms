@@ -26,6 +26,19 @@ export const LOCALE_LABELS: Record<AdminLocale, string> = {
   ko: "🇰🇷 한국어",
 };
 
+// Flag-only variant used by the Topbar's collapsed locale switcher —
+// keeps the header compact while the full label still renders inside
+// the dropdown options.
+export const LOCALE_FLAGS: Record<AdminLocale, string> = {
+  fr: "🇫🇷",
+  en: "🇬🇧",
+  de: "🇩🇪",
+  es: "🇪🇸",
+  nl: "🇳🇱",
+  pt: "🇵🇹",
+  ko: "🇰🇷",
+};
+
 export function isSupportedLocale(value: unknown): value is AdminLocale {
   return typeof value === "string" && (SUPPORTED_LOCALES as string[]).includes(value);
 }

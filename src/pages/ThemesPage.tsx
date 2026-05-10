@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import i18n from "../i18n";
 import { PageHeader } from "../components/layout/PageHeader";
 import { PublishLog } from "../components/publishing/PublishLog";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { ExternalInstallModal } from "../components/plugins/ExternalInstallModal";
-import { Dropdown, type DropdownItem, type DropdownSection } from "../components/ui/Dropdown";
 import { useCmsData } from "../context/CmsDataContext";
 import { listThemes } from "../themes";
 import { listExternalThemes } from "../services/externalRegistry";
@@ -17,8 +15,6 @@ import { toast } from "../lib/toast";
 import {
   buildPublishContext,
   regenerateAll,
-  regenerateHomeOnly,
-  type PublishContext,
   type PublishLogEntry,
   type PublishLogger,
 } from "../services/publisher";
@@ -36,9 +32,11 @@ export function ThemesPage() {
   const [logEntries, setLogEntries] = useState<PublishLogEntry[]>([]);
   const themes = listThemes();
 
-  // Subscribe to the plugin regeneration target registry — the
-  // dropdown entries change when plugins toggle on/off, so a
-  // one-shot read at mount would miss late registrations.
+  // Plugin regeneration targets are still consumed by the local
+  // theme-switch flow (a switch needs to re-run every plugin so the
+  // public site is consistent against the new theme). The global
+  // Regenerate menu in the Topbar maintains its own subscription
+  // independently.
   const [pluginTargets, setPluginTargets] = useState<RegenerationTarget[]>(
     () => listRegenerationTargets(),
   );
@@ -95,24 +93,6 @@ export function ThemesPage() {
     } finally {
       setBusy(false);
     }
-  }
-
-  // Resolves a plugin target's labelKey / descriptionKey against the
-  // plugin's own i18n namespace. Falls back to the raw key when the
-  // bundle is missing (e.g. plugin disabled before label was loaded).
-  function pluginLabel(target: RegenerationTarget, key: string | undefined): string {
-    if (!key) return "";
-    const resolved = i18n.t(key, { ns: target.id });
-    return resolved === key ? "" : resolved;
-  }
-
-  async function buildCtx(): Promise<PublishContext> {
-    return buildPublishContext({
-      terms,
-      settings,
-      users,
-      authorLookup: buildAuthorLookup(users, media),
-    });
   }
 
   // Standalone "Sync theme assets" button — kept as a top-level
@@ -175,101 +155,6 @@ export function ThemesPage() {
     ? themes.find((t) => t.id === pendingThemeId)
     : undefined;
 
-  // Dropdown sections — built from the static built-in targets plus
-  // whatever plugins have registered. Each item resolves into the
-  // same `runWithLog` helper so the busy state + log reset is shared.
-  const sections: DropdownSection[] = useMemo(() => {
-    const builtins: DropdownItem[] = [
-      {
-        id: "home",
-        label: t("themes.regenerate.home"),
-        description: t("themes.regenerate.homeHelp"),
-        onSelect: () =>
-          runWithLog(async (log) => {
-            const ctx = await buildCtx();
-            await regenerateHomeOnly(ctx, log);
-          }),
-      },
-      {
-        id: "allHtml",
-        label: t("themes.regenerate.allHtml"),
-        description: t("themes.regenerate.allHtmlHelp"),
-        onSelect: () =>
-          runWithLog(async (log) => {
-            const ctx = await buildCtx();
-            await regenerateAll(ctx, log);
-          }),
-      },
-      {
-        id: "assets",
-        label: t("themes.regenerate.assets"),
-        description: t("themes.regenerate.assetsHelp"),
-        onSelect: () =>
-          runWithLog(async (log) => {
-            await syncThemeAssets(themes, settings.themeConfigs, log);
-          }),
-      },
-    ];
-
-    const pluginItems: DropdownItem[] = pluginTargets.map((target) => ({
-      id: target.id,
-      label: pluginLabel(target, target.labelKey) || target.id,
-      description: pluginLabel(target, target.descriptionKey) || undefined,
-      onSelect: () =>
-        runWithLog(async (log) => {
-          const ctx = await buildCtx();
-          await target.run(ctx, log);
-        }),
-    }));
-
-    const everything: DropdownItem = {
-      id: "everything",
-      label: t("themes.regenerate.everything"),
-      description: t("themes.regenerate.everythingHelp"),
-      onSelect: () =>
-        runWithLog(async (log) => {
-          // Sequential: theme assets first (so any newly published
-          // HTML can reference a fresh CSS), then full HTML pass,
-          // then every plugin in priority order.
-          await syncThemeAssets(themes, settings.themeConfigs, log);
-          const ctx = await buildCtx();
-          await regenerateAll(ctx, log);
-          for (const target of pluginTargets) {
-            try {
-              await target.run(ctx, log);
-            } catch (err) {
-              log({
-                level: "error",
-                message: `Plugin "${target.id}" regen failed: ${(err as Error).message}`,
-              });
-            }
-          }
-          log({ level: "success", message: "Everything regenerated." });
-        }),
-    };
-
-    const out: DropdownSection[] = [
-      {
-        id: "site",
-        label: t("themes.regenerate.groupBuiltins"),
-        items: builtins,
-      },
-    ];
-    if (pluginItems.length > 0) {
-      out.push({
-        id: "plugins",
-        label: t("themes.regenerate.groupPlugins"),
-        items: pluginItems,
-      });
-    }
-    out.push({
-      id: "everything",
-      items: [everything],
-    });
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- t() identity is stable per render; settings.themeConfigs is the actual data dep
-  }, [pluginTargets, settings.themeConfigs, t]);
-
   return (
     <div className="p-4 md:p-6 space-y-4">
       <PageHeader
@@ -288,22 +173,6 @@ export function ThemesPage() {
               <RefreshCw className="h-4 w-4" />
               {t("themes.syncAssets")}
             </button>
-            <Dropdown
-              triggerLabel={
-                // Both icons render at all times; class toggles their
-                // visibility. Avoids React's type-swap reconciliation
-                // (Loader2 ↔ RefreshCw) firing in the same commit
-                // batch as the parent's busy/log state updates,
-                // which used to trigger "Node.insertBefore" errors.
-                <>
-                  <Loader2 className={busy ? "h-4 w-4 animate-spin" : "hidden"} />
-                  <RefreshCw className={busy ? "hidden" : "h-4 w-4"} />
-                  <span>{busy ? t("themes.regenerate.running") : t("themes.regenerate.button")}</span>
-                </>
-              }
-              disabled={busy}
-              sections={sections}
-            />
           </>
         }
       />

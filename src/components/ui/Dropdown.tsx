@@ -38,6 +38,10 @@ interface DropdownProps {
   // simple label (renders inside a `btn-primary` with a chevron) or a
   // full ReactNode for custom triggers.
   triggerLabel: ReactNode;
+  // Override for the trigger's class. Defaults to `btn-primary`. Use
+  // `btn-secondary` etc. when the trigger lives in a context where the
+  // primary inverted style is too loud (e.g. the global Topbar).
+  triggerClassName?: string;
   // Disables the trigger button entirely. Closing happens immediately
   // when this flips to true while the panel is open.
   disabled?: boolean;
@@ -50,6 +54,7 @@ interface DropdownProps {
 
 export function Dropdown({
   triggerLabel,
+  triggerClassName = "btn-primary",
   disabled,
   alignEnd = true,
   sections,
@@ -100,7 +105,7 @@ export function Dropdown({
     <div ref={ref} className="relative inline-block">
       <button
         type="button"
-        className="btn-primary"
+        className={triggerClassName}
         onClick={() => setOpen((o) => !o)}
         disabled={disabled}
         aria-haspopup="menu"

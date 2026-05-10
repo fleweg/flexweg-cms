@@ -1,7 +1,7 @@
 import { Menu as MenuIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../../context/AuthContext";
 import { LocaleSwitcher } from "../ui/LocaleSwitcher";
+import { RegenerateMenu } from "./RegenerateMenu";
 import flexwegLogo from "../../assets/flexweg-logo.png";
 
 interface TopbarProps {
@@ -13,7 +13,6 @@ interface TopbarProps {
 
 export function Topbar({ onOpenMobileNav }: TopbarProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-surface-200 dark:bg-surface-900/80 dark:border-surface-800">
@@ -39,12 +38,8 @@ export function Topbar({ onOpenMobileNav }: TopbarProps) {
           </div>
         </div>
         <div className="flex items-center gap-3 ml-auto">
+          <RegenerateMenu />
           <LocaleSwitcher />
-          {user && (
-            <span className="hidden md:inline text-xs text-surface-500 truncate max-w-[200px] dark:text-surface-400">
-              {user.email}
-            </span>
-          )}
         </div>
       </div>
     </header>

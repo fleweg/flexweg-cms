@@ -1,12 +1,17 @@
-import { Globe } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useOptionalAuth } from "../../context/AuthContext";
-import { setActiveLocale, SUPPORTED_LOCALES, LOCALE_LABELS } from "../../i18n";
+import {
+  setActiveLocale,
+  SUPPORTED_LOCALES,
+  LOCALE_LABELS,
+  LOCALE_FLAGS,
+} from "../../i18n";
 import { setUserPreferences } from "../../services/users";
 import type { AdminLocale } from "../../core/types";
 
 export function LocaleSwitcher() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Optional: SetupForm renders this component before AuthProvider is
   // mounted (Firebase isn't configured yet). In that mode `auth` is null
   // and we skip the Firestore persistence step — only localStorage is
@@ -27,11 +32,20 @@ export function LocaleSwitcher() {
     }
   }
 
+  // Compact pattern: the visible chip shows only the flag of the active
+  // locale; an invisible <select> overlays it so clicking opens the
+  // native dropdown — which renders the full labels (flag + native
+  // name) by virtue of <option> textContent. Best of both worlds:
+  // tight header footprint, full readability when picking.
   return (
-    <div className="inline-flex items-center gap-2">
-      <Globe className="h-4 w-4 text-surface-400" aria-hidden />
+    <div className="relative inline-flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+      <span className="text-base leading-none select-none" aria-hidden>
+        {LOCALE_FLAGS[current]}
+      </span>
+      <ChevronDown className="h-3.5 w-3.5 text-surface-500 dark:text-surface-400" aria-hidden />
       <select
-        className="bg-transparent text-sm font-medium text-surface-700 dark:text-surface-200 outline-none"
+        className="absolute inset-0 cursor-pointer opacity-0"
+        aria-label={t("common.language")}
         value={current}
         onChange={(e) => handleChange(e.target.value as AdminLocale)}
       >
