@@ -59,6 +59,7 @@ type ErrorKind =
   | "missingFields"
   | "rootDeployment"
   | "firebaseAuth"
+  | "firebaseAuthInvalidCredential"
   | "wrongAdminEmail"
   | "flexwegAuth"
   | "flexwegNetwork"
@@ -232,6 +233,18 @@ export function SetupForm() {
       } catch (err) {
         const detailKey = authErrorTranslationKey(err);
         const fbErr = err as { code?: string; message?: string };
+        // The invalid-credential / wrong-password code gets a
+        // dedicated kind so we can render a richer hint paragraph —
+        // Firebase's email enumeration protection conflates "wrong
+        // password", "no such user", and "user signs in with a
+        // different provider" into one error code, so the user needs
+        // pointers to all three causes.
+        if (detailKey === "setup.errors.firebaseAuthInvalidCredential") {
+          setError({ kind: "firebaseAuthInvalidCredential" });
+          setSubmitting(false);
+          setStep(null);
+          return;
+        }
         let detail = t(detailKey);
         // For unmapped Firebase error codes the translated message is
         // a generic "could not sign in" — append the raw code +
@@ -837,6 +850,15 @@ function ErrorMessage({ error }: { error: ErrorState }) {
       );
     case "firebaseAuth":
       return <span>{error.detail ?? t("setup.errors.firebaseAuthGeneric")}</span>;
+    case "firebaseAuthInvalidCredential":
+      return (
+        <div className="space-y-1.5">
+          <p>{t("setup.errors.firebaseAuthInvalidCredential")}</p>
+          <p className="text-xs whitespace-pre-line leading-relaxed">
+            {t("setup.errors.firebaseAuthInvalidCredentialHint")}
+          </p>
+        </div>
+      );
     case "wrongAdminEmail":
       return <span>{t("setup.errors.wrongAdminEmail")}</span>;
     case "flexwegAuth":
