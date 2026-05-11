@@ -442,8 +442,9 @@ function EditProfileModal({ user, onClose }: { user: UserRecord; onClose: () => 
               {t("common.cancel")}
             </button>
             <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? t("common.saving") : t("common.save")}
+              <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+              <Save className={saving ? "hidden" : "h-4 w-4"} />
+              <span>{saving ? t("common.saving") : t("common.save")}</span>
             </button>
           </div>
         </div>

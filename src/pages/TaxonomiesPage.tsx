@@ -111,8 +111,9 @@ function TermSection({
           onClick={handleAdd}
           disabled={busy || !!newSlugCollision}
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-          {type === "category" ? t("taxonomies.newCategory") : t("taxonomies.newTag")}
+          <Loader2 className={busy ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Plus className={busy ? "hidden" : "h-4 w-4"} />
+          <span>{type === "category" ? t("taxonomies.newCategory") : t("taxonomies.newTag")}</span>
         </button>
       </div>
       {newSlugCollision && (

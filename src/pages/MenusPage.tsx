@@ -166,8 +166,9 @@ export function MenusPage() {
               onClick={save}
               disabled={!isDirty || saving}
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? t("common.saving") : t("menus.saveAndPublish")}
+              <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+              <Save className={saving ? "hidden" : "h-4 w-4"} />
+              <span>{saving ? t("common.saving") : t("menus.saveAndPublish")}</span>
             </button>
           </>
         }

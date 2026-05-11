@@ -62,15 +62,17 @@ export function PublishButton({ post, onLog }: PublishButtonProps) {
   if (post.status === "online") {
     return (
       <button type="button" className="btn-secondary" disabled={busy} onClick={handleUnpublish}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />}
-        {busy ? t("posts.edit.unpublishing") : t("posts.edit.unpublish")}
+        <Loader2 className={busy ? "h-4 w-4 animate-spin" : "hidden"} />
+        <Undo2 className={busy ? "hidden" : "h-4 w-4"} />
+        <span>{busy ? t("posts.edit.unpublishing") : t("posts.edit.unpublish")}</span>
       </button>
     );
   }
   return (
     <button type="button" className="btn-primary" disabled={busy} onClick={handlePublish}>
-      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-      {busy ? t("posts.edit.publishing") : t("posts.edit.publish")}
+      <Loader2 className={busy ? "h-4 w-4 animate-spin" : "hidden"} />
+      <Send className={busy ? "hidden" : "h-4 w-4"} />
+      <span>{busy ? t("posts.edit.publishing") : t("posts.edit.publish")}</span>
     </button>
   );
 }

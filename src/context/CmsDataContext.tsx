@@ -139,7 +139,7 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
           // immediately after so the editor's inserter stays consistent
           // across both plugin toggles and theme switches.
           applyPluginRegistration(s.enabledPlugins ?? {});
-          applyThemeRegistration(s.activeThemeId);
+          applyThemeRegistration(s.activeThemeId, s);
         },
         reportError,
       ),

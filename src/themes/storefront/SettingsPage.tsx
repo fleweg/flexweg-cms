@@ -815,10 +815,18 @@ function CatalogTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConf
             ? new Date(draft.jsonLastGeneratedAt).toLocaleString()
             : t("settings.catalog.never")}
         </p>
+        {/* Stable-shape button content: render both icons at all times
+            and toggle visibility via class. Swapping React element
+            types (Loader2 ↔ RotateCcw) AND the text in the same
+            commit was throwing "Node.insertBefore" on Firefox when
+            a browser extension injected sibling DOM into the same
+            container mid-render — same fix pattern used by the
+            global RegenerateMenu trigger. */}
         <button type="button" onClick={handleForceRegenerate} disabled={regenerating || !draft.enabled}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-low border border-outline-variant text-sm font-medium hover:bg-surface-container disabled:opacity-50">
-          {regenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-          {regenerating ? t("settings.buttons.regenerating") : t("settings.buttons.forceRegenerate")}
+          <Loader2 className={regenerating ? "h-4 w-4 animate-spin" : "hidden"} />
+          <RotateCcw className={regenerating ? "hidden" : "h-4 w-4"} />
+          <span>{regenerating ? t("settings.buttons.regenerating") : t("settings.buttons.forceRegenerate")}</span>
         </button>
       </Section>
 
@@ -944,14 +952,16 @@ function LogoTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig>
             onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpload(file); }} />
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {config.logoEnabled ? t("settings.logo.replace") : t("settings.logo.upload")}
+            <Loader2 className={uploading ? "h-4 w-4 animate-spin" : "hidden"} />
+            <Upload className={uploading ? "hidden" : "h-4 w-4"} />
+            <span>{config.logoEnabled ? t("settings.logo.replace") : t("settings.logo.upload")}</span>
           </button>
           {config.logoEnabled && (
             <button type="button" onClick={handleRemove} disabled={removing}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50">
-              {removing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-              {t("settings.logo.remove")}
+              <Loader2 className={removing ? "h-4 w-4 animate-spin" : "hidden"} />
+              <Trash2 className={removing ? "hidden" : "h-4 w-4"} />
+              <span>{t("settings.logo.remove")}</span>
             </button>
           )}
         </div>
@@ -998,14 +1008,22 @@ function StyleTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig
     setDraft({ ...draft, vars: next });
   }
 
-  const fontSerifOptions: FontOption[] = Object.keys(FONT_PRESETS.serif).map((name) => ({
-    name,
-    fallback: "serif",
-  }));
-  const fontSansOptions: FontOption[] = Object.keys(FONT_PRESETS.sans).map((name) => ({
-    name,
-    fallback: "sans-serif",
-  }));
+  // Both dropdowns show every available font — serif AND sans —
+  // because nothing in the theme prevents using a sans-serif as the
+  // heading family or a serif as the body family. Each option keeps
+  // its own fallback so the dropdown preview renders against the
+  // correct generic family while the Google Fonts download is in
+  // flight.
+  const allFontOptions: FontOption[] = [
+    ...Object.keys(FONT_PRESETS.serif).map((name) => ({
+      name,
+      fallback: "serif" as const,
+    })),
+    ...Object.keys(FONT_PRESETS.sans).map((name) => ({
+      name,
+      fallback: "sans-serif" as const,
+    })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -1015,7 +1033,7 @@ function StyleTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig
           <div>
             <label className="label">{t("settings.font.serif")}</label>
             <FontSelect
-              options={fontSerifOptions}
+              options={allFontOptions}
               value={draft.fontSerif || DEFAULT_FONT_SERIF}
               onChange={(value) => setDraft({ ...draft, fontSerif: value })}
             />
@@ -1023,7 +1041,7 @@ function StyleTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig
           <div>
             <label className="label">{t("settings.font.sans")}</label>
             <FontSelect
-              options={fontSansOptions}
+              options={allFontOptions}
               value={draft.fontSans || DEFAULT_FONT_SANS}
               onChange={(value) => setDraft({ ...draft, fontSans: value })}
             />
@@ -1212,8 +1230,9 @@ function SaveBar({ onSave, saving }: { onSave: () => void; saving: boolean }) {
     <div className="flex justify-end gap-2 pt-3 border-t border-surface-200 dark:border-surface-800">
       <button type="button" onClick={onSave} disabled={saving}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
-        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        {saving ? t("settings.buttons.saving") : t("settings.buttons.save")}
+        <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+        <Save className={saving ? "hidden" : "h-4 w-4"} />
+        <span>{saving ? t("settings.buttons.saving") : t("settings.buttons.save")}</span>
       </button>
     </div>
   );

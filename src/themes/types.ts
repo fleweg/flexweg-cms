@@ -274,7 +274,16 @@ export interface ThemeManifest<TConfig = unknown> {
   // markers) without scattering side effects through the codebase.
   // Called AFTER the theme's blocks have been registered, so handlers
   // can rely on registry availability if needed.
-  register?: (api: import("../core/pluginRegistry").PluginApi) => void;
+  //
+  // The optional `ctx.settings` argument exposes the current
+  // SiteSettings so a theme can conditionally register targets that
+  // depend on its own config (e.g. only surface a "Force regenerate
+  // catalog" entry when the storefront's catalog feature is enabled).
+  // Themes that don't need settings can ignore the second argument.
+  register?: (
+    api: import("../core/pluginRegistry").PluginApi,
+    ctx?: { settings: SiteSettings },
+  ) => void;
 }
 
 // Re-exported so theme code only needs one import statement.

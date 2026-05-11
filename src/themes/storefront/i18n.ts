@@ -415,10 +415,56 @@ const publicBakedKo: typeof publicBakedEn = {
   next: "다음",
 };
 
-export const en = { title: "Theme settings", settings: settingsEn, publicBaked: publicBakedEn, blocks };
-export const fr = { title: "Theme settings", settings: settingsFr, publicBaked: publicBakedFr, blocks };
-export const de = { title: "Theme settings", settings: settingsDe, publicBaked: publicBakedDe, blocks };
-export const es = { title: "Theme settings", settings: settingsEs, publicBaked: publicBakedEs, blocks };
-export const nl = { title: "Theme settings", settings: settingsNl, publicBaked: publicBakedNl, blocks };
-export const pt = { title: "Theme settings", settings: settingsPt, publicBaked: publicBakedPt, blocks };
-export const ko = { title: "Theme settings", settings: settingsKo, publicBaked: publicBakedKo, blocks };
+// Labels for the global Regenerate ▾ menu entry contributed by this
+// theme when the catalog feature is enabled. Looked up via
+// `i18n.t(labelKey, { ns: "theme-storefront" })`.
+const regenerationTargetEn = {
+  catalog: {
+    label: "Regenerate catalog",
+    description: "Rebuild /data/products.json and the catalog HTML page.",
+  },
+};
+const regenerationTargetFr = {
+  catalog: {
+    label: "Régénérer le catalogue",
+    description: "Reconstruit /data/products.json et la page HTML du catalogue.",
+  },
+};
+const regenerationTargetDe = {
+  catalog: {
+    label: "Katalog neu generieren",
+    description: "Erstellt /data/products.json und die HTML-Katalogseite neu.",
+  },
+};
+const regenerationTargetEs = {
+  catalog: {
+    label: "Regenerar catálogo",
+    description: "Reconstruye /data/products.json y la página HTML del catálogo.",
+  },
+};
+const regenerationTargetNl = {
+  catalog: {
+    label: "Catalogus regenereren",
+    description: "Bouwt /data/products.json en de catalogus-HTML-pagina opnieuw op.",
+  },
+};
+const regenerationTargetPt = {
+  catalog: {
+    label: "Regenerar catálogo",
+    description: "Reconstrói /data/products.json e a página HTML do catálogo.",
+  },
+};
+const regenerationTargetKo = {
+  catalog: {
+    label: "카탈로그 재생성",
+    description: "/data/products.json과 카탈로그 HTML 페이지를 다시 빌드합니다.",
+  },
+};
+
+export const en = { title: "Theme settings", settings: settingsEn, publicBaked: publicBakedEn, blocks, regenerationTarget: regenerationTargetEn };
+export const fr = { title: "Theme settings", settings: settingsFr, publicBaked: publicBakedFr, blocks, regenerationTarget: regenerationTargetFr };
+export const de = { title: "Theme settings", settings: settingsDe, publicBaked: publicBakedDe, blocks, regenerationTarget: regenerationTargetDe };
+export const es = { title: "Theme settings", settings: settingsEs, publicBaked: publicBakedEs, blocks, regenerationTarget: regenerationTargetEs };
+export const nl = { title: "Theme settings", settings: settingsNl, publicBaked: publicBakedNl, blocks, regenerationTarget: regenerationTargetNl };
+export const pt = { title: "Theme settings", settings: settingsPt, publicBaked: publicBakedPt, blocks, regenerationTarget: regenerationTargetPt };
+export const ko = { title: "Theme settings", settings: settingsKo, publicBaked: publicBakedKo, blocks, regenerationTarget: regenerationTargetKo };

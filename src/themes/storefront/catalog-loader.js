@@ -357,6 +357,16 @@
       });
       host.appendChild(chip);
     });
+    // Toggle the `is-overflowing` class so the fade mask shows only
+    // when the chip cloud actually scrolls. Without this check the
+    // bottom row would always look faded even on short lists.
+    requestAnimationFrame(function () {
+      if (host.scrollHeight > host.clientHeight + 1) {
+        host.classList.add("is-overflowing");
+      } else {
+        host.classList.remove("is-overflowing");
+      }
+    });
   }
 
   function renderPriceRange(facets) {

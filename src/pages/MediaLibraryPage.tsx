@@ -163,8 +163,9 @@ export function MediaLibraryPage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
-              {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {isUploading ? t("media.uploading") : t("media.upload")}
+              <Loader2 className={isUploading ? "h-4 w-4 animate-spin" : "hidden"} />
+              <Upload className={isUploading ? "hidden" : "h-4 w-4"} />
+              <span>{isUploading ? t("media.uploading") : t("media.upload")}</span>
             </button>
           </>
         }

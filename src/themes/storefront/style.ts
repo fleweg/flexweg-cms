@@ -112,13 +112,25 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Looks up a font's Google Fonts CSS2 spec across BOTH FONT_PRESETS
+// buckets — users can put a sans face in the serif slot or vice
+// versa, so we don't constrain the lookup to one bucket.
+function fontSpec(name: string, fallback: string): string {
+  const all = {
+    ...(FONT_PRESETS.serif as Record<string, string>),
+    ...(FONT_PRESETS.sans as Record<string, string>),
+  };
+  return all[name] ?? all[fallback];
+}
+
 export function buildGoogleFontsUrl(serif: string, sans: string): string {
-  const serifSeg =
-    (FONT_PRESETS.serif as Record<string, string>)[serif] ??
-    FONT_PRESETS.serif[DEFAULT_FONT_SERIF];
-  const sansSeg =
-    (FONT_PRESETS.sans as Record<string, string>)[sans] ??
-    FONT_PRESETS.sans[DEFAULT_FONT_SANS];
+  const serifSeg = fontSpec(serif, DEFAULT_FONT_SERIF);
+  const sansSeg = fontSpec(sans, DEFAULT_FONT_SANS);
+  // Same font picked twice → only request it once. Avoids `&family=X&family=X`
+  // which Google Fonts handles fine but inflates the URL.
+  if (serifSeg === sansSeg) {
+    return `https://fonts.googleapis.com/css2?family=${serifSeg}&display=swap`;
+  }
   return `https://fonts.googleapis.com/css2?family=${serifSeg}&family=${sansSeg}&display=swap`;
 }
 

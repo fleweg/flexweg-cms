@@ -181,8 +181,9 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
           onClick={saveSettings}
           disabled={savingSettings}
         >
-          {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {savingSettings ? t("robots.saving") : t("saveSettings")}
+          <Loader2 className={savingSettings ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Save className={savingSettings ? "hidden" : "h-4 w-4"} />
+          <span>{savingSettings ? t("robots.saving") : t("saveSettings")}</span>
         </button>
       </section>
 
@@ -206,8 +207,9 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
           onClick={saveAndRegenerateRobots}
           disabled={savingRobots}
         >
-          {savingRobots ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {savingRobots ? t("robots.saving") : t("robots.saveAndRegenerate")}
+          <Loader2 className={savingRobots ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Save className={savingRobots ? "hidden" : "h-4 w-4"} />
+          <span>{savingRobots ? t("robots.saving") : t("robots.saveAndRegenerate")}</span>
         </button>
       </section>
 

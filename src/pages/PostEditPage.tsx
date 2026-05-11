@@ -498,7 +498,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
               onClick={handleSave}
               disabled={saving || !slugValid || !!collision}
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+              <Save className={saving ? "hidden" : "h-4 w-4"} />
               <span className="hidden sm:inline">
                 {saving
                   ? t("common.saving")

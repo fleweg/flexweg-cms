@@ -448,6 +448,42 @@
   .storefront-stock-order { background: rgb(var(--color-tertiary-fixed)); color: rgb(var(--color-on-tertiary-fixed)); }
 
   /* ---------- Catalog filter (Phase 6) ---------- */
+  /* Tag chip cloud is height-capped so dozens of tags can't push
+     other filters off-screen. Thin scrollbar styled to match the
+     palette; the fading bottom edge hints there's more to scroll
+     when the host overflows. */
+  .storefront-catalog-tags-host {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-outline-variant)) transparent;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black calc(100% - 1.5rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black calc(100% - 1.5rem),
+      transparent 100%
+    );
+  }
+  .storefront-catalog-tags-host::-webkit-scrollbar {
+    width: 6px;
+  }
+  .storefront-catalog-tags-host::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .storefront-catalog-tags-host::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-outline-variant));
+    border-radius: 3px;
+  }
+  /* Remove the mask when the content fits inside (no scroll). We add
+     the `is-overflowing` class via the catalog loader after measuring
+     scrollHeight vs clientHeight — see catalog-loader.js. */
+  .storefront-catalog-tags-host:not(.is-overflowing) {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   /* Filled by /theme-assets/storefront-catalog.js at runtime — DOM
      contract documented in catalog-loader.js. Hidden state for
      filtered-out cards uses display:none rather than visibility so

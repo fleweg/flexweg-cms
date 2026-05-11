@@ -73,7 +73,8 @@ export function RegenerateMenu() {
 
   function pluginLabel(target: RegenerationTarget, key: string | undefined): string {
     if (!key) return "";
-    const resolved = i18n.t(key, { ns: target.id });
+    const ns = target.i18nNamespace ?? target.id;
+    const resolved = i18n.t(key, { ns });
     return resolved === key ? "" : resolved;
   }
 

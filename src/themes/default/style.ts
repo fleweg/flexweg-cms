@@ -185,16 +185,28 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Looks up a font's Google Fonts CSS2 spec in BOTH FONT_PRESETS
+// buckets — the picker now allows any font in either slot, so the
+// URL builder can't constrain the lookup to one family bucket.
+function fontSpec(name: string, fallback: string): string {
+  const all = {
+    ...(FONT_PRESETS.serif as Record<string, string>),
+    ...(FONT_PRESETS.sans as Record<string, string>),
+  };
+  return all[name] ?? all[fallback];
+}
+
 // Builds the Google Fonts CSS2 URL for the chosen pair. Sans family
 // listed first so its glyphs preload before the serif (the reading
 // surface uses sans for metadata, which is more frequently visible).
 export function buildGoogleFontsUrl(serif: string, sans: string): string {
-  const sansFamily =
-    (FONT_PRESETS.sans as Record<string, string>)[sans] ??
-    FONT_PRESETS.sans[DEFAULT_FONT_SANS];
-  const serifFamily =
-    (FONT_PRESETS.serif as Record<string, string>)[serif] ??
-    FONT_PRESETS.serif[DEFAULT_FONT_SERIF];
+  const sansFamily = fontSpec(sans, DEFAULT_FONT_SANS);
+  const serifFamily = fontSpec(serif, DEFAULT_FONT_SERIF);
+  // Same font picked twice → request once. Avoids `&family=X&family=X`
+  // which Google handles fine but inflates the URL.
+  if (sansFamily === serifFamily) {
+    return `https://fonts.googleapis.com/css2?family=${sansFamily}&display=swap`;
+  }
   return `https://fonts.googleapis.com/css2?family=${sansFamily}&family=${serifFamily}&display=swap`;
 }
 

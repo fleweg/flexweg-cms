@@ -108,15 +108,6 @@ export function CatalogTemplate({ site }: CatalogTemplateProps) {
               </div>
             )}
 
-            {catalog.filters.showTagFilter && (
-              <div data-cms-catalog-tags>
-                <h3 className="font-label-caps text-label-caps text-primary uppercase tracking-widest mb-stack-md">
-                  {t("publicBaked.catalogFilterTags")}
-                </h3>
-                <div className="flex flex-wrap gap-2" data-cms-catalog-tags-host />
-              </div>
-            )}
-
             {catalog.filters.showPriceRange && (
               <div data-cms-catalog-price>
                 <h3 className="font-label-caps text-label-caps text-primary uppercase tracking-widest mb-stack-md">
@@ -145,6 +136,23 @@ export function CatalogTemplate({ site }: CatalogTemplateProps) {
                   {t("publicBaked.catalogFilterStock")}
                 </h3>
                 <div className="space-y-2 text-body-md" data-cms-catalog-stock-host />
+              </div>
+            )}
+
+            {catalog.filters.showTagFilter && (
+              // Tags come last in the sidebar so a long tag list doesn't
+              // push the price / category / stock filters off-screen.
+              // The host is also capped at 16rem with overflow-y so
+              // even dozens of tags stay inside the panel — the user
+              // scrolls the chip cloud instead of the whole sidebar.
+              <div data-cms-catalog-tags>
+                <h3 className="font-label-caps text-label-caps text-primary uppercase tracking-widest mb-stack-md">
+                  {t("publicBaked.catalogFilterTags")}
+                </h3>
+                <div
+                  className="storefront-catalog-tags-host flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1"
+                  data-cms-catalog-tags-host
+                />
               </div>
             )}
           </div>

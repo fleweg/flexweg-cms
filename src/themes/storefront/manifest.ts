@@ -132,7 +132,7 @@ export const manifest: ManifestWithCatalogJs = {
     productFeaturesBlock,
     reviewsListBlock,
   ] as ThemeManifest["blocks"],
-  register(api) {
+  register(api, ctx) {
     api.addFilter<string>("post.html.body", (html, ...rest) =>
       transformBodyHtml(html, rest[0] as Parameters<typeof transformBodyHtml>[1]),
     );
@@ -142,13 +142,40 @@ export const manifest: ManifestWithCatalogJs = {
     // publish/unpublish/delete. Best-effort: failures are logged and
     // toasted via flexwegApi but never abort the parent publish.
     const onCatalogTouch = (_post: unknown, ...rest: unknown[]) => {
-      const ctx = rest[0] as PublishContext | undefined;
-      if (!ctx) return;
-      void republishCatalog(ctx);
+      const pubCtx = rest[0] as PublishContext | undefined;
+      if (!pubCtx) return;
+      void republishCatalog(pubCtx);
     };
     api.addAction("publish.complete", onCatalogTouch);
     api.addAction("post.unpublished", onCatalogTouch);
     api.addAction("post.deleted", onCatalogTouch);
+
+    // Surface a "Force regenerate catalog" entry in the global
+    // Regenerate ▾ menu — only when the catalog feature is actually
+    // enabled. The conditional registration means the dropdown
+    // entry appears / disappears as the user toggles the feature
+    // (applyThemeRegistration re-runs whenever settings change).
+    const catalogEnabled = (ctx?.settings.themeConfigs as
+      | Record<string, unknown>
+      | undefined)?.["storefront"]
+      ? ((ctx?.settings.themeConfigs as Record<string, unknown>)["storefront"] as
+          | StorefrontThemeConfig
+          | undefined)?.catalog?.enabled === true
+      : false;
+    if (catalogEnabled) {
+      api.registerRegenerationTarget({
+        id: "storefront/catalog",
+        i18nNamespace: "theme-storefront",
+        labelKey: "regenerationTarget.catalog.label",
+        descriptionKey: "regenerationTarget.catalog.description",
+        priority: 250,
+        run: async (pubCtx, log) => {
+          log({ level: "info", message: "Regenerating catalog products.json + page…" });
+          await republishCatalog(pubCtx);
+          log({ level: "success", message: "Catalog regenerated." });
+        },
+      });
+    }
 
     // Menu auto-link — when catalog.addToMenu is on, append a header
     // entry pointing at the catalog slug. Same pattern flexweg-rss

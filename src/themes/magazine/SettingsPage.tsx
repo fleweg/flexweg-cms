@@ -400,8 +400,9 @@ function StyleTab({
           onClick={handleReset}
           disabled={saving || resetting}
         >
-          {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-          {resetting ? t("settings.style.resetting") : t("settings.style.reset")}
+          <Loader2 className={resetting ? "h-4 w-4 animate-spin" : "hidden"} />
+          <RotateCcw className={resetting ? "hidden" : "h-4 w-4"} />
+          <span>{resetting ? t("settings.style.resetting") : t("settings.style.reset")}</span>
         </button>
         <button
           type="button"
@@ -409,8 +410,9 @@ function StyleTab({
           onClick={handleSave}
           disabled={saving || resetting}
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? t("settings.style.saving") : t("settings.style.save")}
+          <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Save className={saving ? "hidden" : "h-4 w-4"} />
+          <span>{saving ? t("settings.style.saving") : t("settings.style.save")}</span>
         </button>
       </div>
     </div>
@@ -630,8 +632,9 @@ function HomeTab({
           onClick={handleSave}
           disabled={saving}
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? t("settings.home.saving") : t("settings.home.save")}
+          <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Save className={saving ? "hidden" : "h-4 w-4"} />
+          <span>{saving ? t("settings.home.saving") : t("settings.home.save")}</span>
         </button>
       </div>
     </div>
@@ -704,8 +707,9 @@ function HeaderTab({
           onClick={handleSave}
           disabled={saving}
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? t("settings.header.saving") : t("settings.header.save")}
+          <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
+          <Save className={saving ? "hidden" : "h-4 w-4"} />
+          <span>{saving ? t("settings.header.saving") : t("settings.header.save")}</span>
         </button>
       </div>
     </div>

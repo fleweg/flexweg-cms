@@ -243,8 +243,9 @@ export function FlexwegSearchSettingsPage({
           onClick={saveSettings}
           disabled={saving || regenerating}
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? t("actions.saving") : t("actions.save")}
+          <Loader2 className={saving ? "w-4 h-4 animate-spin" : "hidden"} />
+          <Save className={saving ? "hidden" : "w-4 h-4"} />
+          <span>{saving ? t("actions.saving") : t("actions.save")}</span>
         </button>
       </section>
     </div>

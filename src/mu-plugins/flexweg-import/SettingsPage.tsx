@@ -714,8 +714,9 @@ function SummaryView({
         className="btn-ghost text-xs"
         onClick={onToggleDetails}
       >
-        {showDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        {showDetails ? t("summary.hideDetails") : t("summary.showDetails")}
+        <ChevronDown className={showDetails ? "h-3.5 w-3.5" : "hidden"} />
+        <ChevronRight className={showDetails ? "hidden" : "h-3.5 w-3.5"} />
+        <span>{showDetails ? t("summary.hideDetails") : t("summary.showDetails")}</span>
       </button>
 
       {showDetails && (

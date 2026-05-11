@@ -20,9 +20,14 @@ export interface RegenerationTarget {
   // Stable id — by convention the plugin id, e.g. "flexweg-sitemaps".
   // Used for React keys + fallback labels when i18n lookup fails.
   id: string;
-  // i18n key resolved against the plugin's own namespace
-  // (`useTranslation(<plugin-id>)`). The ThemesPage looks up the
-  // resolved label via i18n.t(labelKey, { ns: id }).
+  // i18n namespace for label / description lookup. Defaults to the
+  // target id (the plugin convention). Themes typically pass their
+  // own namespace (`theme-<id>`) here so the target's labels can
+  // live in the theme's existing i18n bundle.
+  i18nNamespace?: string;
+  // i18n key resolved against the target's namespace. The Regenerate
+  // dropdown looks up the resolved label via
+  // `i18n.t(labelKey, { ns: target.i18nNamespace ?? target.id })`.
   labelKey: string;
   // Optional second-line description shown below the label in the
   // dropdown. Same namespace as labelKey.

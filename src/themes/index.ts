@@ -103,7 +103,10 @@ export function loadExternalThemeTranslations(theme: ThemeManifest): void {
 // A swallow-and-log try/catch keeps a single bad block / hook from
 // taking down the whole admin — same defensive pattern as
 // plugins/index.ts.
-export function applyThemeRegistration(activeThemeId: string): void {
+export function applyThemeRegistration(
+  activeThemeId: string,
+  settings?: import("../core/types").SiteSettings,
+): void {
   const theme = getActiveTheme(activeThemeId);
   if (theme.blocks) {
     for (const block of theme.blocks) {
@@ -116,7 +119,17 @@ export function applyThemeRegistration(activeThemeId: string): void {
   }
   if (theme.register) {
     try {
-      theme.register(pluginApi);
+      // Pass settings as a `ctx` arg so themes can read their live
+      // config and decide what to register. Themes that don't care
+      // about settings ignore the second parameter (TypeScript marks
+      // it optional). When settings haven't loaded yet (early boot),
+      // we just call without the ctx — theme registration will fire
+      // again later when settings arrive.
+      if (settings) {
+        theme.register(pluginApi, { settings });
+      } else {
+        theme.register(pluginApi);
+      }
     } catch (err) {
       console.error(`Theme "${theme.id}" failed in its register() callback:`, err);
     }
