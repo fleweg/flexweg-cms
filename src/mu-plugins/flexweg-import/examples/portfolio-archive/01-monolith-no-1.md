@@ -1,0 +1,20 @@
+---
+title: Monolith No. 1
+slug: monolith-no-1
+type: post
+status: draft
+category: Architecture
+tags: [concrete, brutalism]
+heroImage: 01-monolith.jpg
+excerpt: "A three-year study of light and concrete inside a Berlin museum."
+---
+
+The Museum of Light project began as a brief from the museum's director, who wanted to recapture the gallery's original 1962 atmosphere — diffused light, no spotlights, no distractions. Three years and six photographic visits later, this monograph distils the work into its quietest moments.
+
+<div data-cms-block="portfolio/bento-gallery" data-attrs="eyJtYWluSW1hZ2VVcmwiOiIwMS1tb25vbGl0aC5qcGciLCJtYWluSW1hZ2VBbHQiOiIiLCJzdWJUb3BJbWFnZVVybCI6IjA4LWdhbGxlcnktd2lkZS5qcGciLCJzdWJUb3BJbWFnZUFsdCI6IiIsInN1YlRvcEdyYXlzY2FsZSI6dHJ1ZSwic3ViQm90dG9tSW1hZ2VVcmwiOiIwNy1oZXJvLWRldGFpbC5qcGciLCJzdWJCb3R0b21JbWFnZUFsdCI6IiIsIndpZGVJbWFnZVVybCI6IjAyLXVyYmFuLXN5bW1ldHJ5LmpwZyIsIndpZGVJbWFnZUFsdCI6IiJ9"></div>
+
+<div data-cms-block="portfolio/storytelling" data-attrs="eyJleWVicm93IjoiVEhFIFBST0NFU1MiLCJoZWFkbGluZSI6IlNpbGVuY2UgaXMgdGhlIHVsdGltYXRlIGx1eHVyeS4iLCJib2R5IjoiSW4gYSB3b3JsZCBvZiBjb25zdGFudCB2aXN1YWwgbm9pc2UsIHdlIGNob3NlIHRvIGVtYnJhY2UgdGhlIHZvaWQuIE91ciBjdXJhdGlvbiBwcm9jZXNzIGZvciB0aGUgZXhoaWJpdGlvbiBpbnZvbHZlZCByZW1vdmluZyBvdmVyIDgwJSBvZiB0aGUgaW5pdGlhbCBmcmFtZXMgdG8gZmluZCB0aGUgc2luZ3VsYXIgaGVhcnQgb2YgdGhlIHByb2plY3QuIiwic3RlcDFMYWJlbCI6IjAxLiBSRVNFQVJDSCIsInN0ZXAxVGV4dCI6IkRlZXAgYXJjaGl0ZWN0dXJhbCBhdWRpdGluZyBhbmQgc2l0ZSBtYXBwaW5nLiIsInN0ZXAyTGFiZWwiOiIwMi4gRVhFQ1VUSU9OIiwic3RlcDJUZXh0IjoiSGlnaC1wcmVjaXNpb24gcGhvdG9ncmFwaGljIGNhcHR1cmUgb3ZlciBzaXggbW9udGhzLiIsImltYWdlVXJsIjoiIiwiaW1hZ2VBbHQiOiIifQ=="></div>
+
+<div data-cms-block="portfolio/project-meta" data-attrs="eyJyb3dzIjpbeyJsYWJlbCI6IlNFUlZJQ0VTIiwidmFsdWUiOiJDcmVhdGl2ZSBEaXJlY3Rpb25cbkFyY2hpdGVjdHVyYWwgUGhvdG9ncmFwaHkifSx7ImxhYmVsIjoiWUVBUiIsInZhbHVlIjoiMjAyNCJ9LHsibGFiZWwiOiJDTElFTlQiLCJ2YWx1ZSI6IkFyY2hpdGVjdHVyZSJ9XX0="></div>
+
+<div data-cms-block="portfolio/next-project" data-attrs="eyJleWVicm93IjoiTkVYVCBQUk9KRUNUIiwidGl0bGUiOiJVcmJhbiBTeW1tZXRyeSIsImhyZWYiOiIvYXJjaGl0ZWN0dXJlL3VyYmFuLXN5bW1ldHJ5Lmh0bWwiLCJjdGFMYWJlbCI6IlZJRVcgQ0FTRSBTVFVEWSJ9"></div>

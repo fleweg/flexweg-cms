@@ -791,20 +791,113 @@ function blobToFile(blob: Blob, filename: string): File {
   return new File([blob], filename, { type: blob.type });
 }
 
+// Resolves a single image reference to a Flexweg URL using the
+// shared lookup heuristic — literal first, then `images/foo.jpg` →
+// `foo.jpg` fallback. Returns null when no media doc matches, so
+// callers can decide whether to leave the original ref untouched or
+// emit a warning. Used both by rewriteImageRefs (markdown body) and
+// rewriteBlockMarkerImages (theme block attrs).
+function resolveMediaUrl(
+  ref: string,
+  byName: Map<string, Media>,
+  byUrl: Map<string, Media>,
+): string | null {
+  const isUrl = /^https?:\/\//.test(ref);
+  const bareName = ref.includes("/") ? ref.split("/").pop()! : ref;
+  const media = isUrl
+    ? byUrl.get(ref)
+    : byName.get(ref) ?? byName.get(bareName);
+  if (!media) return null;
+  const formats = media.formats;
+  if (!formats) {
+    const legacyUrl = (media as Media & { url?: string }).url;
+    return legacyUrl ?? null;
+  }
+  const variant =
+    (media.defaultFormat ? formats[media.defaultFormat] : undefined) ??
+    Object.values(formats)[0];
+  return variant ? variant.url : null;
+}
+
+// Scans every theme block marker (<div data-cms-block="X/Y"
+// data-attrs="<base64>"></div>) in the body, decodes the JSON, finds
+// every string value that looks like a local image filename (ends in
+// jpg/png/webp/gif/svg, no scheme, no leading slash), and rewrites
+// it through resolveMediaUrl. Re-encodes the attrs and writes the
+// marker back. Generic across themes — works for portfolio's bento
+// gallery, storytelling, and any future theme block that stores
+// image filenames in its attrs.
+//
+// The base64/JSON shape mirrors what every theme's blocks/util.ts
+// emits (encodeAttrs / decodeAttrs), so this scan is portable.
+const IMAGE_EXT_RE = /\.(?:jpe?g|png|webp|gif|svg)$/i;
+const BLOCK_MARKER_RE =
+  /<div\s+[^>]*data-cms-block="[^"]+"[^>]*data-attrs="([^"]*)"[^>]*>\s*<\/div>/g;
+
+function rewriteBlockMarkerImages(
+  body: string,
+  byName: Map<string, Media>,
+  byUrl: Map<string, Media>,
+): string {
+  return body.replace(BLOCK_MARKER_RE, (full, encoded: string) => {
+    if (!encoded) return full;
+    let json: string;
+    let parsed: unknown;
+    try {
+      // Node Buffer is available; fall back to atob if the runtime
+      // ever changes (the admin always runs in a browser).
+      json =
+        typeof Buffer !== "undefined"
+          ? Buffer.from(encoded, "base64").toString("utf-8")
+          : decodeURIComponent(escape(atob(encoded)));
+      parsed = JSON.parse(json);
+    } catch {
+      return full;
+    }
+    let mutated = false;
+    const visit = (node: unknown): unknown => {
+      if (typeof node === "string") {
+        if (/^https?:\/\//.test(node)) return node;
+        if (!IMAGE_EXT_RE.test(node)) return node;
+        const resolved = resolveMediaUrl(node, byName, byUrl);
+        if (resolved) {
+          mutated = true;
+          return resolved;
+        }
+        return node;
+      }
+      if (Array.isArray(node)) return node.map(visit);
+      if (node && typeof node === "object") {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(node)) out[k] = visit(v);
+        return out;
+      }
+      return node;
+    };
+    const rewritten = visit(parsed);
+    if (!mutated) return full;
+    const newJson = JSON.stringify(rewritten);
+    const newEncoded =
+      typeof Buffer !== "undefined"
+        ? Buffer.from(newJson, "utf-8").toString("base64")
+        : btoa(unescape(encodeURIComponent(newJson)));
+    return full.replace(/data-attrs="[^"]*"/, `data-attrs="${newEncoded}"`);
+  });
+}
+
 function rewriteImageRefs(
   body: string,
   byName: Map<string, Media>,
   byUrl: Map<string, Media>,
 ): string {
-  return body.replace(/(!\[[^\]]*\]\()([^)\s]+)(\))/g, (full, open, ref, close) => {
+  // 1. Block markers (theme blocks like portfolio/bento-gallery store
+  // image filenames inside base64-encoded data-attrs). Resolve first
+  // so the marker bodies carry Flexweg URLs by the time they're
+  // sanitized + decoded at publish time.
+  let out = rewriteBlockMarkerImages(body, byName, byUrl);
+  // 2. Markdown image syntax — the classic ![alt](path) pattern.
+  out = out.replace(/(!\[[^\]]*\]\()([^)\s]+)(\))/g, (full, open, ref, close) => {
     const isUrl = /^https?:\/\//.test(ref);
-    // Lookup by bare filename. Media docs are keyed by their raw
-    // upload filename (e.g. "shop-front.jpg"), but markdown bodies
-    // often reference images via the bundle convention
-    // `images/shop-front.jpg`. Try the literal ref first, then strip
-    // any leading subfolder (anything before the last "/") and try
-    // again — this lets `images/foo.jpg`, `pics/foo.jpg`, or just
-    // `foo.jpg` all resolve to the same media.
     const bareName = ref.includes("/") ? ref.split("/").pop()! : ref;
     const media = isUrl
       ? byUrl.get(ref)
@@ -823,6 +916,7 @@ function rewriteImageRefs(
     if (!variant) return full;
     return `${open}${variant.url}${close}`;
   });
+  return out;
 }
 
 // Parent-first ordering. Terms whose parentSlug references another

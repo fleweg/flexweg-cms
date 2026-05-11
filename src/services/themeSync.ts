@@ -69,6 +69,14 @@ export async function syncThemeAssets(
       log({ level: "info", message: `Uploading ${jsPath}…` });
       await uploadFile({ path: jsPath, content: jsTextCatalog });
     }
+    // Optional filters loader (currently portfolio-only). Same
+    // extension-property convention as jsTextCatalog above.
+    const jsTextFilters = (theme as { jsTextFilters?: string }).jsTextFilters;
+    if (jsTextFilters) {
+      const jsPath = `theme-assets/${theme.id}-filters.js`;
+      log({ level: "info", message: `Uploading ${jsPath}…` });
+      await uploadFile({ path: jsPath, content: jsTextFilters });
+    }
   }
   log({ level: "success", message: "Theme assets synced." });
 }

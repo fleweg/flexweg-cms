@@ -27,6 +27,8 @@ const TARGETS = process.argv.slice(2).length
   : [
       resolve(root, "src/themes/magazine"),
       resolve(root, "src/themes/corporate"),
+      resolve(root, "src/themes/storefront"),
+      resolve(root, "src/themes/portfolio"),
     ];
 
 const RUNTIME_BASES = [

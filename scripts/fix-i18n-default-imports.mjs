@@ -15,6 +15,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TARGETS = [
   resolve(root, "src/themes/magazine"),
   resolve(root, "src/themes/corporate"),
+  resolve(root, "src/themes/storefront"),
+  resolve(root, "src/themes/portfolio"),
 ];
 
 // Match: import i18n[, { ... }] from "@flexweg/cms-runtime"

@@ -1,0 +1,317 @@
+/* Google Fonts — Playfair Display (display) + Inter (body) + Material
+   Symbols Outlined (UI icons). The font pair is swappable from Theme
+   Settings → Style; compileCss() rewrites this @import line at upload
+   time. Material Symbols stays put — it's the icon font, not a
+   typeface choice. */
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material 3 palette — strong-minimalism monochromatic. RGB triplets
+   so Tailwind's `rgb(var(--color-X) / <alpha-value>)` can apply
+   modifier alpha (e.g. text-primary/60). All values from DESIGN.md. */
+@layer base {
+  :root {
+    --color-background: 253 248 248;        /* #fdf8f8 — warm off-white */
+    --color-surface: 253 248 248;
+    --color-surface-container-lowest: 255 255 255;
+    --color-surface-container-low: 247 243 242;
+    --color-surface-container: 241 237 236;
+    --color-on-surface: 28 27 27;           /* #1c1b1b — charcoal */
+    --color-on-surface-variant: 68 71 72;
+    --color-outline: 116 120 120;
+    --color-outline-variant: 196 199 199;
+    --color-primary: 0 0 0;                 /* #000 — pure for 1px borders */
+    --color-on-primary: 255 255 255;
+    --color-secondary: 93 95 95;            /* #5d5f5f — meta grey */
+    --color-on-secondary: 255 255 255;
+    --color-secondary-container: 223 224 224;
+    --color-on-secondary-container: 97 99 99;
+    --color-error: 225 29 72;               /* #E11D48 — rose accent (active state only) */
+    --font-serif: "Playfair Display";
+    --font-sans: "Inter";
+  }
+
+  html, body {
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-surface));
+    font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  /* ───── Display headlines ───── */
+  .display-serif {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* ───── Material Symbols ───── */
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+
+  /* ───── Nav links — active state shows a 4px rose dot below the
+     label, exactly the mockup contract. The loader sets is-active
+     on the matching <a>. */
+  .nav-link {
+    position: relative;
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgb(var(--color-secondary));
+    transition: color 0.2s;
+  }
+  .nav-link:hover { color: rgb(var(--color-on-surface)); }
+  .nav-link.is-active { color: rgb(var(--color-on-surface)); }
+  .nav-link.is-active::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: rgb(var(--color-error));
+    border-radius: 0;
+  }
+
+  /* ───── Outline button (Contact pill etc.) ───── */
+  .portfolio-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.5rem;
+    border: 1px solid rgb(var(--color-primary));
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgb(var(--color-on-surface));
+    background: transparent;
+    transition: background 0.3s, color 0.3s;
+    cursor: pointer;
+  }
+  .portfolio-btn-outline:hover {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-primary));
+  }
+
+  /* ───── Project card ───── */
+  .project-card {
+    cursor: pointer;
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .project-card__image {
+    overflow: hidden;
+    background: rgb(var(--color-surface-container));
+    margin-bottom: 1rem;
+  }
+  .project-card__image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.7s ease;
+  }
+  .project-card:hover .project-card__image img {
+    transform: scale(1.02);
+  }
+  .project-card__title {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: rgb(var(--color-on-surface));
+    margin-bottom: 0.25rem;
+  }
+  .project-card__meta {
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(var(--color-secondary));
+  }
+
+  /* ───── Staggered grid offsets — applied by HomeTemplate via
+     position-based nth-child. Mobile flat, desktop staggered. */
+  @media (min-width: 768px) {
+    .portfolio-staggered > :nth-child(2) { margin-top: 3rem; }
+    .portfolio-staggered > :nth-child(4) { margin-top: 6rem; }
+    .portfolio-staggered > :nth-child(6) { margin-top: -3rem; }
+    .portfolio-staggered > :nth-child(8) { margin-top: 4.5rem; }
+    .portfolio-staggered > :nth-child(10) { margin-top: -1.5rem; }
+  }
+
+  /* ───── Masonry grid (12-col, cards span 3 or 6) ───── */
+  .portfolio-masonry {
+    column-count: 1;
+    column-gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .portfolio-masonry { column-count: 3; }
+  }
+  @media (min-width: 1024px) {
+    .portfolio-masonry { column-count: 4; }
+  }
+  .portfolio-masonry > * {
+    break-inside: avoid;
+    margin-bottom: 3rem;
+  }
+
+  /* ───── Burger overlay ───── */
+  .burger-menu {
+    position: fixed;
+    inset: 0;
+    background: rgb(var(--color-surface));
+    z-index: 60;
+    display: none;
+    padding: 4rem 2.5rem;
+  }
+  .burger-menu.is-open { display: flex; flex-direction: column; gap: 2rem; }
+  .burger-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .burger-menu a {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: rgb(var(--color-on-surface));
+    text-decoration: none;
+  }
+
+  /* ───── Single post — body prose ───── */
+  .portfolio-prose {
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgb(var(--color-on-surface));
+    max-width: 700px;
+  }
+  .portfolio-prose p { margin-bottom: 1.5rem; }
+  .portfolio-prose h2 {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+  }
+  .portfolio-prose h3 {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .portfolio-prose ul, .portfolio-prose ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .portfolio-prose ul { list-style: disc; }
+  .portfolio-prose ol { list-style: decimal; }
+  .portfolio-prose blockquote {
+    border-left: 1px solid rgb(var(--color-primary));
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-style: italic;
+    font-size: 24px;
+  }
+  .portfolio-prose a {
+    color: rgb(var(--color-on-surface));
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .portfolio-prose a:hover {
+    color: rgb(var(--color-error));
+  }
+  .portfolio-prose img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 2rem 0;
+  }
+
+  /* ───── Static page body (type: page) ───── */
+  .portfolio-page-body {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgb(var(--color-on-surface));
+  }
+  @media (min-width: 768px) {
+    .portfolio-page-body { padding: 0 2.5rem; }
+  }
+  .portfolio-page-body p { margin-bottom: 1.5rem; }
+  .portfolio-page-body h1 {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 48px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+  @media (min-width: 768px) {
+    .portfolio-page-body h1 { font-size: 80px; line-height: 1.1; letter-spacing: -0.02em; }
+  }
+  .portfolio-page-body h2 {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 4rem;
+    margin-bottom: 1rem;
+  }
+  .portfolio-page-body h3 {
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    margin-top: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .portfolio-page-body img {
+    width: 100%;
+    height: auto;
+    margin: 3rem 0;
+  }
+  .portfolio-page-body ul, .portfolio-page-body ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .portfolio-page-body ul { list-style: disc; }
+  .portfolio-page-body ol { list-style: decimal; }
+  .portfolio-page-body a {
+    color: rgb(var(--color-on-surface));
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .portfolio-page-body a:hover {
+    color: rgb(var(--color-error));
+  }
+}
