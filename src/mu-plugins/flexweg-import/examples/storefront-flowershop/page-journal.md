@@ -9,7 +9,7 @@ seoDescription: Quiet reflections on flowers, slow living, the seasons we work w
 excerpt: "Reflections on the seasons, the work, and the small daily acts that add up to a life worth living."
 ---
 
-![A notebook on the workshop bench](images/39-journal-mood.jpg)
+![A notebook on the workshop bench](39-journal-mood.jpg)
 
 # Cultivating a meaningful life
 

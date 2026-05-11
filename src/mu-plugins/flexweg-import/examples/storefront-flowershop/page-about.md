@@ -9,7 +9,7 @@ seoDescription: The story of how a corner flower shop grew from a Saturday marke
 excerpt: "How a Saturday market stall became the everyday flower shop you walk past on your way to the bakery."
 ---
 
-![Our shop on a quiet Tuesday morning](images/34-shop-front.jpg)
+![Our shop on a quiet Tuesday morning](34-shop-front.jpg)
 
 # A small shop on a quiet street
 
@@ -19,7 +19,7 @@ The shop has been on the same corner ever since. Three windows, a deep counter, 
 
 ## Who works here
 
-![Hands at work — never beautiful, always honest](images/36-florist-hands.jpg)
+![Hands at work — never beautiful, always honest](36-florist-hands.jpg)
 
 Three of us, full-time. Lila still does most of the floral design. Marcus runs the deliveries and learned more about cars than he ever expected to. Yuki joined two years ago from the culinary world and has the steadiest knife hand of any of us — she tackles all the wedding work now.
 
@@ -27,7 +27,7 @@ We're a small team, on purpose. The bouquets each get more attention because not
 
 ## How we source
 
-![Our buying day — three crates of cosmos and the rest is whatever surprises us](images/37-florist-working.jpg)
+![Our buying day — three crates of cosmos and the rest is whatever surprises us](37-florist-working.jpg)
 
 Fifty per cent of our flowers are British-grown — Cornwall, Lincolnshire, a market garden in Norfolk we visit twice a year. The rest comes through our wholesaler in New Covent Garden, almost all from European growers. We don't buy roses from Kenya or Ecuador, and we wrap nothing in plastic film. Sometimes that means we run out of red roses for Valentine's Day. We make peace with that.
 
@@ -43,7 +43,7 @@ We try not to be self-important about flowers — they're flowers, they brighten
 
 ## Visit us
 
-![Inside, on a slow Thursday afternoon](images/35-shop-interior.jpg)
+![Inside, on a slow Thursday afternoon](35-shop-interior.jpg)
 
 We're open Tuesday through Saturday, 9 am to 6 pm. Closed Sundays and Mondays — we go to market, rest, and live our lives. The kettle is always on. There's usually a dog asleep behind the counter.
 

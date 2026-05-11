@@ -450,7 +450,16 @@ export function scanBundle(bundle: ImportBundle, ctx: ScanContext, options: Impo
     }
     for (const ref of refs) {
       if (seenLocalNames.has(ref)) continue;
-      const blob = bundle.images.find((i) => i.filename === ref);
+      // Resolve the ref against the bundle by trying the literal
+      // first, then stripping any leading subfolder so a markdown
+      // `![](images/shop-front.jpg)` matches the bundle's
+      // `images/shop-front.jpg` directly OR `shop-front.jpg` when
+      // the bundle author flattened the path in their bundle. Same
+      // tolerance as rewriteImageRefs on the publish side.
+      const bareName = ref.includes("/") ? ref.split("/").pop()! : ref;
+      const blob =
+        bundle.images.find((i) => i.filename === ref) ??
+        bundle.images.find((i) => i.filename === bareName);
       if (!blob) {
         warnings.push({
           level: "warning",
@@ -460,11 +469,12 @@ export function scanBundle(bundle: ImportBundle, ctx: ScanContext, options: Impo
         continue;
       }
       // Dedup against existing media: same name + roughly same
-      // bytes → reuse.
-      const existing = existingMediaByName.get(ref);
+      // bytes → reuse. Match by bare filename — media docs persist
+      // under their bare name regardless of how the ref was written.
+      const existing = existingMediaByName.get(bareName);
       if (existing && Math.abs((existing.size ?? 0) - blob.blob.size) < 1024) continue;
       imagesToUpload.push({
-        filename: ref,
+        filename: blob.filename,
         bytes: blob.blob.size,
         remote: false,
       });
@@ -788,7 +798,17 @@ function rewriteImageRefs(
 ): string {
   return body.replace(/(!\[[^\]]*\]\()([^)\s]+)(\))/g, (full, open, ref, close) => {
     const isUrl = /^https?:\/\//.test(ref);
-    const media = isUrl ? byUrl.get(ref) : byName.get(ref);
+    // Lookup by bare filename. Media docs are keyed by their raw
+    // upload filename (e.g. "shop-front.jpg"), but markdown bodies
+    // often reference images via the bundle convention
+    // `images/shop-front.jpg`. Try the literal ref first, then strip
+    // any leading subfolder (anything before the last "/") and try
+    // again — this lets `images/foo.jpg`, `pics/foo.jpg`, or just
+    // `foo.jpg` all resolve to the same media.
+    const bareName = ref.includes("/") ? ref.split("/").pop()! : ref;
+    const media = isUrl
+      ? byUrl.get(ref)
+      : byName.get(ref) ?? byName.get(bareName);
     if (!media) return full; // leave as-is, user can fix manually
     // Legacy media docs (created before the multi-variant pipeline)
     // have no `formats` map but expose `url` directly.

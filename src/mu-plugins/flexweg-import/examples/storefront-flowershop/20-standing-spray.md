@@ -11,7 +11,7 @@ excerpt: "A floor-standing tribute on an easel, suitable for the chapel or grave
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjoxNDEuNjcsInByaWNlVFRDIjoxNzAsInByb21vVFRDIjowLCJjdXJyZW5jeSI6IkdCUCIsInN0b2NrU3RhdHVzIjoiaW4tc3RvY2siLCJ2YXJpYW50cyI6W10sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOltdfQ=="></div>
 
-![Standing Spray](images/20-standing-spray.jpg)
+![Standing Spray](20-standing-spray.jpg)
 
 Built on an easel, head-height when displayed. Visible from a distance — for chapels and gravesides where smaller arrangements get lost. White, blush, or all-green palette available.
 

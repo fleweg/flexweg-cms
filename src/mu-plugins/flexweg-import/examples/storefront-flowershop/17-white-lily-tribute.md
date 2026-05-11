@@ -11,7 +11,7 @@ excerpt: "A simple, dignified arrangement of white lilies and gypsophila — del
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjo5MS42NywicHJpY2VUVEMiOjExMCwicHJvbW9UVEMiOjAsImN1cnJlbmN5IjoiR0JQIiwic3RvY2tTdGF0dXMiOiJpbi1zdG9jayIsInZhcmlhbnRzIjpbeyJsYWJlbCI6IlNpemUiLCJvcHRpb25zIjpbIlNtYWxsIiwiTWVkaXVtICgrIFx1MDBhMzE1KSIsIkxhcmdlICgrIFx1MDBhMzMwKSJdfV0sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOltdfQ=="></div>
 
-![White Lily Tribute](images/17-white-lily-tribute.jpg)
+![White Lily Tribute](17-white-lily-tribute.jpg)
 
 Sometimes you just want something quiet and clean. White oriental lilies — Casablanca or Stargazer's white cousin — gypsophila for softness, a length of ivy down one side. Sympathy card included with your message.
 

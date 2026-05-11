@@ -9,7 +9,7 @@ seoDescription: How to reach the shop. Phone, email, opening hours, and the addr
 excerpt: "How to reach us. Phone, email, the front door — whichever you prefer."
 ---
 
-![The shop counter on a Tuesday morning](images/40-shop-counter.jpg)
+![The shop counter on a Tuesday morning](40-shop-counter.jpg)
 
 # Contact
 

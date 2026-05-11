@@ -11,7 +11,7 @@ excerpt: "A loose, romantic mix of garden roses, ranunculus and astilbe in soft 
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjo2Mi41LCJwcmljZVRUQyI6NzUsInByb21vVFRDIjowLCJjdXJyZW5jeSI6IkdCUCIsInN0b2NrU3RhdHVzIjoiaW4tc3RvY2siLCJ2YXJpYW50cyI6W3sibGFiZWwiOiJTaXplIiwib3B0aW9ucyI6WyJTbWFsbCIsIk1lZGl1bSAoKyBcdTAwYTMxNSkiLCJMYXJnZSAoKyBcdTAwYTMzMCkiXX0seyJsYWJlbCI6IldyYXBwaW5nIiwib3B0aW9ucyI6WyJLcmFmdCBwYXBlciIsIkxpbmVuIHJpYmJvbiAoKyBcdTAwYTM1KSJdfV0sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOlsiTmV3Il19"></div>
 
-![Spring Romance](images/01-spring-romance.jpg)
+![Spring Romance](01-spring-romance.jpg)
 
 A celebration of early spring, gathered the morning of your delivery. Garden-grown blooms in soft pinks and creams, looser and more painterly than the supermarket fare you've been settling for.
 

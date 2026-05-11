@@ -11,7 +11,7 @@ excerpt: "A flowering Phalaenopsis orchid — easier than its reputation suggest
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjo1NC4xNywicHJpY2VUVEMiOjY1LCJwcm9tb1RUQyI6NTIsImN1cnJlbmN5IjoiR0JQIiwic3RvY2tTdGF0dXMiOiJpbi1zdG9jayIsInZhcmlhbnRzIjpbeyJsYWJlbCI6IkNvbG91ciIsIm9wdGlvbnMiOlsiV2hpdGUiLCJTb2Z0IHBpbmsiLCJNYWdlbnRhIl19LHsibGFiZWwiOiJTdGVtcyIsIm9wdGlvbnMiOlsiU2luZ2xlIiwiRG91YmxlIl19XSwiY3RhUHJpbWFyeUxhYmVsIjoiUmVzZXJ2ZSB0aGlzIGJvdXF1ZXQiLCJjdGFQcmltYXJ5SHJlZiI6Ii9jb250YWN0Lmh0bWwiLCJjdGFTZWNvbmRhcnlMYWJlbCI6IkFzayBhIHF1ZXN0aW9uIiwiY3RhU2Vjb25kYXJ5SHJlZiI6Im1haWx0bzpoZWxsb0BleGFtcGxlLmNvbSIsImJhZGdlcyI6WyJCZXN0c2VsbGVyIl19"></div>
 
-![Phalaenopsis Orchid](images/23-phalaenopsis-orchid.jpg)
+![Phalaenopsis Orchid](23-phalaenopsis-orchid.jpg)
 
 Orchids have an undeserved reputation for difficulty. Phalaenopsis (the supermarket orchid, but ours are nursery-grown) want neglect more than care: bright indirect light, weekly watering with three ice cubes, and an annual repotting in orchid bark.
 

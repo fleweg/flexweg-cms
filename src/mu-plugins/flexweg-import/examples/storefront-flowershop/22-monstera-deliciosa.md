@@ -11,7 +11,7 @@ excerpt: "Swiss-cheese plant — fast-growing, architectural, thriving in indire
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjo2Mi41LCJwcmljZVRUQyI6NzUsInByb21vVFRDIjowLCJjdXJyZW5jeSI6IkdCUCIsInN0b2NrU3RhdHVzIjoiaW4tc3RvY2siLCJ2YXJpYW50cyI6W3sibGFiZWwiOiJQb3QiLCJvcHRpb25zIjpbIlBsYXN0aWMgbnVyc2VyeSBwb3QiLCJUZXJyYWNvdHRhICgrIFx1MDBhMzEyKSIsIlN0b25ld2FyZSAoKyBcdTAwYTMyNCkiXX0seyJsYWJlbCI6IlNpemUiLCJvcHRpb25zIjpbIk1lZGl1bSAoNTAgY20pIiwiTGFyZ2UgKDkwIGNtKSJdfV0sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOltdfQ=="></div>
 
-![Monstera Deliciosa](images/22-monstera-deliciosa.jpg)
+![Monstera Deliciosa](22-monstera-deliciosa.jpg)
 
 The houseplant that single-handedly shaped a decade of interior design. Big leaves, holes that get more dramatic as it grows, happy in a corner away from direct sun.
 

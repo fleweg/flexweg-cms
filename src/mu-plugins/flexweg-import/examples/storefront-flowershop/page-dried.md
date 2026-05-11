@@ -9,7 +9,7 @@ seoDescription: Dried flower arrangements that hold their colour for years. Sust
 excerpt: "Dried flowers that last for years. Sustainable, low-maintenance, and the right kind of beautiful for the right kind of room."
 ---
 
-![A dried bouquet on the workshop bench](images/31-dried-bouquet.jpg)
+![A dried bouquet on the workshop bench](31-dried-bouquet.jpg)
 
 # Everlasting
 
@@ -17,7 +17,7 @@ Dried flowers used to be the consolation prize. The leftover. The thing you acce
 
 ## Why we make them
 
-![Dried roses — preserved at peak, not the leftovers](images/32-dried-roses.jpg)
+![Dried roses — preserved at peak, not the leftovers](32-dried-roses.jpg)
 
 Fresh flowers are perishable. That's part of the appeal — the brief, generous gesture. But a dried arrangement does different work: it lives in the room for a year or two, it doesn't need water, it doesn't suffer when you go on holiday. Three reasons we lean into them more each season:
 
@@ -27,7 +27,7 @@ Fresh flowers are perishable. That's part of the appeal — the brief, generous 
 
 ## The process
 
-![Hanging upside down in a dry, dark cupboard for two weeks](images/33-dried-arrangement.jpg)
+![Hanging upside down in a dry, dark cupboard for two weeks](33-dried-arrangement.jpg)
 
 We dry our own. Bunches go into the workshop's dry cupboard — dark, dry, with airflow — for two weeks minimum. Some flowers (delphiniums, larkspur) keep nearly all their colour. Others (roses, peonies) shift toward muted, dustier versions of themselves. We don't bleach. We don't dye. The colour palette of a dried bouquet is the limit of what nature gave us, and we like the constraint.
 

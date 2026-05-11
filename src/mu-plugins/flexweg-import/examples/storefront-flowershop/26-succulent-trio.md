@@ -11,7 +11,7 @@ excerpt: "Three small succulents in matching pots — the gift for desks and win
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjoyOS4xNywicHJpY2VUVEMiOjM1LCJwcm9tb1RUQyI6MCwiY3VycmVuY3kiOiJHQlAiLCJzdG9ja1N0YXR1cyI6ImluLXN0b2NrIiwidmFyaWFudHMiOlt7ImxhYmVsIjoiUG90Iiwib3B0aW9ucyI6WyJUZXJyYWNvdHRhIHRyaW8iLCJDb25jcmV0ZSB0cmlvICgrIFx1MDBhMzgpIl19XSwiY3RhUHJpbWFyeUxhYmVsIjoiUmVzZXJ2ZSB0aGlzIGJvdXF1ZXQiLCJjdGFQcmltYXJ5SHJlZiI6Ii9jb250YWN0Lmh0bWwiLCJjdGFTZWNvbmRhcnlMYWJlbCI6IkFzayBhIHF1ZXN0aW9uIiwiY3RhU2Vjb25kYXJ5SHJlZiI6Im1haWx0bzpoZWxsb0BleGFtcGxlLmNvbSIsImJhZGdlcyI6W119"></div>
 
-![Succulent Trio](images/26-succulent-trio.jpg)
+![Succulent Trio](26-succulent-trio.jpg)
 
 Three different species per box — a Haworthia, an Echeveria and a Sedum, varying with what's available from our growers. Tiny enough for the smallest desk, hardy enough that the recipient can ignore them.
 

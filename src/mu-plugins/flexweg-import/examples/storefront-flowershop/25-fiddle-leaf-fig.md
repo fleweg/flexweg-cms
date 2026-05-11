@@ -11,7 +11,7 @@ excerpt: "Ficus lyrata — the dramatic standalone plant that anchors a living r
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjoxMDguMzMsInByaWNlVFRDIjoxMzAsInByb21vVFRDIjowLCJjdXJyZW5jeSI6IkdCUCIsInN0b2NrU3RhdHVzIjoiaW4tc3RvY2siLCJ2YXJpYW50cyI6W3sibGFiZWwiOiJQb3QiLCJvcHRpb25zIjpbIlBsYXN0aWMgbnVyc2VyeSBwb3QiLCJUZXJyYWNvdHRhICgrIFx1MDBhMzEyKSIsIlN0b25ld2FyZSAoKyBcdTAwYTMyNCkiXX0seyJsYWJlbCI6IlNpemUiLCJvcHRpb25zIjpbIk1lZGl1bSAoOTAgY20pIiwiTGFyZ2UgKDE0MCBjbSkiLCJUcmVlICgxODAgY20rKSJdfV0sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOlsiU3RhdGVtZW50Il19"></div>
 
-![Fiddle-Leaf Fig](images/25-fiddle-leaf-fig.jpg)
+![Fiddle-Leaf Fig](25-fiddle-leaf-fig.jpg)
 
 The plant that fills a corner without trying to take over. Big violin-shaped leaves, growth measured in months not weeks. Worth the slight fussiness in care.
 

@@ -9,7 +9,7 @@ seoDescription: A monthly window into the British growing calendar — what's in
 excerpt: "A monthly window into what's growing right now. We plan with the season, not against it."
 ---
 
-![The peony season — six weeks a year, worth waiting for](images/04-pink-peony.jpg)
+![The peony season — six weeks a year, worth waiting for](04-pink-peony.jpg)
 
 # Seasonal blooms
 
@@ -23,7 +23,7 @@ In between: the boring weeks. The bridge season. The "everything-is-tulips-and-w
 
 ## A rough calendar
 
-![Wildflower season — June, sometimes early July](images/03-wildflower-meadow.jpg)
+![Wildflower season — June, sometimes early July](03-wildflower-meadow.jpg)
 
 | Month | What we're excited about |
 |---|---|

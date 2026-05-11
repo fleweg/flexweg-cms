@@ -9,7 +9,7 @@ seoDescription: A rotating curation of hard-to-find plants — rare orchid speci
 excerpt: "A rotating selection of rare species — orchids, unusual succulents, plants you won't find in supermarkets. Stock changes monthly."
 ---
 
-![A rare slipper orchid, only here for the month](images/38-rare-orchid.jpg)
+![A rare slipper orchid, only here for the month](38-rare-orchid.jpg)
 
 # Rare & unusual
 

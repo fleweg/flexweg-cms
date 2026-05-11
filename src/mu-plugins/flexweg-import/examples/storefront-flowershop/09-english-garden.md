@@ -11,7 +11,7 @@ excerpt: "David Austin garden roses, sweet peas and lavender. The classic Englis
 
 <div data-cms-block="storefront/product-info" data-attrs="eyJwcmljZUhUIjo4My4zMywicHJpY2VUVEMiOjEwMCwicHJvbW9UVEMiOjAsImN1cnJlbmN5IjoiR0JQIiwic3RvY2tTdGF0dXMiOiJpbi1zdG9jayIsInZhcmlhbnRzIjpbeyJsYWJlbCI6IlNpemUiLCJvcHRpb25zIjpbIlNtYWxsIiwiTWVkaXVtICgrIFx1MDBhMzE1KSIsIkxhcmdlICgrIFx1MDBhMzMwKSJdfSx7ImxhYmVsIjoiVmFzZSIsIm9wdGlvbnMiOlsiTm8gdmFzZSIsIkdsYXNzIGN5bGluZGVyICgrIFx1MDBhMzE4KSIsIkNlcmFtaWMgc3RvbmV3YXJlICgrIFx1MDBhMzM1KSJdfV0sImN0YVByaW1hcnlMYWJlbCI6IlJlc2VydmUgdGhpcyBib3VxdWV0IiwiY3RhUHJpbWFyeUhyZWYiOiIvY29udGFjdC5odG1sIiwiY3RhU2Vjb25kYXJ5TGFiZWwiOiJBc2sgYSBxdWVzdGlvbiIsImN0YVNlY29uZGFyeUhyZWYiOiJtYWlsdG86aGVsbG9AZXhhbXBsZS5jb20iLCJiYWRnZXMiOlsiQmVzdHNlbGxlciJdfQ=="></div>
 
-![English Garden](images/09-english-garden.jpg)
+![English Garden](09-english-garden.jpg)
 
 Our most-asked-for bouquet, year-round. Heavy with garden roses, scented with sweet peas and lavender, finished with whatever flowering branch is having its moment that week.
 

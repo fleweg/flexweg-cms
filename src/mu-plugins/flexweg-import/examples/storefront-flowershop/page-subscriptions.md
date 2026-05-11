@@ -9,7 +9,7 @@ seoDescription: A flower or plant subscription is a small recurring ritual. Here
 excerpt: "A flower subscription is a quiet ritual. Once a week, once a month, once every two — your kitchen table the better for it."
 ---
 
-![Wednesday delivery, the standing weekly order](images/28-weekly-subscription.jpg)
+![Wednesday delivery, the standing weekly order](28-weekly-subscription.jpg)
 
 # Floral rituals
 
