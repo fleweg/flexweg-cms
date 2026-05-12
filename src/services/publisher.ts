@@ -30,6 +30,7 @@ import { publishMenuJson } from "./menuPublisher";
 import { publishPostsJson } from "./postsJsonPublisher";
 import { publishAuthorsJson } from "./authorsJsonPublisher";
 import { fetchAllPosts, markPostDraft, markPostOnline } from "./posts";
+import { fetchAllTerms } from "./taxonomies";
 import { postSortMillis } from "../core/postSort";
 import { setCurrentPublishContext } from "./publishContext";
 import { resolveArchivesLink } from "../plugins/flexweg-archives/generator";
@@ -617,17 +618,25 @@ export async function buildPublishContext(args: {
   // fresh list here instead of relying on the cache.
   posts?: Post[];
   pages?: Post[];
+  // When true, refetch terms from Firestore inside this call instead
+  // of trusting `args.terms`. Use this when the caller just wrote
+  // new terms in the same turn and can't rely on the React
+  // subscription's eventual update — e.g. flexweg-import after
+  // creating new categories. Default false to keep hot-path callers
+  // (UI clicks) free of an extra read.
+  refreshTerms?: boolean;
 }): Promise<PublishContext> {
-  const [posts, pages, mediaList] = await Promise.all([
+  const [posts, pages, mediaList, terms] = await Promise.all([
     args.posts ? Promise.resolve(args.posts) : fetchAllPosts({ type: "post" }),
     args.pages ? Promise.resolve(args.pages) : fetchAllPosts({ type: "page" }),
     listAllMedia(),
+    args.refreshTerms ? fetchAllTerms() : Promise.resolve(args.terms),
   ]);
   const media = new Map(mediaList.map((m) => [m.id, m]));
   return {
     posts,
     pages,
-    terms: args.terms,
+    terms,
     settings: args.settings,
     users: args.users,
     authorLookup: args.authorLookup,
@@ -848,6 +857,71 @@ async function republishAuthorsJson(ctx: PublishContext, log: PublishLogger): Pr
   } catch (err) {
     log({ level: "warn", message: `Authors JSON republish failed: ${(err as Error).message}` });
   }
+}
+
+// Repair pass: walks every online post, recomputes the canonical
+// `buildPostUrl` against the current `ctx.terms`, and re-publishes the
+// posts whose current `lastPublishedPath` no longer matches. Lighter
+// than `regenerateAll` because it skips the home / listings / author
+// passes and skips any post whose path is already correct.
+//
+// Useful after an import that ran with a stale terms list (or any
+// scenario where a post got published at a wrong path and the user
+// wants a one-click fix without doing surgery on individual posts).
+//
+// Cleanup of the stale path happens via the standard cleanupStalePaths
+// flow — the old file is deleted before the new one is uploaded.
+export async function repairPublishPaths(
+  ctx: PublishContext,
+  log: PublishLogger,
+): Promise<{ repaired: number; checked: number }> {
+  const onlinePosts = [...ctx.posts, ...ctx.pages].filter((p) => p.status === "online");
+  log({ level: "info", message: `Checking ${onlinePosts.length} online posts for path drift…` });
+
+  let repaired = 0;
+  for (const post of onlinePosts) {
+    const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
+    const homeBound = isStaticHome(post, ctx.settings);
+    const expectedPath = homeBound ? HOME_PATH : buildPostUrl({ post, primaryTerm: term });
+    if (post.lastPublishedPath === expectedPath) continue;
+    log({
+      level: "info",
+      message: `Repairing "${post.title}": ${post.lastPublishedPath || "(none)"} → ${expectedPath}`,
+    });
+    const failedDeletions = await cleanupStalePaths(
+      [post.lastPublishedPath ?? "", ...(post.previousPublishedPaths ?? [])],
+      expectedPath,
+      log,
+    );
+    let hash = "";
+    if (!homeBound) {
+      const html = await renderSingle(post, ctx);
+      const result = await uploadIfChanged(expectedPath, html, undefined, log);
+      hash = result.hash;
+    }
+    await markPostOnline(post.id, {
+      lastPublishedPath: expectedPath,
+      lastPublishedHash: hash,
+      previousPublishedPaths: failedDeletions,
+    });
+    repaired++;
+    await new Promise((r) => setTimeout(r, 75));
+  }
+
+  // After repairing the post files, refresh listings + menu.json + the
+  // posts/authors JSON so any URL change propagates. Skip if nothing
+  // moved.
+  if (repaired > 0) {
+    await regenerateListings(ctx, log);
+    await republishMenu(ctx, log);
+    await republishPostsJson(ctx, log);
+  }
+
+  log({
+    level: "success",
+    message: `Repair complete: ${repaired} of ${onlinePosts.length} posts moved.`,
+  });
+  return { repaired, checked: onlinePosts.length };
 }
 
 // Full regeneration: every online post, every category, the home, the 404.

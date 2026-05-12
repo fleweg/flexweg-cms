@@ -267,6 +267,8 @@
       "homeHelp": "Genereert alleen index.html opnieuw — snelste optie.",
       "allHtml": "Alle HTML-pagina's",
       "allHtmlHelp": "Elke post, pagina, archief en lijst — plus menu / posts / authors JSON-snapshots.",
+      "repair": "URL's herstellen",
+      "repairHelp": "Berekent de canonieke URL van elke online post opnieuw en verplaatst bestanden die op de verkeerde URL terechtkwamen. Handig na een import die liep voordat de termen gesynchroniseerd waren.",
       "assets": "Thema-bestanden",
       "assetsHelp": "Uploadt CSS + bijbehorende scripts van het actieve thema naar /theme-assets/.",
       "everything": "Alles",

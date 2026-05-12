@@ -87,10 +87,16 @@ export function ExternalInstallModal({
     setInstalling(true);
     try {
       const result = await installFromZip(kind, file);
+      const successKey =
+        result.mode === "upgrade"
+          ? "externalInstall.upgradeSuccess"
+          : "externalInstall.installSuccess";
       toast.success(
-        t("externalInstall.installSuccess", {
+        t(successKey, {
           name: result.manifest.name,
           count: result.filesUploaded,
+          previousVersion: result.previousVersion ?? "",
+          newVersion: result.manifest.version,
         }),
       );
       // Reload to pick up the freshly installed bundle. A no-cache

@@ -17,7 +17,7 @@ import { PreviewModal } from "../components/editor/PreviewModal";
 import { useEditorStyleInjection } from "../hooks/useEditorStyleInjection";
 import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
-import { PublishLog } from "../components/publishing/PublishLog";
+import { PublishLogModal } from "../components/publishing/PublishLogModal";
 import {
   buildPostUrl,
   detectPathCollision,
@@ -142,7 +142,10 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const inlinePickerResolveRef = useRef<((m: Media | null) => void) | null>(null);
   // Promise-based controller for the inline media picker. Lets the editor's
   // image button await the user's selection before inserting the URL.
-  const [showLog, setShowLog] = useState(false);
+  //
+  // PublishLogModal auto-shows when `logEntries.length > 0` — no
+  // separate showLog flag needed. Closing the modal calls
+  // `setLogEntries([])` which hides it.
   // Tiptap editor instance, lifted from MarkdownEditor so the
   // EditorInspector's Block tab can read selection state and surface
   // per-block options.
@@ -264,7 +267,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     if (!title.trim()) return;
     if (!slugValid) return;
     setSaving(true);
-    setShowLog(false);
+    setLogEntries([]);
     try {
       const termIds = primaryTermId ? [primaryTermId, ...tagIds] : [...tagIds];
       const seo = buildSeoPayload();
@@ -328,7 +331,6 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
           users,
           authorLookup: buildAuthorLookup(users, media),
         });
-        setShowLog(true);
         setLogEntries([]);
         await publishPost(existing.id, ctx, appendLog);
         toast.success(t("posts.edit.savedAndRepublished"));
@@ -346,7 +348,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   async function handleDelete() {
     if (!existing) return;
     if (!window.confirm(t("posts.edit.confirmDelete"))) return;
-    setShowLog(true);
+    setLogEntries([]);
     const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
     try {
       const ctx = await buildPublishContext({
@@ -364,7 +366,6 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   }
 
   function appendLog(entry: PublishLogEntry) {
-    setShowLog(true);
     setLogEntries((prev) => [...prev, entry]);
   }
 
@@ -554,11 +555,11 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
             />
           </div>
 
-          {showLog && (
-            <div className="mt-6">
-              <PublishLog entries={logEntries} />
-            </div>
-          )}
+          <PublishLogModal
+            entries={logEntries}
+            busy={false}
+            onClear={() => setLogEntries([])}
+          />
         </div>
 
         <EditorInspector

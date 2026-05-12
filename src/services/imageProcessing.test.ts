@@ -68,7 +68,7 @@ describe("mergeFormats", () => {
   });
   it("falls back when no theme config is supplied", () => {
     const merged = mergeFormats(ADMIN_FORMATS, undefined);
-    expect(Object.keys(merged.formats)).toEqual(["admin-thumb", "admin-preview"]);
+    expect(Object.keys(merged.formats)).toEqual(["admin-thumb", "admin-preview", "admin-original"]);
     expect(merged.outputMime).toBe("image/webp");
     expect(merged.defaultFormat).toBe("admin-preview");
   });

@@ -52,6 +52,14 @@ export interface BundledManifest {
 export interface UploadResult {
   manifest: BundledManifest;
   filesUploaded: number;
+  // "install" = fresh entry, "upgrade" = same id already existed and
+  // we overwrote it (files purged + re-uploaded, registry entry's
+  // version/apiVersion refreshed). Lets the UI surface "Theme X
+  // upgraded to v1.1.0" vs "Theme X installed".
+  mode: "install" | "upgrade";
+  // When mode === "upgrade", carries the version we replaced so the
+  // toast can show "v1.0.0 → v1.1.0".
+  previousVersion?: string;
 }
 
 export class ExternalUploadError extends Error {
@@ -61,7 +69,6 @@ export class ExternalUploadError extends Error {
       | "no-manifest"
       | "invalid-manifest"
       | "incompatible-api"
-      | "duplicate-id"
       | "no-bundle"
       | "fetch-manifest"
       | "upload-failed",
@@ -239,15 +246,29 @@ export async function installFromZip(
     );
   }
 
-  // Refuse to clobber an existing entry — the caller is expected to
-  // explicitly uninstall first if they want to swap an entry.
+  // Detect existing entry — same id means "upgrade", different ids
+  // mean "install". Upgrade purges the existing folder so leftover
+  // files from a previous version don't shadow the new bundle.
   const current = await readManifest();
   const list = current[kind];
-  if (list.some((e) => e.id === manifest.id)) {
-    throw new ExternalUploadError(
-      `${kind === "plugins" ? "plugin" : "theme"} "${manifest.id}" is already installed — uninstall it first`,
-      "duplicate-id",
-    );
+  const existingIdx = list.findIndex((e) => e.id === manifest.id);
+  const isUpgrade = existingIdx >= 0;
+  const previousVersion = isUpgrade ? list[existingIdx].version : undefined;
+  if (isUpgrade) {
+    // 404 is silently swallowed inside deleteFolder. We delete the
+    // folder BEFORE writing the new manifest entry so a failed
+    // upload can't strand the admin pointing at a deleted folder.
+    try {
+      await deleteFolder(adminPath(`${kind}/${manifest.id}`));
+    } catch (err) {
+      // Soft-fail: if the folder is locked or partially missing,
+      // continue — the per-file uploads below will overwrite any
+      // surviving file from the old install.
+      console.warn(
+        `[externalUpload] could not pre-clean ${manifest.id} folder during upgrade:`,
+        err,
+      );
+    }
   }
 
   // Upload every non-directory file in the (possibly prefixed) ZIP to
@@ -288,18 +309,27 @@ export async function installFromZip(
     }
   }
 
-  // Append the new entry to external.json. Default entryPath when the
-  // manifest didn't override.
+  // Update the registry — upgrade replaces in place to preserve
+  // ordering; fresh install appends.
   const newEntry: ExternalEntry = {
     id: manifest.id,
     version: manifest.version,
     apiVersion: manifest.apiVersion,
     entryPath: `${kind}/${manifest.id}/${entryName}`,
   };
-  current[kind].push(newEntry);
+  if (isUpgrade) {
+    current[kind][existingIdx] = newEntry;
+  } else {
+    current[kind].push(newEntry);
+  }
   await writeManifest(current);
 
-  return { manifest, filesUploaded };
+  return {
+    manifest,
+    filesUploaded,
+    mode: isUpgrade ? "upgrade" : "install",
+    previousVersion,
+  };
 }
 
 // Uninstalls an external entry. Deletes the folder on Flexweg, drops

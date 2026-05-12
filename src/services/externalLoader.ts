@@ -87,7 +87,13 @@ function resolveBundleUrl(
   const path = entry.entryPath ?? defaultEntryPath(type, entry.id);
   // Strip any leading slash so URL() interprets the path as relative.
   const relative = path.replace(/^\/+/, "");
-  return new URL(relative, document.baseURI).href;
+  const base = new URL(relative, document.baseURI);
+  // Cache-bust via the entry version so an in-place upgrade (same URL,
+  // new content) doesn't get served the HTTP-cached older bundle. The
+  // browser's module cache is keyed by full URL, so different `?v=`
+  // produces a fresh import + a fresh manifest.cssText for Sync.
+  if (entry.version) base.searchParams.set("v", entry.version);
+  return base.href;
 }
 
 // Read the registry through services/externalRegistryStore. The store
@@ -153,7 +159,7 @@ async function loadOneEntry(
     return { ok: false, missing };
   }
   // Accept both `export default manifest` (the convention for
-  // user-authored external bundles, see examples/external-plugin/) AND
+  // user-authored external bundles, see external/plugins/hello-plugin/) AND
   // `export const manifest = ...` (the in-tree convention used by
   // plugins/themes that get packaged as externals at build time —
   // changing every in-tree manifest.ts to `export default` would be

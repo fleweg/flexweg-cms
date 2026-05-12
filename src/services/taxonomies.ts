@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -30,6 +31,16 @@ export function subscribeToTerms(
     (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Term)),
     onError,
   );
+}
+
+// One-shot read of every term. Use when a caller can't rely on the
+// React subscription's freshness — typically right after writing new
+// terms in a service path that also needs to publish them in the same
+// turn (e.g. flexweg-import after creating new categories).
+export async function fetchAllTerms(): Promise<Term[]> {
+  const q = query(termsCollection(), orderBy("name", "asc"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Term);
 }
 
 export interface CreateTermInput {

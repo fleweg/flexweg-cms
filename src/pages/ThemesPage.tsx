@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
-import { PublishLog } from "../components/publishing/PublishLog";
+import { PublishLogModal } from "../components/publishing/PublishLogModal";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { ExternalInstallModal } from "../components/plugins/ExternalInstallModal";
 import { useCmsData } from "../context/CmsDataContext";
@@ -244,7 +244,11 @@ export function ThemesPage() {
           );
         })}
       </div>
-      <PublishLog entries={logEntries} />
+      <PublishLogModal
+        entries={logEntries}
+        busy={busy}
+        onClear={() => setLogEntries([])}
+      />
       {pendingTheme && (
         <ConfirmModal
           title={t("themes.confirmSwitch.title", { theme: pendingTheme.name })}

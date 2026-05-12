@@ -713,14 +713,18 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
       try {
         log(`Publishing: ${entry.title}`);
         // createPost above invalidated the fetchAllPosts cache;
-        // buildPublishContext below picks up the freshly-created
-        // post from Firestore (read-your-writes consistency), so
-        // we don't need to manually patch a synthetic into ctx.
+        // buildPublishContext picks up the freshly-created post from
+        // Firestore (read-your-writes consistency) and — critically —
+        // we pass `refreshTerms: true` so the just-created categories
+        // are visible to buildPostUrl. Otherwise term-resolution for
+        // primaryTermId would miss and the post would publish at the
+        // root path instead of <category>/<slug>.html.
         const publishCtx = await buildPublishContext({
           terms: ctx.terms,
           users: ctx.users,
           settings,
           authorLookup: buildAuthorLookup(ctx.users, ctx.media),
+          refreshTerms: true,
         });
         await publishPost(postId, publishCtx, () => {}, {
           publishedAt: entry.publishedAt,

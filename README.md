@@ -973,8 +973,9 @@ Authoring docs and ready-to-build scaffolds:
 - [docs/creating-a-plugin.md](docs/creating-a-plugin.md) — full guide for external plugin authoring.
 - [docs/creating-a-theme.md](docs/creating-a-theme.md) — full guide for external theme authoring.
 - [docs/runtime-api-reference.md](docs/runtime-api-reference.md) — public API surface (`@flexweg/cms-runtime` exports, hook list, manifest shapes).
-- [examples/external-plugin/](examples/external-plugin/) — minimal plugin scaffold (head meta tag + dashboard card).
-- [examples/external-theme/](examples/external-theme/) — minimal theme scaffold (six templates + hand-written CSS).
+- [external/plugins/hello-plugin/](external/plugins/hello-plugin/) — minimal plugin scaffold (head meta tag + dashboard card).
+- [external/themes/minimal-theme/](external/themes/minimal-theme/) — minimal theme scaffold (six templates + hand-written CSS).
+- [external/themes/marketplace-core/](external/themes/marketplace-core/) — full marketplace theme (custom blocks, settings page, palette + font overrides).
 
 Compatibility: external bundles declare an `apiVersion` in their `manifest.json`; the admin checks it against `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]` at install + at every boot, and skips out-of-range bundles with a console warning. Browser support: import-maps are native in Chrome 89+, Firefox 108+, Safari 16.4+ (covers virtually every admin user).
 

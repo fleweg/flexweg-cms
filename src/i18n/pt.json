@@ -267,6 +267,8 @@
       "homeHelp": "Regenera apenas index.html — opção mais rápida.",
       "allHtml": "Todas as páginas HTML",
       "allHtmlHelp": "Todos os posts, páginas, arquivos e listagens — mais os snapshots menu / posts / authors JSON.",
+      "repair": "Reparar URLs",
+      "repairHelp": "Recalcula a URL canônica de cada post online e move os arquivos que ficaram na URL errada. Útil após uma importação executada antes que os termos fossem sincronizados.",
       "assets": "Recursos do tema",
       "assetsHelp": "Envia o CSS e os scripts do tema ativo para /theme-assets/.",
       "everything": "Tudo",

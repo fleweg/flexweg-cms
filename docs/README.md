@@ -19,9 +19,10 @@ External authoring lives alongside the existing in-tree authoring (folders under
 
 ## Working examples
 
-Two ready-to-build scaffolds live under `examples/` in the main repo:
+Ready-to-build scaffolds live under `external/` in the main repo. External themes are grouped under `external/themes/<id>/` and external plugins under `external/plugins/<id>/`, where `<id>` matches each bundle's `manifest.id`:
 
-- `examples/external-plugin/` — minimal plugin: head meta tag + dashboard card.
-- `examples/external-theme/` — minimal theme: six templates + a hand-written stylesheet.
+- `external/plugins/hello-plugin/` — minimal plugin: head meta tag + dashboard card.
+- `external/themes/minimal-theme/` — minimal theme: six templates + a hand-written stylesheet.
+- `external/themes/marketplace-core/` — full theme: app-store style marketplace listing themes + plugins, with custom blocks, settings page, font + palette overrides.
 
-Both follow the conventions described in the docs and are good copy-from-here starting points.
+All follow the conventions described in the docs and are good copy-from-here starting points.

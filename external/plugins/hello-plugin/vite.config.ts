@@ -23,6 +23,13 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  // Vite lib mode doesn't replace `process.env.NODE_ENV` at build time
+  // (only app mode does). Any externalised dep that ships a React-style
+  // dev/prod branch throws "process is not defined" in the browser
+  // without this. Hard-code "production".
+  define: {
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
   build: {
     lib: {
       entry: "src/manifest.tsx",

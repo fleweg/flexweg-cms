@@ -155,7 +155,7 @@ async function buildOneEntry(kind, meta, srcDir, distOutDir) {
 
   // Themes also ship their compiled CSS as a sibling file so
   // user-installed external themes (which we scaffold this way in
-  // examples/external-theme/) keep parity with build-time externals.
+  // external/themes/minimal-theme/) keep parity with build-time externals.
   // The CSS comes from src/themes/<id>/theme.compiled.css when the
   // theme uses Tailwind (already produced by build-theme-tailwind.mjs
   // at prebuild) or from theme.scss compiled output otherwise.

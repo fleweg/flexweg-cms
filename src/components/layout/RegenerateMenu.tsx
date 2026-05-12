@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { Loader2, RefreshCw, X } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "../../i18n";
 import { useCmsData } from "../../context/CmsDataContext";
 import { Dropdown, type DropdownItem, type DropdownSection } from "../ui/Dropdown";
-import { PublishLog } from "../publishing/PublishLog";
+import { PublishLogModal } from "../publishing/PublishLogModal";
 import { listThemes } from "../../themes";
 import {
   buildPublishContext,
   regenerateAll,
   regenerateHomeOnly,
+  repairPublishPaths,
   type PublishContext,
   type PublishLogEntry,
   type PublishLogger,
@@ -45,19 +45,6 @@ export function RegenerateMenu() {
     });
   }, []);
 
-  // Esc clears the log modal — but only when the run has finished.
-  // Mid-regen we leave the modal pinned so a stray keypress doesn't
-  // hide live progress.
-  useEffect(() => {
-    if (busy) return;
-    if (logEntries.length === 0) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLogEntries([]);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [busy, logEntries.length]);
-
   async function runWithLog(work: (log: PublishLogger) => Promise<void>) {
     setBusy(true);
     setLogEntries([]);
@@ -78,12 +65,13 @@ export function RegenerateMenu() {
     return resolved === key ? "" : resolved;
   }
 
-  async function buildCtx(): Promise<PublishContext> {
+  async function buildCtx(opts?: { refreshTerms?: boolean }): Promise<PublishContext> {
     return buildPublishContext({
       terms,
       settings,
       users,
       authorLookup: buildAuthorLookup(users, media),
+      refreshTerms: opts?.refreshTerms,
     });
   }
 
@@ -107,6 +95,21 @@ export function RegenerateMenu() {
           runWithLog(async (log) => {
             const ctx = await buildCtx();
             await regenerateAll(ctx, log);
+          }),
+      },
+      {
+        id: "repair",
+        label: t("themes.regenerate.repair"),
+        description: t("themes.regenerate.repairHelp"),
+        // The whole point of this action is to recover from a publish
+        // that ran with stale terms — so force a Firestore refresh of
+        // terms before checking path drift, otherwise we'd be using
+        // the same potentially-stale React state that may have caused
+        // the drift in the first place.
+        onSelect: () =>
+          runWithLog(async (log) => {
+            const ctx = await buildCtx({ refreshTerms: true });
+            await repairPublishPaths(ctx, log);
           }),
       },
       {
@@ -165,8 +168,6 @@ export function RegenerateMenu() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t() identity is stable; settings.themeConfigs is the actual data dep
   }, [pluginTargets, settings.themeConfigs, t]);
 
-  const showLog = busy || logEntries.length > 0;
-
   return (
     <>
       <Dropdown
@@ -182,57 +183,11 @@ export function RegenerateMenu() {
         sections={sections}
       />
 
-      {showLog &&
-        // Portal the modal to <body> so its `position: fixed` resolves
-        // against the viewport. The Topbar uses `backdrop-blur`
-        // (CSS `backdrop-filter`), which per spec creates a new
-        // containing block for fixed descendants — without the portal
-        // the modal would center against the header, not the page.
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-fade-in"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="regenerate-log-title"
-            onClick={(e) => {
-              // Backdrop click clears the log only after the run is
-              // finished — mid-regen we ignore so the user can't
-              // accidentally hide progress.
-              if (busy) return;
-              if (e.target === e.currentTarget) setLogEntries([]);
-            }}
-          >
-            <div className="card w-full max-w-lg max-h-[80vh] flex flex-col animate-scale-in">
-              <div className="flex items-center justify-between border-b border-surface-200 px-4 py-3 dark:border-surface-700">
-                <h2
-                  id="regenerate-log-title"
-                  className="text-sm font-semibold flex items-center gap-2"
-                >
-                  {busy ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 text-surface-500" />
-                  )}
-                  {busy ? t("themes.regenerate.running") : t("themes.regenerate.button")}
-                </h2>
-                {!busy && (
-                  <button
-                    type="button"
-                    className="p-1 rounded hover:bg-surface-100 dark:hover:bg-surface-800"
-                    onClick={() => setLogEntries([])}
-                    aria-label={t("common.close")}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              <div className="overflow-y-auto p-3">
-                <PublishLog entries={logEntries} />
-              </div>
-            </div>
-          </div>,
-          document.body,
-        )}
+      <PublishLogModal
+        entries={logEntries}
+        busy={busy}
+        onClear={() => setLogEntries([])}
+      />
     </>
   );
 }

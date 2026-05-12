@@ -267,6 +267,8 @@
       "homeHelp": "Generiert nur index.html neu — schnellste Option.",
       "allHtml": "Alle HTML-Seiten",
       "allHtmlHelp": "Alle Beiträge, Seiten, Archive und Listen — plus Menu / Posts / Authors JSON-Snapshots.",
+      "repair": "URLs reparieren",
+      "repairHelp": "Berechnet die kanonische URL jedes veröffentlichten Beitrags neu und verschiebt Dateien, die unter der falschen URL gelandet sind. Nützlich nach einem Import, der vor der Synchronisierung der Begriffe lief.",
       "assets": "Theme-Assets",
       "assetsHelp": "Lädt CSS + Begleit-Skripte des aktiven Themes nach /theme-assets/ hoch.",
       "everything": "Alles",

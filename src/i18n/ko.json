@@ -267,6 +267,8 @@
       "homeHelp": "index.html만 재생성합니다 — 가장 빠른 옵션입니다.",
       "allHtml": "모든 HTML 페이지",
       "allHtmlHelp": "모든 게시물, 페이지, 아카이브, 목록 + menu / posts / authors JSON 스냅샷.",
+      "repair": "URL 복구",
+      "repairHelp": "온라인 상태의 모든 게시물에 대해 정규 경로를 다시 계산하고 잘못된 URL에 업로드된 파일을 옮깁니다. 용어 동기화 전에 실행된 import 이후 유용합니다.",
       "assets": "테마 자산",
       "assetsHelp": "활성 테마의 CSS와 부속 스크립트를 /theme-assets/에 업로드합니다.",
       "everything": "전체",
