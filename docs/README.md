@@ -26,3 +26,9 @@ Ready-to-build scaffolds live under `external/` in the main repo. External theme
 - `external/themes/marketplace-core/` — full theme: app-store style marketplace listing themes + plugins, with custom blocks, settings page, font + palette overrides.
 
 All follow the conventions described in the docs and are good copy-from-here starting points.
+
+## AI authoring skill
+
+For developers using Claude Code (or any AI assistant that supports skill files), this repo ships a self-contained skill at [`.claude/skills/flexweg/SKILL.md`](../.claude/skills/flexweg/SKILL.md). It packages the most important Flexweg constraints (externalize React, BaseLayout sentinels, manifest shapes, hook reference, common gotchas) into a single document — useful both as a Claude Code skill (auto-loads when working in this repo, invokable via `/flexweg`) and as a portable reference you can paste into any other AI assistant.
+
+To use it in your own project outside this repo, copy the entire `.claude/skills/flexweg/` folder (including its `SKILL.md`) into your project's `.claude/skills/` directory, or into `~/.claude/skills/` for global availability across every project.
