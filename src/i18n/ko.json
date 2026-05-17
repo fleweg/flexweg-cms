@@ -202,7 +202,10 @@
           "advanced": "고급"
         },
         "noSettings": "이 블록에는 설정이 없습니다.",
-        "noSelection": "옵션을 보려면 편집기에서 블록을 선택하세요."
+        "noSelection": "옵션을 보려면 편집기에서 블록을 선택하세요.",
+        "slash": {
+          "noResults": "일치하는 블록이 없습니다."
+        }
       }
     },
     "status": {

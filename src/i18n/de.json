@@ -202,7 +202,10 @@
           "advanced": "Erweitert"
         },
         "noSettings": "Dieser Block hat keine Einstellungen.",
-        "noSelection": "Wählen Sie einen Block im Editor, um seine Optionen anzuzeigen."
+        "noSelection": "Wählen Sie einen Block im Editor, um seine Optionen anzuzeigen.",
+        "slash": {
+          "noResults": "Kein passender Block."
+        }
       }
     },
     "status": {

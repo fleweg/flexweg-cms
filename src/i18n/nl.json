@@ -202,7 +202,10 @@
           "advanced": "Geavanceerd"
         },
         "noSettings": "Dit blok heeft geen instellingen.",
-        "noSelection": "Selecteer een blok in de editor om de opties te zien."
+        "noSelection": "Selecteer een blok in de editor om de opties te zien.",
+        "slash": {
+          "noResults": "Geen overeenkomend blok."
+        }
       }
     },
     "status": {

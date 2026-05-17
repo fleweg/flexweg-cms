@@ -24,6 +24,7 @@ import {
 } from "../../core/blockRegistry";
 import { BlockToolbar } from "./BlockToolbar";
 import { TrailingNode } from "./TrailingNode";
+import { SlashCommand, setSlashCommandPickMedia } from "./SlashCommand";
 
 interface MarkdownEditorProps {
   value: string;
@@ -87,6 +88,13 @@ export function MarkdownEditor({
       // publish time strips anything dangerous before the marker is
       // replaced with the real iframe.
       Markdown.configure({ html: true, transformPastedText: true, breaks: false }),
+      // Notion-style block picker triggered by typing "/". The
+      // FloatingMenu "+" button below covers discoverability for
+      // first-time users; the slash command is the keyboard
+      // shortcut for everyone else. Both pull from the same
+      // listBlocks() registry, so plugin blocks light up in both
+      // surfaces without extra wiring.
+      SlashCommand,
     ];
     const pluginExtensions = listBlocks()
       .flatMap((b) => b.extensions ?? [])
@@ -128,6 +136,17 @@ export function MarkdownEditor({
       onEditorReady(null);
     };
   }, [editor, onEditorReady]);
+
+  // Forward the host's onPickMedia callback into the SlashCommand
+  // extension's storage so blocks inserted via `/` (e.g. core/image)
+  // can still open the media picker. Re-syncs whenever the host's
+  // prop identity changes — useEditor's options aren't reactive, so
+  // this is how we keep the callback up-to-date without recreating
+  // the editor.
+  useEffect(() => {
+    if (!editor) return;
+    setSlashCommandPickMedia(editor, onPickMedia);
+  }, [editor, onPickMedia]);
 
   // Block list for the inserter, read fresh on every render so
   // freshly-registered blocks (e.g. after toggling a plugin) show up

@@ -202,7 +202,10 @@
           "advanced": "Advanced"
         },
         "noSettings": "This block has no settings.",
-        "noSelection": "Select a block in the editor to see its options."
+        "noSelection": "Select a block in the editor to see its options.",
+        "slash": {
+          "noResults": "No matching block."
+        }
       }
     },
     "status": {

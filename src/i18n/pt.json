@@ -202,7 +202,10 @@
           "advanced": "Avançado"
         },
         "noSettings": "Este bloco não tem definições.",
-        "noSelection": "Seleciona um bloco no editor para ver as suas opções."
+        "noSelection": "Seleciona um bloco no editor para ver as suas opções.",
+        "slash": {
+          "noResults": "Nenhum bloco corresponde."
+        }
       }
     },
     "status": {
