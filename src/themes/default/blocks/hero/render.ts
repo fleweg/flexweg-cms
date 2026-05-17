@@ -9,7 +9,6 @@ export interface HeroAttrs {
   featuredPostId?: string;
   variant?: "image-overlay" | "split-left" | "split-right" | "minimal";
   showCategory?: boolean;
-  showAuthor?: boolean;
 }
 
 interface RenderEnv {
@@ -54,9 +53,13 @@ function resolveFeatured(attrs: HeroAttrs, env: RenderEnv): Post | null {
 //       <a class="cms-hero-category" href="<term>">…</a>
 //       <h2 class="cms-hero-title"><a href="<post>">…</a></h2>
 //       <p class="cms-hero-excerpt">…</p>
-//       <div class="cms-hero-author">…</div>
 //     </div>
 //   </section>
+//
+// Author byline was removed from the hero deliberately — author info
+// belongs in the dedicated sidebar on single posts, not on every
+// listing block. See themes/default/templates/SingleTemplate.tsx for
+// the surviving display.
 //
 // Title and image both link to the post; the image link is hidden
 // from assistive tech (`tabindex=-1` + `aria-hidden`) so the title
@@ -71,7 +74,6 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
 
   const variant = attrs.variant ?? "image-overlay";
   const showCategory = attrs.showCategory ?? true;
-  const showAuthor = attrs.showAuthor ?? true;
 
   const term = post.primaryTermId
     ? env.ctx.terms.find((t) => t.id === post.primaryTermId && t.type === "category")
@@ -81,7 +83,6 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
   // Largest available variant for hero use; pickFormat falls through
   // its chain so even legacy single-URL media renders.
   const imageUrl = pickFormat(heroMedia, "large");
-  const author = post.authorId ? env.ctx.authorLookup(post.authorId) : undefined;
 
   const categoryHtml =
     showCategory && term
@@ -93,24 +94,11 @@ export function renderHero(attrs: HeroAttrs, env: RenderEnv): HeroRenderResult {
     ? `<p class="cms-hero-excerpt">${escapeText(post.excerpt)}</p>`
     : "";
 
-  // Avatar runs through the same pickFormat chain as hero images —
-  // falls back gracefully to the avatar's first available variant
-  // (or its legacy single-url for old uploads).
-  const avatarUrl = author?.avatar ? pickFormat(author.avatar, "thumbnail") : "";
-  const authorHtml =
-    showAuthor && author
-      ? `<div class="cms-hero-author">${
-          avatarUrl
-            ? `<img class="cms-hero-author-avatar" src="${escapeAttr(avatarUrl)}" alt="${escapeAttr(author.displayName)}" loading="lazy" />`
-            : ""
-        }<span class="cms-hero-author-name">${escapeText(author.displayName)}</span></div>`
-      : "";
-
   const imageHtml = imageUrl
     ? `<div class="cms-hero-image-wrap"><a href="${escapeAttr(url)}" tabindex="-1" aria-hidden="true"><img class="cms-hero-image" src="${escapeAttr(imageUrl)}" alt="${escapeAttr(heroMedia?.alt ?? post.title)}" loading="lazy" /></a></div>`
     : "";
 
-  const contentHtml = `<div class="cms-hero-content">${categoryHtml}${titleHtml}${excerptHtml}${authorHtml}</div>`;
+  const contentHtml = `<div class="cms-hero-content">${categoryHtml}${titleHtml}${excerptHtml}</div>`;
 
   const variantClass = `cms-hero cms-hero-${variant}`;
   if (variant === "minimal") {

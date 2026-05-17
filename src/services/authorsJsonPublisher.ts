@@ -3,7 +3,7 @@ import { buildAuthorUrl } from "../core/slug";
 import type { Media, Post, SocialNetwork, UserRecord } from "../core/types";
 import { SOCIAL_NETWORKS } from "../core/types";
 import { uploadFile } from "./flexwegApi";
-import { resolveDisplayName } from "./users";
+import { resolvePublicDisplayName } from "./users";
 
 // Path on Flexweg of the public-side authors snapshot. Grouped under
 // `data/` alongside menu.json + posts.json so the public-site root
@@ -64,6 +64,14 @@ export function buildAuthorsJson(
   const authors: Record<string, AuthorsJsonEntry> = {};
   for (const user of users) {
     if (!referenced.has(user.id)) continue;
+    // Skip users who haven't filled in a display name — emitting their
+    // entry would either show an empty card or, worse, fall back to
+    // their email address. Templates that lookup an authorId not in
+    // this map already hide the related UI gracefully (e.g. the
+    // runtime author-bio block early-returns when its `data-cms-
+    // author-id` isn't in the JSON).
+    const displayName = resolvePublicDisplayName(user);
+    if (!displayName) continue;
     const heroView = user.avatarMediaId
       ? mediaToView(mediaMap.get(user.avatarMediaId))
       : undefined;
@@ -81,7 +89,7 @@ export function buildAuthorsJson(
     }
     authors[user.id] = {
       id: user.id,
-      displayName: resolveDisplayName(user),
+      displayName,
       title: user.title,
       bio: user.bio,
       avatar: avatar || undefined,

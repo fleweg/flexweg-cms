@@ -103,7 +103,7 @@ export const en = {
         minimal: "Minimal (no image)",
       },
       showCategory: "Show category label",
-      showAuthor: "Show author",
+
     },
     postsList: {
       title: "Posts list",
@@ -295,7 +295,7 @@ export const fr: typeof en = {
         minimal: "Minimal (sans image)",
       },
       showCategory: "Afficher la catégorie",
-      showAuthor: "Afficher l'auteur",
+
     },
     postsList: {
       title: "Liste d'articles",
@@ -478,7 +478,7 @@ export const de: typeof en = {
         minimal: "Minimal (kein Bild)",
       },
       showCategory: "Kategorie-Label anzeigen",
-      showAuthor: "Autor anzeigen",
+
     },
     postsList: {
       title: "Artikelliste",
@@ -661,7 +661,7 @@ export const es: typeof en = {
         minimal: "Mínimo (sin imagen)",
       },
       showCategory: "Mostrar etiqueta de categoría",
-      showAuthor: "Mostrar autor",
+
     },
     postsList: {
       title: "Lista de entradas",
@@ -844,7 +844,7 @@ export const nl: typeof en = {
         minimal: "Minimaal (geen afbeelding)",
       },
       showCategory: "Categorie-label tonen",
-      showAuthor: "Auteur tonen",
+
     },
     postsList: {
       title: "Berichtenlijst",
@@ -1027,7 +1027,7 @@ export const pt: typeof en = {
         minimal: "Mínimo (sem imagem)",
       },
       showCategory: "Mostrar etiqueta da categoria",
-      showAuthor: "Mostrar autor",
+
     },
     postsList: {
       title: "Lista de artigos",
@@ -1210,7 +1210,7 @@ export const ko: typeof en = {
         minimal: "미니멀 (이미지 없음)",
       },
       showCategory: "카테고리 라벨 표시",
-      showAuthor: "작성자 표시",
+
     },
     postsList: {
       title: "게시물 목록",

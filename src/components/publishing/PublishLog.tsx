@@ -8,23 +8,38 @@ interface PublishLogProps {
 
 export function PublishLog({ entries }: PublishLogProps) {
   if (entries.length === 0) return null;
+  // Newest entry first — the log scrolls down as more entries land,
+  // so without the reverse the user has to constantly chase the
+  // bottom of the list to see progress (and tell when the run is
+  // done). Putting the latest entry on top means the activity always
+  // appears at a stable position at the top of the panel.
+  //
+  // We render the entries in REVERSE INDEX order (highest index =
+  // freshest = displayed first) without mutating the prop, and we
+  // key by the original index so React can keep DOM nodes stable as
+  // new items prepend.
+  const reverseIndexes: number[] = [];
+  for (let i = entries.length - 1; i >= 0; i--) reverseIndexes.push(i);
   return (
     <ul className="card divide-y divide-surface-200 dark:divide-surface-800 max-h-64 overflow-y-auto">
-      {entries.map((entry, i) => (
-        <li key={i} className="flex items-start gap-2 px-3 py-2 text-sm">
-          <Icon level={entry.level} />
-          <span
-            className={cn(
-              entry.level === "error" && "text-red-700 dark:text-red-300",
-              entry.level === "warn" && "text-amber-700 dark:text-amber-300",
-              entry.level === "success" && "text-emerald-700 dark:text-emerald-300",
-              entry.level === "info" && "text-surface-600 dark:text-surface-300",
-            )}
-          >
-            {entry.message}
-          </span>
-        </li>
-      ))}
+      {reverseIndexes.map((i) => {
+        const entry = entries[i];
+        return (
+          <li key={i} className="flex items-start gap-2 px-3 py-2 text-sm">
+            <Icon level={entry.level} />
+            <span
+              className={cn(
+                entry.level === "error" && "text-red-700 dark:text-red-300",
+                entry.level === "warn" && "text-amber-700 dark:text-amber-300",
+                entry.level === "success" && "text-emerald-700 dark:text-emerald-300",
+                entry.level === "info" && "text-surface-600 dark:text-surface-300",
+              )}
+            >
+              {entry.message}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

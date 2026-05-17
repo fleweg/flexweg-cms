@@ -16,7 +16,6 @@ const DEFAULT_ATTRS: HeroAttrs = {
   featuredPostId: "latest",
   variant: "image-overlay",
   showCategory: true,
-  showAuthor: true,
 };
 
 interface HeroNodeViewProps {
@@ -131,14 +130,6 @@ function HeroInspector({ editor }: HeroInspectorProps) {
           onChange={(e) => patch({ showCategory: e.target.checked })}
         />
         <span>{t("blocks.hero.showCategory")}</span>
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={attrs.showAuthor ?? true}
-          onChange={(e) => patch({ showAuthor: e.target.checked })}
-        />
-        <span>{t("blocks.hero.showAuthor")}</span>
       </label>
     </div>
   );

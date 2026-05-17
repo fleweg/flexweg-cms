@@ -1458,26 +1458,6 @@ a.author-bio__name:hover {
     margin: 0 0 20px 0;
     max-width: 60ch;
   }
-  .cms-hero-author {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    color: var(--color-on-surface-variant);
-
-    &-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-    &-name {
-      font-weight: 700;
-      color: var(--color-on-surface);
-    }
-  }
 }
 
 // Variant 1: image-overlay — image plein cadre + texte sur fond
@@ -1512,17 +1492,13 @@ a.author-bio__name:hover {
     color: #ffffff;
     padding: 32px;
   }
-  .cms-hero-title a,
-  .cms-hero-author-name {
+  .cms-hero-title a {
     color: #ffffff;
   }
   .cms-hero-title a:hover {
     color: var(--color-secondary-container);
   }
   .cms-hero-excerpt {
-    color: rgba(255, 255, 255, 0.85);
-  }
-  .cms-hero-author {
     color: rgba(255, 255, 255, 0.85);
   }
 
@@ -1586,9 +1562,6 @@ a.author-bio__name:hover {
   }
   .cms-hero-title {
     font-size: clamp(32px, 6vw, 56px);
-  }
-  .cms-hero-author {
-    justify-content: center;
   }
 
   @media (min-width: 768px) {

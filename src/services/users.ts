@@ -184,12 +184,30 @@ export async function setUserProfile(uid: string, patch: UserProfilePatch): Prom
 //   2. legacy displayName field
 //   3. email
 //   4. literal id (last resort, never blank)
+//
+// NOTE: this is the ADMIN-facing resolver — email/id fallbacks are
+// acceptable in admin UI (the team knows who's who). For PUBLIC-facing
+// surfaces use `resolvePublicDisplayName` below instead, which stops at
+// the legacy displayName field and returns "" rather than leaking the
+// email to the published site.
 export function resolveDisplayName(record: Pick<UserRecord, "firstName" | "lastName" | "displayName" | "email" | "id">): string {
   const full = [record.firstName, record.lastName].filter(Boolean).join(" ").trim();
   if (full) return full;
   if (record.displayName && record.displayName.trim()) return record.displayName.trim();
   if (record.email) return record.email;
   return record.id;
+}
+
+// Strict public-facing resolver. Returns the joined firstName + lastName
+// (or the legacy displayName field if neither is set), never the user's
+// email or id. Returns an empty string when the user hasn't filled in
+// any name — callers should treat that as "no author info" and skip
+// rendering rather than show an email address publicly.
+export function resolvePublicDisplayName(record: Pick<UserRecord, "firstName" | "lastName" | "displayName">): string {
+  const full = [record.firstName, record.lastName].filter(Boolean).join(" ").trim();
+  if (full) return full;
+  if (record.displayName && record.displayName.trim()) return record.displayName.trim();
+  return "";
 }
 
 export async function deleteUserRecord(uid: string): Promise<void> {
@@ -231,13 +249,20 @@ export function buildAuthorLookup(
   return (id: string) => {
     const record = userMap.get(id);
     if (!record) return undefined;
+    // Public-facing display name only — refuses to fall back to the
+    // user's email. If the user hasn't set a first/last name (or the
+    // legacy displayName field), this lookup behaves as if no author
+    // existed at all, so themes that conditionally render `if (author)`
+    // naturally hide the byline instead of leaking the email address.
+    const displayName = resolvePublicDisplayName(record);
+    if (!displayName) return undefined;
     const avatar = record.avatarMediaId
       ? mediaToView(mediaMap.get(record.avatarMediaId))
       : undefined;
     const socials = visibleSocials(record);
     return {
       id: record.id,
-      displayName: resolveDisplayName(record),
+      displayName,
       title: record.title,
       bio: record.bio,
       avatar,
