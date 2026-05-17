@@ -64,7 +64,35 @@ export function SingleTemplate({
       <article className="page-single__main">
         <Breadcrumb items={breadcrumbs} />
 
+        {/* Header order: title → hero image → excerpt (lede) →
+            date + category (meta-strip) → author. The hero <figure>
+            lives INSIDE <header> so it sits between the title and the
+            excerpt in the rendered flow. The meta-strip pairs the
+            primary category with the publication date — kept
+            together as one visual unit so the category badge doesn't
+            float orphaned on the page. */}
         <header>
+          <h1 className="page-single__title">{post.title}</h1>
+
+          {hero && (
+            <figure className="page-single__hero">
+              {/* Above-the-fold hero — typically THE LCP element on
+                  single posts. We deliberately skip `loading="lazy"`
+                  (which would defer fetching) and ask the browser to
+                  prioritize this resource via `fetchpriority="high"`,
+                  so the image starts downloading as early as possible
+                  in the request waterfall. */}
+              <img
+                src={pickFormat(hero, "large")}
+                alt={hero.alt ?? ""}
+                fetchPriority="high"
+              />
+              {hero.caption && <figcaption>{hero.caption}</figcaption>}
+            </figure>
+          )}
+
+          {post.excerpt && <p className="page-single__lede">{post.excerpt}</p>}
+
           <div className="page-single__meta-strip">
             {primaryTerm && <span className="label-caps">{primaryTerm.name}</span>}
             {primaryTerm && dateLabel && (
@@ -72,8 +100,7 @@ export function SingleTemplate({
             )}
             {dateLabel && <span className="label-caps">{dateLabel}</span>}
           </div>
-          <h1 className="page-single__title">{post.title}</h1>
-          {post.excerpt && <p className="page-single__lede">{post.excerpt}</p>}
+
           {author && (
             <div className="page-single__author-strip">
               <AuthorAvatar name={author.displayName} avatar={author.avatar} />
@@ -83,26 +110,6 @@ export function SingleTemplate({
             </div>
           )}
         </header>
-
-        {hero && (
-          <figure className="page-single__hero">
-            {/* The single page is the most prominent surface for a hero
-                image — request the largest variant the theme declares.
-                pickFormat handles fallbacks if "large" doesn't exist. */}
-            {/* Above-the-fold hero — typically THE LCP element on
-                single posts. We deliberately skip `loading="lazy"`
-                (which would defer fetching) and ask the browser to
-                prioritize this resource via `fetchpriority="high"`,
-                so the image starts downloading as early as possible
-                in the request waterfall. */}
-            <img
-              src={pickFormat(hero, "large")}
-              alt={hero.alt ?? ""}
-              fetchPriority="high"
-            />
-            {hero.caption && <figcaption>{hero.caption}</figcaption>}
-          </figure>
-        )}
 
         <div
           className="page-body"

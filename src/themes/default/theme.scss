@@ -618,7 +618,11 @@ body.burger-open {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px 16px;
-  margin-bottom: 24px;
+  // Matches .page-single__lede's bottom margin (40px) so the
+  // category + date strip breathes at the same rhythm as the lede
+  // above it. No mobile-specific override — the lede uses the same
+  // 40px across viewports.
+  margin-bottom: 40px;
 }
 
 .page-single__meta-strip .label-caps {
