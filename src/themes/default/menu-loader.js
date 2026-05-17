@@ -83,12 +83,33 @@
       items.forEach(function (item) {
         list.appendChild(renderItem(item));
       });
-      // Hide the host until we have content — keeps the layout from
-      // reserving empty space when there's no menu configured.
-      if (items.length === 0) {
+      // Hide empty INLINE menu hosts (footer nav) so they don't
+      // reserve whitespace. Skip the burger-menu container: it is
+      // `position: fixed` (no layout impact) AND any `hidden`
+      // attribute here would `display: none` the panel, which the
+      // `.burger-menu.is-open { transform: translate(0) }` rule can
+      // never override — leading to "click toggles is-open but the
+      // menu stays invisible" bugs. Visibility of the burger UI is
+      // gated by the burger TOGGLE button below instead.
+      var isBurgerMenu = host.id === "burger-menu";
+      if (items.length === 0 && !isBurgerMenu) {
         host.setAttribute("hidden", "");
       } else {
         host.removeAttribute("hidden");
+      }
+    });
+    // Hide the burger TOGGLE button when the header menu has no
+    // items — otherwise users see a button that opens an empty
+    // (off-canvas) panel and conclude "the burger is broken". As
+    // soon as the admin adds a menu item in Menus and republishes,
+    // /menu.json gets a non-empty `header` array and the toggle
+    // reappears automatically on the next page load.
+    var headerItems = (menu && menu.header) || [];
+    document.querySelectorAll(".burger-toggle").forEach(function (toggle) {
+      if (headerItems.length === 0) {
+        toggle.setAttribute("hidden", "");
+      } else {
+        toggle.removeAttribute("hidden");
       }
     });
     paintBranding(menu);

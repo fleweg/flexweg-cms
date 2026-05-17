@@ -3,10 +3,7 @@ import { createPortal } from "react-dom";
 import { ArrowRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import flexwegLogo from "../assets/flexweg-logo.png";
-import {
-  sendEmailVerification,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { LocaleSwitcher } from "../components/ui/LocaleSwitcher";
 import {
@@ -88,7 +85,6 @@ type ErrorKind =
   | "rootDeployment"
   | "firebaseAuth"
   | "firebaseAuthInvalidCredential"
-  | "emailNotVerified"
   | "wrongAdminEmail"
   | "rulesNotPinned"
   | "flexwegAuth"
@@ -282,21 +278,7 @@ export function SetupForm() {
         return;
       }
 
-      // 2b. Email verified.
-      const cu = getAuthClient().currentUser;
-      if (cu && !cu.emailVerified) {
-        try {
-          await sendEmailVerification(cu);
-        } catch (err) {
-          console.warn("[setup] sendEmailVerification failed:", err);
-        }
-        setError({ kind: "emailNotVerified", detail: state.adminEmail });
-        setSubmitting(false);
-        setStep(null);
-        return;
-      }
-
-      // 2c. Rules pinned (probe `config/admin`).
+      // 2b. Rules pinned (probe `config/admin`).
       try {
         await getDoc(doc(getDb(), collections.config, configDocs.admin));
       } catch (err) {
@@ -618,7 +600,6 @@ export function SetupForm() {
               {error ? (
                 <div className="rounded-lg bg-red-50 text-red-700 ring-1 ring-red-200 px-3 py-2 text-sm dark:bg-red-900/30 dark:text-red-300 dark:ring-red-700/50">
                   <ErrorMessage error={error} />
-                  {error.kind === "emailNotVerified" && <ResendVerificationButton />}
                 </div>
               ) : null}
             </div>
@@ -990,17 +971,6 @@ function ErrorMessage({ error }: { error: ErrorState }) {
           </p>
         </div>
       );
-    case "emailNotVerified":
-      return (
-        <div className="space-y-1.5">
-          <p>{t("setup.errors.emailNotVerifiedTitle")}</p>
-          <p className="text-xs leading-relaxed">
-            {t("setup.errors.emailNotVerifiedHint", {
-              email: error.detail ?? "",
-            })}
-          </p>
-        </div>
-      );
     case "flexwegAuth":
       return <span>{t("setup.errors.flexwegAuth")}</span>;
     case "flexwegNetwork":
@@ -1037,75 +1007,6 @@ interface ProgressOverlayProps {
   step: string | null;
   progressLog: string[];
   done: boolean;
-}
-
-// Inline button rendered alongside the "email not verified" error.
-// Re-triggers Firebase's `sendEmailVerification` for the currently
-// signed-in user. The user is still signed in at this point — the
-// SetupForm aborts the flow before sign-out, so getCurrentUser()
-// returns the user we just authenticated. Self-contained: tracks its
-// own busy / sent / error state so the SetupForm doesn't have to.
-function ResendVerificationButton() {
-  const { t } = useTranslation();
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  async function handleResend() {
-    if (status === "sending") return;
-    setStatus("sending");
-    setErrorMsg(null);
-    const u = getAuthClient().currentUser;
-    if (!u) {
-      // Edge case: user signed out between the failed submit and the
-      // resend click. We can't send without a user — surface a clear
-      // failure and let the user retry the full submit.
-      setStatus("failed");
-      setErrorMsg(t("setup.errors.emailNotVerifiedResendNoUser"));
-      return;
-    }
-    try {
-      await sendEmailVerification(u);
-      setStatus("sent");
-    } catch (err) {
-      setStatus("failed");
-      const e = err as { code?: string; message?: string };
-      // Rate-limit is the most common failure mode here (Firebase
-      // throttles to a handful of sends per hour). Surface the raw
-      // code so the user knows whether to wait or fix something.
-      const detail = e.code ? `[${e.code}]` : "";
-      const msg = e.message ?? "";
-      setErrorMsg([detail, msg].filter(Boolean).join(" ").trim());
-    }
-  }
-
-  return (
-    <div className="mt-2 flex items-center gap-2">
-      <button
-        type="button"
-        onClick={handleResend}
-        disabled={status === "sending"}
-        className="inline-flex items-center gap-1.5 rounded-md bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-medium px-2.5 py-1.5 transition-colors dark:bg-red-700 dark:hover:bg-red-600"
-      >
-        {status === "sending" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        {status === "sending"
-          ? t("setup.errors.emailNotVerifiedResending")
-          : status === "sent"
-            ? t("setup.errors.emailNotVerifiedResent")
-            : t("setup.errors.emailNotVerifiedResend")}
-      </button>
-      {status === "sent" && (
-        <span className="text-xs text-emerald-700 dark:text-emerald-300">
-          {t("setup.errors.emailNotVerifiedResentDetail")}
-        </span>
-      )}
-      {status === "failed" && errorMsg && (
-        <span className="text-xs">
-          {t("setup.errors.emailNotVerifiedResendFailed")}
-          {errorMsg ? `: ${errorMsg}` : ""}
-        </span>
-      )}
-    </div>
-  );
 }
 
 // Full-screen overlay rendered while the SetupForm submit handler is

@@ -129,8 +129,16 @@ export function Dropdown({
       {open && (
         <div
           role="menu"
+          // max-h caps the panel at the viewport minus the topbar
+          // height (~3.5rem) + a 1rem safety margin so the bottom
+          // rounded corners stay visible. overflow-y: auto turns the
+          // overflow into an inner scroll instead of clipping the
+          // last items off-screen — typical case is the global
+          // Regenerate menu with many plugin-contributed targets.
+          // overscroll-contain stops the inner scroll from chaining
+          // into the page when the user wheels past the boundary.
           className={
-            "absolute z-50 mt-1 min-w-[260px] max-w-[360px] rounded-md border border-surface-200 bg-white shadow-pop dark:border-surface-700 dark:bg-surface-900 animate-scale-in origin-top-right " +
+            "absolute z-50 mt-1 min-w-[260px] max-w-[360px] max-h-[calc(100vh-4.5rem)] overflow-y-auto overscroll-contain rounded-md border border-surface-200 bg-white shadow-pop dark:border-surface-700 dark:bg-surface-900 animate-scale-in origin-top-right " +
             (alignEnd ? "right-0" : "left-0")
           }
         >

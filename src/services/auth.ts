@@ -1,6 +1,5 @@
 import {
   onAuthStateChanged,
-  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as fbSignOut,
@@ -26,29 +25,10 @@ export async function sendResetEmail(email: string): Promise<void> {
   return sendPasswordResetEmail(getAuthClient(), email.trim());
 }
 
-// Sends a Firebase verification email to the currently signed-in user.
-// No-ops when no user is signed in, throws on Firebase errors so the
-// caller can surface them. Mirrors Firebase's own contract.
-export async function sendVerificationEmail(): Promise<void> {
-  const u = getAuthClient().currentUser;
-  if (!u) return;
-  await sendEmailVerification(u);
-}
-
-// Forces a refresh of the currently-signed-in user's auth state — used
-// by the SetupForm after a verification-email click to re-evaluate
-// `emailVerified` without a full sign-out / sign-in cycle.
-export async function reloadCurrentUser(): Promise<FirebaseUser | null> {
-  const u = getAuthClient().currentUser;
-  if (!u) return null;
-  await u.reload();
-  return getAuthClient().currentUser;
-}
-
 // Probes whether the currently-signed-in user is the bootstrap admin
 // by attempting to read `config/admin` — a doc whose Firestore rules
 // grant read ONLY to the user whose email matches the rules-pinned
-// bootstrap admin email AND whose `email_verified` token claim is true.
+// bootstrap admin email.
 //
 // Why this exists: it lets the client identify the bootstrap admin
 // without carrying the admin email in the public `/admin/config.js`.

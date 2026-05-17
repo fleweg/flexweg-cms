@@ -38,15 +38,20 @@ export function renderPageToHtml<TInner extends object>(
   let html = renderToStaticMarkup(tree);
   // Replace whichever sentinel form React emitted. self-closing void-element
   // serialization may differ across React versions, so we try both.
+  // We pass each replacement through a function so String.prototype.replace
+  // does NOT interpret `$$`, `$&`, `$'`, `$\``, `$n`, `$<name>` as escape
+  // sequences in the replacement string. Plugin payloads commonly include
+  // these characters in inlined JS / CSS — e.g. `function $$(…)` as a
+  // helper alias was being silently collapsed to `function $(…)`.
   if (html.includes(HEAD_EXTRA_SENTINEL)) {
-    html = html.replace(HEAD_EXTRA_SENTINEL, extraHead);
+    html = html.replace(HEAD_EXTRA_SENTINEL, () => extraHead);
   } else if (html.includes(HEAD_EXTRA_SENTINEL_FALLBACK)) {
-    html = html.replace(HEAD_EXTRA_SENTINEL_FALLBACK, extraHead);
+    html = html.replace(HEAD_EXTRA_SENTINEL_FALLBACK, () => extraHead);
   }
   // Always remove the sentinel even when no plugin filtered in — keeps
   // the published HTML clean of internal markers.
   if (html.includes(BODY_END_SENTINEL)) {
-    html = html.replace(BODY_END_SENTINEL, bodyEnd);
+    html = html.replace(BODY_END_SENTINEL, () => bodyEnd);
   }
   return "<!doctype html>" + html;
 }
