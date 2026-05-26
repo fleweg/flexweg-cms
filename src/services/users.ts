@@ -1,272 +1,95 @@
-import {
-  collection,
-  deleteField,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
-import type { User as FirebaseUser } from "firebase/auth";
-import { collections, getDb } from "./firebase";
-import type {
-  AdminLocale,
-  Media,
-  SocialEntry,
-  SocialNetwork,
-  UserPreferences,
-  UserRecord,
-  UserRole,
-} from "../core/types";
-import { SOCIAL_NETWORKS } from "../core/types";
-import { mediaToView } from "../core/media";
-import type { AuthorView } from "../themes/types";
+// Backend dispatcher for the users service.
+//
+// IMPORTANT: dispatched function exports are HOISTED FUNCTION
+// declarations (not `const x = impl.x`), and `impl()` is resolved
+// lazily on first call. Reason: `core/flexwegRuntime.ts` reads several
+// dispatcher exports at module-init inside an object literal, and a
+// circular import path through `themes/index.ts` means this module's
+// body hasn't necessarily run when flexwegRuntime's body does. Using
+// hoisted function bindings + lazy impl resolution avoids the TDZ
+// ("can't access lexical declaration X before initialization") crash.
+//
+// `syncUsersFromApi` is intentionally NOT re-exported here — it exists
+// only on the SQLite backend (no Firebase counterpart). Callers that
+// need it (e.g. AddUserModal in UsersPage) import directly from
+// `services/flexweg-sqlite/users`. Keeping it off the dispatcher
+// preserves backend symmetry and avoids a runtime-mode branch in every
+// caller.
 
-export const USER_ROLES: { admin: UserRole; editor: UserRole } = {
-  admin: "admin",
-  editor: "editor",
-};
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebase from "./firebase/users";
+import * as sqlite from "./flexweg-sqlite/users";
 
-const usersCollection = () => collection(getDb(), collections.users);
-const userDoc = (uid: string) => doc(getDb(), collections.users, uid);
+let _impl: typeof firebase | typeof sqlite | null = null;
+function impl(): typeof firebase {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqlite : firebase;
+  return _impl as typeof firebase;
+}
+
+// Constants: re-export directly from firebase (identical value in
+// SQLite impl). Direct re-export is a live binding too, but the value
+// is hoisted at module-record creation, so no TDZ.
+export { USER_ROLES } from "./firebase/users";
 
 export function subscribeToUsers(
-  onChange: (users: UserRecord[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  const q = query(usersCollection(), orderBy("email", "asc"));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const users = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as UserRecord);
-      onChange(users);
-    },
-    onError,
-  );
+  ...args: Parameters<typeof firebase.subscribeToUsers>
+): ReturnType<typeof firebase.subscribeToUsers> {
+  return impl().subscribeToUsers(...args);
 }
-
-export async function getUserRecord(uid: string): Promise<UserRecord | null> {
-  const snap = await getDoc(userDoc(uid));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as UserRecord) : null;
+export function getUserRecord(
+  ...args: Parameters<typeof firebase.getUserRecord>
+): ReturnType<typeof firebase.getUserRecord> {
+  return impl().getUserRecord(...args);
 }
-
-// Live subscription to a single user's record. AuthContext uses this to
-// keep the signed-in user's record fresh after the initial load — so
-// settings like adminLocale change immediately in the UI when the user
-// updates them, without waiting for a reload.
 export function subscribeToUserRecord(
-  uid: string,
-  onChange: (record: UserRecord | null) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  return onSnapshot(
-    userDoc(uid),
-    (snap) => {
-      onChange(snap.exists() ? ({ id: snap.id, ...snap.data() } as UserRecord) : null);
-    },
-    onError,
-  );
+  ...args: Parameters<typeof firebase.subscribeToUserRecord>
+): ReturnType<typeof firebase.subscribeToUserRecord> {
+  return impl().subscribeToUserRecord(...args);
 }
-
-// Self-create record on first login. Tries `role: "admin"` first —
-// the Firestore rules accept this only when the user matches the
-// pinned bootstrap admin (verified email + pinned address); for
-// everyone else the rules reject the admin attempt and we fall back to
-// `role: "editor"`. This makes the bootstrap detection self-healing
-// without needing the email in the public client config — the rules
-// are the single source of truth and the record reflects them.
-export async function ensureSelfUserRecord(authUser: FirebaseUser): Promise<UserRecord> {
-  const ref = userDoc(authUser.uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return { id: snap.id, ...snap.data() } as UserRecord;
-  const baseData = {
-    email: (authUser.email ?? "").toLowerCase(),
-    disabled: false,
-    preferences: { adminLocale: "en" as AdminLocale },
-    createdAt: serverTimestamp(),
-    createdBy: authUser.uid,
-  };
-  const adminData = { ...baseData, role: USER_ROLES.admin };
-  try {
-    await setDoc(ref, adminData);
-    return { id: authUser.uid, ...adminData } as unknown as UserRecord;
-  } catch (err) {
-    // Only fall back when Firestore rejects with permission-denied —
-    // any other error (network, etc.) should propagate so the caller
-    // can decide. The rules deny admin self-create for non-bootstrap
-    // users, so this branch is the expected path for editors.
-    const code = (err as { code?: string })?.code ?? "";
-    if (code !== "permission-denied") throw err;
-    const editorData = { ...baseData, role: USER_ROLES.editor };
-    await setDoc(ref, editorData);
-    return { id: authUser.uid, ...editorData } as unknown as UserRecord;
-  }
+export function ensureSelfUserRecord(
+  ...args: Parameters<typeof firebase.ensureSelfUserRecord>
+): ReturnType<typeof firebase.ensureSelfUserRecord> {
+  return impl().ensureSelfUserRecord(...args);
 }
-
-export async function setUserRole(uid: string, role: UserRole): Promise<void> {
-  if (role !== USER_ROLES.admin && role !== USER_ROLES.editor) {
-    throw new Error("Invalid role.");
-  }
-  return updateDoc(userDoc(uid), { role });
+export function setUserRole(
+  ...args: Parameters<typeof firebase.setUserRole>
+): ReturnType<typeof firebase.setUserRole> {
+  return impl().setUserRole(...args);
 }
-
-export async function setUserDisabled(uid: string, disabled: boolean): Promise<void> {
-  return updateDoc(userDoc(uid), { disabled: Boolean(disabled) });
+export function setUserDisabled(
+  ...args: Parameters<typeof firebase.setUserDisabled>
+): ReturnType<typeof firebase.setUserDisabled> {
+  return impl().setUserDisabled(...args);
 }
-
-export async function setUserPreferences(uid: string, prefs: Partial<UserPreferences>): Promise<void> {
-  // Merge under `preferences.*` rather than overwriting the whole map so
-  // future preference fields don't get clobbered by partial updates.
-  const update: Record<string, unknown> = {};
-  if (prefs.adminLocale) update["preferences.adminLocale"] = prefs.adminLocale;
-  if (Object.keys(update).length === 0) return;
-  return updateDoc(userDoc(uid), update);
+export function setUserPreferences(
+  ...args: Parameters<typeof firebase.setUserPreferences>
+): ReturnType<typeof firebase.setUserPreferences> {
+  return impl().setUserPreferences(...args);
 }
-
-// Persists the editable author profile fields. Empty strings are
-// translated to deleteField() so clearing a value via the UI removes
-// the Firestore entry instead of leaving an empty placeholder around.
-// Called from Settings → Profile by the user editing their own record.
-export interface UserProfilePatch {
-  firstName?: string | null;
-  lastName?: string | null;
-  // Job / role title shown publicly under the name in author cards.
-  // Empty / null clears the field entirely (deleteField).
-  title?: string | null;
-  bio?: string | null;
-  avatarMediaId?: string | null;
-  // Social profiles map. When set, replaces the whole `socials`
-  // object — the form sends the full state on every save so we
-  // don't have to merge per-network. Pass `null` to clear all.
-  socials?: Partial<Record<SocialNetwork, SocialEntry>> | null;
+export function setUserProfile(
+  ...args: Parameters<typeof firebase.setUserProfile>
+): ReturnType<typeof firebase.setUserProfile> {
+  return impl().setUserProfile(...args);
 }
-
-export async function setUserProfile(uid: string, patch: UserProfilePatch): Promise<void> {
-  const update: Record<string, unknown> = {};
-  for (const key of ["firstName", "lastName", "title", "bio", "avatarMediaId"] as const) {
-    if (!(key in patch)) continue;
-    const value = patch[key];
-    if (value === null || value === undefined || value === "") {
-      update[key] = deleteField();
-    } else {
-      update[key] = value;
-    }
-  }
-  if ("socials" in patch) {
-    const value = patch.socials;
-    if (value === null || value === undefined) {
-      update.socials = deleteField();
-    } else {
-      // Drop entries with empty URLs — keeping them would persist
-      // half-configured networks across saves and surface as
-      // "configured but invisible" in subsequent reads. Empty URL =
-      // user cleared the field, so we treat it as "remove this
-      // network entirely".
-      const cleaned: Partial<Record<SocialNetwork, SocialEntry>> = {};
-      for (const [network, entry] of Object.entries(value) as Array<[SocialNetwork, SocialEntry]>) {
-        if (entry && typeof entry.url === "string" && entry.url.trim().length > 0) {
-          cleaned[network] = { url: entry.url.trim(), visible: !!entry.visible };
-        }
-      }
-      update.socials = Object.keys(cleaned).length > 0 ? cleaned : deleteField();
-    }
-  }
-  if (Object.keys(update).length === 0) return;
-  return updateDoc(userDoc(uid), update);
+export function resolveDisplayName(
+  ...args: Parameters<typeof firebase.resolveDisplayName>
+): ReturnType<typeof firebase.resolveDisplayName> {
+  return impl().resolveDisplayName(...args);
 }
-
-// Best-effort display name for templates / admin lists. Order:
-//   1. firstName + lastName (when at least one is set)
-//   2. legacy displayName field
-//   3. email
-//   4. literal id (last resort, never blank)
-//
-// NOTE: this is the ADMIN-facing resolver — email/id fallbacks are
-// acceptable in admin UI (the team knows who's who). For PUBLIC-facing
-// surfaces use `resolvePublicDisplayName` below instead, which stops at
-// the legacy displayName field and returns "" rather than leaking the
-// email to the published site.
-export function resolveDisplayName(record: Pick<UserRecord, "firstName" | "lastName" | "displayName" | "email" | "id">): string {
-  const full = [record.firstName, record.lastName].filter(Boolean).join(" ").trim();
-  if (full) return full;
-  if (record.displayName && record.displayName.trim()) return record.displayName.trim();
-  if (record.email) return record.email;
-  return record.id;
+export function resolvePublicDisplayName(
+  ...args: Parameters<typeof firebase.resolvePublicDisplayName>
+): ReturnType<typeof firebase.resolvePublicDisplayName> {
+  return impl().resolvePublicDisplayName(...args);
 }
-
-// Strict public-facing resolver. Returns the joined firstName + lastName
-// (or the legacy displayName field if neither is set), never the user's
-// email or id. Returns an empty string when the user hasn't filled in
-// any name — callers should treat that as "no author info" and skip
-// rendering rather than show an email address publicly.
-export function resolvePublicDisplayName(record: Pick<UserRecord, "firstName" | "lastName" | "displayName">): string {
-  const full = [record.firstName, record.lastName].filter(Boolean).join(" ").trim();
-  if (full) return full;
-  if (record.displayName && record.displayName.trim()) return record.displayName.trim();
-  return "";
+export function deleteUserRecord(
+  ...args: Parameters<typeof firebase.deleteUserRecord>
+): ReturnType<typeof firebase.deleteUserRecord> {
+  return impl().deleteUserRecord(...args);
 }
-
-export async function deleteUserRecord(uid: string): Promise<void> {
-  return deleteDoc(userDoc(uid));
-}
-
-// Filters the user's stored socials map down to the entries that are
-// (a) present, (b) marked visible, and (c) carry a non-empty URL.
-// Order follows SOCIAL_NETWORKS so the public output is stable.
-function visibleSocials(record: UserRecord): { network: SocialNetwork; url: string }[] {
-  const stored = record.socials;
-  if (!stored) return [];
-  const out: { network: SocialNetwork; url: string }[] = [];
-  for (const network of SOCIAL_NETWORKS) {
-    const entry = stored[network];
-    if (!entry || !entry.visible) continue;
-    if (typeof entry.url !== "string" || !entry.url.trim()) continue;
-    out.push({ network, url: entry.url.trim() });
-  }
-  return out;
-}
-
-// Builds an `authorLookup` resolver suitable for `buildPublishContext`.
-// Hits the in-memory users array (subscribed via CmsDataContext) so it
-// works for posts authored by any admin — not just the currently
-// authenticated user. Resolves the author's avatar through the same
-// media catalog the publisher already has in hand, so theme components
-// can `pickFormat(avatar, "small")` like they do for hero images.
-//
-// Email is intentionally NOT carried over to AuthorView — it's
-// admin-only data. Templates that previously read `author.email` for
-// a fallback should fall through to `bio` or stay silent.
 export function buildAuthorLookup(
-  users: UserRecord[],
-  media: Media[] | Map<string, Media>,
-): (id: string) => AuthorView | undefined {
-  const userMap = new Map(users.map((u) => [u.id, u]));
-  const mediaMap = media instanceof Map ? media : new Map(media.map((m) => [m.id, m]));
-  return (id: string) => {
-    const record = userMap.get(id);
-    if (!record) return undefined;
-    // Public-facing display name only — refuses to fall back to the
-    // user's email. If the user hasn't set a first/last name (or the
-    // legacy displayName field), this lookup behaves as if no author
-    // existed at all, so themes that conditionally render `if (author)`
-    // naturally hide the byline instead of leaking the email address.
-    const displayName = resolvePublicDisplayName(record);
-    if (!displayName) return undefined;
-    const avatar = record.avatarMediaId
-      ? mediaToView(mediaMap.get(record.avatarMediaId))
-      : undefined;
-    const socials = visibleSocials(record);
-    return {
-      id: record.id,
-      displayName,
-      title: record.title,
-      bio: record.bio,
-      avatar,
-      socials: socials.length > 0 ? socials : undefined,
-    };
-  };
+  ...args: Parameters<typeof firebase.buildAuthorLookup>
+): ReturnType<typeof firebase.buildAuthorLookup> {
+  return impl().buildAuthorLookup(...args);
 }
+
+export type { UserProfilePatch } from "./firebase/users";

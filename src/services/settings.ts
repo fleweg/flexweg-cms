@@ -1,86 +1,54 @@
-import { deleteField, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
-import { collections, getDb, settingsDocs } from "./firebase";
-import type { SiteSettings } from "../core/types";
+// Backend dispatcher for the site settings service.
+//
+// DEFAULT_SITE_SETTINGS is the same constant in both backends (the
+// SQLite impl re-exports the Firebase definition to keep one source of
+// truth). Re-exporting from the dispatcher is purely cosmetic — both
+// impls converge on the same value.
+//
+// IMPORTANT: dispatched function exports are HOISTED FUNCTION
+// declarations (not `const x = impl.x`), and `impl()` is resolved
+// lazily on first call. Reason: `core/flexwegRuntime.ts` reads several
+// dispatcher exports at module-init inside an object literal, and a
+// circular import path through `themes/index.ts` means this module's
+// body hasn't necessarily run when flexwegRuntime's body does. Using
+// hoisted function bindings + lazy impl resolution avoids the TDZ
+// ("can't access lexical declaration X before initialization") crash.
 
-const siteSettingsRef = () => doc(getDb(), collections.settings, settingsDocs.site);
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebase from "./firebase/settings";
+import * as sqlite from "./flexweg-sqlite/settings";
 
-// Defaults applied on first read. Stored back to Firestore as soon as an
-// admin opens the Settings page so the settings doc exists for rules.
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  title: "My site",
-  description: "",
-  language: "en",
-  baseUrl: "",
-  activeThemeId: "default",
-  enabledPlugins: {
-    "core-seo": true,
-    "flexweg-sitemaps": true,
-    "flexweg-rss": true,
-    "flexweg-archives": true,
-    // Off by default — a one-shot migration tool. Users enable it
-    // when they need to import a batch and disable it afterward.
-    "flexweg-import": false,
-  },
-  homeMode: "latest-posts",
-  postsPerPage: 10,
-  menus: { header: [], footer: [] },
-  pluginConfigs: {},
-  themeConfigs: {},
-  paginationMode: "global",
-};
+let _impl: typeof firebase | typeof sqlite | null = null;
+function impl(): typeof firebase {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqlite : firebase;
+  return _impl as typeof firebase;
+}
+
+// Constants: re-export directly from firebase (identical value in
+// SQLite impl). Direct re-export is a live binding too, but the value
+// is hoisted at module-record creation, so no TDZ.
+export { DEFAULT_SITE_SETTINGS } from "./firebase/settings";
 
 export function subscribeToSettings(
-  onChange: (settings: SiteSettings) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  return onSnapshot(
-    siteSettingsRef(),
-    (snap) => {
-      const data = snap.data() as Partial<SiteSettings> | undefined;
-      onChange({ ...DEFAULT_SITE_SETTINGS, ...(data ?? {}) });
-    },
-    onError,
-  );
+  ...args: Parameters<typeof firebase.subscribeToSettings>
+): ReturnType<typeof firebase.subscribeToSettings> {
+  return impl().subscribeToSettings(...args);
 }
-
-export async function getSettings(): Promise<SiteSettings> {
-  const snap = await getDoc(siteSettingsRef());
-  const data = snap.exists() ? (snap.data() as Partial<SiteSettings>) : {};
-  return { ...DEFAULT_SITE_SETTINGS, ...data };
+export function getSettings(
+  ...args: Parameters<typeof firebase.getSettings>
+): ReturnType<typeof firebase.getSettings> {
+  return impl().getSettings(...args);
 }
-
-export async function updateSettings(patch: Partial<SiteSettings>): Promise<void> {
-  // Firestore rejects `undefined` values. Callers commonly pass an
-  // optional field set to `undefined` to mean "clear this field" — translate
-  // that into deleteField() so setDoc({ merge: true }) actually removes the
-  // key instead of throwing.
-  const sanitized: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(patch)) {
-    sanitized[key] = value === undefined ? deleteField() : value;
-  }
-  await setDoc(siteSettingsRef(), sanitized, { merge: true });
+export function updateSettings(
+  ...args: Parameters<typeof firebase.updateSettings>
+): ReturnType<typeof firebase.updateSettings> {
+  return impl().updateSettings(...args);
 }
-
-// Writes a plugin's config blob. Uses Firestore's nested-map merge so other
-// plugins' configs aren't touched. The plugin's own config is replaced
-// wholesale by the value passed in — plugins that want to do partial
-// updates should read the current value first and merge themselves.
-export async function updatePluginConfig<T>(pluginId: string, config: T): Promise<void> {
-  await setDoc(
-    siteSettingsRef(),
-    { pluginConfigs: { [pluginId]: config } },
-    { merge: true },
-  );
+// Generic wrappers — written explicitly so `<T>` survives (the
+// rest-spread + Parameters pattern erases generics).
+export function updatePluginConfig<T>(pluginId: string, config: T): Promise<void> {
+  return impl().updatePluginConfig(pluginId, config);
 }
-
-// Writes a theme's config blob. Same shape as updatePluginConfig — the
-// theme's own settings page reads from settings.themeConfigs[themeId]
-// and saves the full blob back here. Other themes' configs are
-// preserved so re-activating an old theme keeps its settings intact.
-export async function updateThemeConfig<T>(themeId: string, config: T): Promise<void> {
-  await setDoc(
-    siteSettingsRef(),
-    { themeConfigs: { [themeId]: config } },
-    { merge: true },
-  );
+export function updateThemeConfig<T>(themeId: string, config: T): Promise<void> {
+  return impl().updateThemeConfig(themeId, config);
 }

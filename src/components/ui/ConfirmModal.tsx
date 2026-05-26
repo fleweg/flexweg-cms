@@ -96,8 +96,11 @@ export function ConfirmModal({
             }}
             disabled={busy}
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            {confirmLabel}
+            {/* Lesson #4 — stable DOM. Always render spinner, toggle via className. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (busy ? "" : "hidden")} />
+              <span>{confirmLabel}</span>
+            </span>
           </button>
         </div>
       </div>

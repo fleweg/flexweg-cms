@@ -258,6 +258,8 @@
     "title": "Themes",
     "active": "Aktiv",
     "activate": "Aktivieren",
+    "installExternal": "Theme installieren",
+    "uninstallDisabledTitle": "Wechseln Sie zu einem anderen Theme, bevor Sie dieses deinstallieren.",
     "syncAssets": "Theme-Assets synchronisieren",
     "regenerateSite": "Website neu generieren",
     "regenerating": "Generiert neu…",
@@ -295,10 +297,42 @@
     "author": "Autor",
     "learnMore": "Mehr erfahren",
     "mustUseBadge": "Pflicht",
+    "installExternal": "Plugin installieren",
     "tabs": {
       "regular": "Plugins",
       "mustUse": "Pflicht-Plugins"
     }
+  },
+  "externalInstall": {
+    "titlePlugin": "Plugin installieren",
+    "titleTheme": "Theme installieren",
+    "labelPlugin": "Plugin",
+    "labelTheme": "Theme",
+    "intro": "Ziehen Sie eine ZIP-Datei mit einem {{label}}-Bundle hierher (manifest.json + bundle.js im ZIP-Root). Das {{label}} wird auf Ihre Flexweg-Site hochgeladen und nach einem Neuladen registriert. Ein erneuter Upload eines ZIP mit derselben Manifest-ID aktualisiert den vorhandenen Eintrag direkt — keine Deinstallation nötig.",
+    "zipField": "Bundle-ZIP-Datei",
+    "install": "Installieren",
+    "installing": "Installiert…",
+    "installSuccess": "{{name}} installiert ({{count}} Dateien hochgeladen). Lädt neu…",
+    "upgradeSuccess": "{{name}} von v{{previousVersion}} auf v{{newVersion}} aktualisiert ({{count}} Dateien hochgeladen). Lädt neu…",
+    "installedTitle": "Bereits installiert",
+    "bundledDefaultsTitle": "Mitgelieferte Standard-Plugins/Themes verfügbar",
+    "bundledDefaultsHint": "{{count}} mitgeliefertes Plugin/Theme ist derzeit deinstalliert. Stellen Sie sie wieder her, um den Auslieferungszustand dieser Admin-Version wiederherzustellen.",
+    "bundledDefaultsRestore": "Wiederherstellen",
+    "bundledDefaultsRestored": "{{plugins}} Plugin(s) und {{themes}} Theme(s) wiederhergestellt. Lädt neu…",
+    "uninstall": "Deinstallieren",
+    "uninstallSuccess": "{{id}} deinstalliert. Lädt neu…",
+    "confirmUninstall": "{{id}} deinstallieren? Die Dateien werden von Flexweg gelöscht.",
+    "errors": {
+      "no-manifest": "Im ZIP fehlt manifest.json im Root.",
+      "invalid-manifest": "manifest.json ist ungültig (fehlende Pflichtfelder oder kein gültiges JSON).",
+      "incompatible-api": "Das Bundle wurde gegen eine inkompatible Runtime-API-Version gebaut.",
+      "no-bundle": "Das ZIP enthält die im Manifest deklarierte Einstiegsdatei nicht.",
+      "fetch-manifest": "Die aktuelle external.json auf Flexweg konnte nicht gelesen werden.",
+      "upload-failed": "Upload fehlgeschlagen — prüfen Sie Ihren Flexweg-API-Schlüssel und Ihre Verbindung."
+    }
+  },
+  "externalLoader": {
+    "someFailed": "{{count}} externe(s) Bundle(s) konnten nicht geladen werden. Siehe Browser-Konsole."
   },
   "menus": {
     "title": "Menüs",
@@ -332,10 +366,22 @@
     "flexweg": {
       "title": "Flexweg-API",
       "apiKey": "API-Schlüssel",
-      "apiKeyHelp": "Erstellt in Ihrem Flexweg-Konto → API. Wird in Firestore gespeichert.",
+      "apiKeyHelp": "Erstellt in Ihrem Flexweg-Konto → API.",
       "siteUrl": "Website-URL",
       "siteUrlHelp": "Öffentliche URL Ihrer Flexweg-Website ohne abschließenden Schrägstrich.",
-      "apiBaseUrl": "API-Basis-URL"
+      "apiBaseUrl": "API-Basis-URL",
+      "storageHelpFirebase": "In Firestore gespeichert (config/flexweg). Lesbar für jedes angemeldete Teammitglied, schreibbar nur für Administratoren.",
+      "storageHelpSqlite": "In der lokalen SQLite-Tabelle config gespeichert. Lesbar für jedes angemeldete Teammitglied, schreibbar nur für Administratoren."
+    },
+    "backend": {
+      "title": "Daten-Backend",
+      "active": "Aktives Backend:",
+      "switchButton": "Backend wechseln…",
+      "confirmTitle": "Alle aktuellen Daten gehen verloren.",
+      "confirmBody": "Beim Wechsel wird die In-Browser-Konfiguration gelöscht und das Setup-Formular erneut geladen. Das neue Backend startet leer — die Daten des vorherigen Backends bleiben an Ort und Stelle (in Firestore oder als .sqlite-Datei auf Flexweg), aber das CMS liest sie erst wieder, wenn Sie zurückwechseln.",
+      "confirmYes": "Ja, Backend wechseln",
+      "downloadBackup": "Backup der .sqlite-Datei herunterladen",
+      "downloadBackupHelp": "vor dem Wechsel des Backends durchführen."
     },
     "performance": {
       "title": "Leistung",
@@ -389,6 +435,37 @@
     "disabled": "Deaktiviert",
     "editProfileTitle": "Profil bearbeiten — {{email}}",
     "profileSaved": "Profil gespeichert.",
+    "descriptionFirebase": "Verwalten Sie Ihr Team. Neue Konten werden in der Firebase Console angelegt und beim ersten Login hier gespiegelt.",
+    "descriptionSqlite": "Verwalten Sie Ihr Team. Nutzen Sie unten den Knopf +Benutzer hinzufügen, um Konten direkt anzulegen.",
+    "addUser": "Benutzer hinzufügen",
+    "addUserSuccess": "{{email}} hinzugefügt.",
+    "removeConfirmFirebase": "Datensatz von {{email}} löschen? Damit werden Profil und Rolle aus dem CMS entfernt. Um den Login-Zugang zu entziehen, löschen Sie das Konto zusätzlich in der Firebase Console.",
+    "removeConfirmSqlite": "{{email}} dauerhaft löschen? Damit wird der Login-Zugang entzogen UND Profil sowie Rolle entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "empty": {
+      "title": "Noch keine Teammitglieder",
+      "descriptionFirebase": "Legen Sie das erste Konto in der Firebase Console an und melden Sie sich hier einmal an, um das Profil zu registrieren.",
+      "descriptionSqlite": "Klicken Sie oben auf +Benutzer hinzufügen, um das erste Teammitglied einzuladen."
+    },
+    "help": {
+      "title": "So fügen Sie ein neues Teammitglied hinzu",
+      "bootstrapLine": "Der Bootstrap-Admin (immer voller Zugriff) ist:",
+      "firebase": {
+        "step1": "Öffnen Sie Firebase Console → Authentication → Add user.",
+        "step2": "Legen Sie E-Mail und Passwort fest und übermitteln Sie diese dem neuen Mitglied.",
+        "step3": "Bitten Sie es, sich hier einmal anzumelden — das Profil erscheint in der Liste oben und Sie können Rolle und Details bearbeiten."
+      },
+      "sqlite": {
+        "step1": "Klicken Sie oben auf den Knopf +Benutzer hinzufügen.",
+        "step2": "Geben Sie die E-Mail und ein temporäres Passwort (mindestens 8 Zeichen) ein.",
+        "step3": "Teilen Sie die Zugangsdaten sicher mit — das Passwort kann nach dem Login aus dem Profil heraus geändert werden."
+      }
+    },
+    "addUserModal": {
+      "title": "Neues Teammitglied hinzufügen",
+      "intro": "Legt das Konto direkt in der Flexweg SQLite Auth-Datenbank an. Der neue Benutzer erhält standardmäßig die Editor-Rolle; befördern Sie ihn aus der Liste unten, wenn er Admin-Zugriff benötigt.",
+      "submit": "Benutzer anlegen",
+      "submitting": "Wird angelegt…"
+    },
     "actions": {
       "editProfile": "Profil bearbeiten",
       "promote": "Zum Administrator befördern",
@@ -429,6 +506,29 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL fehlt in .env. Setzen Sie sie auf die E-Mail-Adresse des Bootstrap-Administrators.",
     "consoleHint": "Überprüfen Sie die Browser-Konsole und Ihre .env-Konfiguration. Siehe README für Setup-Anweisungen."
   },
+  "identity": {
+    "brandTitle": "Flexweg CMS",
+    "brandSubtitle": "Statischer Publisher",
+    "login": {
+      "heading": "Anmelden",
+      "intro": "Verwenden Sie die E-Mail-Adresse und das Passwort, die Ihr Administrator Ihnen mitgeteilt hat.",
+      "submit": "Anmelden",
+      "submitting": "Anmeldung läuft…"
+    },
+    "fields": {
+      "name": "Anzeigename (optional)",
+      "namePlaceholder": "Erika Mustermann",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "passwordHint": "Mindestens 8 Zeichen."
+    },
+    "footer": "Neue Konten werden von einem Administrator über die Benutzerseite angelegt.",
+    "errors": {
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "missingPassword": "Passwort ist erforderlich.",
+      "passwordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein."
+    }
+  },
   "setup": {
     "title": "Willkommen bei Flexweg CMS",
     "subtitle": "Erstkonfiguration",
@@ -437,19 +537,32 @@
     "introFlexweg": "Schritt 2 — Flexweg. Geben Sie Ihren Flexweg-API-Schlüssel und die Site-URL ein. Wir testen die API, speichern die Konfiguration in Firestore, laden config.js auf Ihre Site hoch und synchronisieren die Theme-Assets.",
     "continueToFlexweg": "Firebase prüfen und fortfahren",
     "stepper": {
-      "welcome": "Willkommen",
       "terms": "AGB",
+      "backend": "Backend",
       "firebase": "Firebase",
-      "flexweg": "Flexweg"
+      "flexweg": "Flexweg",
+      "sqlite": "SQLite"
     },
-    "welcome": {
-      "heading": "Willkommen bei Flexweg CMS!",
-      "intro": "Flexweg CMS ist ein kostenloses Tool, das Flexweg Ihnen zur Verfügung stellt, um Seiten auf Ihrem Flexweg-Hosting zu veröffentlichen — Flexweg wird Ihnen die Nutzung des CMS niemals in Rechnung stellen. Es benötigt ein kostenloses Firebase-Projekt (Auth + Firestore) — dort werden Ihre Beiträge, Medienmetadaten und Einstellungen gespeichert.",
-      "firebaseTitle": "Firebase wird benötigt — und ist kostenlos",
-      "firebaseBody": "Ein Firebase-Projekt anzulegen ist kostenlos und dauert etwa 5 Minuten: Firebase Console öffnen, neues Projekt erstellen, Authentication (E-Mail/Passwort) und Firestore aktivieren. Der Spark-Plan reicht für eine typische Website. Unser Tutorial führt Sie durch jeden Klick.",
-      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
-      "tutorialButton": "Firebase-Setup-Tutorial",
-      "haveAccountButton": "Ich habe mein Firebase-Projekt erstellt"
+    "backend": {
+      "title": "Daten-Backend wählen",
+      "intro": "Wählen Sie, wo das CMS Ihre Beiträge, Seiten, Benutzer und Einstellungen speichert. Sie können später über die Einstellungen wechseln (Daten werden nicht migriert).",
+      "sqliteTitle": "Flexweg SQLite (empfohlen)",
+      "sqliteHint": "Alle Daten verbleiben auf Ihrer Flexweg-Site als SQLite-Datei. Kein externer Dienst. Auth wird von der Flexweg SQLite-API bereitgestellt.",
+      "firebaseTitle": "Firebase",
+      "firebaseHint": "Verwenden Sie ein Firebase-Projekt für Firestore + Auth. Kostenlos im Spark-Plan. Echtzeit-Updates per onSnapshot.",
+      "continue": "Weiter"
+    },
+    "sqlite": {
+      "heading": "Verbinden Sie Ihre Flexweg-Site",
+      "intro": "Wir verwenden Ihren Flexweg-Master-API-Schlüssel EINMAL, um ein Token mit eingeschränktem Geltungsbereich für die SQLite-Datenbank zu erzeugen. Nach der Installation wird der Master-Schlüssel verworfen und nur das beschränkte Token (auf diese eine SQLite-Datei begrenzt) gespeichert.",
+      "apiKeyHint": "Flexweg-Master-API-Schlüssel. Wird nur zur Installation verwendet — danach nie gespeichert.",
+      "detectedFromUrl": "Aus URL erkannt",
+      "advanced": "Erweiterte Einstellungen (Site-URL, SQLite-Pfad…)",
+      "pathHint": "Wo die SQLite-Datei auf Ihrer Flexweg-Site liegt. Ordner werden automatisch erstellt.",
+      "adminHeading": "Administratorkonto",
+      "adminIntro": "Legen Sie den ersten Benutzer an — dieses Konto erhält automatisch Admin-Rechte. Weitere Mitglieder werden nach der Anmeldung über die Benutzerseite onboardet.",
+      "passwordHint": "Mindestens 8 Zeichen.",
+      "submit": "SQLite-Datenbank installieren"
     },
     "terms": {
       "title": "Nutzungsbedingungen",
@@ -493,7 +606,7 @@
     },
     "help": {
       "firebase": "Diese Werte finden Sie in Firebase Console → Projekteinstellungen → Allgemein → Ihre Apps → SDK-Setup und Konfiguration.",
-      "admin": "Verwenden Sie einen vorhandenen Benutzer aus Firebase Authentication. Wer sich mit dieser E-Mail anmeldet, wird als Administrator behandelt und benötigt keinen Benutzerdatensatz. Erstellen Sie den Benutzer bei Bedarf über Firebase Console → Authentication.",
+      "admin": "Verwenden Sie einen vorhandenen Benutzer aus Firebase Authentication. Wer sich mit dieser E-Mail anmeldet, wird als Administrator behandelt und umgeht die Benutzerdatensatz-Prüfung. Erstellen Sie den Benutzer bei Bedarf über Firebase Console → Authentication.",
       "flexweg": "Erstellen Sie einen permanenten API-Schlüssel in Ihrem Flexweg-Konto → API. Die Site-URL ist die öffentliche Adresse Ihrer Flexweg-Site (z. B. https://ihre-site.flexweg.com).",
       "flexwegApiKeyHint": "Ihren API-Schlüssel finden Sie in Ihren Flexweg-Kontoeinstellungen.",
       "flexwegApiKeyLink": "Kontoeinstellungen öffnen"
@@ -509,7 +622,8 @@
       "adminPassword": "Passwort",
       "flexwegApiKey": "API-Schlüssel",
       "flexwegSiteUrl": "Site-URL",
-      "flexwegApiBaseUrl": "API-Basis-URL"
+      "flexwegApiBaseUrl": "API-Basis-URL",
+      "sqlitePath": "SQLite-Pfad"
     },
     "submit": "Speichern und fortfahren",
     "submitting": "Konfiguration läuft…",
@@ -521,7 +635,15 @@
       "testFlexweg": "Flexweg-API wird getestet…",
       "writeFirestore": "Konfiguration wird gespeichert…",
       "uploadConfig": "config.js wird zu Flexweg hochgeladen…",
-      "syncThemes": "Theme-Assets werden zu Flexweg synchronisiert…"
+      "syncThemes": "Theme-Assets werden zu Flexweg synchronisiert…",
+      "sqliteInstall": "Beschränktes SQLite-Token wird erstellt…",
+      "sqliteRegisterAdmin": "Admin-Konto wird registriert…",
+      "sqliteSchema": "SQLite-Schema wird initialisiert…"
+    },
+    "stepsDone": {
+      "sqliteInstall": "Beschränktes SQLite-Token ausgestellt",
+      "sqliteRegisterAdmin": "Admin registriert und angemeldet",
+      "sqliteSchema": "SQLite-Schema bereit"
     },
     "errors": {
       "missingFields": "Bitte füllen Sie alle Felder aus.",
@@ -535,6 +657,8 @@
       "firebaseInvalidApiKey": "Der Firebase-API-Schlüssel ist ungültig. Prüfen Sie den Wert in der Firebase Console.",
       "firebaseNetwork": "Netzwerkfehler bei der Anmeldung bei Firebase. Prüfen Sie Ihre Verbindung.",
       "firebaseTooManyRequests": "Zu viele Anmeldeversuche. Bitte versuchen Sie es später erneut oder setzen Sie das Passwort über Firebase Console zurück.",
+      "firebaseOperationNotAllowed": "Die Anmeldung per E-Mail/Passwort ist in diesem Firebase-Projekt nicht aktiviert. Öffnen Sie Firebase Console → Authentication → Sign-in method und aktivieren Sie den Email/Password-Anbieter.",
+      "firebaseUserDisabled": "Dieses Firebase-Benutzerkonto ist deaktiviert. Aktivieren Sie es über Firebase Console → Authentication → Users wieder.",
       "wrongAdminEmail": "Das Firebase-Konto, mit dem Sie sich angemeldet haben, stimmt nicht mit der eingegebenen Admin-E-Mail überein. Bitte erneut versuchen.",
       "rulesNotPinnedTitle": "Die Firestore-Regeln erkennen Sie noch nicht als Bootstrap-Admin.",
       "rulesNotPinnedHint": "Öffnen Sie Firebase Console → Firestore → Rules und ersetzen Sie den Wert von `bootstrapAdminEmail()` durch: {{email}} — klicken Sie dann auf Veröffentlichen. Die Regelvorlage im README enthält einen Platzhalter `you@example.com`, der durch Ihre tatsächliche Admin-E-Mail ersetzt werden muss. Nachdem die aktualisierten Regeln veröffentlicht sind, klicken Sie hier erneut auf Absenden.",

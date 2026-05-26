@@ -258,6 +258,8 @@
     "title": "Temas",
     "active": "Activo",
     "activate": "Activar",
+    "installExternal": "Instalar tema",
+    "uninstallDisabledTitle": "Cambia a otro tema antes de desinstalar este.",
     "syncAssets": "Sincronizar recursos del tema",
     "regenerateSite": "Regenerar el sitio",
     "regenerating": "Regenerando…",
@@ -295,10 +297,42 @@
     "author": "autor",
     "learnMore": "Más información",
     "mustUseBadge": "Obligatorio",
+    "installExternal": "Instalar plugin",
     "tabs": {
       "regular": "Plugins",
       "mustUse": "Obligatorios"
     }
+  },
+  "externalInstall": {
+    "titlePlugin": "Instalar un plugin",
+    "titleTheme": "Instalar un tema",
+    "labelPlugin": "plugin",
+    "labelTheme": "tema",
+    "intro": "Suelta un archivo ZIP que contenga un bundle de {{label}} (manifest.json + bundle.js en la raíz del ZIP). El {{label}} se subirá a tu sitio Flexweg y se registrará tras una recarga. Volver a subir un ZIP con el mismo id de manifest actualiza la entrada existente en el sitio — no hace falta desinstalar.",
+    "zipField": "Archivo ZIP del bundle",
+    "install": "Instalar",
+    "installing": "Instalando…",
+    "installSuccess": "{{name}} instalado ({{count}} archivos subidos). Recargando…",
+    "upgradeSuccess": "{{name}} actualizado de v{{previousVersion}} a v{{newVersion}} ({{count}} archivos subidos). Recargando…",
+    "installedTitle": "Ya instalado",
+    "bundledDefaultsTitle": "Plugins/temas incluidos disponibles",
+    "bundledDefaultsHint": "{{count}} plugin/tema incluido está actualmente desinstalado. Restáuralos para recuperar lo que venía con esta versión del admin.",
+    "bundledDefaultsRestore": "Restaurar",
+    "bundledDefaultsRestored": "Restaurados {{plugins}} plugin(s) y {{themes}} tema(s). Recargando…",
+    "uninstall": "Desinstalar",
+    "uninstallSuccess": "{{id}} desinstalado. Recargando…",
+    "confirmUninstall": "¿Desinstalar {{id}}? Los archivos se eliminarán de Flexweg.",
+    "errors": {
+      "no-manifest": "El ZIP no tiene manifest.json en la raíz.",
+      "invalid-manifest": "manifest.json no es válido (falta algún campo obligatorio o no es JSON válido).",
+      "incompatible-api": "El bundle se compiló contra una versión incompatible de la API runtime.",
+      "no-bundle": "El ZIP no contiene el archivo de entrada declarado en el manifest.",
+      "fetch-manifest": "No se pudo leer el external.json actual en Flexweg.",
+      "upload-failed": "Falló la subida — revisa tu clave API de Flexweg y tu conexión."
+    }
+  },
+  "externalLoader": {
+    "someFailed": "{{count}} bundle(s) externo(s) no se pudieron cargar. Mira la consola del navegador."
   },
   "menus": {
     "title": "Menús",
@@ -332,10 +366,22 @@
     "flexweg": {
       "title": "API de Flexweg",
       "apiKey": "Clave API",
-      "apiKeyHelp": "Generada desde tu cuenta Flexweg → API. Almacenada en Firestore.",
+      "apiKeyHelp": "Generada desde tu cuenta Flexweg → API.",
       "siteUrl": "URL del sitio",
       "siteUrlHelp": "URL pública de tu sitio Flexweg sin barra final.",
-      "apiBaseUrl": "URL base de la API"
+      "apiBaseUrl": "URL base de la API",
+      "storageHelpFirebase": "Almacenada en Firestore (config/flexweg). Lectura para cualquier miembro con sesión iniciada, escritura solo para administradores.",
+      "storageHelpSqlite": "Almacenada en la tabla SQLite local config. Lectura para cualquier miembro con sesión iniciada, escritura solo para administradores."
+    },
+    "backend": {
+      "title": "Backend de datos",
+      "active": "Backend activo:",
+      "switchButton": "Cambiar de backend…",
+      "confirmTitle": "Se perderán todos los datos actuales.",
+      "confirmBody": "Cambiar borra la configuración del navegador y recarga el formulario de configuración. El nuevo backend empieza vacío — los datos del backend anterior siguen donde estaban (en Firestore o como un archivo .sqlite en Flexweg), pero el CMS no los leerá hasta que vuelvas a cambiar.",
+      "confirmYes": "Sí, cambiar de backend",
+      "downloadBackup": "Descargar una copia de seguridad del archivo .sqlite",
+      "downloadBackupHelp": "hazlo antes de cambiar de backend."
     },
     "performance": {
       "title": "Rendimiento",
@@ -389,6 +435,37 @@
     "disabled": "Deshabilitado",
     "editProfileTitle": "Editar perfil — {{email}}",
     "profileSaved": "Perfil guardado.",
+    "descriptionFirebase": "Gestiona tu equipo. Las nuevas cuentas se crean en la Firebase Console y se replican aquí en el primer inicio de sesión.",
+    "descriptionSqlite": "Gestiona tu equipo. Usa el botón +Añadir usuario más abajo para crear cuentas directamente.",
+    "addUser": "Añadir usuario",
+    "addUserSuccess": "{{email}} añadido.",
+    "removeConfirmFirebase": "¿Eliminar la ficha de {{email}}? Se quita su perfil y rol del CMS. Para revocar el acceso, elimina además la cuenta en la Firebase Console.",
+    "removeConfirmSqlite": "¿Eliminar permanentemente a {{email}}? Se revoca su acceso Y se quitan su perfil y rol. Esta acción no se puede deshacer.",
+    "empty": {
+      "title": "Aún no hay miembros del equipo",
+      "descriptionFirebase": "Crea la primera cuenta en la Firebase Console y luego inicia sesión aquí una vez para registrar el perfil.",
+      "descriptionSqlite": "Pulsa +Añadir usuario arriba para invitar al primer miembro."
+    },
+    "help": {
+      "title": "Cómo añadir un nuevo miembro al equipo",
+      "bootstrapLine": "El admin inicial (siempre con acceso total) es:",
+      "firebase": {
+        "step1": "Abre la Firebase Console → Authentication → Add user.",
+        "step2": "Pon un correo y una contraseña y envíalos al nuevo miembro.",
+        "step3": "Pídele que inicie sesión aquí una vez — su perfil aparece en la lista de arriba y puedes editar su rol y sus datos."
+      },
+      "sqlite": {
+        "step1": "Pulsa el botón +Añadir usuario de arriba.",
+        "step2": "Introduce su correo y una contraseña temporal (8+ caracteres).",
+        "step3": "Comparte las credenciales de forma segura — podrá cambiar la contraseña desde su perfil una vez iniciada la sesión."
+      }
+    },
+    "addUserModal": {
+      "title": "Añadir un nuevo miembro del equipo",
+      "intro": "Crea la cuenta directamente en la base de datos Flexweg SQLite Auth. El nuevo usuario tiene rol de editor por defecto; promociónalo desde la lista de abajo si necesita acceso de admin.",
+      "submit": "Crear usuario",
+      "submitting": "Creando…"
+    },
     "actions": {
       "editProfile": "Editar perfil",
       "promote": "Promover a administrador",
@@ -429,6 +506,29 @@
     "adminEmailMessage": "Falta VITE_ADMIN_EMAIL en .env. Establécelo con el correo del administrador inicial.",
     "consoleHint": "Revisa la consola del navegador y tu configuración .env. Consulta el README para las instrucciones de configuración."
   },
+  "identity": {
+    "brandTitle": "Flexweg CMS",
+    "brandSubtitle": "Publicación estática",
+    "login": {
+      "heading": "Iniciar sesión",
+      "intro": "Usa el correo y la contraseña que te ha facilitado tu administrador.",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión…"
+    },
+    "fields": {
+      "name": "Nombre a mostrar (opcional)",
+      "namePlaceholder": "Juan Pérez",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "passwordHint": "Al menos 8 caracteres."
+    },
+    "footer": "Las nuevas cuentas las crea un administrador desde la página Usuarios.",
+    "errors": {
+      "invalidEmail": "Introduce una dirección de correo válida.",
+      "missingPassword": "La contraseña es obligatoria.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres."
+    }
+  },
   "setup": {
     "title": "Bienvenido a Flexweg CMS",
     "subtitle": "Configuración inicial",
@@ -437,19 +537,32 @@
     "introFlexweg": "Paso 2 — Flexweg. Introduce tu clave API Flexweg y la URL del sitio. Probamos la API, guardamos la configuración en Firestore, subimos config.js a tu sitio y sincronizamos los activos del tema.",
     "continueToFlexweg": "Validar Firebase y continuar",
     "stepper": {
-      "welcome": "Bienvenida",
       "terms": "Condiciones",
+      "backend": "Backend",
       "firebase": "Firebase",
-      "flexweg": "Flexweg"
+      "flexweg": "Flexweg",
+      "sqlite": "SQLite"
     },
-    "welcome": {
-      "heading": "¡Bienvenido a Flexweg CMS!",
-      "intro": "Flexweg CMS es una herramienta gratuita que Flexweg pone a tu disposición para publicar páginas en tu hosting Flexweg — Flexweg nunca te facturará el uso del CMS. Para funcionar necesita un proyecto Firebase gratuito (Auth + Firestore) — ahí guarda tus posts, los metadatos de los medios y los ajustes.",
-      "firebaseTitle": "Firebase es obligatorio — y gratuito",
-      "firebaseBody": "Crear un proyecto Firebase es gratis y lleva unos 5 minutos: abre la Firebase Console, crea un nuevo proyecto, activa Authentication (email/contraseña) y Firestore. El plan Spark es suficiente para un sitio típico. Nuestro tutorial te guía clic a clic.",
-      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
-      "tutorialButton": "Tutorial de configuración Firebase",
-      "haveAccountButton": "Ya he creado mi proyecto Firebase"
+    "backend": {
+      "title": "Elige un backend de datos",
+      "intro": "Elige dónde el CMS guardará tus posts, páginas, usuarios y ajustes. Puedes cambiarlo luego desde Ajustes (los datos no se migran).",
+      "sqliteTitle": "Flexweg SQLite (recomendado)",
+      "sqliteHint": "Todos los datos se quedan en tu sitio Flexweg como un archivo SQLite. Sin servicio externo. La auth la proporciona la API SQLite de Flexweg.",
+      "firebaseTitle": "Firebase",
+      "firebaseHint": "Usa un proyecto Firebase para Firestore + Auth. Gratis con el plan Spark. Actualizaciones en tiempo real vía onSnapshot.",
+      "continue": "Continuar"
+    },
+    "sqlite": {
+      "heading": "Conecta tu sitio Flexweg",
+      "intro": "Usaremos tu clave API maestra de Flexweg UNA SOLA VEZ para crear un token con alcance limitado para la base de datos SQLite. Tras la instalación, la clave maestra se descarta y solo se almacena el token con alcance (limitado a este único archivo SQLite).",
+      "apiKeyHint": "Clave API maestra de Flexweg. Se usa solo para instalar — nunca se almacena después.",
+      "detectedFromUrl": "Detectado desde la URL",
+      "advanced": "Ajustes avanzados (URL del sitio, ruta SQLite…)",
+      "pathHint": "Dónde vive el archivo SQLite en tu sitio Flexweg. Las carpetas se crean automáticamente.",
+      "adminHeading": "Cuenta de administrador",
+      "adminIntro": "Crea el primer usuario — esta cuenta obtiene derechos de admin automáticamente. Los miembros siguientes se incorporan desde la página Usuarios una vez con sesión iniciada.",
+      "passwordHint": "Al menos 8 caracteres.",
+      "submit": "Instalar base de datos SQLite"
     },
     "terms": {
       "title": "Condiciones de uso",
@@ -493,7 +606,7 @@
     },
     "help": {
       "firebase": "Encuentra estos valores en Firebase Console → Configuración del proyecto → General → Tus apps → Configuración del SDK.",
-      "admin": "Usa un usuario existente de Firebase Authentication. Cualquiera que inicie sesión con este correo es tratado como administrador y no necesita un registro de usuario. Crea el usuario en Firebase Console → Authentication si aún no existe.",
+      "admin": "Usa un usuario existente de Firebase Authentication. Cualquiera que inicie sesión con este correo es tratado como administrador y se salta la comprobación del registro de usuario. Crea el usuario en Firebase Console → Authentication si aún no existe.",
       "flexweg": "Genera una clave API permanente en tu cuenta Flexweg → API. La URL del sitio es la dirección pública de tu sitio Flexweg (p. ej. https://tu-sitio.flexweg.com).",
       "flexwegApiKeyHint": "Obtén tu clave API desde la configuración de tu cuenta Flexweg.",
       "flexwegApiKeyLink": "Abrir configuración de la cuenta"
@@ -509,7 +622,8 @@
       "adminPassword": "Contraseña",
       "flexwegApiKey": "Clave API",
       "flexwegSiteUrl": "URL del sitio",
-      "flexwegApiBaseUrl": "URL base de la API"
+      "flexwegApiBaseUrl": "URL base de la API",
+      "sqlitePath": "Ruta SQLite"
     },
     "submit": "Guardar y continuar",
     "submitting": "Configurando…",
@@ -521,7 +635,15 @@
       "testFlexweg": "Probando la API de Flexweg…",
       "writeFirestore": "Guardando configuración…",
       "uploadConfig": "Subiendo config.js a Flexweg…",
-      "syncThemes": "Sincronizando assets de tema con Flexweg…"
+      "syncThemes": "Sincronizando assets de tema con Flexweg…",
+      "sqliteInstall": "Creando token SQLite con alcance limitado…",
+      "sqliteRegisterAdmin": "Registrando la cuenta de admin…",
+      "sqliteSchema": "Inicializando el esquema SQLite…"
+    },
+    "stepsDone": {
+      "sqliteInstall": "Token SQLite con alcance limitado emitido",
+      "sqliteRegisterAdmin": "Admin registrado y con sesión iniciada",
+      "sqliteSchema": "Esquema SQLite listo"
     },
     "errors": {
       "missingFields": "Por favor, rellena todos los campos.",
@@ -535,6 +657,8 @@
       "firebaseInvalidApiKey": "La clave API de Firebase no es válida. Verifica el valor en Firebase Console.",
       "firebaseNetwork": "Error de red al iniciar sesión en Firebase. Verifica tu conexión.",
       "firebaseTooManyRequests": "Demasiados intentos de inicio de sesión. Inténtalo más tarde o restablece la contraseña desde Firebase Console.",
+      "firebaseOperationNotAllowed": "El inicio de sesión con correo/contraseña no está activado en este proyecto Firebase. Abre Firebase Console → Authentication → Sign-in method y habilita el proveedor Email/Password.",
+      "firebaseUserDisabled": "Esta cuenta de usuario de Firebase está deshabilitada. Vuelve a habilitarla desde Firebase Console → Authentication → Users.",
       "wrongAdminEmail": "La cuenta de Firebase con la que iniciaste sesión no coincide con el correo de admin que has escrito. Inténtalo de nuevo.",
       "rulesNotPinnedTitle": "Las reglas de Firestore aún no te reconocen como admin bootstrap.",
       "rulesNotPinnedHint": "Abre Firebase Console → Firestore → Reglas y sustituye el valor de `bootstrapAdminEmail()` por: {{email}} — luego haz clic en Publicar. La plantilla de reglas del README incluye un marcador `you@example.com` que debe sustituirse por tu correo de admin real. Una vez publicadas las nuevas reglas, vuelve a hacer clic en Enviar aquí.",

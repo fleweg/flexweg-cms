@@ -181,9 +181,21 @@ export function fileToBase64(file: File): Promise<string> {
   });
 }
 
+// Encodes a slash-delimited path for use as a query string value while
+// keeping the slashes literal. `URLSearchParams` would encode `/` as
+// `%2F`, and the Flexweg `/files/delete` endpoint does NOT decode that
+// back into a path separator — it returns 200 OK but the file isn't
+// actually deleted, leaving orphans on storage forever. Encoding each
+// segment individually keeps spaces / unicode safe while preserving the
+// literal slashes the API needs. (Lesson #6 of the SQLite migration —
+// originally surfaced on the Notion port.)
+function encodePathForQuery(p: string): string {
+  return p.split("/").map(encodeURIComponent).join("/");
+}
+
 export async function deleteFile(path: string, signal?: AbortSignal): Promise<void> {
   const config = await requireConfig();
-  const url = `${config.apiBaseUrl}/files/delete?${new URLSearchParams({ path })}`;
+  const url = `${config.apiBaseUrl}/files/delete?path=${encodePathForQuery(path)}`;
   try {
     await performRequest("delete", () =>
       fetch(url, {
@@ -328,7 +340,9 @@ export async function getStorageLimits(): Promise<StorageLimitsResponse> {
 
 export async function deleteFolder(path: string): Promise<void> {
   const config = await requireConfig();
-  const url = `${config.apiBaseUrl}/files/delete-folder?${new URLSearchParams({ path })}`;
+  // Same `%2F` gotcha as deleteFile — keep slashes literal. See
+  // encodePathForQuery above.
+  const url = `${config.apiBaseUrl}/files/delete-folder?path=${encodePathForQuery(path)}`;
   try {
     await performRequest("deleteFolder", () =>
       fetch(url, {
@@ -343,7 +357,22 @@ export async function deleteFolder(path: string): Promise<void> {
 }
 
 // Convenience: build the public URL for a path stored on Flexweg.
+//
+// The user-supplied siteUrl frequently includes the app subfolder
+// (e.g. `https://your-site.flexweg.com/admin`). Naïvely joining
+// `${siteUrl}/${path}` where path is something like `admin/media/x.png`
+// produces a doubled-subfolder URL (`/admin/admin/media/x.png`) that
+// 404s. Strip to origin before joining so the result is always a
+// well-formed public URL regardless of what the user typed.
+// (Lesson #5 of the SQLite migration.)
 export async function publicUrlFor(path: string): Promise<string> {
   const config = await requireConfig();
-  return `${config.siteUrl}/${path.replace(/^\/+/, "")}`;
+  const cleaned = path.replace(/^\/+/, "");
+  try {
+    const origin = new URL(config.siteUrl).origin;
+    return `${origin.replace(/\/+$/, "")}/${cleaned}`;
+  } catch {
+    // Malformed siteUrl — fall back to the raw join.
+    return `${config.siteUrl.replace(/\/+$/, "")}/${cleaned}`;
+  }
 }

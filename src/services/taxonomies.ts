@@ -1,83 +1,48 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { collections, getDb } from "./firebase";
-import type { Term, TermType } from "../core/types";
+// Backend dispatcher for the taxonomies (terms) service.
+//
+// IMPORTANT: dispatched function exports are HOISTED FUNCTION
+// declarations (not `const x = impl.x`), and `impl()` is resolved
+// lazily on first call. Reason: `core/flexwegRuntime.ts` reads several
+// dispatcher exports at module-init inside an object literal, and a
+// circular import path through `themes/index.ts` means this module's
+// body hasn't necessarily run when flexwegRuntime's body does. Using
+// hoisted function bindings + lazy impl resolution avoids the TDZ
+// ("can't access lexical declaration X before initialization") crash.
 
-const termsCollection = () => collection(getDb(), collections.terms);
-const termDoc = (id: string) => doc(getDb(), collections.terms, id);
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebase from "./firebase/taxonomies";
+import * as sqlite from "./flexweg-sqlite/taxonomies";
 
-function newId(): string {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+let _impl: typeof firebase | typeof sqlite | null = null;
+function impl(): typeof firebase {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqlite : firebase;
+  return _impl as typeof firebase;
 }
 
 export function subscribeToTerms(
-  onChange: (terms: Term[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  const q = query(termsCollection(), orderBy("name", "asc"));
-  return onSnapshot(
-    q,
-    (snap) => onChange(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Term)),
-    onError,
-  );
+  ...args: Parameters<typeof firebase.subscribeToTerms>
+): ReturnType<typeof firebase.subscribeToTerms> {
+  return impl().subscribeToTerms(...args);
+}
+export function fetchAllTerms(
+  ...args: Parameters<typeof firebase.fetchAllTerms>
+): ReturnType<typeof firebase.fetchAllTerms> {
+  return impl().fetchAllTerms(...args);
+}
+export function createTerm(
+  ...args: Parameters<typeof firebase.createTerm>
+): ReturnType<typeof firebase.createTerm> {
+  return impl().createTerm(...args);
+}
+export function updateTerm(
+  ...args: Parameters<typeof firebase.updateTerm>
+): ReturnType<typeof firebase.updateTerm> {
+  return impl().updateTerm(...args);
+}
+export function deleteTerm(
+  ...args: Parameters<typeof firebase.deleteTerm>
+): ReturnType<typeof firebase.deleteTerm> {
+  return impl().deleteTerm(...args);
 }
 
-// One-shot read of every term. Use when a caller can't rely on the
-// React subscription's freshness — typically right after writing new
-// terms in a service path that also needs to publish them in the same
-// turn (e.g. flexweg-import after creating new categories).
-export async function fetchAllTerms(): Promise<Term[]> {
-  const q = query(termsCollection(), orderBy("name", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Term);
-}
-
-export interface CreateTermInput {
-  type: TermType;
-  name: string;
-  slug: string;
-  description?: string;
-  parentId?: string;
-}
-
-export async function createTerm(input: CreateTermInput): Promise<string> {
-  const id = newId();
-  const data: Record<string, unknown> = {
-    type: input.type,
-    name: input.name,
-    slug: input.slug,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  if (input.description) data.description = input.description;
-  if (input.parentId) data.parentId = input.parentId;
-  await setDoc(termDoc(id), data);
-  return id;
-}
-
-export async function updateTerm(
-  id: string,
-  patch: Partial<Pick<Term, "name" | "slug" | "description" | "parentId">>,
-): Promise<void> {
-  const update: Record<string, unknown> = { updatedAt: serverTimestamp() };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === undefined) continue;
-    update[key] = value;
-  }
-  await updateDoc(termDoc(id), update);
-}
-
-export async function deleteTerm(id: string): Promise<void> {
-  await deleteDoc(termDoc(id));
-}
+export type { CreateTermInput } from "./firebase/taxonomies";

@@ -231,12 +231,22 @@ export function ThemesPage() {
                       active ? t("themes.uninstallDisabledTitle") : undefined
                     }
                   >
-                    {uninstallingId === theme.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                    {t("externalInstall.uninstall")}
+                    {/* Lesson #4 — stable DOM. */}
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Loader2
+                        className={
+                          "h-4 w-4 animate-spin " +
+                          (uninstallingId === theme.id ? "" : "hidden")
+                        }
+                      />
+                      <Trash2
+                        className={
+                          "h-4 w-4 " +
+                          (uninstallingId === theme.id ? "hidden" : "")
+                        }
+                      />
+                      <span>{t("externalInstall.uninstall")}</span>
+                    </span>
                   </button>
                 )}
               </div>

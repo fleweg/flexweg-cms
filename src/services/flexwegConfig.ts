@@ -1,45 +1,47 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { collections, configDocs, getDb } from "./firebase";
+// Backend dispatcher for the Flexweg attachments-config service.
+//
+// Both backends store the master Flexweg API key in their own data
+// layer (Firestore `config/flexweg` vs SQLite `config` table key
+// "flexweg"). The shape returned by `getFlexwegConfig()` is identical —
+// the dispatcher hands it to services/flexwegApi.ts which is itself
+// backend-agnostic.
+//
+// `FlexwegConfig` is defined in the firebase impl and the SQLite impl
+// imports it via `import type { FlexwegConfig } from "../flexwegConfig"`
+// (this file) — type-only, so the runtime import graph stays acyclic.
+//
+// IMPORTANT: dispatched function exports are HOISTED FUNCTION
+// declarations (not `const x = impl.x`), and `impl()` is resolved
+// lazily on first call. Reason: `core/flexwegRuntime.ts` reads several
+// dispatcher exports at module-init inside an object literal, and a
+// circular import path through `themes/index.ts` means this module's
+// body hasn't necessarily run when flexwegRuntime's body does. Using
+// hoisted function bindings + lazy impl resolution avoids the TDZ
+// ("can't access lexical declaration X before initialization") crash.
 
-// Default Flexweg API base. Override via the Settings UI if your account
-// uses a different host. The trailing slash is normalized away on read.
-export const DEFAULT_FLEXWEG_API_BASE_URL = "https://www.flexweg.com/api/v1";
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebase from "./firebase/flexwegConfig";
+import * as sqlite from "./flexweg-sqlite/flexwegConfig";
 
-export interface FlexwegConfig {
-  // Permanent API key generated in Flexweg account → API. Stored in Firestore
-  // under config/flexweg, readable by any active admin/editor. Do not use
-  // this pattern on a public-facing app — a team member can fish the key out
-  // of devtools at runtime.
-  apiKey: string;
-  // Public base URL where uploaded files are served, e.g.
-  // "https://your-site.flexweg.com" (no trailing slash).
-  siteUrl: string;
-  // API base URL, e.g. "https://www.flexweg.com/api/v1" (no trailing slash).
-  apiBaseUrl: string;
+let _impl: typeof firebase | typeof sqlite | null = null;
+function impl(): typeof firebase {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqlite : firebase;
+  return _impl as typeof firebase;
 }
 
-const flexwegDocRef = () => doc(getDb(), collections.config, configDocs.flexweg);
+// The DEFAULT_FLEXWEG_API_BASE_URL value is identical in both backends —
+// re-exporting from firebase is fine and avoids a needless indirection.
+export { DEFAULT_FLEXWEG_API_BASE_URL } from "./firebase/flexwegConfig";
 
-function stripTrailingSlash(s: string): string {
-  return s.replace(/\/+$/, "");
+export function getFlexwegConfig(
+  ...args: Parameters<typeof firebase.getFlexwegConfig>
+): ReturnType<typeof firebase.getFlexwegConfig> {
+  return impl().getFlexwegConfig(...args);
+}
+export function setFlexwegConfig(
+  ...args: Parameters<typeof firebase.setFlexwegConfig>
+): ReturnType<typeof firebase.setFlexwegConfig> {
+  return impl().setFlexwegConfig(...args);
 }
 
-export async function getFlexwegConfig(): Promise<FlexwegConfig | null> {
-  const snap = await getDoc(flexwegDocRef());
-  if (!snap.exists()) return null;
-  const data = snap.data() as Partial<FlexwegConfig> | undefined;
-  if (!data?.apiKey || !data?.siteUrl) return null;
-  return {
-    apiKey: data.apiKey,
-    siteUrl: stripTrailingSlash(data.siteUrl),
-    apiBaseUrl: stripTrailingSlash(data.apiBaseUrl ?? DEFAULT_FLEXWEG_API_BASE_URL),
-  };
-}
-
-export async function setFlexwegConfig(next: FlexwegConfig): Promise<void> {
-  await setDoc(flexwegDocRef(), {
-    apiKey: next.apiKey,
-    siteUrl: stripTrailingSlash(next.siteUrl),
-    apiBaseUrl: stripTrailingSlash(next.apiBaseUrl || DEFAULT_FLEXWEG_API_BASE_URL),
-  });
-}
+export type { FlexwegConfig } from "./firebase/flexwegConfig";

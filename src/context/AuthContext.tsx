@@ -7,7 +7,7 @@ import {
   subscribeToAuth,
 } from "../services/auth";
 import { ensureSelfUserRecord, subscribeToUserRecord, USER_ROLES } from "../services/users";
-import { getAdminEmail } from "../services/firebase";
+import { getAdminEmail } from "../services/firebaseClient";
 import { setActiveLocale } from "../i18n";
 import type { UserRecord, UserRole } from "../core/types";
 

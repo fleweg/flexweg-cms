@@ -348,12 +348,12 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
                 onClick={handleInitialize}
                 disabled={folderInitialising}
               >
-                {folderInitialising ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <FolderPlus className="h-4 w-4" />
-                )}
-                {folderInitialising ? t("folder.initializing") : t("folder.initialize")}
+                {/* Lesson #4 — stable DOM. */}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <Loader2 className={"h-4 w-4 animate-spin " + (folderInitialising ? "" : "hidden")} />
+                  <FolderPlus className={"h-4 w-4 " + (folderInitialising ? "hidden" : "")} />
+                  <span>{folderInitialising ? t("folder.initializing") : t("folder.initialize")}</span>
+                </span>
               </button>
             </div>
           ) : (
@@ -378,12 +378,11 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
                 onClick={refreshFolder}
                 disabled={folderLoading}
               >
-                {folderLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
-                )}
-                {t("folder.refresh")}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <Loader2 className={"h-4 w-4 animate-spin " + (folderLoading ? "" : "hidden")} />
+                  <RefreshCw className={"h-4 w-4 " + (folderLoading ? "hidden" : "")} />
+                  <span>{t("folder.refresh")}</span>
+                </span>
               </button>
             </div>
           )}
@@ -419,12 +418,12 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
             onClick={handleScan}
             disabled={scanning || running || !hasFiles}
           >
-            {scanning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            {scanning ? t("scan.scanning") : t("scan.button")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (scanning ? "" : "hidden")} />
+              <Search className={"h-4 w-4 " + (scanning ? "hidden" : "")} />
+              <span>{scanning ? t("scan.scanning") : t("scan.button")}</span>
+            </span>
           </button>
           <button
             type="button"
@@ -433,12 +432,11 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
             disabled={running || scanning || !summary || blockedByErrors || (summary.entries.length === 0)}
             title={blockedByErrors ? t("confirm.blockedByErrors") : undefined}
           >
-            {running ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            {running ? t("confirm.running") : t("confirm.button")}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (running ? "" : "hidden")} />
+              <Play className={"h-4 w-4 " + (running ? "hidden" : "")} />
+              <span>{running ? t("confirm.running") : t("confirm.button")}</span>
+            </span>
           </button>
         </div>
 
@@ -608,12 +606,12 @@ export function ImportSettingsPage({ config, save }: PluginSettingsPageProps<Imp
             onClick={handleSaveDefaults}
             disabled={savingDefaults}
           >
-            {savingDefaults ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            {t("defaults.save")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (savingDefaults ? "" : "hidden")} />
+              <CheckCircle2 className={"h-4 w-4 " + (savingDefaults ? "hidden" : "")} />
+              <span>{t("defaults.save")}</span>
+            </span>
           </button>
         </div>
       </section>

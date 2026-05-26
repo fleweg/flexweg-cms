@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Eye, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "lucide-react";
 import type { Editor } from "@tiptap/core";
-import type { Timestamp } from "firebase/firestore";
+import { Timestamp as TimestampImpl, type Timestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
 import { useAllPosts } from "../hooks/useAllPosts";
@@ -92,7 +92,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { categories, tags, media, settings, users } = useCmsData();
+  const { categories, tags, media, settings, users, addOptimisticPost } = useCmsData();
   // Posts + pages used to come from the global subscription. Now
   // we fetch on mount (cached for 30 s in services/posts.ts) — the
   // edit page needs both lists for slug collision checks across the
@@ -283,6 +283,28 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
           primaryTermId: primaryTermId || undefined,
           heroMediaId,
           seo,
+        });
+        // Optimistic insert — closes the latency gap between the
+        // server-side INSERT and the next subscription tick (~4 s
+        // in SQLite mode, ~100 ms in Firebase). Without it, the
+        // PostEditPage re-renders post-navigate and finds nothing
+        // in `useAllPosts`, briefly showing a "Post not found" flash.
+        const nowTs = TimestampImpl.now();
+        addOptimisticPost({
+          id: newId,
+          type,
+          title,
+          slug,
+          contentMarkdown,
+          excerpt: excerpt || undefined,
+          heroMediaId: heroMediaId ?? undefined,
+          authorId: user.uid,
+          termIds,
+          primaryTermId: primaryTermId || undefined,
+          status: "draft",
+          seo,
+          createdAt: nowTs,
+          updatedAt: nowTs,
         });
         toast.success(t("posts.edit.draftSaved"));
         navigate(`/${type === "post" ? "posts" : "pages"}/${newId}`, { replace: true });

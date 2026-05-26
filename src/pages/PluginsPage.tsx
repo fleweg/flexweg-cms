@@ -162,12 +162,22 @@ export function PluginsPage() {
                       onClick={() => handleUninstall(plugin.id)}
                       disabled={uninstallingId === plugin.id}
                     >
-                      {uninstallingId === plugin.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                      {t("externalInstall.uninstall")}
+                      {/* Lesson #4 — stable DOM. */}
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        <Loader2
+                          className={
+                            "h-4 w-4 animate-spin " +
+                            (uninstallingId === plugin.id ? "" : "hidden")
+                          }
+                        />
+                        <Trash2
+                          className={
+                            "h-4 w-4 " +
+                            (uninstallingId === plugin.id ? "hidden" : "")
+                          }
+                        />
+                        <span>{t("externalInstall.uninstall")}</span>
+                      </span>
                     </button>
                   )}
                 </div>

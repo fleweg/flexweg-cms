@@ -1,31 +1,36 @@
-// Firestore-backed registry of installed external plugins / themes.
+// Backend-agnostic registry of installed external plugins / themes.
 //
 // This used to live in /admin/external.json on Flexweg, which made
 // re-deploys risky — overwriting the file would wipe the admin's
-// uninstall state. By moving the runtime registry to Firestore, the
-// dist/admin/ folder becomes fully re-deployable; only Firestore holds
-// what's actually loaded.
+// uninstall state. Moving the runtime registry to the active backend's
+// data store (Firestore in Firebase mode, SQLite `config` table in
+// SQLite mode) makes the dist/admin/ folder fully re-deployable; only
+// the backend holds what's actually loaded.
 //
 // Storage layout:
-//   /settings/externalRegistry        ← Firestore doc (mutable, user state)
-//   /admin/external.default.json       ← Flexweg file (immutable, built-in baseline)
-//   /admin/external.json (legacy)      ← Flexweg file (one-time migration source)
+//   Backend (Firestore doc OR SQLite config row)  ← mutable, user state
+//   /admin/external.default.json                  ← Flexweg file (immutable, built-in baseline)
+//   /admin/external.json (legacy)                  ← Flexweg file (one-time migration source)
 //
-// Read precedence on a cold boot: Firestore → legacy file → defaults.
-// The first read materialises the result back into Firestore so future
-// boots short-circuit there.
+// Read precedence on a cold boot:
+//   1. Backend (Firestore/SQLite) — happy path
+//   2. Legacy file (pre-Firestore deployments only) — migrates on read
+//   3. Defaults file (fresh install) — seeds the backend
+// On a fallback to (2) or (3), the result is materialised back into
+// the backend so subsequent boots short-circuit at step 1.
+//
+// IMPORTANT: the backend read/write primitives go through a lazy
+// dispatcher (hoisted function wrappers + cached impl). Same pattern
+// as services/posts.ts and the other 7 dispatchers — avoids TDZ from
+// circular imports via themes/index.ts.
 
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { collections, getDb } from "./firebase";
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebaseStore from "./firebase/externalRegistryStore";
+import * as sqliteStore from "./flexweg-sqlite/externalRegistryStore";
 import {
   EMPTY_EXTERNAL_MANIFEST,
   type ExternalManifest,
 } from "./externalRegistry";
-
-// Firestore doc id under `settings/`. Living next to settings/site
-// keeps the Firestore rules trivial — `match /settings/{docId}` already
-// allows editor read+write.
-export const EXTERNAL_REGISTRY_DOC_ID = "externalRegistry";
 
 // Flexweg paths still relevant to the registry layer:
 // - external.default.json: build-time baseline shipped with the admin
@@ -42,8 +47,20 @@ export const LEGACY_MANIFEST_PATH = "admin/external.json";
 const DEFAULT_MANIFEST_BROWSER_PATH = "external.default.json";
 const LEGACY_MANIFEST_BROWSER_PATH = "external.json";
 
-function registryDocRef() {
-  return doc(getDb(), collections.settings, EXTERNAL_REGISTRY_DOC_ID);
+// ─── Backend dispatcher (storage primitives) ─────────────────────────
+
+let _impl: typeof firebaseStore | typeof sqliteStore | null = null;
+function impl(): typeof firebaseStore {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqliteStore : firebaseStore;
+  return _impl as typeof firebaseStore;
+}
+
+function readBackendRegistry(): Promise<ExternalManifest | null> {
+  return impl().readBackendRegistry();
+}
+
+function writeBackendRegistry(manifest: ExternalManifest): Promise<void> {
+  return impl().writeBackendRegistry(manifest);
 }
 
 function normaliseManifest(value: unknown): ExternalManifest | null {
@@ -54,15 +71,6 @@ function normaliseManifest(value: unknown): ExternalManifest | null {
     plugins: Array.isArray(v.plugins) ? v.plugins : [],
     themes: Array.isArray(v.themes) ? v.themes : [],
   };
-}
-
-// Reads the Firestore registry doc. Returns null when absent —
-// callers fall back to legacy / defaults. Errors propagate so the
-// loader can decide whether to retry or proceed with empty.
-async function readFirestoreRegistry(): Promise<ExternalManifest | null> {
-  const snap = await getDoc(registryDocRef());
-  if (!snap.exists()) return null;
-  return normaliseManifest(snap.data());
 }
 
 // Same fetch pattern as externalLoader's old fetchExternalManifest:
@@ -85,28 +93,29 @@ async function fetchManifestFile(
 }
 
 // Top-level read — the loader and upload UI both go through this.
-// Returns the live registry, materialising into Firestore when a
+// Returns the live registry, materialising into the backend when a
 // legacy file or default-file fallback is taken so subsequent boots
-// short-circuit at the Firestore step.
+// short-circuit at the backend step.
 export async function readRegistry(): Promise<ExternalManifest> {
-  // 1. Firestore first — happy path on warm boot.
-  let firestore: ExternalManifest | null = null;
+  // 1. Backend first — happy path on warm boot.
+  let backend: ExternalManifest | null = null;
   try {
-    firestore = await readFirestoreRegistry();
+    backend = await readBackendRegistry();
   } catch (err) {
-    // Permission denied / network error — log and continue to
-    // fallback paths so the admin can still bootstrap from the file.
-    console.warn("[external-registry] Firestore read failed:", err);
+    // Permission denied / network error / SQLite token rejected — log
+    // and continue to fallback paths so the admin can still bootstrap
+    // from the file.
+    console.warn("[external-registry] backend read failed:", err);
   }
-  if (firestore) return firestore;
+  if (backend) return backend;
 
   // 2. Legacy on-disk registry. Pre-Firestore deployments wrote here.
-  // Migrate transparently — the read materialises into Firestore.
+  // Migrate transparently — the read materialises into the backend.
   const legacy = await fetchManifestFile(LEGACY_MANIFEST_BROWSER_PATH);
   if (legacy) {
-    await writeRegistry(legacy).catch((err) => {
+    await writeBackendRegistry(legacy).catch((err) => {
       console.warn(
-        "[external-registry] could not migrate legacy file to Firestore:",
+        "[external-registry] could not migrate legacy file to backend:",
         err,
       );
     });
@@ -116,33 +125,30 @@ export async function readRegistry(): Promise<ExternalManifest> {
   // 3. Build-time default — fresh install / never-customised admin.
   const defaults = await fetchManifestFile(DEFAULT_MANIFEST_BROWSER_PATH);
   if (defaults) {
-    await writeRegistry(defaults).catch((err) => {
+    await writeBackendRegistry(defaults).catch((err) => {
       console.warn(
-        "[external-registry] could not seed Firestore from defaults:",
+        "[external-registry] could not seed backend from defaults:",
         err,
       );
     });
     return defaults;
   }
 
-  // 4. Nothing found — neither a Firestore doc, a legacy file nor a
+  // 4. Nothing found — neither a backend entry, a legacy file nor a
   // defaults file exists. Return empty; the admin boots without any
   // external entries (still valid — only mu-plugins + the bundled
   // default theme are registered).
   return { ...EMPTY_EXTERNAL_MANIFEST };
 }
 
-// Writes the manifest to Firestore. Single source of truth for
-// runtime state. Called by install / uninstall / reinstall flows.
+// Writes the manifest to the active backend. Single source of truth
+// for runtime state. Called by install / uninstall / reinstall flows.
 export async function writeRegistry(manifest: ExternalManifest): Promise<void> {
-  await setDoc(registryDocRef(), {
-    plugins: manifest.plugins,
-    themes: manifest.themes,
-  });
+  await writeBackendRegistry(manifest);
 }
 
 // Build-time defaults baseline — read directly from the on-disk file,
-// NEVER from Firestore. Used by the "Reinstall bundled defaults" UI
+// NEVER from the backend. Used by the "Reinstall bundled defaults" UI
 // to compute what was originally shipped vs what's currently registered.
 export async function readDefaults(): Promise<ExternalManifest> {
   const defaults = await fetchManifestFile(DEFAULT_MANIFEST_BROWSER_PATH);

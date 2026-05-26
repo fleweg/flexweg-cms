@@ -230,18 +230,19 @@ export function FaviconSettingsPage({
               onClick={() => fileInputRef.current?.click()}
               disabled={generating || removing}
             >
-              {generating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : config.enabled ? (
-                <ImageIcon className="h-4 w-4" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {generating
-                ? t("upload.picking")
-                : config.enabled
-                  ? t("upload.change")
-                  : t("upload.pick")}
+              {/* Lesson #4 — stable DOM. Always render all 3 icons, toggle via className. */}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (generating ? "" : "hidden")} />
+                <ImageIcon className={"h-4 w-4 " + (!generating && config.enabled ? "" : "hidden")} />
+                <Upload className={"h-4 w-4 " + (!generating && !config.enabled ? "" : "hidden")} />
+                <span>
+                  {generating
+                    ? t("upload.picking")
+                    : config.enabled
+                      ? t("upload.change")
+                      : t("upload.pick")}
+                </span>
+              </span>
             </button>
             {config.enabled && (
               <button
@@ -250,12 +251,11 @@ export function FaviconSettingsPage({
                 onClick={handleRemove}
                 disabled={generating || removing}
               >
-                {removing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-                {removing ? t("upload.removing") : t("upload.remove")}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <Loader2 className={"h-4 w-4 animate-spin " + (removing ? "" : "hidden")} />
+                  <Trash2 className={"h-4 w-4 " + (removing ? "hidden" : "")} />
+                  <span>{removing ? t("upload.removing") : t("upload.remove")}</span>
+                </span>
               </button>
             )}
           </div>
@@ -377,12 +377,12 @@ export function FaviconSettingsPage({
           onClick={handleSaveManifest}
           disabled={savingManifest}
         >
-          {savingManifest ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {savingManifest ? t("pwa.saving") : t("pwa.save")}
+          {/* Lesson #4 — stable DOM. */}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (savingManifest ? "" : "hidden")} />
+            <Save className={"h-4 w-4 " + (savingManifest ? "hidden" : "")} />
+            <span>{savingManifest ? t("pwa.saving") : t("pwa.save")}</span>
+          </span>
         </button>
       </section>
     </div>

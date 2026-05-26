@@ -255,18 +255,19 @@ function LogoTab({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || removing}
           >
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : config.logoEnabled ? (
-              <ImageIcon className="h-4 w-4" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            {uploading
-              ? t("settings.logo.uploading")
-              : config.logoEnabled
-                ? t("settings.logo.change")
-                : t("settings.logo.upload")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (uploading ? "" : "hidden")} />
+              <ImageIcon className={"h-4 w-4 " + (!uploading && config.logoEnabled ? "" : "hidden")} />
+              <Upload className={"h-4 w-4 " + (!uploading && !config.logoEnabled ? "" : "hidden")} />
+              <span>
+                {uploading
+                  ? t("settings.logo.uploading")
+                  : config.logoEnabled
+                    ? t("settings.logo.change")
+                    : t("settings.logo.upload")}
+              </span>
+            </span>
           </button>
           {config.logoEnabled && (
             <button
@@ -275,12 +276,11 @@ function LogoTab({
               onClick={handleRemove}
               disabled={uploading || removing}
             >
-              {removing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              {removing ? t("settings.logo.removing") : t("settings.logo.remove")}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (removing ? "" : "hidden")} />
+                <Trash2 className={"h-4 w-4 " + (removing ? "hidden" : "")} />
+                <span>{removing ? t("settings.logo.removing") : t("settings.logo.remove")}</span>
+              </span>
             </button>
           )}
         </div>

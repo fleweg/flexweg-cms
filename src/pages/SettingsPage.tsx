@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Database,
+  Download,
+  Flame,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useCmsData } from "../context/CmsDataContext";
@@ -15,6 +22,11 @@ import { updateSettings } from "../services/settings";
 import { setUserPreferences } from "../services/users";
 import { invalidateCachedReady } from "../services/firestoreSetup";
 import { toast } from "../lib/toast";
+import {
+  getBackendKind,
+  getRuntimeConfig,
+  resetRuntimeConfigCache,
+} from "../lib/runtimeConfig";
 import { EDITOR_FONT_OPTIONS, DEFAULT_EDITOR_SIZES, SYSTEM_FONT_NAME } from "../core/editorFonts";
 import { FontSelect } from "../components/ui/FontSelect";
 import type { AdminLocale, EditorStyle, PaginationMode } from "../core/types";
@@ -24,8 +36,9 @@ import type { AdminLocale, EditorStyle, PaginationMode } from "../core/types";
 // content sections.
 export function SettingsPage() {
   const { t } = useTranslation();
-  const { user, record } = useAuth();
+  const { user, record, isAdmin } = useAuth();
   const { settings } = useCmsData();
+  const backend = getBackendKind();
   // The home-page picker needs the full pages list. Loaded on mount
   // — the picker is the only place this list is needed on this page.
   const { posts: pages } = useAllPosts("page");
@@ -274,42 +287,55 @@ export function SettingsPage() {
           </div>
         )}
         <button type="button" className="btn-primary" onClick={saveSite} disabled={savingSite}>
-          {savingSite && <Loader2 className="h-4 w-4 animate-spin" />}
-          {savingSite ? t("common.saving") : t("common.save")}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (savingSite ? "" : "hidden")} />
+            <span>{savingSite ? t("common.saving") : t("common.save")}</span>
+          </span>
         </button>
       </section>
 
-      <section className="card p-4 space-y-3">
-        <h2 className="font-semibold">{t("settings.performance.title")}</h2>
-        <p className="text-xs text-surface-500 dark:text-surface-400">
-          {t("settings.performance.help")}
-        </p>
-        <div>
-          <label className="label">{t("settings.performance.mode")}</label>
-          <select
-            className="input max-w-md"
-            value={paginationMode}
-            onChange={(e) => setPaginationMode(e.target.value as PaginationMode)}
-          >
-            <option value="global">{t("settings.performance.modeGlobal")}</option>
-            <option value="paginated">{t("settings.performance.modePaginated")}</option>
-          </select>
-          <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
-            {paginationMode === "global"
-              ? t("settings.performance.globalHelp")
-              : t("settings.performance.paginatedHelp")}
+      {/* Performance / pagination toggle is Firestore-specific —
+          it controls whether posts/pages lists run live `onSnapshot`
+          subscriptions on the whole collection (global) or cursor-
+          paginated queries with composite indexes (paginated). SQLite
+          mode polls a single `/version` endpoint regardless, so the
+          choice has no effect there. Hide the section to avoid
+          surfacing a no-op control. */}
+      {backend !== "flexweg-sqlite" && (
+        <section className="card p-4 space-y-3">
+          <h2 className="font-semibold">{t("settings.performance.title")}</h2>
+          <p className="text-xs text-surface-500 dark:text-surface-400">
+            {t("settings.performance.help")}
           </p>
-        </div>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={savePagination}
-          disabled={savingPagination || paginationMode === (settings.paginationMode ?? "global")}
-        >
-          {savingPagination && <Loader2 className="h-4 w-4 animate-spin" />}
-          {savingPagination ? t("common.saving") : t("common.save")}
-        </button>
-      </section>
+          <div>
+            <label className="label">{t("settings.performance.mode")}</label>
+            <select
+              className="input max-w-md"
+              value={paginationMode}
+              onChange={(e) => setPaginationMode(e.target.value as PaginationMode)}
+            >
+              <option value="global">{t("settings.performance.modeGlobal")}</option>
+              <option value="paginated">{t("settings.performance.modePaginated")}</option>
+            </select>
+            <p className="text-xs text-surface-500 mt-1 dark:text-surface-400">
+              {paginationMode === "global"
+                ? t("settings.performance.globalHelp")
+                : t("settings.performance.paginatedHelp")}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={savePagination}
+            disabled={savingPagination || paginationMode === (settings.paginationMode ?? "global")}
+          >
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (savingPagination ? "" : "hidden")} />
+              <span>{savingPagination ? t("common.saving") : t("common.save")}</span>
+            </span>
+          </button>
+        </section>
+      )}
 
       <section className="card p-4 space-y-3">
         <h2 className="font-semibold">{t("settings.editor.title")}</h2>
@@ -381,8 +407,10 @@ export function SettingsPage() {
             onClick={saveEditorStyle}
             disabled={savingEditor}
           >
-            {savingEditor && <Loader2 className="h-4 w-4 animate-spin" />}
-            {savingEditor ? t("common.saving") : t("common.save")}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (savingEditor ? "" : "hidden")} />
+              <span>{savingEditor ? t("common.saving") : t("common.save")}</span>
+            </span>
           </button>
           <button type="button" className="btn-ghost" onClick={resetEditorStyle}>
             {t("settings.editor.reset")}
@@ -392,6 +420,14 @@ export function SettingsPage() {
 
       <section className="card p-4 space-y-3">
         <h2 className="font-semibold">{t("settings.flexweg.title")}</h2>
+        {/* Storage location depends on the active backend — the
+            dispatcher routes both reads and writes. Same admin-only
+            posture in both modes. */}
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {backend === "flexweg-sqlite"
+            ? t("settings.flexweg.storageHelpSqlite")
+            : t("settings.flexweg.storageHelpFirebase")}
+        </p>
         <div>
           <label className="label">{t("settings.flexweg.apiKey")}</label>
           <input
@@ -425,10 +461,123 @@ export function SettingsPage() {
           />
         </div>
         <button type="button" className="btn-primary" onClick={saveFlexweg} disabled={savingFw}>
-          {savingFw && <Loader2 className="h-4 w-4 animate-spin" />}
-          {savingFw ? t("common.saving") : t("common.save")}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (savingFw ? "" : "hidden")} />
+            <span>{savingFw ? t("common.saving") : t("common.save")}</span>
+          </span>
         </button>
       </section>
+
+      {isAdmin && <BackendSettings backend={backend} />}
     </div>
+  );
+}
+
+// Backend switcher (admin-only). Surfaces the active backend, a
+// download link to the SQLite file (in SQLite mode), and a "Switch
+// backend…" button that wipes the in-browser runtime config + reloads
+// so the SetupForm shows up and the user can pick the other backend.
+//
+// **Data is NOT migrated** — the previous backend's data stays where
+// it was (Firestore or the .sqlite file on Flexweg) but won't be read
+// until the user switches back.
+function BackendSettings({ backend }: { backend: ReturnType<typeof getBackendKind> }) {
+  const { t } = useTranslation();
+  const [confirming, setConfirming] = useState(false);
+  const config = getRuntimeConfig();
+  const isFirebase = backend === "firebase";
+  const isSqlite = backend === "flexweg-sqlite";
+  const backupHref =
+    config && config.backend === "flexweg-sqlite"
+      ? `${config.flexweg.siteUrl.replace(/\/+$/, "")}/${config.flexweg.sqlitePath.replace(/^\/+/, "")}`
+      : null;
+
+  function switchBackend() {
+    if (typeof window !== "undefined") {
+      window.__FLEXWEG_CONFIG__ = null;
+      resetRuntimeConfigCache();
+      window.location.reload();
+    }
+  }
+
+  return (
+    <section className="card p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <RefreshCw className="h-4 w-4 text-surface-500 dark:text-surface-400" />
+        <h2 className="font-semibold">{t("settings.backend.title")}</h2>
+      </div>
+
+      <p className="text-sm text-surface-600 dark:text-surface-300">
+        {t("settings.backend.active")}{" "}
+        <span className="inline-flex items-center gap-1.5 font-medium text-surface-900 dark:text-surface-50">
+          {isFirebase ? (
+            <>
+              <Flame className="h-3.5 w-3.5 text-amber-500" />
+              Firebase
+            </>
+          ) : isSqlite ? (
+            <>
+              <Database className="h-3.5 w-3.5 text-emerald-500" />
+              Flexweg SQLite
+            </>
+          ) : (
+            "—"
+          )}
+        </span>
+      </p>
+
+      {isSqlite && backupHref && (
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          <a
+            href={backupHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
+          >
+            <Download className="h-3.5 w-3.5" />
+            {t("settings.backend.downloadBackup")}
+          </a>{" "}
+          — {t("settings.backend.downloadBackupHelp")}
+        </p>
+      )}
+
+      {!confirming ? (
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setConfirming(true)}
+        >
+          {t("settings.backend.switchButton")}
+        </button>
+      ) : (
+        <div className="rounded-lg bg-amber-50 ring-1 ring-amber-200 p-4 dark:bg-amber-900/20 dark:ring-amber-700/40">
+          <div className="flex gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium">{t("settings.backend.confirmTitle")}</p>
+              <p className="mt-1 text-xs leading-relaxed">
+                {t("settings.backend.confirmBody")}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  className="btn-danger text-xs"
+                  onClick={switchBackend}
+                >
+                  {t("settings.backend.confirmYes")}
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost text-xs"
+                  onClick={() => setConfirming(false)}
+                >
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

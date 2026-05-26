@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { collection, getCountFromServer } from "firebase/firestore";
 import { Database, Loader2, RefreshCw } from "lucide-react";
-import { collections, getDb } from "../../services/firebase";
+import { collections, getDb } from "../../services/firebaseClient";
 import { countPosts } from "../../services/posts";
 
 interface Counts {

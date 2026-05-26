@@ -202,14 +202,16 @@ export function ExternalInstallModal({
               disabled={!file || installing}
               className="btn-primary"
             >
-              {installing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {installing
-                ? t("externalInstall.installing")
-                : t("externalInstall.install")}
+              {/* Lesson #4 — stable DOM. */}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (installing ? "" : "hidden")} />
+                <Upload className={"h-4 w-4 " + (installing ? "hidden" : "")} />
+                <span>
+                  {installing
+                    ? t("externalInstall.installing")
+                    : t("externalInstall.install")}
+                </span>
+              </span>
             </button>
           </div>
         </div>
@@ -250,12 +252,12 @@ export function ExternalInstallModal({
                 }}
                 className="btn-secondary"
               >
-                {restoring ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="h-4 w-4" />
-                )}
-                {t("externalInstall.bundledDefaultsRestore")}
+                {/* Lesson #4 — stable DOM. */}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <Loader2 className={"h-4 w-4 animate-spin " + (restoring ? "" : "hidden")} />
+                  <RotateCcw className={"h-4 w-4 " + (restoring ? "hidden" : "")} />
+                  <span>{t("externalInstall.bundledDefaultsRestore")}</span>
+                </span>
               </button>
             </div>
           </div>
@@ -287,10 +289,16 @@ export function ExternalInstallModal({
                     disabled={uninstallingId === entry.id}
                     className="btn-ghost text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300 text-xs"
                   >
-                    {uninstallingId === entry.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : null}
-                    {t("externalInstall.uninstall")}
+                    {/* Lesson #4 — stable DOM. */}
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Loader2
+                        className={
+                          "h-3.5 w-3.5 animate-spin " +
+                          (uninstallingId === entry.id ? "" : "hidden")
+                        }
+                      />
+                      <span>{t("externalInstall.uninstall")}</span>
+                    </span>
                   </button>
                 </li>
               ))}

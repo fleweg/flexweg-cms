@@ -1,6 +1,11 @@
 # Flexweg CMS
 
-A WordPress-style content management system that publishes a 100% static site to [Flexweg](https://www.flexweg.com) hosting via the Flexweg Files API. The admin is a React + TypeScript single-page app backed by Firebase (Auth + Firestore); on publish it renders pages with the active theme and uploads the resulting HTML files directly to Flexweg.
+A WordPress-style content management system that publishes a 100% static site to [Flexweg](https://www.flexweg.com) hosting via the Flexweg Files API. The admin is a React + TypeScript single-page app with **two interchangeable data backends**, chosen at install time:
+
+- **Firebase** — Firestore + Firebase Auth. Real-time via `onSnapshot`. Free tier covers most small/medium sites.
+- **Flexweg SQLite** — Per-site SQLite file backed by Flexweg's `/api/v1/sqlite/*` endpoints + a full Auth API (bcrypt, opaque session tokens). No external service. Real-time via polling (~4 s).
+
+In both modes attachments (uploaded media) go through the Flexweg Files API; on publish, the active theme renders posts with `react-dom/server.renderToStaticMarkup` and uploads the resulting HTML files directly to Flexweg.
 
 No Node.js, PHP, or database runs on the public site — only the static HTML/CSS/JS the admin pushes there.
 
@@ -67,12 +72,21 @@ flexweg-cms/
 
 ## Setup
 
-There are two ways to get the admin running. Pick whichever fits your workflow:
+There are two ways to get the admin running, multiplied by two backend choices. Pick whichever fits your workflow:
 
-- **Local build path** — clone the repo, fill `.env`, run `npm run build`, upload `dist/admin/` to Flexweg. Best when you're iterating on theme or plugin code.
-- **No-build path** — drop a pre-built `dist/admin/` on Flexweg, open `/admin/`, and fill the in-app **first-run setup form**. Best when handing the admin to a non-technical user — they don't need Node.js, npm, or a clone of the repo.
+- **Local build path** — clone the repo, fill `.env`, run `npm run build`, upload `dist/admin/` to Flexweg. Best when you're iterating on theme or plugin code. *Currently Firebase-only — `.env` does not configure SQLite mode.*
+- **No-build path** — drop a pre-built `dist/admin/` on Flexweg, open `/admin/`, and fill the in-app **first-run setup form**. Best when handing the admin to a non-technical user — they don't need Node.js, npm, or a clone of the repo. The form lets the user pick **Firebase** or **Flexweg SQLite** at install time. SQLite mode is the only way to deploy without an external service.
 
 Both paths converge on the same runtime: the form just writes a populated `/admin/config.js` to Flexweg so the next reload boots exactly like a build with `.env` baked in. The single command `npm run build` covers both — there is no separate "portable" build target.
+
+### The two backends
+
+The form's **Backend** step lets the user pick:
+
+- **Firebase** — collects 6 web-app config fields + bootstrap admin email + password + Flexweg API key + site URL. Validates credentials in-form, writes `config/flexweg` to Firestore, uploads `config.js` to Flexweg. Subsequent boots load Firestore listeners (real-time `onSnapshot`).
+- **Flexweg SQLite** — collects the master Flexweg API key + site URL + SQLite path + bootstrap admin email + password. Calls `POST /api/v1/sqlite/auth/install` to exchange the master key for a **scoped Sqlite token** (bound to the chosen path only — limited blast radius if leaked). Creates the SQLite tables, registers the bootstrap admin (first user → admin server-side), persists the master Flexweg API key in the SQLite `config` table (last use of the key before discarding), and uploads `config.js`. Subsequent boots talk to `/api/v1/sqlite/*` and use polling (~4 s) for real-time updates.
+
+**The master Flexweg API key has the same security posture in both backends**: it's stored where the active backend keeps its app data (Firestore `config/flexweg` or SQLite `config` table) and is readable by any authenticated user via devtools. Documented compromise for an internal-tool deployment. Switching backends from Settings doesn't migrate the key — re-enter it in the new backend's Settings → Flexweg API panel.
 
 ### Path A — Local build with `.env`
 

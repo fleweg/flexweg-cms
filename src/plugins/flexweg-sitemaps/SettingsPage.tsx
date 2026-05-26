@@ -225,12 +225,12 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
             onClick={uploadStylesheets}
             disabled={uploadingXsl}
           >
-            {uploadingXsl ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileCode2 className="h-4 w-4" />
-            )}
-            {uploadingXsl ? t("xsl.uploading") : t("xsl.upload")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (uploadingXsl ? "" : "hidden")} />
+              <FileCode2 className={"h-4 w-4 " + (uploadingXsl ? "hidden" : "")} />
+              <span>{uploadingXsl ? t("xsl.uploading") : t("xsl.upload")}</span>
+            </span>
           </button>
           <button
             type="button"
@@ -238,12 +238,11 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
             onClick={forceRegenerate}
             disabled={regenerating}
           >
-            {regenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {regenerating ? t("forceRegenerating") : t("forceRegenerate")}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (regenerating ? "" : "hidden")} />
+              <RefreshCw className={"h-4 w-4 " + (regenerating ? "hidden" : "")} />
+              <span>{regenerating ? t("forceRegenerating") : t("forceRegenerate")}</span>
+            </span>
           </button>
         </div>
       </section>

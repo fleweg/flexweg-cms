@@ -72,7 +72,16 @@ export function LoginPage() {
             {t("auth.signInSubtitle")}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          {/* Lesson #4 — data-form-type="other" discourages aggressive
+              autofill from major password managers (1Password, Bitwarden,
+              Grammarly…) which otherwise inject DOM into the form and
+              trigger `Node.insertBefore` crashes when React rerenders
+              the submit button. */}
+          <form
+            onSubmit={handleSubmit}
+            className="mt-5 space-y-4"
+            data-form-type="other"
+          >
             <div>
               <label className="label" htmlFor="login-email">
                 {t("auth.email")}
@@ -115,8 +124,16 @@ export function LoginPage() {
             )}
 
             <button type="submit" className="btn-primary w-full" disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {submitting ? t("auth.signingIn") : t("auth.signIn")}
+              {/* Lesson #4 — stable DOM. Always render the spinner,
+                  toggle visibility via className. */}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2
+                  className={
+                    "h-4 w-4 animate-spin " + (submitting ? "" : "hidden")
+                  }
+                />
+                <span>{submitting ? t("auth.signingIn") : t("auth.signIn")}</span>
+              </span>
             </button>
 
             <button
