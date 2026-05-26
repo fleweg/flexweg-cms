@@ -22,6 +22,7 @@ import {
   type FirestoreSetupResult,
 } from "../services/firestoreSetup";
 import { useCmsData } from "../context/CmsDataContext";
+import { getBackendKind } from "../lib/runtimeConfig";
 
 interface FirestoreSetupGateProps {
   children: ReactNode;
@@ -30,6 +31,14 @@ interface FirestoreSetupGateProps {
 export function FirestoreSetupGate({ children }: FirestoreSetupGateProps) {
   const { settings } = useCmsData();
   const mode = settings.paginationMode ?? "global";
+  // The composite-index ping is Firestore-specific. In SQLite mode
+  // there's no Firestore at all — coerce the gate to a pass-through
+  // by overriding `mode` so the useEffect's ping never fires and the
+  // pass-through branch below short-circuits, even when the user has
+  // `paginationMode: "paginated"` left over from a previous Firebase
+  // session. Done as a `mode` override (not an early return) to keep
+  // the hook call order stable per React Rules of Hooks.
+  const effectiveMode = getBackendKind() === "flexweg-sqlite" ? "global" : mode;
 
   const { t } = useTranslation();
   const [result, setResult] = useState<FirestoreSetupResult | null>(
@@ -54,13 +63,14 @@ export function FirestoreSetupGate({ children }: FirestoreSetupGateProps) {
   useEffect(() => {
     // Only ping in paginated mode. Global mode never touches the
     // composite-index queries, so the indexes don't need to exist.
-    if (mode !== "paginated") return;
+    if (effectiveMode !== "paginated") return;
     if (!result) void runPing();
-  }, [mode, result, runPing]);
+  }, [effectiveMode, result, runPing]);
 
-  // Global mode: pass-through. We don't even pretend there's a check —
-  // composite indexes are irrelevant in this branch.
-  if (mode !== "paginated") return <>{children}</>;
+  // Global mode (incl. SQLite-coerced): pass-through. We don't even
+  // pretend there's a check — composite indexes are irrelevant in
+  // this branch.
+  if (effectiveMode !== "paginated") return <>{children}</>;
   if (result?.ready) return <>{children}</>;
 
   return (

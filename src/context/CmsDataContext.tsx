@@ -14,6 +14,7 @@ import { subscribeToPosts } from "../services/posts";
 import { applyPluginRegistration } from "../plugins";
 import { applyThemeRegistration } from "../themes";
 import { loadAllExternalEntries } from "../services/externalLoader";
+import { useOptimisticEntities } from "../hooks/useOptimisticEntities";
 import type { Media, Post, SiteSettings, Term, UserRecord } from "../core/types";
 
 // Posts + pages live behind two access patterns, gated by
@@ -53,6 +54,15 @@ interface CmsDataValue {
   settings: SiteSettings;
   loading: boolean;
   error: Error | null;
+  // Optimistic-insert helpers — synchronously make a freshly-created
+  // entity visible in the local list so the create-then-navigate
+  // flow doesn't flash a "not found" before the next subscription
+  // tick (especially relevant in SQLite mode where polling is ~4 s).
+  // The hook auto-clears entries once the canonical snapshot delivers
+  // the same id.
+  addOptimisticPost: (post: Post) => void;
+  addOptimisticTerm: (term: Term) => void;
+  addOptimisticMedia: (media: Media) => void;
 }
 
 const CmsDataContext = createContext<CmsDataValue | null>(null);
@@ -169,15 +179,33 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
-  const posts = useMemo(() => allPosts.filter((p) => p.type === "post"), [allPosts]);
-  const pages = useMemo(() => allPosts.filter((p) => p.type === "page"), [allPosts]);
+  // Compose optimistic inserts with the canonical lists. The hook
+  // returns `resolved` (canonical + extras) and `addOptimistic`. We
+  // wrap the whole posts corpus once and split into posts/pages
+  // downstream so a single optimistic id appears in only one of the
+  // two filtered lists (whichever matches its `type` field).
+  const { resolved: allPostsResolved, addOptimistic: addOptimisticPost } =
+    useOptimisticEntities<Post>(allPosts);
+  const { resolved: termsResolved, addOptimistic: addOptimisticTerm } =
+    useOptimisticEntities<Term>(terms);
+  const { resolved: mediaResolved, addOptimistic: addOptimisticMedia } =
+    useOptimisticEntities<Media>(media);
+
+  const posts = useMemo(
+    () => allPostsResolved.filter((p) => p.type === "post"),
+    [allPostsResolved],
+  );
+  const pages = useMemo(
+    () => allPostsResolved.filter((p) => p.type === "page"),
+    [allPostsResolved],
+  );
 
   const value = useMemo<CmsDataValue>(() => {
     return {
-      terms,
-      categories: terms.filter((t) => t.type === "category"),
-      tags: terms.filter((t) => t.type === "tag"),
-      media,
+      terms: termsResolved,
+      categories: termsResolved.filter((t) => t.type === "category"),
+      tags: termsResolved.filter((t) => t.type === "tag"),
+      media: mediaResolved,
       posts,
       pages,
       postsLoaded,
@@ -185,8 +213,24 @@ export function CmsDataProvider({ children }: { children: ReactNode }) {
       settings,
       loading: Object.values(loadingFlags).some(Boolean),
       error,
+      addOptimisticPost,
+      addOptimisticTerm,
+      addOptimisticMedia,
     };
-  }, [terms, media, posts, pages, postsLoaded, users, settings, loadingFlags, error]);
+  }, [
+    termsResolved,
+    mediaResolved,
+    posts,
+    pages,
+    postsLoaded,
+    users,
+    settings,
+    loadingFlags,
+    error,
+    addOptimisticPost,
+    addOptimisticTerm,
+    addOptimisticMedia,
+  ]);
 
   return <CmsDataContext.Provider value={value}>{children}</CmsDataContext.Provider>;
 }

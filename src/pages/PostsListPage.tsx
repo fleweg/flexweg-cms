@@ -426,14 +426,16 @@ export function PostsListPage() {
               disabled={busy !== null || draftSelected === 0}
               title={draftSelected === 0 ? t("posts.bulk.noDraftSelected") : undefined}
             >
-              {busy === "publish" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              {busy === "publish"
-                ? t("posts.bulk.publishing")
-                : t("posts.bulk.publish", { count: draftSelected })}
+              {/* Lesson #4 — stable DOM. */}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (busy === "publish" ? "" : "hidden")} />
+                <Send className={"h-4 w-4 " + (busy === "publish" ? "hidden" : "")} />
+                <span>
+                  {busy === "publish"
+                    ? t("posts.bulk.publishing")
+                    : t("posts.bulk.publish", { count: draftSelected })}
+                </span>
+              </span>
             </button>
             <button
               type="button"
@@ -442,14 +444,15 @@ export function PostsListPage() {
               disabled={busy !== null || onlineSelected === 0}
               title={onlineSelected === 0 ? t("posts.bulk.noOnlineSelected") : undefined}
             >
-              {busy === "unpublish" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Undo2 className="h-4 w-4" />
-              )}
-              {busy === "unpublish"
-                ? t("posts.bulk.unpublishing")
-                : t("posts.bulk.unpublish", { count: onlineSelected })}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (busy === "unpublish" ? "" : "hidden")} />
+                <Undo2 className={"h-4 w-4 " + (busy === "unpublish" ? "hidden" : "")} />
+                <span>
+                  {busy === "unpublish"
+                    ? t("posts.bulk.unpublishing")
+                    : t("posts.bulk.unpublish", { count: onlineSelected })}
+                </span>
+              </span>
             </button>
             <button
               type="button"
@@ -457,12 +460,11 @@ export function PostsListPage() {
               onClick={handleDelete}
               disabled={busy !== null}
             >
-              {busy === "delete" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              {busy === "delete" ? t("posts.bulk.deleting") : t("posts.bulk.delete")}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (busy === "delete" ? "" : "hidden")} />
+                <Trash2 className={"h-4 w-4 " + (busy === "delete" ? "hidden" : "")} />
+                <span>{busy === "delete" ? t("posts.bulk.deleting") : t("posts.bulk.delete")}</span>
+              </span>
             </button>
             <button
               type="button"

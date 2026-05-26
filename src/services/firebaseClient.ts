@@ -9,7 +9,9 @@ import {
 } from "../lib/runtimeConfig";
 
 export function getAdminEmail(): string {
-  const v = getRuntimeConfig()?.adminEmail;
+  const config = getRuntimeConfig();
+  if (!config || config.backend !== "firebase") return "";
+  const v = config.adminEmail;
   return typeof v === "string" ? v.trim().toLowerCase() : "";
 }
 
@@ -31,6 +33,16 @@ function getApp(): FirebaseApp {
   if (!config) {
     throw new Error(
       "Firebase config not available. The runtime resolver returned null — either fill .env or complete the in-admin setup form.",
+    );
+  }
+  if (config.backend !== "firebase") {
+    // Hard guard — a service that calls getDb/getAuthClient while the
+    // active backend is something other than Firebase indicates a
+    // dispatcher bug (the wrong implementation was wired up). Throw
+    // loudly so the regression is visible during development rather
+    // than producing subtle data corruption.
+    throw new Error(
+      `Firebase service called while active backend is "${config.backend}". Dispatcher bug — fix the calling code to read through services/<name>.ts, not services/firebase/<name>.ts directly.`,
     );
   }
   cachedApp = getApps()[0] ?? initializeApp(config.firebase);
@@ -59,6 +71,11 @@ export function getAuthClient(): Auth {
 // (which we set here as a side effect so the rest of the codebase stays
 // in sync without a reload).
 export function initFirebaseFromSetup(config: FlexwegRuntimeConfig): void {
+  if (config.backend !== "firebase") {
+    throw new Error(
+      `initFirebaseFromSetup called with non-Firebase config (backend="${config.backend}"). Use the SQLite install helper for that backend.`,
+    );
+  }
   // Idempotent: if Firebase was already initialised (e.g. on a
   // retry after the previous submit hit a sign-in / Firestore error
   // and surfaced its own message), reuse the cached app silently.

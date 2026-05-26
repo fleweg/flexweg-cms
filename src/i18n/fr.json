@@ -366,10 +366,22 @@
     "flexweg": {
       "title": "API Flexweg",
       "apiKey": "Clé API",
-      "apiKeyHelp": "Générée depuis votre compte Flexweg → API. Stockée dans Firestore.",
+      "apiKeyHelp": "Générée depuis votre compte Flexweg → API.",
       "siteUrl": "URL du site",
       "siteUrlHelp": "URL publique de votre site Flexweg sans slash final.",
-      "apiBaseUrl": "URL de base de l'API"
+      "apiBaseUrl": "URL de base de l'API",
+      "storageHelpFirebase": "Stockée dans Firestore (config/flexweg). Lecture par tout membre connecté, écriture admin uniquement.",
+      "storageHelpSqlite": "Stockée dans la table SQLite locale config. Lecture par tout membre connecté, écriture admin uniquement."
+    },
+    "backend": {
+      "title": "Backend de données",
+      "active": "Backend actif :",
+      "switchButton": "Changer de backend…",
+      "confirmTitle": "Les données actuelles seront perdues.",
+      "confirmBody": "Le basculement efface la configuration en mémoire et recharge sur le formulaire de configuration. Le nouveau backend démarre vide — les données du backend précédent restent où elles sont (dans Firestore ou en tant que fichier .sqlite sur Flexweg), mais le CMS ne les lira plus jusqu'au prochain basculement.",
+      "confirmYes": "Oui, changer de backend",
+      "downloadBackup": "Télécharger une sauvegarde du fichier .sqlite",
+      "downloadBackupHelp": "à faire avant de changer de backend."
     },
     "performance": {
       "title": "Performance",
@@ -423,6 +435,37 @@
     "disabled": "Désactivé",
     "editProfileTitle": "Modifier le profil — {{email}}",
     "profileSaved": "Profil enregistré.",
+    "descriptionFirebase": "Gérez votre équipe. Les nouveaux comptes sont créés depuis la Firebase Console, puis miroir-rés ici à la première connexion.",
+    "descriptionSqlite": "Gérez votre équipe. Utilisez le bouton +Ajouter ci-dessous pour créer des comptes directement.",
+    "addUser": "Ajouter un utilisateur",
+    "addUserSuccess": "{{email}} ajouté.",
+    "removeConfirmFirebase": "Supprimer la fiche de {{email}} ? Cela retire son profil + son rôle du CMS. Pour révoquer son accès, supprimez aussi le compte dans la Firebase Console.",
+    "removeConfirmSqlite": "Supprimer définitivement {{email}} ? Cela révoque son accès ET retire son profil + son rôle. Action irréversible.",
+    "empty": {
+      "title": "Aucun membre pour l'instant",
+      "descriptionFirebase": "Créez le premier compte dans la Firebase Console, puis connectez-vous ici une fois pour enregistrer le profil.",
+      "descriptionSqlite": "Cliquez sur +Ajouter ci-dessus pour inviter le premier membre."
+    },
+    "help": {
+      "title": "Comment ajouter un nouveau membre",
+      "bootstrapLine": "L'admin initial (toujours admin complet) est :",
+      "firebase": {
+        "step1": "Ouvrez la Firebase Console → Authentication → Add user.",
+        "step2": "Définissez un email et un mot de passe, transmettez-les au nouveau membre.",
+        "step3": "Demandez-lui de se connecter ici une fois — son profil apparaît dans la liste et vous pouvez gérer son rôle et ses détails."
+      },
+      "sqlite": {
+        "step1": "Cliquez sur le bouton +Ajouter ci-dessus.",
+        "step2": "Saisissez son email et un mot de passe temporaire (8+ caractères).",
+        "step3": "Partagez les identifiants de manière sécurisée — il pourra changer son mot de passe depuis son profil une fois connecté."
+      }
+    },
+    "addUserModal": {
+      "title": "Ajouter un nouveau membre",
+      "intro": "Crée le compte directement dans la base d'auth SQLite Flexweg. Le nouvel utilisateur est éditeur par défaut ; promouvez-le depuis la liste s'il lui faut un accès admin.",
+      "submit": "Créer l'utilisateur",
+      "submitting": "Création…"
+    },
     "actions": {
       "editProfile": "Modifier le profil",
       "promote": "Promouvoir admin",
@@ -463,6 +506,29 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL est manquant dans .env. Renseignez l'email de l'administrateur initial.",
     "consoleHint": "Consultez la console du navigateur et votre .env. Voir le README pour la configuration."
   },
+  "identity": {
+    "brandTitle": "Flexweg CMS",
+    "brandSubtitle": "Publication statique",
+    "login": {
+      "heading": "Connexion",
+      "intro": "Utilisez l'email et le mot de passe transmis par votre administrateur.",
+      "submit": "Se connecter",
+      "submitting": "Connexion…"
+    },
+    "fields": {
+      "name": "Nom affiché (optionnel)",
+      "namePlaceholder": "Jane Doe",
+      "email": "Email",
+      "password": "Mot de passe",
+      "passwordHint": "Au moins 8 caractères."
+    },
+    "footer": "Les nouveaux comptes sont créés par un administrateur depuis la page Utilisateurs.",
+    "errors": {
+      "invalidEmail": "Veuillez entrer une adresse email valide.",
+      "missingPassword": "Le mot de passe est requis.",
+      "passwordTooShort": "Le mot de passe doit faire au moins 8 caractères."
+    }
+  },
   "setup": {
     "title": "Bienvenue sur Flexweg CMS",
     "subtitle": "Configuration initiale",
@@ -471,19 +537,32 @@
     "introFlexweg": "Étape 2 — Flexweg. Renseignez votre clé API Flexweg et l'URL du site. Nous testons l'API, sauvegardons la configuration dans Firestore, uploadons config.js sur votre site et synchronisons les assets de thème.",
     "continueToFlexweg": "Valider Firebase et continuer",
     "stepper": {
-      "welcome": "Bienvenue",
       "terms": "CGU",
+      "backend": "Backend",
       "firebase": "Firebase",
-      "flexweg": "Flexweg"
+      "flexweg": "Flexweg",
+      "sqlite": "SQLite"
     },
-    "welcome": {
-      "heading": "Bienvenue sur Flexweg CMS !",
-      "intro": "Flexweg CMS est un outil gratuit mis à votre disposition par Flexweg pour publier des pages sur votre hébergement Flexweg — Flexweg ne vous facturera jamais l'utilisation du CMS. Pour fonctionner, il a besoin d'un projet Firebase gratuit (Auth + Firestore) — c'est là qu'il stocke vos articles, les métadonnées des médias et les réglages.",
-      "firebaseTitle": "Firebase est requis — et gratuit",
-      "firebaseBody": "Créer un projet Firebase est gratuit et prend environ 5 minutes : ouvrir la Firebase Console, créer un nouveau projet, activer Authentication (email/mot de passe) et Firestore. Le plan Spark suffit pour un site typique. Notre tuto vous accompagne clic par clic.",
-      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
-      "tutorialButton": "Tuto création du projet Firebase",
-      "haveAccountButton": "J'ai créé mon projet Firebase"
+    "backend": {
+      "title": "Choisir le backend de données",
+      "intro": "Choisissez où le CMS stockera vos articles, pages, utilisateurs et paramètres. Vous pourrez changer plus tard depuis les Paramètres (les données ne sont pas migrées).",
+      "sqliteTitle": "Flexweg SQLite (recommandé)",
+      "sqliteHint": "Toutes les données restent sur votre site Flexweg sous forme de fichier SQLite. Aucun service externe. L'auth est fournie par l'API SQLite Flexweg.",
+      "firebaseTitle": "Firebase",
+      "firebaseHint": "Utilisez un projet Firebase pour Firestore + Auth. Gratuit avec le plan Spark. Mises à jour temps réel via onSnapshot.",
+      "continue": "Continuer"
+    },
+    "sqlite": {
+      "heading": "Connecter votre site Flexweg",
+      "intro": "Nous utiliserons votre clé API maître Flexweg UNE SEULE FOIS pour créer un token limité à la base SQLite. Après l'installation, la clé maître est jetée et seul le token limité (à ce seul fichier SQLite) est stocké.",
+      "apiKeyHint": "Clé API maître Flexweg. Utilisée uniquement pour l'installation — jamais stockée après.",
+      "detectedFromUrl": "Détecté depuis l'URL",
+      "advanced": "Réglages avancés (URL du site, chemin SQLite…)",
+      "pathHint": "Emplacement du fichier SQLite sur votre site Flexweg. Les dossiers sont créés automatiquement.",
+      "adminHeading": "Compte administrateur",
+      "adminIntro": "Créez le premier utilisateur — ce compte obtient automatiquement les droits d'admin. Les membres suivants sont créés depuis la page Utilisateurs une fois connecté.",
+      "passwordHint": "Au moins 8 caractères.",
+      "submit": "Installer la base SQLite"
     },
     "terms": {
       "title": "Conditions générales d'utilisation",
@@ -543,7 +622,8 @@
       "adminPassword": "Mot de passe",
       "flexwegApiKey": "Clé API",
       "flexwegSiteUrl": "URL du site",
-      "flexwegApiBaseUrl": "URL de base de l'API"
+      "flexwegApiBaseUrl": "URL de base de l'API",
+      "sqlitePath": "Chemin SQLite"
     },
     "submit": "Enregistrer et continuer",
     "submitting": "Configuration…",
@@ -555,7 +635,15 @@
       "testFlexweg": "Test de l'API Flexweg…",
       "writeFirestore": "Sauvegarde de la configuration…",
       "uploadConfig": "Upload de config.js sur Flexweg…",
-      "syncThemes": "Synchronisation des assets de thème sur Flexweg…"
+      "syncThemes": "Synchronisation des assets de thème sur Flexweg…",
+      "sqliteInstall": "Création du token SQLite limité…",
+      "sqliteRegisterAdmin": "Enregistrement du compte admin…",
+      "sqliteSchema": "Initialisation du schéma SQLite…"
+    },
+    "stepsDone": {
+      "sqliteInstall": "Token SQLite limité créé",
+      "sqliteRegisterAdmin": "Admin enregistré et connecté",
+      "sqliteSchema": "Schéma SQLite prêt"
     },
     "errors": {
       "missingFields": "Veuillez remplir tous les champs.",

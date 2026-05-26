@@ -9,13 +9,20 @@ You are helping a developer build something that runs on **Flexweg CMS**. Stay i
 
 ## How Flexweg works (you must internalize this before scaffolding anything)
 
-Flexweg is a **static-host CMS**: there is no server. The admin SPA (React + Tailwind + Firebase Auth/Firestore) runs in the browser and is the *only* runtime. When an admin clicks **Publish** on a post, the admin:
+Flexweg is a **static-host CMS**: there is no server. The admin SPA (React + Tailwind) runs in the browser and is the *only* runtime. The admin can use one of **two data backends**, picked by the site owner at install time and invisible to extension code:
 
-1. Reads everything from Firestore (posts, terms, media, settings)
+- **Firebase** — Firestore for data + Firebase Auth for login.
+- **Flexweg SQLite** — `/api/v1/sqlite/*` for data + `/api/v1/sqlite/auth/*` for login. Zero external services, hosted on the same Flexweg site as the admin.
+
+When an admin clicks **Publish** on a post, the admin (regardless of backend):
+
+1. Reads everything from the active backend (posts, terms, media, settings) through a dispatcher layer
 2. Runs the active theme's React components through `react-dom/server.renderToStaticMarkup` **inside the browser**
 3. POSTs the resulting HTML to Flexweg's Files API at the post's target path (e.g. `/<category>/<slug>.html`)
 
 The "public site" is just whatever HTML files the admin has uploaded. There is no SSR server, no edge function, no build step that touches the public site — every public file is the result of an explicit admin action.
+
+**For extension authors this means**: your plugin / theme code must stay **backend-agnostic**. Never import `firebase/firestore` or `services/flexweg-sqlite/*` directly — consume the dispatcher-routed exports from `@flexweg/cms-runtime` (see §A and the hook reference below). The same plugin .zip works on both backends without modification.
 
 Extensions (plugins + themes) come in **two flavors**:
 
@@ -446,7 +453,9 @@ manifest.register = (api) => {
 };
 ```
 
-The card renders below the four built-in stats cards on the admin dashboard. The component fetches its own data (Firestore queries, Flexweg API calls, etc.) and manages its own loading / error / empty states.
+The card renders below the four built-in stats cards on the admin dashboard. The component fetches its own data and manages its own loading / error / empty states.
+
+**Data fetching — stay backend-agnostic**: use `useCmsData()` from `@flexweg/cms-runtime` (returns the same shape regardless of the active backend), or call the dispatcher-routed services (`fetchAllPosts`, `subscribeToTerms`, etc.) exposed by the runtime. Never `import { getFirestore } from "firebase/firestore"` directly — that crashes on SQLite-backend sites. The Flexweg Files API (`uploadFile`, `deleteFile`, etc. via the runtime) is always available regardless of backend.
 
 ---
 
@@ -573,6 +582,30 @@ Fix: hard-refresh the admin (Cmd+Shift+R). Long-term: bump `version` in `manifes
 
 The admin validates slugs against the FULL URL path, not the raw slug. A post slug and a category slug can be identical because their published URLs differ (`/posts/hello.html` vs `/hello/index.html`). Use `findAvailableSlug()` from `@flexweg/cms-runtime` to generate non-colliding slugs programmatically.
 
+### Plugin crashes on a SQLite-backend site
+
+Symptom: the plugin works on a Firebase site but throws `Firebase service called while active backend is "flexweg-sqlite". Dispatcher bug.` (or similar) on a SQLite-backend site.
+
+Cause: the plugin code directly imports `firebase/firestore`, `firebase/auth`, or reaches into the admin's `services/firebase/*` modules instead of going through the dispatcher-routed exports in `@flexweg/cms-runtime`.
+
+Fix: replace direct Firestore / Firebase Auth calls with the runtime equivalents. Examples:
+
+- `getFirestore(...).collection("posts").onSnapshot(...)` → `subscribeToPosts(...)` from the runtime
+- `getDoc(doc(db, "settings", "site"))` → `getSiteSettings()` or `useCmsData()` for live data
+- Custom Firestore queries that have no runtime equivalent → file a request to add the wrapper; in the meantime use `useCmsData()` + filter client-side
+
+The same plugin .zip then works on both backends without modification.
+
+### Author info / email missing on the public site
+
+Symptom: an author's name shows up as an obfuscated `[email&nbsp;protected]` (Cloudflare) on the published site, or doesn't show at all where you expected it.
+
+Cause: the publisher's `authorLookup` resolver only emits a public-facing `AuthorView` when the user has set `firstName + lastName` (or the legacy `displayName` field). Without those, the lookup returns `undefined` and templates that check `if (author)` hide the author block. **Email is never exposed publicly** — that's a deliberate design choice.
+
+Fix: in the admin's Users page, edit the user record and set `firstName + lastName`. Republish the post (or wait for the next regen). The author block reappears with the proper name.
+
+If your THEME relies on the author block being there even for nameless users, your template logic needs to handle the `undefined` case — show an empty section, fall back to "Unknown author", whatever. Email is off-limits.
+
 ---
 
 ## Hook reference (the public surface)
@@ -605,10 +638,11 @@ The admin validates slugs against the FULL URL path, not the raw slug. A post sl
 ## Project conventions you should respect
 
 - **Slugs** are lower-case ASCII, dash-separated. Flexweg is case-sensitive — uppercase slugs cause real 404s.
-- **No Firestore reads in theme code**. The publisher resolves everything into plain props before rendering.
+- **Backend-agnostic** — never import `firebase/firestore`, `firebase/auth`, or anything under `services/firebase/` / `services/flexweg-sqlite/` directly. Consume the dispatcher-routed exports from `@flexweg/cms-runtime` (`useCmsData`, `fetchAllPosts`, `subscribeToTerms`, `uploadFile`, etc.) so the same .zip works on Firebase + SQLite sites. The runtime exposes `getBackendKind()` if you genuinely need to branch (rare).
+- **No data reads in theme code**. The publisher resolves everything into plain props before rendering — themes get serialized data, not subscriptions.
 - **Comments and READMEs in English** (the project convention).
 - **UI strings go through `t()`** with the `useTranslation('<plugin-id>')` namespace.
-- **No `services/*` imports from external bundles** — those are admin-internal. Plugins react to hooks; they don't reach into the admin's storage layer.
+- **Stable-DOM submit buttons** — if your settings page has a `<form>` with a save button that toggles a `<Loader2>` spinner, use the always-rendered-with-`className="hidden"`-toggle pattern (not conditional mount). Add `data-form-type="other"` on the form. Without this, browser extensions (1Password, Grammarly, etc.) that inject DOM into the form crash the admin with `Node.insertBefore: Child to insert before is not a child of this node` on save. See any CMS settings page for the canonical shape.
 
 ## Working examples (when the user has the repo checked out locally)
 

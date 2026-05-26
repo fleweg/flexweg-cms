@@ -25,7 +25,7 @@ import {
   where,
   type FirestoreError,
 } from "firebase/firestore";
-import { collections, getDb } from "./firebase";
+import { collections, getDb } from "./firebaseClient";
 
 export interface MissingIndex {
   // Human-readable label shown to the user. Bound to the query

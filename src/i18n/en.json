@@ -366,10 +366,22 @@
     "flexweg": {
       "title": "Flexweg API",
       "apiKey": "API key",
-      "apiKeyHelp": "Generated from your Flexweg account → API. Stored in Firestore.",
+      "apiKeyHelp": "Generated from your Flexweg account → API.",
       "siteUrl": "Site URL",
       "siteUrlHelp": "Public URL of your Flexweg site without trailing slash.",
-      "apiBaseUrl": "API base URL"
+      "apiBaseUrl": "API base URL",
+      "storageHelpFirebase": "Stored in Firestore (config/flexweg). Readable by any signed-in team member, writable by admins only.",
+      "storageHelpSqlite": "Stored in the local SQLite config table. Readable by any signed-in team member, writable by admins only."
+    },
+    "backend": {
+      "title": "Data backend",
+      "active": "Active backend:",
+      "switchButton": "Switch backend…",
+      "confirmTitle": "All current data will be lost.",
+      "confirmBody": "Switching wipes the in-browser config and reloads into the setup form. The new backend starts empty — the previous backend's data stays where it was (in Firestore or as a .sqlite file on Flexweg), but the CMS will not read it anymore until you switch back.",
+      "confirmYes": "Yes, switch backend",
+      "downloadBackup": "Download a backup of the .sqlite file",
+      "downloadBackupHelp": "do this before switching backends."
     },
     "performance": {
       "title": "Performance",
@@ -423,6 +435,37 @@
     "disabled": "Disabled",
     "editProfileTitle": "Edit profile — {{email}}",
     "profileSaved": "Profile saved.",
+    "descriptionFirebase": "Manage your team. New accounts are created in the Firebase Console, then mirrored here on first sign-in.",
+    "descriptionSqlite": "Manage your team. Use the +Add user button below to create new accounts directly.",
+    "addUser": "Add user",
+    "addUserSuccess": "{{email}} added.",
+    "removeConfirmFirebase": "Delete the user record for {{email}}? This removes their profile + role from the CMS. To revoke sign-in access, also delete the account in the Firebase Console.",
+    "removeConfirmSqlite": "Permanently delete {{email}}? This revokes their sign-in access AND removes their profile + role. This cannot be undone.",
+    "empty": {
+      "title": "No team members yet",
+      "descriptionFirebase": "Create the first account in the Firebase Console, then sign in here once to register the profile.",
+      "descriptionSqlite": "Click +Add user above to invite the first team member."
+    },
+    "help": {
+      "title": "How to add a new team member",
+      "bootstrapLine": "The bootstrap admin (always full access) is:",
+      "firebase": {
+        "step1": "Open the Firebase Console → Authentication → Add user.",
+        "step2": "Set an email and password and send them to the new team member.",
+        "step3": "Ask them to sign in here once — their profile appears in the list above and you can edit their role / details."
+      },
+      "sqlite": {
+        "step1": "Click the +Add user button above.",
+        "step2": "Enter their email and a temporary password (8+ characters).",
+        "step3": "Share the credentials securely — they can change the password from their profile once signed in."
+      }
+    },
+    "addUserModal": {
+      "title": "Add a new team member",
+      "intro": "Creates the account directly in the Flexweg SQLite Auth database. The new user defaults to the editor role; promote them from the list below if they need admin access.",
+      "submit": "Create user",
+      "submitting": "Creating…"
+    },
     "actions": {
       "editProfile": "Edit profile",
       "promote": "Promote to admin",
@@ -463,6 +506,29 @@
     "adminEmailMessage": "VITE_ADMIN_EMAIL is missing in .env. Set it to the email of the bootstrap administrator.",
     "consoleHint": "Check the browser console and your .env configuration. See the README for setup instructions."
   },
+  "identity": {
+    "brandTitle": "Flexweg CMS",
+    "brandSubtitle": "Static publisher",
+    "login": {
+      "heading": "Sign in",
+      "intro": "Use the email and password your admin shared with you.",
+      "submit": "Sign in",
+      "submitting": "Signing in…"
+    },
+    "fields": {
+      "name": "Display name (optional)",
+      "namePlaceholder": "Jane Doe",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 8 characters."
+    },
+    "footer": "New accounts are created by an admin from the Users page.",
+    "errors": {
+      "invalidEmail": "Please enter a valid email address.",
+      "missingPassword": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters."
+    }
+  },
   "setup": {
     "title": "Welcome to Flexweg CMS",
     "subtitle": "First-time setup",
@@ -471,19 +537,32 @@
     "introFlexweg": "Step 2 — Flexweg. Fill in your Flexweg API key and site URL. We'll test the API, save the configuration to Firestore, upload config.js to your site, and sync theme assets.",
     "continueToFlexweg": "Validate Firebase & continue",
     "stepper": {
-      "welcome": "Welcome",
       "terms": "Terms",
+      "backend": "Backend",
       "firebase": "Firebase",
-      "flexweg": "Flexweg"
+      "flexweg": "Flexweg",
+      "sqlite": "SQLite"
     },
-    "welcome": {
-      "heading": "Welcome to Flexweg CMS!",
-      "intro": "Flexweg CMS is a free tool offered by Flexweg to publish pages on your Flexweg hosting — no extra fees from Flexweg, ever. To run, it needs a free Firebase project (Auth + Firestore) — that's where it stores your posts, media metadata and settings.",
-      "firebaseTitle": "Firebase is required — and free",
-      "firebaseBody": "Creating a Firebase project is free and takes about 5 minutes: open the Firebase Console, create a new project, enable Authentication (email/password) and Firestore. The Spark plan is enough for the typical site. Our tutorial walks you through every click.",
-      "tutorialUrl": "https://documentation.flexweg.com/firebase-setup/",
-      "tutorialButton": "Firebase setup tutorial",
-      "haveAccountButton": "I've created my Firebase project"
+    "backend": {
+      "title": "Choose a data backend",
+      "intro": "Pick where the CMS will store your posts, pages, users and settings. You can switch later from the Settings page (data is not migrated).",
+      "sqliteTitle": "Flexweg SQLite (recommended)",
+      "sqliteHint": "All data stays on your Flexweg site as a SQLite file. No external service. Auth is provided by Flexweg's SQLite API.",
+      "firebaseTitle": "Firebase",
+      "firebaseHint": "Use a Firebase project for Firestore + Auth. Free under the Spark plan. Real-time updates via onSnapshot.",
+      "continue": "Continue"
+    },
+    "sqlite": {
+      "heading": "Connect your Flexweg site",
+      "intro": "We'll use your master Flexweg API key ONCE to create a scoped token for the SQLite database. After install, the master key is discarded and only the scoped token (limited to this one SQLite file) is stored.",
+      "apiKeyHint": "Master Flexweg API key. Used only to install — never stored after.",
+      "detectedFromUrl": "Detected from URL",
+      "advanced": "Advanced settings (Site URL, SQLite path…)",
+      "pathHint": "Where the SQLite file lives on your Flexweg site. Folders are created automatically.",
+      "adminHeading": "Admin account",
+      "adminIntro": "Create the first user — this account gets admin rights automatically. Subsequent members are onboarded from the Users page once you're signed in.",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Install SQLite database"
     },
     "terms": {
       "title": "Terms of use",
@@ -543,7 +622,8 @@
       "adminPassword": "Password",
       "flexwegApiKey": "API key",
       "flexwegSiteUrl": "Site URL",
-      "flexwegApiBaseUrl": "API base URL"
+      "flexwegApiBaseUrl": "API base URL",
+      "sqlitePath": "SQLite path"
     },
     "submit": "Save & continue",
     "submitting": "Setting up…",
@@ -555,7 +635,15 @@
       "testFlexweg": "Testing Flexweg API…",
       "writeFirestore": "Saving configuration…",
       "uploadConfig": "Uploading config.js to Flexweg…",
-      "syncThemes": "Syncing theme assets to Flexweg…"
+      "syncThemes": "Syncing theme assets to Flexweg…",
+      "sqliteInstall": "Creating scoped SQLite token…",
+      "sqliteRegisterAdmin": "Registering the admin account…",
+      "sqliteSchema": "Bootstrapping SQLite schema…"
+    },
+    "stepsDone": {
+      "sqliteInstall": "Scoped SQLite token issued",
+      "sqliteRegisterAdmin": "Admin registered and signed in",
+      "sqliteSchema": "SQLite schema ready"
     },
     "errors": {
       "missingFields": "Please fill every field.",

@@ -10,6 +10,7 @@ import { ErrorScreen } from "./components/ErrorScreen";
 import { ToastContainer } from "./components/ui/ToastContainer";
 import { FirestoreSetupGate } from "./components/FirestoreSetupGate";
 import { LoginPage } from "./pages/LoginPage";
+import { LocalIdentityPage } from "./pages/LocalIdentityPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PostsListPage } from "./pages/PostsListPage";
 import { PostEditPage } from "./pages/PostEditPage";
@@ -26,7 +27,7 @@ import { SettingsLayout } from "./components/layout/SettingsLayout";
 import { ThemeSettingsRoute } from "./pages/ThemeSettingsRoute";
 import { UsersPage } from "./pages/UsersPage";
 import { SetupForm } from "./pages/SetupForm";
-import { getRuntimeConfig } from "./lib/runtimeConfig";
+import { getBackendKind, getRuntimeConfig } from "./lib/runtimeConfig";
 
 interface BoundaryState {
   error: Error | null;
@@ -128,7 +129,16 @@ function AuthenticatedShell() {
   const { user, loading, disabled, error } = useAuth();
 
   if (loading) return <FullScreenSpinner />;
-  if (!user) return <LoginPage />;
+  // SQLite mode uses a dedicated login screen (no email reset, no
+  // bootstrap-admin probe — admins create accounts from the Users
+  // page). Firebase mode keeps the existing LoginPage.
+  if (!user) {
+    return getBackendKind() === "flexweg-sqlite" ? (
+      <LocalIdentityPage />
+    ) : (
+      <LoginPage />
+    );
+  }
 
   if (error) {
     return (

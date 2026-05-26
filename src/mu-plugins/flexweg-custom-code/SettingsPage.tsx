@@ -104,8 +104,11 @@ export function CustomCodeSettingsPage({
           onClick={onSave}
           disabled={saving}
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          {saving ? t("saving") : t("save")}
+          {/* Lesson #4 — stable DOM. Always render the spinner, toggle via className. */}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (saving ? "" : "hidden")} />
+            <span>{saving ? t("saving") : t("save")}</span>
+          </span>
         </button>
         <p className="text-xs text-surface-500 dark:text-surface-400">
           {t("republishHint")}

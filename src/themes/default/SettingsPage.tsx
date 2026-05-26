@@ -262,18 +262,19 @@ function GeneralTab({
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading || removing}
           >
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : config.logoEnabled ? (
-              <ImageIcon className="h-4 w-4" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            {uploading
-              ? t("logo.uploading")
-              : config.logoEnabled
-                ? t("logo.change")
-                : t("logo.upload")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (uploading ? "" : "hidden")} />
+              <ImageIcon className={"h-4 w-4 " + (!uploading && config.logoEnabled ? "" : "hidden")} />
+              <Upload className={"h-4 w-4 " + (!uploading && !config.logoEnabled ? "" : "hidden")} />
+              <span>
+                {uploading
+                  ? t("logo.uploading")
+                  : config.logoEnabled
+                    ? t("logo.change")
+                    : t("logo.upload")}
+              </span>
+            </span>
           </button>
           {config.logoEnabled && (
             <button
@@ -282,12 +283,11 @@ function GeneralTab({
               onClick={handleRemove}
               disabled={uploading || removing}
             >
-              {removing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-              {removing ? t("logo.removing") : t("logo.remove")}
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <Loader2 className={"h-4 w-4 animate-spin " + (removing ? "" : "hidden")} />
+                <Trash2 className={"h-4 w-4 " + (removing ? "hidden" : "")} />
+                <span>{removing ? t("logo.removing") : t("logo.remove")}</span>
+              </span>
             </button>
           )}
         </div>
@@ -484,12 +484,12 @@ function StyleTab({
           onClick={handleSave}
           disabled={busy || resetting}
         >
-          {busy ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {busy ? t("style.saving") : t("style.save")}
+          {/* Lesson #4 — stable DOM. */}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (busy ? "" : "hidden")} />
+            <Save className={"h-4 w-4 " + (busy ? "hidden" : "")} />
+            <span>{busy ? t("style.saving") : t("style.save")}</span>
+          </span>
         </button>
         <button
           type="button"
@@ -497,12 +497,11 @@ function StyleTab({
           onClick={handleReset}
           disabled={busy || resetting}
         >
-          {resetting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RotateCcw className="h-4 w-4" />
-          )}
-          {resetting ? t("style.resetting") : t("style.reset")}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"h-4 w-4 animate-spin " + (resetting ? "" : "hidden")} />
+            <RotateCcw className={"h-4 w-4 " + (resetting ? "hidden" : "")} />
+            <span>{resetting ? t("style.resetting") : t("style.reset")}</span>
+          </span>
         </button>
       </div>
     </div>

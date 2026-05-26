@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+The CMS is a static React + Vite SPA (`strict` TypeScript) with **two interchangeable data backends**, chosen at install time and switchable from Settings:
+
+- **Firebase mode** — Firestore for data, Firebase Auth for the login gate. Real-time via `onSnapshot`. Attachments via the Flexweg Files API.
+- **Flexweg SQLite mode** — Flexweg's `/api/v1/sqlite/*` endpoints back a per-site SQLite file. Real auth via the SQLite Auth API (email/password, bcrypt server-side, opaque 30-day session tokens). Real-time via polling the `/version` endpoint (~4 s). Attachments via the same Flexweg Files API — the master API key is persisted during install in the SQLite `config` table.
+
 ## Commands
 
 ```bash
@@ -19,14 +24,16 @@ npm run build        # Vite build → dist/admin/, then compiles each theme's SC
 
 ## Runtime config & first-run setup
 
-The admin reads its Firebase config + admin email through one resolver that converges two sources of truth:
+The admin reads its runtime config (Firebase OR SQLite, depending on backend) through one resolver that converges two sources of truth:
 
 1. **`window.__FLEXWEG_CONFIG__`** — set synchronously by `/admin/config.js` (loaded via a plain `<script>` in `index.html` *before* the main bundle). The bundled `public/config.js` ships as `window.__FLEXWEG_CONFIG__ = null;` — the SetupForm rewrites it on Flexweg with real values once the user fills the form.
-2. **`import.meta.env.VITE_FIREBASE_*`** — Vite-injected from `.env` at build time (or served live during `npm run dev`).
+2. **`import.meta.env.VITE_FIREBASE_*`** — Vite-injected from `.env` at build time (or served live during `npm run dev`). Only relevant for the Firebase backend (SQLite has no `.env` fallback).
 
-`src/lib/runtimeConfig.ts.getRuntimeConfig()` checks (1), then (2), and caches the result. `src/services/firebase.ts` reads exclusively through this resolver — no direct `import.meta.env` access remains. `App.tsx` short-circuits to `<SetupForm />` (skipping `<AuthProvider>` etc.) when the resolver returns `null`.
+`src/lib/runtimeConfig.ts.getRuntimeConfig()` checks (1), then (2), and caches the result. The resolver returns a **discriminated union** `FirebaseRuntimeConfig | SqliteRuntimeConfig` (see [src/lib/runtimeConfig.ts](src/lib/runtimeConfig.ts)) — `getBackendKind()` returns the active backend or `null` when no config is available. `App.tsx` short-circuits to `<SetupForm />` (skipping `<AuthProvider>` etc.) when the resolver returns `null`.
 
-The SetupForm flow ([src/pages/SetupForm.tsx](src/pages/SetupForm.tsx)):
+The SetupForm ([src/pages/SetupForm.tsx](src/pages/SetupForm.tsx)) is a multi-step wizard that starts at **Terms** (no Welcome step — lesson learned from the kanban/notion ports: it added friction without changing the user's path) and branches on the user's backend choice:
+
+**Firebase path** (existing two-step flow):
 
 1. **Init Firebase + sign in** — `initFirebaseFromSetup` from `firebase.ts` initialises the SDK with the form's values *and* sets `window.__FLEXWEG_CONFIG__` so the resolver stays consistent for the rest of the session. Then `signInWithEmailAndPassword` validates Firebase config + admin credentials in one go.
 2. **Verify admin email** — checks `auth.currentUser.email === form.adminEmail` to catch typos.
@@ -35,6 +42,18 @@ The SetupForm flow ([src/pages/SetupForm.tsx](src/pages/SetupForm.tsx)):
 4. **Write `config/flexweg`** to Firestore. `permission-denied` here surfaces a specific error pointing to the Firestore-rules section of the README with the admin email pinned in.
 5. **Upload populated `config.js`** via `uploadConfigJs` (also in `setupApi.ts`). The serialised content comes from `buildConfigJsSource(config)` in `runtimeConfig.ts`.
 6. Force a `window.location.reload()` so the next boot fetches the freshly-uploaded `config.js` from Flexweg, the resolver picks up the values, and the admin boots through the normal authenticated path. The SetupForm never shows again.
+
+**Flexweg SQLite path** (single combined step `handleSqliteInstall`):
+
+1. `POST /api/v1/sqlite/auth/install` — exchanges the master Flexweg API key for a **scoped Sqlite token** bound to the chosen SQLite path. The master key is never persisted in the runtime config after this call.
+2. Applies the `SqliteRuntimeConfig` to `window.__FLEXWEG_CONFIG__` immediately so the next API call routes correctly.
+3. Runs `ensureSchema()` from [src/services/flexweg-sqlite/schema.ts](src/services/flexweg-sqlite/schema.ts) — idempotent `CREATE TABLE IF NOT EXISTS` for `users` / `posts` / `terms` / `media` / `settings` / `config`.
+4. Registers the bootstrap admin via `registerUser({ masterApiKey })` — the first user gets `role: "admin"` server-side, then `loginUser` persists the session token to localStorage.
+5. Persists the master Flexweg API key in the SQLite `config` table (so attachments/publish work post-install — this is the **last** use of the master key before discarding it).
+6. Uploads `config.js` to Flexweg.
+7. Reloads with all query params stripped (`?apikey=...` is not allowed to survive in history).
+
+Both paths use `uploadConfigJs` to write `<folder>/config.js`. The folder is auto-detected from `window.location.pathname` via [src/lib/adminBase.ts](src/lib/adminBase.ts).
 
 The setup helpers in `src/lib/setupApi.ts` are intentionally separate from `services/flexwegApi.ts`: the latter funnels through `requireConfig()` which reads from Firestore, and Firestore doesn't yet have the Flexweg config when SetupForm runs. Setup helpers accept the credentials as explicit arguments and call `fetch` directly. After setup completes and the admin reloads, every Flexweg call goes through `flexwegApi.ts` again — `setupApi.ts` is dormant for the lifetime of the deployment.
 
@@ -56,10 +75,85 @@ The admin SPA itself is deployed once to `/admin/` on Flexweg; per-content-chang
 
 ### Two parallel worlds
 
-- **Admin world** (`src/components/`, `src/pages/`, `src/context/`, most of `src/services/`): React + Tailwind UI that talks to Firestore. Uses `HashRouter` so deploying under `/admin/` requires no rewrite rules. Tailwind-only styling; the admin never imports theme SCSS.
+- **Admin world** (`src/components/`, `src/pages/`, `src/context/`, most of `src/services/`): React + Tailwind UI that talks to the active data backend (Firestore or SQLite). Uses `HashRouter` so deploying under `/admin/` requires no rewrite rules. Tailwind-only styling; the admin never imports theme SCSS.
 - **Public world** (`src/themes/`): React components rendered to a string at publish time. **Theme components must only accept serializable props** — no Firestore hooks, no admin context. The `publisher.ts` resolver builds plain props (URLs, MediaView shapes, ResolvedMenuItems) before handing them to templates.
 
 These worlds share `src/core/` (types, slug, markdown, render, plugin registry).
+
+### Dual backend (Firebase / Flexweg SQLite)
+
+`src/services/` is split into three layers — the most important non-obvious part of the codebase:
+
+```
+src/services/
+├── firebaseClient.ts             Firebase SDK init (cached app/db/auth); guards against being called in SQLite mode
+├── flexwegApi.ts                 Backend-agnostic — Flexweg Files API wrapper (uploads, deletes, list, …)
+├── firebase/
+│   ├── auth.ts                   Firebase Auth + Firestore-based bootstrap-admin probe
+│   ├── posts.ts                  Firestore-backed services
+│   ├── taxonomies.ts
+│   ├── media.ts
+│   ├── users.ts
+│   ├── settings.ts
+│   └── flexwegConfig.ts          Reads/writes the Flexweg API key from Firestore `config/flexweg`
+├── flexweg-sqlite/
+│   ├── client.ts                 HTTP wrapper around /api/v1/sqlite/* (X-Sqlite-Token + X-Sqlite-User-Token)
+│   ├── schema.ts                 CREATE TABLE statements + default settings seed
+│   ├── subscriptions.ts          Polling helper using /version (~4 s)
+│   ├── auth.ts                   subscribeToAuth emulation around localStorage + /auth/me
+│   ├── userAuth.ts               /auth/{register,login,logout,me,change-password,users,…} wrappers
+│   ├── posts.ts                  SQLite-backed services (same exports as firebase/*)
+│   ├── taxonomies.ts
+│   ├── media.ts                  Reuses the browser image pipeline; only metadata CRUD is dispatched
+│   ├── users.ts                  Local cache; the SQLite Auth API is source-of-truth for accounts
+│   ├── settings.ts
+│   └── flexwegConfig.ts          Reads/writes the Flexweg API key from the SQLite `config` table
+├── auth.ts                       DISPATCHER: re-exports from firebase/ OR flexweg-sqlite/
+├── posts.ts                      DISPATCHER
+├── taxonomies.ts                 DISPATCHER
+├── media.ts                      DISPATCHER
+├── users.ts                      DISPATCHER
+├── settings.ts                   DISPATCHER
+├── flexwegConfig.ts              DISPATCHER (same FlexwegConfig type in both impls)
+└── externalRegistryStore.ts      DISPATCHER (plugins/themes registry — Firestore doc vs SQLite config row)
+```
+
+(8 dispatchers in total. `externalRegistryStore` is dispatched too because plugin / theme install + uninstall need a backend-routed write path — Firestore in Firebase mode, SQLite `config` table in SQLite mode.)
+
+The top-level files (`services/posts.ts`, `services/users.ts`, …) are thin dispatchers. They expose **hoisted function declarations** that resolve the impl **lazily at first call** (cached afterwards). Constants are re-exported directly from the firebase impl (identical value in both backends):
+
+```ts
+// src/services/posts.ts
+import { getBackendKind } from "../lib/runtimeConfig";
+import * as firebase from "./firebase/posts";
+import * as sqlite from "./flexweg-sqlite/posts";
+
+let _impl: typeof firebase | typeof sqlite | null = null;
+function impl(): typeof firebase {
+  if (!_impl) _impl = getBackendKind() === "flexweg-sqlite" ? sqlite : firebase;
+  return _impl as typeof firebase;
+}
+
+export function subscribeToPosts(...args: Parameters<typeof firebase.subscribeToPosts>): ReturnType<typeof firebase.subscribeToPosts> {
+  return impl().subscribeToPosts(...args);
+}
+// Constants: direct re-export — identical in both backends
+export { USER_ROLES } from "./firebase/users";
+// Types: direct re-export — type-only, no runtime cost
+export type { UserProfilePatch } from "./firebase/users";
+```
+
+**Why HOISTED functions, not `const impl = ...; export const x = impl.x`?** TDZ-safety. `core/flexwegRuntime.ts` reads several dispatcher exports at module init inside an object literal (the runtime API surface exposed to external plugins). A circular import chain through `themes/index.ts` means a dispatcher's body hasn't necessarily run when flexwegRuntime's body does. With `const` exports, that circular access would TDZ — `Uncaught ReferenceError: can't access lexical declaration 'X' before initialization`. Hoisted functions sidestep this: they're available the moment the module record exists, before any body executes; the impl resolution is deferred to the first CALL (which always happens post-init).
+
+Hooks, components, contexts and the publish pipeline import from the top-level dispatchers and stay oblivious to which backend is active. The choice is fixed for the lifetime of the page — switching backend requires a reload (handled by the Settings → Data backend switcher).
+
+**Why lazy-cached impl, not a fresh `getBackendKind()` per call?** Two reasons: (1) the backend never changes after boot; (2) the runtime config resolver does some work to read `window.__FLEXWEG_CONFIG__` — caching avoids repeating it on every CRUD call. The lazy resolution (vs eager) is what dodges TDZ at module init.
+
+**SQLite-mode realtime via polling**: `subscribeWithPolling` in [src/services/flexweg-sqlite/subscriptions.ts](src/services/flexweg-sqlite/subscriptions.ts) shares one `/version` poll across every active subscriber (~4 s tick). When the version bumps, every subscriber re-runs its fetch. Mutators call `notifyPotentialChange()` to hint a refresh without waiting for the next tick.
+
+**Optimistic entities bridge** ([src/hooks/useOptimisticEntities.ts](src/hooks/useOptimisticEntities.ts)) — necessary because the ~4 s polling delay otherwise causes a hard 404 ("Post not found") when the user clicks "+ New post" then the EditPage immediately reads the new id from `CmsDataContext` before the next poll fires. The hook composes a `canonical` list with a local optimistic map keyed by id; `addOptimisticPost(...)` is called synchronously by the create-then-navigate handler, and entries auto-clear once the polling tick brings back the canonical version. Harmless in Firebase mode (the `onSnapshot` fires within ~100 ms and drops the optimistic entry).
+
+**Adding a new backend** = create a sibling subfolder under `src/services/<backend>/` exposing the same function signatures, then add a branch in each dispatcher. The publish pipeline, image processing, theme system and plugin registry are all backend-agnostic — only the data CRUD + auth changes.
 
 ### The publish pipeline
 
@@ -231,9 +325,11 @@ The full set of admin internals exposed via `@flexweg/cms-runtime`:
 
 When adding new admin internals that plugins/themes consume, add them here AND to [public/runtime/cms-runtime.js](public/runtime/cms-runtime.js) so the runtime stub re-exports them.
 
-**Runtime registry storage** ([src/services/externalRegistryStore.ts](src/services/externalRegistryStore.ts)): the live list of installed externals lives in Firestore at `settings/externalRegistry`, NOT as a file on Flexweg. The on-disk `dist/admin/external.default.json` is the immutable build-time baseline used by the "Reinstall bundled defaults" UI and as the seed for fresh installs. There's no longer a mutable `dist/admin/external.json`.
+**Runtime registry storage** ([src/services/externalRegistryStore.ts](src/services/externalRegistryStore.ts)): the live list of installed externals lives in the active backend's data store — Firestore at `settings/externalRegistry` in Firebase mode, SQLite `config` table row with key `"externalRegistry"` in SQLite mode. NOT a file on Flexweg in either mode. The on-disk `dist/admin/external.default.json` is the immutable build-time baseline used by the "Reinstall bundled defaults" UI and as the seed for fresh installs. There's no longer a mutable `dist/admin/external.json`.
 
-`readRegistry()` resolves in this order: Firestore → legacy `external.json` (one-time migration source for pre-Firestore deployments) → `external.default.json` (fresh install). The first non-null result is materialised back into Firestore so subsequent boots hit the Firestore branch directly.
+The orchestration sits at the top level of `externalRegistryStore.ts`; only the backend read/write primitives go through the dispatcher (firebase impl at [src/services/firebase/externalRegistryStore.ts](src/services/firebase/externalRegistryStore.ts), SQLite impl at [src/services/flexweg-sqlite/externalRegistryStore.ts](src/services/flexweg-sqlite/externalRegistryStore.ts)). Same lazy-function pattern as the other 7 dispatchers — avoids TDZ from the same `themes/index.ts` import cycle.
+
+`readRegistry()` resolves in this order: backend (Firestore/SQLite) → legacy `external.json` (one-time migration source for pre-Firestore deployments) → `external.default.json` (fresh install). The first non-null result is materialised back into the backend so subsequent boots hit the backend branch directly.
 
 `writeRegistry()` only writes to Firestore. Install / uninstall / reinstall flows in `services/externalUpload.ts` all funnel through this. Bundle files themselves (the `bundle.js` / `manifest.json` / `theme.css` per entry) still live under `/admin/<kind>/<id>/` on Flexweg — they're written by `installFromZip` and deleted by `uninstallExternal` via the regular `flexwegApi`. Only the manifest moved.
 
@@ -385,13 +481,27 @@ Each `BlockManifest` has:
 
 The `EditorInspector` auto-switches to the Block tab when the active block has its own inspector, but never away from it (so the user keeps control of the tab state). Active-block resolution reads attrs by stripping the `core/` prefix and removing dashes (e.g. `core/heading-2` → `heading2`); plugin blocks should match their Tiptap node name to their manifest id.
 
-### Firestore data model
+### Authentication
 
-Collections: `posts` (both posts and pages, distinguished by `type`), `terms` (categories + tags), `media`, `users`, `settings/site` (singleton), `config/flexweg` (singleton with API key, separate from settings so the rules can be stricter on it).
+The admin is gated behind a login screen — which one renders depends on the backend:
 
-`users/{uid}.preferences.adminLocale` holds each user's admin language preference. `ensureSelfUserRecord` is **try-admin-first**: it attempts to write `role: "admin"` and falls back to `role: "editor"` on `permission-denied`. The Firestore rules let the admin-write through only for the bootstrap admin (verified email + matching pinned address), so editors land on the fallback automatically. This way the bootstrap admin's record reflects `role: "admin"` from first login, the rules are the single source of truth, and the admin email never needs to live in client config.
+- **Firebase mode** → [LoginPage.tsx](src/pages/LoginPage.tsx) — Firebase Auth email/password with a "Forgot password?" button that calls `sendPasswordResetEmail`.
+- **SQLite mode** → [LocalIdentityPage.tsx](src/pages/LocalIdentityPage.tsx) — SQLite Auth API login only (no public registration; admin creates accounts from `/users`). No email-based reset (admins use `adminResetPassword` from the API as a follow-up).
 
-Bootstrap-admin detection at runtime is **rules-driven**: [src/services/auth.ts](src/services/auth.ts) exposes `probeBootstrapAdmin()` which attempts a `getDoc("config/admin")`. The rules grant read on that doc only when `isBootstrapAdmin()` is true (signed-in + email-verified + matching pinned address), so the boolean result of the probe IS the answer. [src/context/AuthContext.tsx](src/context/AuthContext.tsx) caches the probe per session and merges it with a legacy email-comparison fallback (only kicks in when an old `adminEmail` is still present in `window.__FLEXWEG_CONFIG__` from a pre-migration `config.js`). New SetupForm runs strip the email from the uploaded `config.js` so fresh deployments are entirely probe-driven.
+[AuthContext.tsx](src/context/AuthContext.tsx) wraps both and exposes a uniform `{ user, record, role, isAdmin, disabled, … }` shape regardless of backend. The `subscribeToAuth` callback comes from the dispatcher, so the rest of the app reads the same hook in both modes.
+
+**Bootstrap admin** detection differs:
+
+- Firebase mode → rules-driven probe (`probeBootstrapAdmin()` in [src/services/firebase/auth.ts](src/services/firebase/auth.ts)) attempts `getDoc("config/admin")`. The rules grant read on that doc only when `isBootstrapAdmin()` is true (signed-in + email-verified + matching pinned address), so the boolean result IS the answer. `AuthContext` caches the probe per session and merges it with a legacy email-comparison fallback (only kicks in when an old `adminEmail` is still present in `window.__FLEXWEG_CONFIG__` from a pre-migration `config.js`).
+- SQLite mode → `probeBootstrapAdmin()` returns false; admin role flows from the user record's `role` field. The first user registered server-side gets `role: "admin"` automatically — no client-side promotion logic.
+
+### Data model
+
+Backend-agnostic collection/table names: `posts` (both posts and pages, distinguished by `type`), `terms` (categories + tags), `media`, `users`, `settings/site` (singleton), `config/flexweg` (singleton with API key, separate from settings so the rules can be stricter on it in Firebase mode).
+
+In Firebase mode these are Firestore collections; in SQLite mode they're rows in the per-site `.sqlite` file with snake_case columns and JSON columns for nested shapes (`term_ids`, `formats`, `socials`, `seo`, …). The dispatcher pattern hides the difference — code reads/writes through the domain types in [src/core/types.ts](src/core/types.ts) regardless of backend.
+
+`users/{uid}.preferences.adminLocale` holds each user's admin language preference. In Firebase mode, `ensureSelfUserRecord` is **try-admin-first**: it attempts to write `role: "admin"` and falls back to `role: "editor"` on `permission-denied`. The Firestore rules let the admin-write through only for the bootstrap admin (verified email + matching pinned address), so editors land on the fallback automatically. In SQLite mode, the auth API decides who is admin server-side (first user wins) and the local cache mirrors that role.
 
 ### Post / page query architecture
 
@@ -457,6 +567,8 @@ Search does NOT scan `contentMarkdown` — too heavy client-side and the typical
 
 ## Patterns intentionally reused from the sibling `kanban` project
 
-`services/firebase.ts`, `services/auth.ts`, `services/flexwegConfig.ts`, `context/AuthContext.tsx`, `<RequireAdmin>` guard, dark-mode anti-FOUC inline script in `index.html`, `vite.config.ts` (`base: "./"`), Tailwind config — all near-verbatim from `/Users/fredleaux/Sites/flexweg/kanban/`. When extending auth/users patterns, look there first; when changing them, consider the impact on consistency between projects.
+`services/firebaseClient.ts`, `services/auth.ts`, `services/flexwegConfig.ts`, `context/AuthContext.tsx`, `<RequireAdmin>` guard, dark-mode anti-FOUC inline script in `index.html`, `vite.config.ts` (`base: "./"`), Tailwind config — all near-verbatim from `/Users/fredleaux/Sites/flexweg/kanban/`. When extending auth/users patterns, look there first; when changing them, consider the impact on consistency between projects.
 
-The CMS adds the `users.preferences.adminLocale` field that kanban doesn't have, so the user record schema is a strict superset.
+The whole **dual backend** layout (`services/firebase/` + `services/flexweg-sqlite/` + top-level dispatchers + `LocalIdentityPage` + SetupForm wizard with backend choice) was ported from kanban as a coherent block — when extending it, mirror their patterns so the two projects stay in sync. The CMS adds the `users.preferences.adminLocale` field that kanban doesn't have, so the user record schema is a strict superset.
+
+**Form crash prevention** (lesson learned across kanban/notion/CMS ports): every `<form>` carries `data-form-type="other"` to discourage aggressive autofill from password managers, and every submit button uses the stable-DOM `<span>` wrapper with `className`-toggled icons rather than `{saving ? <Loader2 /> : <Save />}`. Without these two defences, browser extensions (1Password, Bitwarden, Grammarly, Honey, …) that inject DOM into forms can trigger `Node.insertBefore: Child to insert before is not a child of this node` crashes in production. When adding new forms or save buttons anywhere in the admin (including plugin / theme settings pages), preserve both defences.

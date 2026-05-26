@@ -230,12 +230,12 @@ export function FlexwegSearchSettingsPage({
           onClick={forceRegenerate}
           disabled={regenerating || saving}
         >
-          {regenerating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-          {regenerating ? t("actions.regenerating") : t("actions.forceRegenerate")}
+          {/* Lesson #4 — stable DOM. */}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            <Loader2 className={"w-4 h-4 animate-spin " + (regenerating ? "" : "hidden")} />
+            <RefreshCw className={"w-4 h-4 " + (regenerating ? "hidden" : "")} />
+            <span>{regenerating ? t("actions.regenerating") : t("actions.forceRegenerate")}</span>
+          </span>
         </button>
         <button
           type="button"

@@ -169,12 +169,12 @@ export function ArchivesSettingsPage({
             onClick={saveSettings}
             disabled={savingSettings}
           >
-            {savingSettings ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {savingSettings ? t("settings.saving") : t("settings.save")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (savingSettings ? "" : "hidden")} />
+              <Save className={"h-4 w-4 " + (savingSettings ? "hidden" : "")} />
+              <span>{savingSettings ? t("settings.saving") : t("settings.save")}</span>
+            </span>
           </button>
         </div>
       </section>
@@ -193,14 +193,16 @@ export function ArchivesSettingsPage({
             onClick={forceRegenerate}
             disabled={regenerating}
           >
-            {regenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            {regenerating
-              ? t("settings.forceRegenerating")
-              : t("settings.forceRegenerate")}
+            {/* Lesson #4 — stable DOM. */}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Loader2 className={"h-4 w-4 animate-spin " + (regenerating ? "" : "hidden")} />
+              <RefreshCw className={"h-4 w-4 " + (regenerating ? "hidden" : "")} />
+              <span>
+                {regenerating
+                  ? t("settings.forceRegenerating")
+                  : t("settings.forceRegenerate")}
+              </span>
+            </span>
           </button>
         </div>
       </section>
