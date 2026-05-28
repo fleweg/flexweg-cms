@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,7 @@ import { ThemeSettingsRoute } from "./pages/ThemeSettingsRoute";
 import { UsersPage } from "./pages/UsersPage";
 import { SetupForm } from "./pages/SetupForm";
 import { getBackendKind, getRuntimeConfig } from "./lib/runtimeConfig";
+import { ensureSchema } from "./services/flexweg-sqlite/schema";
 
 interface BoundaryState {
   error: Error | null;
@@ -224,15 +225,56 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <ThemeProvider>
-        <AuthProvider>
-          <AuthenticatedShell />
-          {/* Toasts are mounted outside the routed shell so navigation
-              never unmounts an in-flight notification. They're inside the
-              error boundary too so toast emissions during a transient DOM
-              error still surface once the boundary auto-recovers. */}
-          <ToastContainer />
-        </AuthProvider>
+        <SqliteSchemaGate>
+          <AuthProvider>
+            <AuthenticatedShell />
+            {/* Toasts are mounted outside the routed shell so navigation
+                never unmounts an in-flight notification. They're inside the
+                error boundary too so toast emissions during a transient DOM
+                error still surface once the boundary auto-recovers. */}
+            <ToastContainer />
+          </AuthProvider>
+        </SqliteSchemaGate>
       </ThemeProvider>
     </AppErrorBoundary>
   );
+}
+
+// Runs `ensureSchema()` once on boot in SQLite mode so existing
+// installs pick up any columns we've added since they were installed
+// (the migration uses `ALTER TABLE … ADD COLUMN IF NOT PRESENT` via
+// PRAGMA table_info — idempotent + cheap). Without this, only the
+// SetupForm's first-install path runs the migration, and a site that
+// shipped before columns like `posts.translations` / `terms.seo`
+// existed throws "no such column" 400s the moment an admin tries to
+// save a translation or a per-term SEO override.
+//
+// In Firebase mode (or when no backend has been picked yet) the gate
+// passes through immediately — no work to do. The spinner only
+// renders for the few ms `ensureSchema()` takes against a live SQLite
+// connection.
+function SqliteSchemaGate({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(() => getBackendKind() !== "flexweg-sqlite");
+
+  useEffect(() => {
+    if (ready) return;
+    let cancelled = false;
+    void ensureSchema()
+      .catch((err) => {
+        // Don't block the UI on a failed migration — the bad column
+        // will surface as a clear 400 inside the relevant CRUD action
+        // (and the toast pipeline will surface it). Logging here keeps
+        // the failure visible in devtools.
+        console.error("[sqlite] ensureSchema failed at boot:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready]);
+
+  if (!ready) return <FullScreenSpinner />;
+  return <>{children}</>;
 }

@@ -8,7 +8,8 @@
       "Edit(/.claude/skills/flexweg/**)",
       "Bash(python3 -c \"import json; d=json.load\\(open\\('_terms.json'\\)\\); print\\('\\\\n'.join\\(sorted\\(d['categories'].keys\\(\\)\\)\\)\\)\")",
       "Bash(python3 -c \"import json; d=json.load\\(open\\('_terms.json'\\)\\); print\\('\\\\n'.join\\(sorted\\(d['tags'].keys\\(\\)\\)\\)\\)\")",
-      "Bash(node --experimental-vm-modules -e ' *)"
+      "Bash(node --experimental-vm-modules -e ' *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
