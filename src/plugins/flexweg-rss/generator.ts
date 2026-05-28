@@ -21,12 +21,15 @@
 import {
   buildPostUrl,
   buildTermUrl,
+  buildRssFeedXml,
   pathToPublicUrl,
   markdownToPlainText,
   deleteFile,
   uploadFile,
   type Media,
   type Post,
+  type RssEnclosure,
+  type RssItem,
   type SiteSettings,
   type Term,
 } from "@flexweg/cms-runtime";
@@ -80,55 +83,9 @@ export function categoryFeedPath(slug: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// XML builder
+// XML builder — re-uses the shared core/rss helper. Local helpers are
+// just for post → RssItem conversion.
 // ─────────────────────────────────────────────────────────────────────
-
-function escapeXml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => {
-    switch (c) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case '"':
-        return "&quot;";
-      default:
-        return "&apos;";
-    }
-  });
-}
-
-// CDATA blocks can't contain "]]>" — split any occurrence so the closing
-// sequence appears outside CDATA. Standard pattern used by every RSS
-// generator that embeds rich content.
-function escapeCdata(value: string): string {
-  return value.replace(/]]>/g, "]]]]><![CDATA[>");
-}
-
-function rfc822(ms: number): string {
-  return new Date(ms).toUTCString();
-}
-
-// Optional cover image for an item — emitted as an RSS 2.0
-// <enclosure>. `length` of 0 means "size unknown" (legacy uploads
-// without per-variant byte counts); modern readers tolerate that.
-interface RssEnclosure {
-  url: string;
-  length: number;
-  type: string;
-}
-
-interface RssItem {
-  title: string;
-  link: string;
-  guid: string;
-  description: string;
-  pubDateMs: number;
-  category?: string;
-  enclosure?: RssEnclosure;
-}
 
 // Returns the cover image enclosure for a post (using its heroMediaId)
 // or null when there's nothing usable. Prefers the `large` variant for
@@ -176,49 +133,6 @@ function guessImageType(url: string): string {
   // Safe default — wrong type still leads most readers to display via
   // the URL alone.
   return "image/jpeg";
-}
-
-interface RssChannel {
-  title: string;
-  link: string;
-  description: string;
-  feedUrl: string;
-  language: string;
-  items: RssItem[];
-  xslHref: string;
-}
-
-function buildRssXml(channel: RssChannel): string {
-  const lines = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<?xml-stylesheet type="text/xsl" href="${escapeXml(channel.xslHref)}"?>`,
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
-    "  <channel>",
-    `    <title>${escapeXml(channel.title)}</title>`,
-    `    <link>${escapeXml(channel.link)}</link>`,
-    `    <description>${escapeXml(channel.description)}</description>`,
-    `    <language>${escapeXml(channel.language)}</language>`,
-    `    <lastBuildDate>${rfc822(Date.now())}</lastBuildDate>`,
-    `    <atom:link href="${escapeXml(channel.feedUrl)}" rel="self" type="application/rss+xml"/>`,
-  ];
-  for (const item of channel.items) {
-    lines.push("    <item>");
-    lines.push(`      <title>${escapeXml(item.title)}</title>`);
-    lines.push(`      <link>${escapeXml(item.link)}</link>`);
-    lines.push(`      <guid isPermaLink="true">${escapeXml(item.guid)}</guid>`);
-    if (item.category) lines.push(`      <category>${escapeXml(item.category)}</category>`);
-    lines.push(`      <description><![CDATA[${escapeCdata(item.description)}]]></description>`);
-    lines.push(`      <pubDate>${rfc822(item.pubDateMs)}</pubDate>`);
-    if (item.enclosure) {
-      lines.push(
-        `      <enclosure url="${escapeXml(item.enclosure.url)}" length="${item.enclosure.length}" type="${escapeXml(item.enclosure.type)}"/>`,
-      );
-    }
-    lines.push("    </item>");
-  }
-  lines.push("  </channel>");
-  lines.push("</rss>");
-  return lines.join("\n");
 }
 
 // Convert a Post to a RSS item. Returns null if the URL can't be built
@@ -367,7 +281,7 @@ async function regenerateSiteFeed(
   }
 
   const items = gatherSiteItems(ctx.posts, ctx.terms, ctx.mediaMap, config, ctx.baseUrl);
-  const xml = buildRssXml({
+  const xml = buildRssFeedXml({
     title: ctx.settings.title || "Site",
     link: pathToPublicUrl(ctx.baseUrl, ""),
     description: ctx.settings.description || ctx.settings.title || "",
@@ -423,7 +337,7 @@ async function regenerateCategoryFeed(
   const items = gatherCategoryItems(ctx.posts, ctx.terms, ctx.mediaMap, feed, ctx.baseUrl);
   const archiveLink = pathToPublicUrl(ctx.baseUrl, buildTermUrl(term));
   const channelTitle = `${ctx.settings.title || "Site"} — ${term.name}`;
-  const xml = buildRssXml({
+  const xml = buildRssFeedXml({
     title: channelTitle,
     link: archiveLink,
     description: term.description || term.name,

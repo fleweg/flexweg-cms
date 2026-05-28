@@ -50,7 +50,11 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
     setSavingRobots(true);
     try {
       await save(draft);
-      await regenerateRobotsTxt({ config: draft, baseUrl: settings.baseUrl });
+      await regenerateRobotsTxt({
+        config: draft,
+        baseUrl: settings.baseUrl,
+        discourageIndexing: settings.discourageIndexing === true,
+      });
       toast.success(t("robots.saved"));
     } finally {
       setSavingRobots(false);
@@ -82,7 +86,11 @@ export function SitemapsSettingsPage({ config, save }: PluginSettingsPageProps<S
       });
       // robots.txt is regenerated alongside on this button — the user
       // expectation per the plugin spec is "force regenerate everything".
-      await regenerateRobotsTxt({ config: draft, baseUrl: settings.baseUrl });
+      await regenerateRobotsTxt({
+        config: draft,
+        baseUrl: settings.baseUrl,
+        discourageIndexing: settings.discourageIndexing === true,
+      });
       toast.success(
         t("uploaded", { count: xslResult.uploaded.length + result.uploaded.length + 1 }),
       );

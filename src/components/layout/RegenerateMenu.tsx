@@ -92,8 +92,15 @@ export function RegenerateMenu() {
         label: t("themes.regenerate.allHtml"),
         description: t("themes.regenerate.allHtmlHelp"),
         onSelect: () =>
+          // Force a fresh terms read — the live React subscription
+          // can lag a recent term mutation (SQLite polls every ~4s,
+          // Firebase ~100ms). Without this, saving a category's
+          // SEO meta in the modal and immediately clicking
+          // Regenerate would re-render the archive with the
+          // pre-save term snapshot and the new tags wouldn't make
+          // it into the published HTML.
           runWithLog(async (log) => {
-            const ctx = await buildCtx();
+            const ctx = await buildCtx({ refreshTerms: true });
             await regenerateAll(ctx, log);
           }),
       },
@@ -141,7 +148,8 @@ export function RegenerateMenu() {
       onSelect: () =>
         runWithLog(async (log) => {
           await syncThemeAssets(themes, settings.themeConfigs, log);
-          const ctx = await buildCtx();
+          // Same fresh-terms guard as the "allHtml" path — see comment there.
+          const ctx = await buildCtx({ refreshTerms: true });
           await regenerateAll(ctx, log);
           for (const target of pluginTargets) {
             try {

@@ -28,7 +28,20 @@ export interface RenderPageOptions<TInner extends object> {
 export function renderPageToHtml<TInner extends object>(
   opts: RenderPageOptions<TInner>,
 ): string {
+  // `<meta name="robots">` short-circuit. When the admin has toggled
+  // `discourageIndexing` in the general settings, every published
+  // page must include the noindex/nofollow directive. Emitted ahead
+  // of the plugin head-extras so any subsequent emission can't
+  // accidentally elevate the page's indexing status (defence in
+  // depth — Google honours the most restrictive instance).
+  const noIndex = opts.baseProps.site.settings.discourageIndexing === true;
+  const noIndexMeta = noIndex
+    ? '<meta name="robots" content="noindex,nofollow" />'
+    : "";
   const extraHead = applyFiltersSync<string>("page.head.extra", "", opts.baseProps);
+  const combinedHead = noIndexMeta && extraHead
+    ? `${noIndexMeta}\n${extraHead}`
+    : noIndexMeta || extraHead;
   const bodyEnd = applyFiltersSync<string>("page.body.end", "", opts.baseProps);
   const tree: ReactElement = (
     <opts.base {...opts.baseProps}>
@@ -44,9 +57,9 @@ export function renderPageToHtml<TInner extends object>(
   // these characters in inlined JS / CSS — e.g. `function $$(…)` as a
   // helper alias was being silently collapsed to `function $(…)`.
   if (html.includes(HEAD_EXTRA_SENTINEL)) {
-    html = html.replace(HEAD_EXTRA_SENTINEL, () => extraHead);
+    html = html.replace(HEAD_EXTRA_SENTINEL, () => combinedHead);
   } else if (html.includes(HEAD_EXTRA_SENTINEL_FALLBACK)) {
-    html = html.replace(HEAD_EXTRA_SENTINEL_FALLBACK, () => extraHead);
+    html = html.replace(HEAD_EXTRA_SENTINEL_FALLBACK, () => combinedHead);
   }
   // Always remove the sentinel even when no plugin filtered in — keeps
   // the published HTML clean of internal markers.

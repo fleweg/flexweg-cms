@@ -1,4 +1,4 @@
-import type { BaseLayoutProps } from "@flexweg/cms-runtime";
+import { canonicalUrl, type BaseLayoutProps } from "@flexweg/cms-runtime";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
@@ -17,6 +17,7 @@ export function BaseLayout({
   pageDescription,
   ogImage,
   currentPath,
+  currentLocale,
   children,
 }: BaseLayoutProps) {
   const cssHref = `/${site.themeCssPath}`;
@@ -26,14 +27,14 @@ export function BaseLayout({
   const jsHrefCatalog = `/theme-assets/${themeId}-catalog.js`;
   const canonical =
     site.settings.baseUrl && currentPath
-      ? `${site.settings.baseUrl.replace(/\/+$/, "")}/${currentPath.replace(/^\/+/, "")}`
+      ? canonicalUrl(site.settings.baseUrl, currentPath)
       : undefined;
   const fullTitle = pageTitle
     ? `${pageTitle} — ${site.settings.title}`
     : site.settings.title;
 
   return (
-    <html lang={site.settings.language || "en"}>
+    <html lang={currentLocale || site.settings.language || "en"}>
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

@@ -26,8 +26,14 @@ export const FLEXWEG_API_MIN_VERSION = R.minApiVersion;
 
 // CMS plugin API + registries
 export const pluginApi = R.pluginApi;
+export const applyFilters = R.applyFilters;
+export const applyFiltersSync = R.applyFiltersSync;
+export const doAction = R.doAction;
 export const registerBlock = R.registerBlock;
 export const registerDashboardCard = R.registerDashboardCard;
+export const registerInspectorTab = R.registerInspectorTab;
+export const registerTermEditorSection = R.registerTermEditorSection;
+export const registerEditorVariantProvider = R.registerEditorVariantProvider;
 export const registerExternalPlugin = R.registerExternalPlugin;
 export const registerExternalTheme = R.registerExternalTheme;
 
@@ -38,6 +44,8 @@ export const findAvailableSlug = R.findAvailableSlug;
 export const buildPostUrl = R.buildPostUrl;
 export const buildTermUrl = R.buildTermUrl;
 export const pathToPublicUrl = R.pathToPublicUrl;
+export const canonicalPath = R.canonicalPath;
+export const canonicalUrl = R.canonicalUrl;
 export const detectPathCollision = R.detectPathCollision;
 export const detectTermSlugCollision = R.detectTermSlugCollision;
 export const normalizeMediaSlug = R.normalizeMediaSlug;
@@ -85,6 +93,11 @@ export const uploadMedia = R.uploadMedia;
 
 // services/taxonomies — term CRUD
 export const createTerm = R.createTerm;
+export const updateTerm = R.updateTerm;
+export const deleteTerm = R.deleteTerm;
+
+// core/rss — shared RSS 2.0 feed builder
+export const buildRssFeedXml = R.buildRssFeedXml;
 
 // services/users — author resolution
 export const buildAuthorLookup = R.buildAuthorLookup;
@@ -93,9 +106,14 @@ export const buildAuthorLookup = R.buildAuthorLookup;
 export const publishPost = R.publishPost;
 export const buildPublishContext = R.buildPublishContext;
 export const buildSiteContext = R.buildSiteContext;
+export const renderHome = R.renderHome;
 
 // services/menuPublisher — /menu.json upload
 export const publishMenuJson = R.publishMenuJson;
+
+// services/postsJsonPublisher + authorsJsonPublisher — sidebar data
+export const publishPostsJson = R.publishPostsJson;
+export const publishAuthorsJson = R.publishAuthorsJson;
 
 // services/catalogPublisher — /data/products.json upload (storefront theme)
 export const publishProductsJson = R.publishProductsJson;

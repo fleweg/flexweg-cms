@@ -238,7 +238,17 @@
     "newTag": "New tag",
     "noCategories": "No categories yet.",
     "noTags": "No tags yet.",
-    "slugCollision": "This slug is already used by \"{{label}}\"."
+    "slugCollision": "This slug is already used by \"{{label}}\".",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "Edit SEO meta tags",
+      "title": "SEO meta tags",
+      "subtitle": "Custom title and description for the \"{{name}}\" archive page.",
+      "metaTitle": "Meta title",
+      "metaTitleHint": "Used as the page <title>. Defaults to the term name when blank.",
+      "metaDescription": "Meta description",
+      "metaDescriptionHint": "Used as the page meta description. Defaults to the term description when blank."
+    }
   },
   "media": {
     "title": "Media library",
@@ -338,6 +348,7 @@
     "title": "Menus",
     "header": "Header menu",
     "footer": "Footer menu",
+    "label": "Label",
     "saveAndPublish": "Save & generate",
     "discard": "Discard",
     "saved": "Menus saved and published.",
@@ -361,7 +372,10 @@
       "homeMode": "Home content",
       "homeLatest": "Latest posts",
       "homeStatic": "Static page",
-      "homePage": "Home page"
+      "homePage": "Home page",
+      "discourageIndexing": "Discourage search engines from indexing this site",
+      "discourageIndexingHelp": "When enabled, every published page gets a noindex/nofollow meta tag and robots.txt is set to disallow all crawlers. Mirrors WordPress' behaviour — useful for staging sites or pre-launch reviews. Search engines that respect the directive will not index the site.",
+      "discourageRegenerateHint": "Indexing setting saved. Click 'Regenerate all' in Themes to apply the change to every published page and robots.txt."
     },
     "flexweg": {
       "title": "Flexweg API",

@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "title": "Multilingue",
+    "intro": "Configurez les langues supplémentaires. Chaque langue activée obtient son préfixe d'URL et des traductions par contenu.",
+    "save": "Sauvegarder",
+    "saving": "Sauvegarde…",
+    "saved": "Sauvegardé.",
+    "primaryLanguage": {
+      "title": "Langue principale",
+      "help": "Les pages dans cette langue se trouvent à la racine du site (sans préfixe). Les autres langues sont sous /<lang>/.",
+      "siteHint": "La langue du site est actuellement « {{lang}} »."
+    },
+    "enabledLanguages": {
+      "title": "Langues supplémentaires",
+      "help": "Cliquez une langue pour l'activer. Les langues activées apparaissent dans l'onglet Traductions de l'éditeur et sur le site public sous /<lang>/."
+    },
+    "homePages": {
+      "title": "Page d'accueil par langue",
+      "help": "Optionnel : choisissez une page statique (dans la langue correspondante) pour servir d'accueil à /<lang>/. Sinon, une liste des derniers articles est rendue.",
+      "none": "— Derniers articles —"
+    },
+    "switcher": {
+      "title": "Sélecteur de langue",
+      "help": "Affiche un sélecteur de langue sur le site public. Les thèmes doivent intégrer un conteneur [data-cms-langswitch] dans leur Header / Footer pour que le sélecteur apparaisse (les thèmes intégrés le font déjà).",
+      "header": "Afficher le sélecteur dans l'en-tête du site",
+      "footer": "Afficher le sélecteur dans le pied de page du site"
+    }
+  },
+  "tab": {
+    "label": "Traductions",
+    "noLanguages": "Aucune langue supplémentaire n'est configurée.",
+    "configureLanguages": "Configurer les langues",
+    "editPrimaryInMain": "Modifiez la langue principale dans l'éditeur (titre, slug, contenu ci-dessus).",
+    "save": "Sauvegarder les traductions",
+    "saving": "Sauvegarde…",
+    "saved": "Traductions sauvegardées.",
+    "duplicate": "Dupliquer depuis la langue principale",
+    "invalidSlug": "Slug invalide pour {{lang}}.",
+    "fields": {
+      "title": "Titre",
+      "slug": "Slug",
+      "slugHelp": "Caractères ASCII minuscules + tirets uniquement.",
+      "excerpt": "Extrait",
+      "content": "Contenu (Markdown)",
+      "contentHelp": "Markdown simple. Les blocs de thème (Hero, embeds, etc.) intégrés dans la langue principale ne sont PAS répliqués automatiquement — collez votre contenu traduit ici.",
+      "seo": "SEO",
+      "seoTitle": "Titre SEO",
+      "seoDescription": "Méta description"
+    }
+  },
+  "termSection": {
+    "title": "Traductions",
+    "name": "Nom",
+    "slug": "Slug",
+    "invalidSlug": "Slug invalide",
+    "seoTitle": "Titre meta SEO",
+    "seoDescription": "Description meta SEO",
+    "noLanguages": "Activez des langues secondaires dans les réglages du plugin Multilingue pour traduire ce terme."
+  }
+}

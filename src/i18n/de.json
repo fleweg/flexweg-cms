@@ -238,7 +238,17 @@
     "newTag": "Neues Schlagwort",
     "noCategories": "Noch keine Kategorien.",
     "noTags": "Noch keine Schlagwörter.",
-    "slugCollision": "Dieser Slug wird bereits von \"{{label}}\" verwendet."
+    "slugCollision": "Dieser Slug wird bereits von \"{{label}}\" verwendet.",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "SEO-Meta-Tags bearbeiten",
+      "title": "SEO-Meta-Tags",
+      "subtitle": "Eigener Titel und Beschreibung für die Archivseite \"{{name}}\".",
+      "metaTitle": "Meta-Titel",
+      "metaTitleHint": "Wird als Seiten-<title> verwendet. Standard: der Name des Begriffs.",
+      "metaDescription": "Meta-Beschreibung",
+      "metaDescriptionHint": "Wird als Meta-Beschreibung der Seite verwendet. Standard: die Beschreibung des Begriffs."
+    }
   },
   "media": {
     "title": "Medienbibliothek",
@@ -338,6 +348,7 @@
     "title": "Menüs",
     "header": "Kopfzeilen-Menü",
     "footer": "Fußzeilen-Menü",
+    "label": "Beschriftung",
     "saveAndPublish": "Speichern & generieren",
     "discard": "Verwerfen",
     "saved": "Menüs gespeichert und veröffentlicht.",

@@ -238,7 +238,17 @@
     "newTag": "Nieuwe tag",
     "noCategories": "Nog geen categorieën.",
     "noTags": "Nog geen tags.",
-    "slugCollision": "Deze slug wordt al gebruikt door \"{{label}}\"."
+    "slugCollision": "Deze slug wordt al gebruikt door \"{{label}}\".",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "SEO-metatags bewerken",
+      "title": "SEO-metatags",
+      "subtitle": "Aangepaste titel en beschrijving voor de archiefpagina van \"{{name}}\".",
+      "metaTitle": "Metatitel",
+      "metaTitleHint": "Gebruikt als <title> van de pagina. Standaard: de naam van de term.",
+      "metaDescription": "Metabeschrijving",
+      "metaDescriptionHint": "Gebruikt als metabeschrijving van de pagina. Standaard: de beschrijving van de term."
+    }
   },
   "media": {
     "title": "Mediabibliotheek",
@@ -338,6 +348,7 @@
     "title": "Menu's",
     "header": "Hoofdmenu",
     "footer": "Voettekstmenu",
+    "label": "Label",
     "saveAndPublish": "Opslaan & genereren",
     "discard": "Negeren",
     "saved": "Menu's opgeslagen en gepubliceerd.",

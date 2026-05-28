@@ -37,13 +37,15 @@ export function Header({ site }: { site: SiteContext }) {
 
           <a
             className="font-serif text-headline-sm font-bold text-primary tracking-tight"
-            href="/index.html"
+            href={site.homePath ?? "/index.html"}
             data-cms-brand
           >
             {settings.title}
           </a>
 
           <div className="flex items-center gap-3">
+            {/* Multilang plugin populates this when active. */}
+            <div data-cms-langswitch="header" aria-hidden="true" />
             {/* Search trigger — paired with the flexweg-search plugin
                 which scans `[data-cms-search]` buttons and opens its
                 modal on click. When the plugin is disabled the button

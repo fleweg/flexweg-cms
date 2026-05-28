@@ -33,7 +33,7 @@ export function CategoryTemplate({
         </div>
         <div className="max-w-container-max mx-auto px-gutter relative z-10">
           <nav className="flex items-center gap-2 mb-6 text-on-primary-container text-label-caps font-semibold uppercase tracking-wider">
-            <a className="hover:text-secondary-fixed" href="/index.html">
+            <a className="hover:text-secondary-fixed" href={site.homePath ?? "/index.html"}>
               {t("publicBaked.home")}
             </a>
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>

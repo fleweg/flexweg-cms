@@ -6,6 +6,7 @@ import {
   parseSources,
   type ParsedEntry,
   type ParsedTerm,
+  type ParsedTermTranslations,
   type ParseWarning,
   type SourceFile,
   type WordPressAttachment,
@@ -14,7 +15,7 @@ import { slugify, isValidSlug, findAvailableSlug } from "../../core/slug";
 import type { Media, Post, SiteSettings, Term, UserRecord } from "../../core/types";
 import { uploadMedia } from "../../services/media";
 import { createPost } from "../../services/posts";
-import { createTerm } from "../../services/taxonomies";
+import { createTerm, updateTerm } from "../../services/taxonomies";
 import { publishPost, buildPublishContext } from "../../services/publisher";
 import { buildAuthorLookup } from "../../services/users";
 import {
@@ -117,6 +118,12 @@ export interface DryRunSummary {
   // WP attachments referenced by entries (heroImage, inline images)
   // that match an entry in attachments[]. URL-keyed.
   wpAttachmentsToFetch: WordPressAttachment[];
+  // Optional per-term translations harvested from `_terms.json` at
+  // the bundle root. Applied AFTER the importer creates each term so
+  // the localised name + slug land on `Term.translations`. Plugin-
+  // free sites carry them harmlessly. Empty when no `_terms.json`
+  // shipped with the bundle.
+  termTranslations: ParsedTermTranslations[];
   // Errors from parsers + resolution.  Errors are blocking;
   // warnings are not.
   warnings: ParseWarning[];
@@ -172,6 +179,12 @@ export async function listImportFolder(): Promise<FolderListing> {
         markdownFiles.push({ path: item.path, name });
       } else if (ext === "xml" && !rel.includes("/")) {
         xmlFiles.push({ path: item.path, name });
+      } else if (/^_terms\.json$/i.test(name) && !rel.includes("/")) {
+        // Bundle metadata — declares per-term translations consumed
+        // by the multilang plugin. Routed into the markdown channel
+        // (parseSources detects the underscore prefix and handles it
+        // out-of-band).
+        markdownFiles.push({ path: item.path, name });
       }
     }
     if (res.items.length < (res.per_page ?? 100)) break;
@@ -504,6 +517,7 @@ export function scanBundle(bundle: ImportBundle, ctx: ScanContext, options: Impo
     tagsToCreate,
     imagesToUpload,
     wpAttachmentsToFetch,
+    termTranslations: parsed.termTranslations,
     warnings,
   };
 }
@@ -637,6 +651,48 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
     }
   }
 
+  // ─── 2b. Apply term translations from `_terms.json` ─────────────
+  // For each declared translation set, find the matching term (by
+  // name or slug across existing + just-created terms) and patch
+  // its `translations` field. Plugin-free sites get the data on the
+  // term but nothing else changes. The multilang plugin picks it up
+  // on its next render.
+  const existingTermsBySlugRun = new Map<string, Term>();
+  for (const t of ctx.terms) existingTermsBySlugRun.set(`${t.type}:${t.slug}`, t);
+  for (const tt of summary.termTranslations) {
+    const termSlug = slugify(tt.name);
+    let termId: string | undefined;
+    if (tt.type === "category") {
+      termId =
+        newCategoryIds.get(termSlug) ??
+        existingTermsBySlugRun.get(`category:${termSlug}`)?.id;
+    } else {
+      termId =
+        newTagIds.get(termSlug) ?? existingTermsBySlugRun.get(`tag:${termSlug}`)?.id;
+    }
+    if (!termId) {
+      // Translation declared for a term that didn't get created (no
+      // entry referenced it) — surface a warning but don't fail.
+      result.warnings.push({
+        level: "warning",
+        source: "_terms.json",
+        message: `No ${tt.type} matched name "${tt.name}" — translations skipped.`,
+      });
+      continue;
+    }
+    try {
+      await updateTerm(termId, {
+        translations: tt.translations as unknown as Record<string, unknown>,
+      });
+    } catch (err) {
+      result.warnings.push({
+        level: "warning",
+        source: "_terms.json",
+        message: `Could not apply translations to "${tt.name}": ${(err as Error).message}`,
+      });
+    }
+  }
+
   // ─── 3. Create posts ────────────────────────────────────────────
   for (const resolved of summary.entries) {
     const entry = resolved.source;
@@ -676,6 +732,32 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
     // stay as-is so the user can fix them after.
     const body = rewriteImageRefs(entry.contentBody, mediaByName, mediaByWpUrl);
 
+    // Convert sidecar translations (paired by `<name>.<lang>.md`)
+    // into the opaque map stored on `Post.translations`. Each
+    // translation also runs through `rewriteImageRefs` so the same
+    // media URL substitutions apply to localised inline images.
+    // Plugin-free sites carry this field harmlessly; the multilang
+    // plugin reads it on first publish.
+    let translations: Record<string, unknown> | undefined;
+    if (entry.translations) {
+      const map: Record<string, unknown> = {};
+      for (const [lang, t] of Object.entries(entry.translations)) {
+        const translatedBody = rewriteImageRefs(t.contentBody, mediaByName, mediaByWpUrl);
+        const seo: { title?: string; description?: string } = {};
+        if (t.seoTitle) seo.title = t.seoTitle;
+        if (t.seoDescription) seo.description = t.seoDescription;
+        const entryPayload: Record<string, unknown> = {
+          title: t.title,
+          slug: t.slug,
+          contentMarkdown: translatedBody,
+        };
+        if (t.excerpt) entryPayload.excerpt = t.excerpt;
+        if (Object.keys(seo).length > 0) entryPayload.seo = seo;
+        map[lang] = entryPayload;
+      }
+      if (Object.keys(map).length > 0) translations = map;
+    }
+
     let postId: string;
     try {
       postId = await createPost({
@@ -694,6 +776,7 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
             : undefined,
         createdAt: entry.publishedAt,
         publishedAt: entry.publishedAt,
+        translations,
       });
     } catch (err) {
       result.errors.push({

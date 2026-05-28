@@ -16,6 +16,11 @@ export function Footer({ site }: { site: SiteContext }) {
         <p className="site-footer__copy">
           © {year} {settings.title}
         </p>
+        {/* Language switcher footer mount point. Hidden until the
+            multilang plugin populates it (or removed when the
+            footer-switcher setting is off). See Header.tsx for
+            the symmetric header mount. */}
+        <div className="site-footer__langswitch" data-cms-langswitch="footer" aria-hidden="true" />
       </div>
     </footer>
   );

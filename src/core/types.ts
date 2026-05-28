@@ -120,6 +120,19 @@ export interface Post {
   // a legacy URL. Preserved as opaque metadata so a future redirect
   // generator can consume it; not read by the publisher itself.
   legacyUrl?: string;
+  // Optional per-locale extra fields populated by plugins (e.g.
+  // flexweg-multilang). Opaque to the core — the plugin defines its
+  // own shape per locale. Keyed by BCP-47-ish language tag ("fr",
+  // "es-MX", …). Backends serialize this as a JSON column (SQLite)
+  // or a Firestore Map. Reading code that doesn't care about
+  // translations simply ignores the field.
+  translations?: Record<string, unknown>;
+  // Optional per-locale tracking of the path each translation is
+  // currently published at. Used by plugins that publish to multiple
+  // paths from a single post (e.g. multilang) for cleanup bookkeeping
+  // when slugs or enabled locales change. Keyed by the same language
+  // tag as `translations`.
+  lastPublishedPathsByLocale?: Record<string, string>;
 }
 
 export type TermType = "category" | "tag";
@@ -131,9 +144,19 @@ export interface Term {
   slug: string;
   description?: string;
   parentId?: string;
+  // Per-archive SEO overrides — surfaced as <title> +
+  // <meta name="description"> on the category archive page. Falls
+  // back to the term's `name` / `description` when unset. Edited
+  // through the SEO modal on the Categories & Tags page.
+  seo?: SeoMeta;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
   lastPublishedPath?: string;
+  // Optional per-locale extra fields populated by plugins (e.g.
+  // flexweg-multilang stores `{ slug, name, description, seo }`
+  // per language here). Same opacity contract as `Post.translations`:
+  // the core sees an opaque map and never reads its inner shape.
+  translations?: Record<string, unknown>;
 }
 
 // One pre-rendered variant of an uploaded image. Each Media doc owns N
@@ -217,6 +240,16 @@ export interface MenuItem {
   ref?: { kind: "post" | "term" | "home"; id?: string };
   externalUrl?: string;
   children?: MenuItem[];
+  // Per-language label overrides. Keyed by BCP-47-ish language tag
+  // ("fr", "es-MX"). Surfaced by the runtime menu-loader: it reads
+  // `document.documentElement.lang` and prefers
+  // `translations[lang].label` over `label` when present. Missing /
+  // empty entries fall back to the primary `label`.
+  //
+  // Edited inline in MenusPage when the multilang plugin is enabled.
+  // The core menu resolver projects this map into
+  // `ResolvedMenuItem.labels` for the public-side loader.
+  translations?: Record<string, { label?: string }>;
 }
 
 export interface SiteSettings {
@@ -267,6 +300,13 @@ export interface SiteSettings {
   //
   // Default is "global" — matches the safer / setup-free path.
   paginationMode?: "global" | "paginated";
+  // Search-engine indexing gate (WordPress "Discourage search engines
+  // from indexing this site"). When true, every published HTML page
+  // gets a `<meta name="robots" content="noindex,nofollow">` and the
+  // robots.txt is forced to `User-agent: *\nDisallow: /`, overriding
+  // any user-supplied robots content. Default false — sites are
+  // indexable unless the admin opts out.
+  discourageIndexing?: boolean;
 }
 
 export type PaginationMode = "global" | "paginated";

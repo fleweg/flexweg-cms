@@ -32,7 +32,7 @@ const distAdmin = resolve(root, "dist/admin");
 // stamps this on every produced manifest.json + external.json entry
 // so the admin's external loader can reject stale bundles built
 // against an older API.
-const FLEXWEG_API_VERSION = "1.1.0";
+const FLEXWEG_API_VERSION = "1.3.0";
 
 // Externalised at build time; resolved via the import-map at runtime.
 // Keep in sync with the import-map in index.html.
@@ -60,6 +60,16 @@ const PLUGINS = [
   { id: "flexweg-rss", name: "Flexweg RSS", version: "1.0.0" },
   { id: "flexweg-archives", name: "Flexweg Archives", version: "1.0.0" },
   { id: "flexweg-search", name: "Flexweg Search", version: "1.0.0" },
+  // External-source plugins that we still bundle into the admin
+  // distribution so a fresh install ships with them pre-installed.
+  // `srcDir` is resolved relative to repo root; absent → falls back
+  // to src/plugins/<id>/.
+  {
+    id: "flexweg-multilang",
+    name: "Multi-language",
+    version: "1.5.1",
+    srcDir: "external/plugins/flexweg-multilang/src",
+  },
 ];
 
 const THEMES = [
@@ -213,7 +223,9 @@ async function main() {
   mkdirSync(themesDist, { recursive: true });
 
   for (const meta of PLUGINS) {
-    const srcDir = resolve(root, "src/plugins", meta.id);
+    const srcDir = meta.srcDir
+      ? resolve(root, meta.srcDir)
+      : resolve(root, "src/plugins", meta.id);
     await buildOneEntry("plugins", meta, srcDir, pluginsDist);
   }
   for (const meta of THEMES) {

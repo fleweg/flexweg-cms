@@ -142,6 +142,11 @@ interface IndexTemplateProps {
   drillDown: DrillDown;
   showCounts: boolean;
   t: TFunction;
+  // Root of the archive tree on the public site. "archives" for the
+  // primary language, "<lang>/archives" for localised variants. Used
+  // by `periodHref` so links inside the rendered HTML stay within
+  // the right language tree.
+  root?: string;
 }
 
 export function ArchiveIndexTemplate({
@@ -149,6 +154,7 @@ export function ArchiveIndexTemplate({
   drillDown,
   showCounts,
   t,
+  root,
 }: IndexTemplateProps) {
   const yearGroups = [...groupPostsByPeriod(posts, drillDown, "year").values()].sort(
     (a, b) => comparePeriodsDesc(a.period, b.period),
@@ -181,7 +187,7 @@ export function ArchiveIndexTemplate({
             return (
               <li key={year.year} className="archives__year">
                 <h2 className="archives__year-heading">
-                  <a className="archives__year-link" href={periodHref(year)}>
+                  <a className="archives__year-link" href={periodHref(year, root)}>
                     {year.year}
                   </a>
                   {showCounts && (
@@ -197,7 +203,7 @@ export function ArchiveIndexTemplate({
                       >
                         <a
                           className="archives__drilldown-link"
-                          href={periodHref(drillPeriod)}
+                          href={periodHref(drillPeriod, root)}
                         >
                           {formatPeriodLabel(drillPeriod, t)}
                         </a>
@@ -236,6 +242,14 @@ interface PeriodTemplateProps {
   language: string;
   t: TFunction;
   terms: { id: string; slug: string }[];
+  // Root of the archive tree (see IndexTemplateProps.root). Forwarded
+  // to `periodHref` for sub-group + back-link URLs so localised
+  // pages stay inside their own language tree.
+  root?: string;
+  // Archive index href — already includes the language prefix in
+  // localised mode so the year page's "← back to archives" link
+  // points at /<lang>/archives/ instead of /archives/.
+  indexHref?: string;
 }
 
 export function ArchivePeriodTemplate({
@@ -246,6 +260,8 @@ export function ArchivePeriodTemplate({
   language,
   t,
   terms,
+  root,
+  indexHref,
 }: PeriodTemplateProps) {
   const sorted = sortPostsDesc(posts);
 
@@ -282,11 +298,12 @@ export function ArchivePeriodTemplate({
     : null;
 
   // Back-link target: month/week pages link to their year; year pages
-  // link to the index.
+  // link to the index. `indexHref` overrides the default for the
+  // localised case where the index URL includes the language prefix.
   const backHref =
     period.kind === "year"
-      ? ARCHIVES_INDEX_HREF
-      : periodHref({ kind: "year", year: period.year });
+      ? indexHref ?? ARCHIVES_INDEX_HREF
+      : periodHref({ kind: "year", year: period.year }, root);
   const backLabel =
     period.kind === "year"
       ? t("page.backToIndex")
@@ -324,7 +341,7 @@ export function ArchivePeriodTemplate({
               <h2 className="archives__group-heading">
                 <a
                   className="archives__group-link"
-                  href={periodHref(subPeriod)}
+                  href={periodHref(subPeriod, root)}
                 >
                   {formatPeriodLabel(subPeriod, t)}
                 </a>

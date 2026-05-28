@@ -1,0 +1,21 @@
+{
+  "name": "flexweg-cms-multilang",
+  "private": true,
+  "version": "1.5.1",
+  "description": "Multi-language support for Flexweg CMS — translated posts/pages/terms, hreflang SEO, per-language sitemap entries, per-language RSS feeds.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && node scripts/pack.mjs",
+    "pack": "node scripts/pack.mjs"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.28",
+    "@vitejs/plugin-react": "^4.3.3",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^15.2.0",
+    "typescript": "^6.0.3",
+    "vite": "^5.4.10"
+  }
+}

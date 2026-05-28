@@ -51,6 +51,8 @@ Before writing any code, identify which path applies:
 - **"Add a dashboard card"** → §D
 - **"Prepare demo content for import"** → §E
 - **"My publish is broken / URLs are wrong"** → §F (debug)
+- **"Extend the post / page editor or the taxonomies UI"** (custom tab, term section, per-variant editing) → §G
+- **"Build multi-language / multi-variant publishing"** (per-locale URLs, hreflang, sitemap alternates, per-language sidebars) → §H
 
 Ask the user one clarifying question if it's not obvious. Don't guess.
 
@@ -91,7 +93,7 @@ my-plugin/
 | `id` | yes | Lower-case ASCII + dash. Used as folder name on Flexweg. **Immutable** after install. |
 | `name` | yes | Display name shown during install. |
 | `version` | yes | Semver of the plugin itself. |
-| `apiVersion` | yes | Runtime API version this bundle was built against. Admin refuses to load if outside `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]`. Current is `1.0.0`. |
+| `apiVersion` | yes | Runtime API version this bundle was built against. Admin refuses to load if outside `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]`. Current is `1.3.x` (min `1.0.0`). |
 | `entry` | no | Defaults to `bundle.js`. |
 
 ### `src/manifest.tsx` (the runtime payload — default-export a `PluginManifest`)
@@ -219,7 +221,16 @@ declare module "@flexweg/cms-runtime" {
     addAction(hook: string, fn: (...args: unknown[]) => void | Promise<void>, priority?: number): void;
     registerBlock(manifest: unknown): void;
     registerDashboardCard(manifest: { id: string; priority?: number; component: React.ComponentType }): void;
+    // NEW (API 1.2): editor / taxonomies extensibility points — see §G.
+    registerInspectorTab(manifest: unknown): void;
+    registerTermEditorSection(manifest: unknown): void;
+    // NEW (API 1.3): full per-variant editor replacement — see §H.
+    registerEditorVariantProvider(manifest: unknown): void;
   };
+  // Also exposed at top level for direct invocation from your handlers.
+  export function applyFilters<T>(hook: string, value: T, ...args: unknown[]): Promise<T>;
+  export function applyFiltersSync<T>(hook: string, value: T, ...args: unknown[]): T;
+  export function doAction(hook: string, ...args: unknown[]): Promise<void>;
   export interface PluginManifest<TConfig = unknown> {
     id: string;
     name: string;
@@ -242,6 +253,17 @@ declare module "@flexweg/cms-runtime" {
   // Add Post, PublishContext, etc. as needed.
 }
 ```
+
+The full set of runtime exports (call from your handlers, no admin import needed) includes the entries above plus:
+- Slug helpers: `slugify`, `isValidSlug`, `findAvailableSlug`, `buildPostUrl`, `buildTermUrl`, `pathToPublicUrl`, `canonicalPath`, `canonicalUrl`, `detectPathCollision`, `detectTermSlugCollision`
+- Files API: `uploadFile`, `deleteFile`, `deleteFolder`, `getFile`, `listFiles`, `publicUrlFor`, `FlexwegApiError`
+- CRUD: `fetchAllPosts`, `createPost`, `updatePost`, `createTerm`, `updateTerm`, `deleteTerm`, `uploadMedia`
+- Publisher: `publishPost`, `buildPublishContext`, `buildSiteContext`, `renderHome`, `publishMenuJson`, `publishPostsJson`, `publishAuthorsJson` (the latter three accept an optional `pathOverride` so plugins can write per-locale variants)
+- Settings: `updatePluginConfig`, `updateThemeConfig`
+- Rendering: `renderPageToHtml`, `getActiveTheme`, `renderMarkdown`, `markdownToPlainText`
+- RSS helper: `buildRssFeedXml` (shared with the flexweg-rss plugin)
+- Hooks: `useCmsData`, `useAuth`, `useAllPosts`
+- i18n: `i18n` (instance), `pickPublicLocale`, `setActiveLocale`
 
 ### Install + uninstall
 
@@ -317,7 +339,7 @@ export default manifest;
 Without these two HTML comments in your `<head>` and just before `</body>`, plugins like `flexweg-favicon`, `flexweg-rss`, `core-seo`, and `flexweg-custom-code` **silently no-op** on your theme. The admin's renderer does a post-`renderToStaticMarkup` string replace on these sentinels.
 
 ```tsx
-import type { BaseLayoutProps } from "../types/cms-runtime";
+import { canonicalUrl, type BaseLayoutProps } from "@flexweg/cms-runtime";
 
 export function BaseLayout({
   site,
@@ -325,9 +347,35 @@ export function BaseLayout({
   pageDescription,
   ogImage,
   currentPath,
+  currentLocale,          // ← API ≥ 1.2: per-page locale override
   children,
 }: BaseLayoutProps) {
-  const lang = site.settings.language ?? "en";
+  // currentLocale wins over the site-wide language. Multilang plugins
+  // set it per page so <html lang> is correct on /fr/ pages without
+  // having to override the global setting.
+  const lang = currentLocale || site.settings.language || "en";
+  // SiteContext.homePath (API ≥ 1.3) is plugin-provided. Multilang
+  // sets it to "/fr/index.html" on FR pages so the brand link points
+  // at the right home. Falls back to the global home. Use the same
+  // value for any breadcrumb's "Home" entry in your other templates.
+  const homeHref = site.homePath ?? "/index.html";
+  // ALWAYS emit a canonical from the BaseLayout — every theme owns
+  // this. The publisher passes a localised `currentPath` (e.g.
+  // "fr/news/hello.html") so this naturally points at the right
+  // per-locale URL. The multilang plugin intentionally does NOT
+  // emit a canonical of its own; if your theme skips this, the
+  // page ends up canonical-less.
+  //
+  // Use `canonicalUrl()` (NOT a raw string concat) so directory
+  // landings (home, /<lang>/, category archives) emit the clean
+  // form ending in `/` rather than `/index.html`. Both files
+  // resolve to the same content on Flexweg but the trailing-slash
+  // form is the SEO-preferred canonical and matches what
+  // multilang's hreflang link tags use, keeping the two in sync.
+  const canonical =
+    site.settings.baseUrl && currentPath
+      ? canonicalUrl(site.settings.baseUrl, currentPath)
+      : undefined;
   return (
     <html lang={lang}>
       <head>
@@ -336,11 +384,15 @@ export function BaseLayout({
         <title>{pageTitle}</title>
         {pageDescription && <meta name="description" content={pageDescription} />}
         {ogImage && <meta property="og:image" content={ogImage} />}
+        {canonical && <link rel="canonical" href={canonical} />}
         <link rel="stylesheet" href={`/theme-assets/${"my-theme"}.css`} />
         {/* MANDATORY sentinel — plugins inject head tags here */}
         <meta name="x-cms-head-extra" />
       </head>
       <body>
+        {/* Use homeHref (NOT hard-coded "/") in your Header so the
+            multilang plugin can localise the brand link. */}
+        <header><a href={homeHref}>{site.settings.title}</a></header>
         {children}
         {/* MANDATORY sentinel — plugins inject body-end scripts here */}
         <script type="application/x-cms-body-end" />
@@ -606,6 +658,316 @@ Fix: in the admin's Users page, edit the user record and set `firstName + lastNa
 
 If your THEME relies on the author block being there even for nameless users, your template logic needs to handle the `undefined` case — show an empty section, fall back to "Unknown author", whatever. Email is off-limits.
 
+### `bundle.js?v=X.Y.Z` served from cache after a reinstall
+
+Symptom: the bundle was rebuilt + re-uploaded but the admin still runs the old code. Hard refresh doesn't always help because the URL is the same.
+
+Cause: the external loader appends `?v=<entry.version>` to invalidate the cache. If you didn't bump `version` in `manifest.json`, the URL stays identical and the browser HTTP cache serves the stale bytes.
+
+Fix: bump the plugin's `version` in BOTH `manifest.json` AND `package.json` (and in `scripts/build-bundled-externals.mjs` if the plugin is also bundled there), rebuild, redeploy, then reinstall (or click "Restore bundled defaults" in `/plugins`).
+
+### Two ZIPs out of sync after a code change
+
+Symptom: I see one ZIP at `external/plugins/<id>/<id>.zip` and another at `dist/packs/plugins/<id>.zip` with different sizes / contents.
+
+Cause: there are two build pipelines for each plugin. `npm run build` at the CMS root rebuilds the ZIP at `dist/packs/plugins/<id>.zip` (this is the authoritative one — built from the latest source). The ZIP inside the plugin's own folder is only rebuilt when you run `npm run build` **inside** that folder.
+
+Fix: always rebuild from the CMS root. The `dist/packs/plugins/<id>.zip` artifact is the one to upload in production.
+
+### Multilang tabs not appearing after reinstall
+
+Symptom: the multilang plugin is installed but no language tabs show above the editor.
+
+Causes (in order of likelihood):
+1. The plugin's `apiVersion` is below the API the admin is shipping. Plugin needs `apiVersion >= 1.3.0` for the variant tabs.
+2. The browser cached an older `bundle.js`. Bump `version` in `manifest.json` to force a fresh fetch.
+3. The admin you deployed is older than the plugin expects. Verify `window.__FLEXWEG_RUNTIME__.apiVersion` in devtools — should be `1.3.0` or higher.
+4. No secondary languages enabled. Open `/settings/plugin/flexweg-multilang` and toggle at least one language on.
+
+### Localised home is empty / shows "No posts yet"
+
+Cause: themes that delegate home rendering to pre-rendered `heroHtml` + `listHtml` strings (default theme) end up with empty home pages if the localised render passes `posts: [...]` but not those HTML strings.
+
+Fix: the multilang plugin reuses the publisher's exported `renderHome(ctx, options)` with a shadow ctx (term slugs prefixed with `<lang>/`, post fields swapped to translations). The theme renders the home exactly as for primary, just with translated content. If you wrote a custom multilang renderer, port it to the same shadow-ctx + `renderHome` pattern instead of building your own template props.
+
+### Primary-language page has no hreflang tags while FR variant does
+
+Symptom: opening the FR variant shows the full hreflang alternates block in `<head>`. Opening the primary EN variant shows nothing → Google reports a hreflang cluster broken by missing reciprocity → the entire cluster is ignored.
+
+Cause: the multilang plugin's `pathRegistry` (consumed by the sync `page.head.extra` filter) gets refreshed inside `publish.additional` — too late for the primary page, which was already rendered. The localised variants come out fine because the same handler refreshes BEFORE rendering them.
+
+Fix: refresh the registry from `publish.before` (per-post hook fired BEFORE `renderSingle` in `publishPost`, `regenerateAll`, `repairPublishPaths`) AND from `regenerate.listings.before` (fired before `renderHome` / `renderCategory` in `regenerateListings` and `regenerateHomeOnly`). Both hooks land in API 1.3.3+. Older multilang plugin versions only registered on `publish.complete` and missed this completely.
+
+### Duplicate `<link rel="canonical">` in published HTML
+
+Symptom: viewing the source of any published page shows two canonical link tags with the same URL.
+
+Cause: the theme's `BaseLayout` emits one (always), and a multilang plugin earlier than 1.3.2 also emitted one in its `page.head.extra` block.
+
+Fix: upgrade multilang to ≥ 1.3.2 — it no longer emits a canonical. The theme's canonical is the single source of truth and already points at the localised path because the publisher passes a localised `currentPath`.
+
+### "Continue reading" sidebar shows EN content on FR pages
+
+Cause: the default theme's `posts-loader.js` fetches `/data/posts.json` (primary content). Localised pages need `/<lang>/data/posts.json` with translated entries.
+
+Fix: the multilang plugin publishes per-language data files (`/fr/data/posts.json`, `/fr/data/authors.json`) on every publish, and the updated default theme's `posts-loader.js` detects the locale prefix from `window.location.pathname` and fetches the localised file first (falling back to root on 404). If you ship a custom theme, mirror this pattern: detect the leading 2-letter URL segment and prefix your data fetches.
+
+---
+
+## §G — Editor & taxonomies extensibility (API ≥ 1.2)
+
+Three registries let plugins inject UI into the admin without touching the in-tree pages. All are cleared on every `applyPluginRegistration()` pass and re-registered by each enabled plugin's `register()` callback (same lifecycle as blocks / dashboard cards).
+
+### `registerInspectorTab` — extra tab in the post / page editor's right inspector
+
+Use when you want to surface PER-POST settings or metadata that don't belong in the Document tab and aren't tied to a specific block. The tab gets the live `entity` (Post), an `updateEntity(patch)` helper (writes to the host's in-memory draft) and a `save()` helper that resolves once `updatePost` returns.
+
+```ts
+api.registerInspectorTab({
+  id: "my-plugin/audit",
+  labelKey: "audit.tabLabel",
+  namespace: "my-plugin",     // i18n namespace for the label
+  forKind: "all",             // "post" | "page" | "all"
+  badge: (entity) => entity.translations ? "● checked" : undefined,
+  priority: 50,               // lower runs first; default 100
+  component: AuditTabBody,    // ({ entity, updateEntity, save }) => ReactNode
+});
+```
+
+The host doesn't merge per-tab patches into the standard save flow automatically — your tab is responsible for writing its data via `updatePost(entity.id, {...})` directly (or by hooking into the host's save via the `save` callback when applicable).
+
+### `registerTermEditorSection` — extra fields in the categories / tags edit modal
+
+Use for per-term metadata (e.g. per-language slug + name + SEO meta, term-specific config). The host renders your section in a collapsible row under the standard name + slug inputs (chevron on the row toggles it). Patches accumulate into a per-row plugin state; the row's Save button commits everything atomically via `updateTerm`.
+
+The row already exposes a primary-language **SEO** button (between the slug input and Save) that opens a modal letting the admin set `Term.seo = { title, description, ogImage }` for the archive page's `<title>` + `<meta name="description">`. Plugins extending the term editor can layer **per-language** SEO on top by carrying a `seo` sub-object inside their translations map (see flexweg-multilang's `TermTranslation.seo`). The publisher's category render reads `term.seo` for the primary language; per-locale renders read `termTrans.seo` from the plugin's translations.
+
+```ts
+api.registerTermEditorSection({
+  id: "my-plugin/term-extras",
+  termType: "all",            // "category" | "tag" | "all"
+  priority: 50,
+  component: TermExtrasSection, // ({ term, updateTerm }) => ReactNode
+});
+```
+
+Inside the component, call `updateTerm({ ...patch })` on each keystroke — the host accumulates patches in local state and writes them on Save. Don't filter / clean up partial entries on every keystroke; if you do, typing the first character of `name` while `slug` is empty would drop the entry from the map and look like the input is ignoring input. Tidy up at save time, not per keystroke.
+
+### `registerEditorVariantProvider` — swap the WHOLE editor content per variant (API ≥ 1.3)
+
+Use when each "variant" of a post needs the full editor (title + slug + WYSIWYG + blocks + drag-and-drop + excerpt + SEO), not just a side-panel form. The host renders a tab strip above the editor; switching tabs swaps the editor state for the new variant while preserving the same Tiptap instance (so blocks + extensions + scroll stay alive).
+
+At most ONE provider should return more than one variant for a given entity. Multiple providers race for the same tab strip; the lower-priority one wins.
+
+```ts
+api.registerEditorVariantProvider({
+  id: "my-plugin/variants",
+  priority: 50,
+  listVariants(entity, ctx) {
+    // ctx = { settings, terms } — pulled from useCmsData() by the host.
+    // Return [{id, label, badge, primary}]. Exactly one must be primary.
+    // The primary uses the entity's native fields (host saves through
+    // its normal updatePost path). Non-primary variants save via your
+    // saveFields handler.
+    return [
+      { id: "en", label: "EN", badge: "★", primary: true },
+      { id: "fr", label: "FR", badge: "○", primary: false },
+    ];
+  },
+  loadFields(entity, variantId, ctx) {
+    // Return { title, slug, contentMarkdown, excerpt?, seo? } for the
+    // given variant. Return null for an empty draft.
+    if (variantId === "en") return null; // primary uses entity directly
+    return readFromTranslationsMap(entity, variantId);
+  },
+  async saveFields(entity, variantId, fields, ctx) {
+    // Called when the user clicks Save with a non-primary variant
+    // active. Strip undefined values before writing — Firestore
+    // rejects `undefined` field values.
+    await updatePost(entity.id, {
+      translations: {
+        ...((entity.translations as Record<string, unknown>) ?? {}),
+        [variantId]: stripUndefined(fields),
+      },
+    });
+  },
+  validate(entity, variantId, fields, ctx) {
+    if (!isValidSlug(fields.slug)) return "Invalid slug.";
+    return null;
+  },
+  getSlugPathPrefix(entity, variantId, fields, ctx) {
+    // Optional. Lets your tab show "fr/news/" before the slug input
+    // so the user sees the full localised URL.
+    return `${variantId}/${categorySlugFor(entity, ctx)}/`;
+  },
+});
+```
+
+The host:
+- Pre-empts auto-slug-from-title when switching to a variant that has a saved slug, but RE-ENABLES it for empty variants so the user gets the same UX as when creating a new post.
+- For non-primary variants, skips the global slug-collision detection (uniqueness is per-variant — your `validate` handles it).
+- On Save with a non-primary variant active on an online post, also triggers `publishPost` so the new variant goes live alongside the others.
+
+---
+
+## §H — Multi-language plugins
+
+This section covers the patterns the `flexweg-multilang` plugin uses. Apply the same recipes whenever you need per-locale URLs, hreflang SEO, sitemap alternates, per-language sidebar data, or per-language `<html lang>`. The same techniques generalize to "draft variants", A/B variants, version snapshots, etc. — the variant API is intentionally generic.
+
+### Storage model
+
+Per-post translations live on `Post.translations` (opaque `Record<string, unknown>` keyed by language code) — added by the variant provider's `saveFields`. Per-term translations live on `Term.translations` (same shape). Both are JSON columns in SQLite + Firestore Maps natively. Old posts without translations keep working unchanged.
+
+Bookkeeping for cleanup: `Post.lastPublishedPathsByLocale` (`Record<lang, string>`) records where each variant was published last. The publisher's `publish.additional` flow auto-diffs this against the new set of paths and cleans up orphans (slug renames, removed languages) without you doing manual cleanup.
+
+Plugin config (which languages are enabled, primary language, per-language home page id, menu label translations) lives in `settings.pluginConfigs["flexweg-multilang"]` — the standard Plugin Settings storage.
+
+### URL strategy
+
+Primary language at root (`site.com/news/hello.html`). Other languages prefixed: `site.com/fr/actualites/bonjour.html`. The plugin builds localised URLs by:
+1. Pre-prefixing the **term slug** with `<lang>/` in a shadow ctx (e.g. `actualites` → `fr/actualites`).
+2. Letting the publisher's standard `buildPostUrl({ post, primaryTerm })` produce the right URL with zero changes to the URL-building logic.
+3. For pages (no category), prefixing the **post slug** itself (since pages live at root).
+
+This trick lets the plugin reuse `publisher.renderHome(shadowCtx, options)` for the localised home — the active theme renders exactly as for primary, just with translated content.
+
+### The render flow
+
+Localised single posts (one per language) are returned from the `publish.additional` filter. The publisher uploads them alongside the primary file and tracks paths via `Post.lastPublishedPathsByLocale` for orphan cleanup.
+
+Localised homes + category archives are returned from `publish.extraListings` (fires inside `regenerateListings`, `regenerateHomeOnly`, and `regenerateAll`). Each enabled language gets its `/<lang>/index.html` and `/<lang>/<cat>/index.html`.
+
+**Critical**: refresh your `pathRegistry` (hreflang lookup) AT THE START of your `publish.additional` / `publish.extraListings` handlers. The `page.head.extra` filter that injects `<link rel="alternate" hreflang>` runs DURING the render — if the registry isn't refreshed before render, the very first publish of a new translation produces a page without hreflang.
+
+### Per-page `<html lang>` (API ≥ 1.2)
+
+Set `currentLocale` in `BaseLayoutProps` when rendering a localised page. The theme's BaseLayout uses it instead of `site.settings.language`. The publisher's `renderHome` accepts a `currentLocale` option that propagates.
+
+### Per-page brand link (API ≥ 1.3)
+
+Set `site.homePath` to `/<lang>/index.html` when rendering a localised page. Themes that use `site.homePath ?? "/index.html"` (recommended pattern in the BaseLayout sample above) get the right link automatically.
+
+### hreflang + canonical + og:locale (Google best practices)
+
+Hook `page.head.extra` (sync). Inject:
+```html
+<link rel="alternate" hreflang="en" href="https://site.com/news/hello.html" />
+<link rel="alternate" hreflang="fr" href="https://site.com/fr/actualites/bonjour.html" />
+<link rel="alternate" hreflang="x-default" href="https://site.com/news/hello.html" />
+<meta property="og:locale" content="fr_FR" />
+<meta property="og:locale:alternate" content="en_US" />
+```
+
+Rules: symmetric (each page lists ALL alternates including itself); `x-default` points at the primary language; missing translations are absent (no broken links).
+
+**Do NOT emit a `<link rel="canonical">` from the plugin** — the active theme's `BaseLayout` already emits one (`canonicalUrl(baseUrl, currentPath)`), and the publisher passes the localised `currentPath` (e.g. `fr/soins/bonjour.html`), so the theme's canonical already points at the right per-locale URL. Emitting a second canonical produces a duplicate that Google flags as a soft SEO issue.
+
+**Build hreflang `href`s with `canonicalUrl(baseUrl, path)`, not `pathToPublicUrl(...)`**. `canonicalUrl` strips trailing `index.html`, producing the same clean form (`https://site.com/fr/`) the theme's canonical uses. If your hreflang `href` ends in `/index.html` and the theme's canonical doesn't, Google may treat the pair as a mismatch and ignore the cluster. The same applies to sitemap `<xhtml:link>` alternates and `<loc>` entries — keep every Google-facing URL in the clean form.
+
+**Reciprocity is non-negotiable**: Google ignores the entire hreflang cluster if pages don't symmetrically link back. The plugin's path registry must be refreshed BEFORE rendering — for the primary page, that means using `publish.before` (per-post hook, fires before `renderSingle`) and `regenerate.listings.before` (per-listing-pass hook, fires before `renderHome` / `renderCategory`). The `publish.additional` filter alone is not enough because it fires AFTER the primary is rendered. The publisher fires both hooks consistently across `publishPost`, `regenerateAll`, `repairPublishPaths`, `regenerateListings`, and `regenerateHomeOnly`.
+
+### Sitemap with hreflang alternates
+
+Hook the four sitemap filters in `flexweg-sitemaps`:
+- `sitemap.urlset.namespaces` → add `xmlns:xhtml="http://www.w3.org/1999/xhtml"`
+- `sitemap.url.entry` → inject `<xhtml:link rel="alternate" hreflang="..." href="..."/>` for each language inside every `<url>`
+- `sitemap.urls.extra` → add `<url>` entries for translated paths (each with its own `<xhtml:link>` block)
+- `sitemap.index.extra` → add per-language news sitemap references (Google News doesn't support xhtml:link in news sitemaps, so the pattern is one news sitemap per language)
+
+### RSS per language
+
+Generate `/<lang>/feed.xml` + `/<lang>/<cat>/<cat>.xml` per enabled language using `buildRssFeedXml` (exposed via runtime). No need to hook into flexweg-rss — it owns the primary feed; your plugin generates the localised ones at sibling URLs.
+
+### Per-language sidebar data (posts.json / authors.json)
+
+The default theme's `posts-loader.js` fetches `/data/posts.json` + `/data/authors.json` to fill `[data-cms-related]` and `[data-cms-author-bio]` widgets. For localised pages, generate `/<lang>/data/posts.json` + `/<lang>/data/authors.json` with translated entries.
+
+`publishPostsJson` and `publishAuthorsJson` (both exposed via runtime since API 1.3) accept an optional `pathOverride` so you can publish to `<lang>/data/posts.json` without re-implementing the data shape:
+
+```ts
+import { publishPostsJson, publishAuthorsJson } from "@flexweg/cms-runtime";
+
+await publishPostsJson(
+  { ...ctx.settings, language: "fr" },   // overrides used for date formatting
+  shadowPosts,                            // translated posts
+  shadowPages,
+  shadowTerms,                            // terms with prefixed slugs
+  ctx.media,
+  "fr/data/posts.json",                   // pathOverride
+);
+```
+
+The default theme's `posts-loader.js` detects the URL's leading 2-letter segment and fetches the localised file first, falling back to the root file on 404. Custom themes should mirror this pattern.
+
+### Inputs validation: strip `undefined` before writing to Firestore
+
+Firestore rejects `undefined` field values. When building a translation object to persist, ONLY include keys that have a value:
+
+```ts
+const entry: PostTranslation = { title, slug, contentMarkdown };
+if (excerpt) entry.excerpt = excerpt;
+if (seo) {
+  const cleanedSeo: PostTranslation["seo"] = {};
+  if (seo.title) cleanedSeo.title = seo.title;
+  if (seo.description) cleanedSeo.description = seo.description;
+  if (Object.keys(cleanedSeo).length) entry.seo = cleanedSeo;
+}
+```
+
+Same constraint applies anywhere you write nested data via `updatePost` / `updateTerm` — top-level `undefined` is filtered by the dispatcher but nested `undefined` slips through and Firestore rejects the write.
+
+### Regenerate paths that need locale awareness
+
+If you're contributing to the publisher / a plugin that already integrates with multilang, three regenerate entry points fire the relevant hooks:
+- `regenerateListings` → fires `publish.extraListings` (localised homes + archives)
+- `regenerateHomeOnly` → fires `publish.extraListings`
+- `regenerateAll` → fires `publish.additional` per post + `publish.extraListings` for listings
+
+`publishPost` / `unpublishPost` / `deletePostAndUnpublish` all fire the relevant hooks already. Plugin authors don't need to invoke these directly.
+
+### Importer hooks for multilingual bundles
+
+The built-in **Flexweg Import** plugin (`src/mu-plugins/flexweg-import/`) ships native multilang support so demo content + WP imports populate `Post.translations` / `Term.translations` automatically when the multilang plugin is installed (and harmlessly when it isn't). The conventions:
+
+- **Post / page sidecars**: `<name>.<lang>.md` next to `<name>.md`. The sidecar's frontmatter only needs `title`, `slug`, `excerpt`, `seoTitle`, `seoDescription` — category, tags, hero image, author + dates are shared with the primary. The importer pairs by filename prefix and writes `Post.translations[<lang>] = { title, slug, contentMarkdown, excerpt?, seo? }`.
+- **Term translations**: optional `_terms.json` at the bundle root. Top-level keys group by `categories` / `tags`, nested keys match the primary-language name from each entry's frontmatter, and each language carries `{ name, slug, description? }`. The importer applies these via `updateTerm` AFTER creating each term. Only terms actually referenced by an imported post get an attempt; unused entries produce a non-blocking warning.
+- **Firestore safety**: the parser writes the translation entry WITHOUT undefined fields. `description` is only included when explicitly provided. Otherwise Firestore rejects the nested `undefined` and the whole `updateTerm` call fails silently (warning surfaces but no translation lands).
+- **CreatePostInput** accepts an optional `translations: Record<string, unknown>` so the import path doesn't need a second pass. The dispatcher serialises it on Firestore + SQLite alike.
+
+When authoring a demo bundle, ship the sidecars + `_terms.json` even if you don't expect every install to enable multilang — the data lays dormant until the plugin is activated.
+
+### Theme multilang compatibility checklist
+
+Multi-language sites work out of the box for content + SEO with any theme that uses the standard `BaseLayoutProps` shape. But for the FULL experience (right brand link, breadcrumb, sidebar widgets) themes need to opt into three small contracts:
+
+| Contract | What to do | Where in the default theme |
+|---|---|---|
+| **`<html lang>` per page** | Use `currentLocale ?? site.settings.language` in `BaseLayout` | `templates/BaseLayout.tsx` |
+| **Brand link respects locale** | Use `site.homePath ?? "/index.html"` for the logo / brand anchor in Header (and Footer if it has one) | `components/Header.tsx` |
+| **Breadcrumb's "Home" entry** | Use `site.homePath ?? "/index.html"` for any link labelled Home / Accueil / etc. in Single + Category + Catalog + Catalog-style templates | `templates/SingleTemplate.tsx` line ~33 |
+| **Translated "Home" label** | Look up the label via `publicT("breadcrumb.home", { defaultValue: "Home" })` (or `t("publicBaked.home")` in themes that already use that namespace) — the theme's i18n bundle defines the per-locale strings | `i18n.ts` (each locale's `breadcrumb.home`) |
+| **Sidebar widget data file** | The `posts-loader.js` script that fetches `/data/posts.json` + `/data/authors.json` must detect a leading `/<2-letter>/...` URL segment and prefer `/<lang>/data/<file>.json` first (falling back to root on 404). The multilang plugin generates the localised files on every publish. | `posts-loader.js` — `detectLocalePrefix()` + `fetchWithLocaleFallback()` |
+
+All five in-tree themes (default, magazine, corporate, storefront, portfolio) are now multilang-aware. Copy these patterns when authoring a new theme.
+
+The publisher passes `currentLocale` and `homePath` automatically — themes that follow the checklist need NO multilang-specific code. The plugin stays generic; themes stay generic; the publisher wires them together at render time.
+
+### Reference implementation
+
+`external/plugins/flexweg-multilang/` ships with:
+- `src/editor/variantProvider.ts` — `registerEditorVariantProvider` setup
+- `src/editor/TermTranslationsSection.tsx` — `registerTermEditorSection` setup
+- `src/publisher/computeAdditional.ts` — `publish.additional` handler
+- `src/publisher/computeExtraListings.ts` — `publish.extraListings` handler
+- `src/publisher/render.ts` — shadow ctx + `renderHome` delegation trick
+- `src/publisher/sitemap.ts` — 4 sitemap handlers
+- `src/publisher/feeds.ts` — per-language RSS
+- `src/publisher/localizedJson.ts` — per-language `data/posts.json` + `data/authors.json`
+- `src/core/hreflang.ts` — hreflang HTML + sitemap alternates XML builders
+- `src/core/pathRegistry.ts` — module-level cache for `page.head.extra`
+
+Copy these patterns when you build per-locale or per-variant features.
+
 ---
 
 ## Hook reference (the public surface)
@@ -620,16 +982,23 @@ If your THEME relies on the author block being there even for nameless users, yo
 | `page.head.extra` | sync | `(html: string, baseProps) => string` — replaces the head sentinel |
 | `page.body.end` | sync | `(html: string, baseProps) => string` — replaces the body-end sentinel |
 | `menu.json.resolved` | async | `(menu, ctx) => menu` — mutate the resolved `{ header, footer }` before upload |
+| `publish.additional` | async (API ≥ 1.2) | `(extra: AdditionalRender[], post, ctx) => AdditionalRender[]` — return extra `{path, html}` pairs the publisher uploads alongside the primary file. Used by multilang to publish translated variants in the same publish pass. Cleanup of paths the plugin no longer returns goes through `Post.lastPublishedPathsByLocale` + the publisher's standard orphan logic. |
+| `publish.extraListings` | async (API ≥ 1.2) | `(extra: AdditionalListingRender[], ctx) => AdditionalListingRender[]` — same idea but for listing files (home / category archives). Fires inside `regenerateListings`, `regenerateHomeOnly`, and `regenerateAll`. |
+| `sitemap.urlset.namespaces` | sync (API ≥ 1.2) | `(ns: Record<string,string>, ctx) => Record<string,string>` — add XML namespace attrs to the `<urlset>` element (e.g. `xmlns:xhtml`). |
+| `sitemap.url.entry` | sync (API ≥ 1.2) | `(innerXml: string, ctx: { entity, baseUrl, path, lastmodMs }) => string` — return extra XML to inject INSIDE each `<url>` (e.g. `<xhtml:link rel="alternate" hreflang="...">` blocks). |
+| `sitemap.urls.extra` | sync (API ≥ 1.2) | `(extra: SitemapExtraUrl[], ctx: { posts, pages, terms, settings, year, scope }) => SitemapExtraUrl[]` — add extra `<url>` entries to the yearly sitemap (e.g. translated paths). |
+| `sitemap.index.extra` | sync (API ≥ 1.2) | `(extra: SitemapIndexExtraEntry[], ctx: { settings }) => SitemapIndexExtraEntry[]` — add extra `<sitemap>` references to sitemap-index.xml (e.g. per-language news sitemaps). |
 
 ### Actions (side effects, fire-and-forget)
 
 | Hook | Payload | When |
 |---|---|---|
-| `publish.before` | `(post, ctx)` | Before any work starts |
+| `publish.before` | `(post, ctx)` (API ≥ 1.3.3 — older fired with just `post`) | Fires BEFORE `renderSingle`. Use this when your plugin needs to seed a module-level cache that `page.head.extra` will read during the same publish (e.g. multilang's `pathRegistry` for hreflang). Also fires per-post inside `regenerateAll` and `repairPublishPaths`. |
 | `publish.after` | `(post, ctx)` | After upload, before listings refresh |
 | `publish.complete` | `(post, ctx)` | After upload + listings + menu.json all updated |
 | `post.unpublished` | `(post, ctx)` | After `unpublishPost` wipes the post's files |
 | `post.deleted` | `(post, ctx)` | After `deletePostAndUnpublish` removes the post |
+| `regenerate.listings.before` | `(ctx)` (API ≥ 1.3.3) | Fires BEFORE `renderHome` / `renderCategory` inside `regenerateListings` AND `regenerateHomeOnly`. Same use case as `publish.before` but for listing-only regeneration paths invoked from the theme's Regenerate menu (no specific post in scope). |
 
 `ctx` is a `PublishContext` with `posts`, `pages`, `terms`, `media`, `settings` — already patched to reflect the just-completed transition. Plugins use it to recompute derived files (sitemaps, search indexes, RSS feeds).
 
@@ -646,13 +1015,25 @@ If your THEME relies on the author block being there even for nameless users, yo
 
 ## Working examples (when the user has the repo checked out locally)
 
-Three ready-to-copy scaffolds live under `external/` in the admin repo:
+Ready-to-copy scaffolds live under `external/` in the admin repo:
 
 - `external/plugins/hello-plugin/` — minimal plugin (head meta + dashboard card)
+- `external/plugins/flexweg-multilang/` — **reference multi-language plugin**: variant provider for the editor, per-locale URLs, hreflang SEO, sitemap alternates, per-language RSS feeds, per-language sidebar data. Read its `src/publisher/` modules for the canonical patterns.
 - `external/themes/minimal-theme/` — minimal theme (six templates + hand-written CSS)
 - `external/themes/marketplace-core/` — full theme with custom blocks, settings page, font + palette overrides, runtime CSS regeneration via `compileCss`
 
 Full authoring docs: `docs/creating-a-plugin.md`, `docs/creating-a-theme.md`, `docs/runtime-api-reference.md`.
+
+## Build pipelines — which ZIP to upload
+
+Plugins shipped under `external/plugins/<id>/` have TWO build pipelines that can drift if you're not careful:
+
+1. **Root `npm run build`** (recommended) — produces `dist/packs/plugins/<id>.zip` AND copies the bundle into `dist/admin/plugins/<id>/` for the bundled-defaults registry. This is the authoritative artifact: it's built from the latest source whenever the CMS is rebuilt.
+2. **Per-plugin `npm run build`** (inside `external/plugins/<id>/`) — produces a standalone `external/plugins/<id>/<id>.zip`. Only rebuilt when you run the per-plugin script.
+
+If you change the plugin's source code, run the ROOT build to get the up-to-date ZIP. The per-plugin script is mainly useful for shipping the ZIP independently of a CMS deploy.
+
+When in doubt: `unzip -p <zip> manifest.json` to verify the version inside matches your latest source.
 
 ---
 

@@ -106,7 +106,11 @@ export const manifest: PluginManifest<SitemapsConfig> = {
           config,
         });
         log({ level: "info", message: "Regenerating robots.txt…" });
-        await regenerateRobotsTxt({ config, baseUrl: ctx.settings.baseUrl });
+        await regenerateRobotsTxt({
+          config,
+          baseUrl: ctx.settings.baseUrl,
+          discourageIndexing: ctx.settings.discourageIndexing === true,
+        });
         log({
           level: "success",
           message: `Sitemaps: ${xslResult.uploaded.length + sitemapResult.uploaded.length + 1} file(s) uploaded.`,

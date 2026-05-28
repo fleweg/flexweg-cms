@@ -46,7 +46,7 @@ export function Header({ site }: { site: SiteContext }) {
           ? "absolute left-1/2 -translate-x-1/2 font-serif text-2xl font-black text-on-surface tracking-tight"
           : "font-serif text-2xl font-black text-on-surface tracking-tight"
       }
-      href="/index.html"
+      href={site.homePath ?? "/index.html"}
       data-cms-brand
     >
       {settings.title}
@@ -66,6 +66,16 @@ export function Header({ site }: { site: SiteContext }) {
     <span aria-hidden="true" />
   );
 
+  // Language switcher mount point — multilang plugin populates
+  // this at runtime when a secondary language is active.
+  const langswitch = (
+    <div
+      className="inline-flex items-center"
+      data-cms-langswitch="header"
+      aria-hidden="true"
+    />
+  );
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-outline-variant">
@@ -74,7 +84,10 @@ export function Header({ site }: { site: SiteContext }) {
             <>
               {burger}
               {brand}
-              {search}
+              <div className="flex items-center gap-stack-md">
+                {langswitch}
+                {search}
+              </div>
             </>
           ) : (
             <>
@@ -82,7 +95,10 @@ export function Header({ site }: { site: SiteContext }) {
                 {burger}
                 {brand}
               </div>
-              {search}
+              <div className="flex items-center gap-stack-md">
+                {langswitch}
+                {search}
+              </div>
             </>
           )}
         </div>

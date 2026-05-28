@@ -128,6 +128,9 @@ export function listHooks(): { filters: string[]; actions: string[] } {
 // inspector's Block tab. See core/blockRegistry.ts for the manifest shape.
 import { registerBlock as registerBlockImpl } from "./blockRegistry";
 import { registerDashboardCard as registerDashboardCardImpl } from "./dashboardCardRegistry";
+import { registerInspectorTab as registerInspectorTabImpl } from "./inspectorTabRegistry";
+import { registerTermEditorSection as registerTermEditorSectionImpl } from "./termEditorSectionRegistry";
+import { registerEditorVariantProvider as registerEditorVariantProviderImpl } from "./editorVariantRegistry";
 import { registerRegenerationTarget as registerRegenerationTargetImpl } from "./regenerationTargetRegistry";
 
 export interface PluginApi {
@@ -139,6 +142,22 @@ export interface PluginApi {
   // unified Regenerate ▾ dropdown on the Themes page. The runner
   // owns its own bookkeeping persistence.
   registerRegenerationTarget: typeof registerRegenerationTargetImpl;
+  // Contributes a tab to the post/page editor's right-side Inspector
+  // (next to Document and Block). Used by plugins that need first-
+  // class per-post editing surfaces (e.g. translations).
+  registerInspectorTab: typeof registerInspectorTabImpl;
+  // Injects a section into the Categories / Tags edit modal so the
+  // plugin can render per-term editing UI alongside the standard
+  // fields (e.g. per-language name + slug).
+  registerTermEditorSection: typeof registerTermEditorSectionImpl;
+  // Contributes "draft variants" to the post / page editor. The host
+  // renders a tab strip above the WYSIWYG; switching tabs swaps the
+  // entire editor state (title, slug, content, excerpt, SEO) to the
+  // selected variant while preserving the same Tiptap instance,
+  // blocks, drag-and-drop, etc. Used by multilang for per-language
+  // editing, but generic enough for A/B variants, draft snapshots,
+  // multi-author drafts.
+  registerEditorVariantProvider: typeof registerEditorVariantProviderImpl;
 }
 
 export const pluginApi: PluginApi = {
@@ -147,4 +166,7 @@ export const pluginApi: PluginApi = {
   registerBlock: registerBlockImpl,
   registerDashboardCard: registerDashboardCardImpl,
   registerRegenerationTarget: registerRegenerationTargetImpl,
+  registerInspectorTab: registerInspectorTabImpl,
+  registerTermEditorSection: registerTermEditorSectionImpl,
+  registerEditorVariantProvider: registerEditorVariantProviderImpl,
 };

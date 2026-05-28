@@ -72,6 +72,11 @@ export interface SiteContext {
   // each theme owns its own config shape — theme components cast as
   // needed. Falls back to the manifest defaults when nothing is stored.
   themeConfig?: unknown;
+  // Pre-resolved path of the "home" link for this page. Defaults to
+  // "/index.html" but plugins (e.g. multilang) override per-locale so
+  // a FR page's logo points at "/fr/index.html". Themes should prefer
+  // this over hardcoding "/index.html" in their Header / brand link.
+  homePath?: string;
 }
 
 export interface BaseLayoutProps {
@@ -83,6 +88,12 @@ export interface BaseLayoutProps {
   // Path the page is being rendered at (e.g. "news/article.html"). Used by
   // themes to compute canonical URLs and active nav state.
   currentPath: string;
+  // Optional locale override for this specific page. Used by
+  // multilang plugins to set `<html lang>` per page (e.g. "fr" for
+  // /fr/article.html) without changing the site-wide
+  // `settings.language`. When undefined the theme falls back to
+  // `site.settings.language`.
+  currentLocale?: string;
   // Plugins can inject additional <head> markup here via filters.
   extraHead?: string;
   children: ReactNode;

@@ -508,13 +508,31 @@
     else document.addEventListener("DOMContentLoaded", fn);
   }
 
+  // Multi-language helper — same locale prefix detection as the
+  // other themes (see default/posts-loader.js for the rationale).
+  function detectLocalePrefix() {
+    var path = window.location.pathname.replace(/^\/+/, "");
+    var first = path.split("/")[0];
+    if (!first) return null;
+    if (/^[a-z]{2}(-[a-z]{2})?$/.test(first.toLowerCase())) return first.toLowerCase();
+    return null;
+  }
+  function fetchWithLocaleFallback(filename) {
+    var locale = detectLocalePrefix();
+    if (!locale) return fetchJson("/data/" + filename);
+    return fetchJson("/" + locale + "/data/" + filename).then(function (data) {
+      if (data) return data;
+      return fetchJson("/data/" + filename);
+    });
+  }
+
   ready(function () {
     wireShareButtons();
     wireContactForms();
     wireFeaturedChevrons();
     Promise.all([
-      fetchJson("/data/posts.json"),
-      fetchJson("/data/authors.json"),
+      fetchWithLocaleFallback("posts.json"),
+      fetchWithLocaleFallback("authors.json"),
     ]).then(function (results) {
       paintRelated(results[0]);
       paintAuthorBios(results[1]);

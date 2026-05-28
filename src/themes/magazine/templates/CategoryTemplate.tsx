@@ -33,7 +33,7 @@ export function CategoryTemplate({
         className="flex items-center gap-2 mb-stack-sm text-on-surface-variant text-xs uppercase tracking-widest"
         aria-label="Breadcrumb"
       >
-        <a className="hover:text-primary transition-colors" href="/index.html">
+        <a className="hover:text-primary transition-colors" href={site.homePath ?? "/index.html"}>
           {t("publicBaked.home")}
         </a>
         <span className="material-symbols-outlined text-base" aria-hidden="true">chevron_right</span>

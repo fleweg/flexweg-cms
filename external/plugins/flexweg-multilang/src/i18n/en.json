@@ -1,0 +1,60 @@
+{
+  "settings": {
+    "title": "Multi-language",
+    "intro": "Configure additional languages. Each enabled language gets its own URL prefix and per-post translations.",
+    "save": "Save settings",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "primaryLanguage": {
+      "title": "Primary language",
+      "help": "Pages in this language live at the root URL (no language prefix). All other languages render under /<lang>/.",
+      "siteHint": "Site language is currently \"{{lang}}\"."
+    },
+    "enabledLanguages": {
+      "title": "Additional languages",
+      "help": "Click a language to toggle it. Enabled languages appear in the editor's Translations tab + on the public site under /<lang>/."
+    },
+    "homePages": {
+      "title": "Home page per language",
+      "help": "Optional: pick a static page (in the corresponding language) to render at /<lang>/. Leave empty for a basic latest-posts list.",
+      "none": "— Latest posts —"
+    },
+    "switcher": {
+      "title": "Language switcher",
+      "help": "Show a language switcher on the public site. Themes must include a [data-cms-langswitch] container in their Header / Footer for the switcher to appear (built-in themes already do).",
+      "header": "Show switcher in the site header",
+      "footer": "Show switcher in the site footer"
+    }
+  },
+  "tab": {
+    "label": "Translations",
+    "noLanguages": "No additional languages are configured for this site.",
+    "configureLanguages": "Configure languages",
+    "editPrimaryInMain": "Edit the primary language in the main editor (title, slug, content above).",
+    "save": "Save translations",
+    "saving": "Saving…",
+    "saved": "Translations saved.",
+    "duplicate": "Duplicate from primary",
+    "invalidSlug": "Invalid slug for {{lang}}.",
+    "fields": {
+      "title": "Title",
+      "slug": "Slug",
+      "slugHelp": "Lower-case ASCII + dashes only.",
+      "excerpt": "Excerpt",
+      "content": "Content (Markdown)",
+      "contentHelp": "Plain Markdown. Theme blocks (Hero, embeds, etc.) embedded in the primary language do NOT replicate automatically — paste your translated body here.",
+      "seo": "SEO",
+      "seoTitle": "SEO title",
+      "seoDescription": "Meta description"
+    }
+  },
+  "termSection": {
+    "title": "Translations",
+    "name": "Name",
+    "slug": "Slug",
+    "invalidSlug": "Invalid slug",
+    "seoTitle": "SEO meta title",
+    "seoDescription": "SEO meta description",
+    "noLanguages": "Enable secondary languages in the Multi-language plugin settings to translate this term."
+  }
+}

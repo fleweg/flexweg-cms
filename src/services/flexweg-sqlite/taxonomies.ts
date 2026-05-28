@@ -5,7 +5,7 @@
 import { Timestamp } from "firebase/firestore";
 import { sqlExec, sqlQuery } from "./client";
 import { notifyPotentialChange, subscribeWithPolling } from "./subscriptions";
-import type { Term, TermType } from "../../core/types";
+import type { SeoMeta, Term, TermType } from "../../core/types";
 
 interface TermRow {
   id: string;
@@ -17,6 +17,17 @@ interface TermRow {
   created_at: number;
   updated_at: number;
   last_published_path: string | null;
+  translations: string | null;
+  seo: string | null;
+}
+
+function parseJsonObject<T>(s: string | null | undefined): T | undefined {
+  if (!s) return undefined;
+  try {
+    return JSON.parse(s) as T;
+  } catch {
+    return undefined;
+  }
 }
 
 function rowToTerm(r: TermRow): Term {
@@ -31,6 +42,10 @@ function rowToTerm(r: TermRow): Term {
   if (r.description) term.description = r.description;
   if (r.parent_id) term.parentId = r.parent_id;
   if (r.last_published_path) term.lastPublishedPath = r.last_published_path;
+  const translations = parseJsonObject<Record<string, unknown>>(r.translations);
+  if (translations && Object.keys(translations).length > 0) term.translations = translations;
+  const seo = parseJsonObject<SeoMeta>(r.seo);
+  if (seo && (seo.title || seo.description || seo.ogImage)) term.seo = seo;
   return term;
 }
 
@@ -78,8 +93,8 @@ export async function createTerm(input: CreateTermInput): Promise<string> {
   await sqlExec(
     `INSERT INTO terms (
       id, type, name, slug, description, parent_id,
-      created_at, updated_at, last_published_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      created_at, updated_at, last_published_path, translations, seo
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.type,
@@ -90,6 +105,8 @@ export async function createTerm(input: CreateTermInput): Promise<string> {
       now,
       now,
       null,
+      null,
+      null,
     ],
   );
   notifyPotentialChange();
@@ -98,7 +115,7 @@ export async function createTerm(input: CreateTermInput): Promise<string> {
 
 export async function updateTerm(
   id: string,
-  patch: Partial<Pick<Term, "name" | "slug" | "description" | "parentId">>,
+  patch: Partial<Pick<Term, "name" | "slug" | "description" | "parentId" | "translations" | "seo">>,
 ): Promise<void> {
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -117,6 +134,20 @@ export async function updateTerm(
   if (patch.parentId !== undefined) {
     sets.push("parent_id = ?");
     params.push(patch.parentId ?? null);
+  }
+  if (patch.translations !== undefined) {
+    sets.push("translations = ?");
+    params.push(
+      patch.translations && Object.keys(patch.translations).length > 0
+        ? JSON.stringify(patch.translations)
+        : null,
+    );
+  }
+  if (patch.seo !== undefined) {
+    sets.push("seo = ?");
+    const seo = patch.seo;
+    const hasAny = seo && (seo.title || seo.description || seo.ogImage);
+    params.push(hasAny ? JSON.stringify(seo) : null);
   }
   sets.push("updated_at = ?");
   params.push(Date.now());

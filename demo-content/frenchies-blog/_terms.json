@@ -1,0 +1,45 @@
+{
+  "_": "Term translations applied AFTER the importer creates each term. Picked up by the multilang plugin when installed; harmless when not. Keys at the top level group by term type; nested keys match the term name from the primary-language frontmatter.",
+
+  "categories": {
+    "Care": {
+      "fr": { "name": "Soins", "slug": "soins" }
+    },
+    "Health": {
+      "fr": { "name": "Santé", "slug": "sante" }
+    },
+    "Training": {
+      "fr": { "name": "Dressage", "slug": "dressage" }
+    },
+    "Lifestyle": {
+      "fr": { "name": "Mode de vie", "slug": "mode-de-vie" }
+    }
+  },
+
+  "tags": {
+    "intro": { "fr": { "name": "intro", "slug": "intro" } },
+    "lifestyle": { "fr": { "name": "mode de vie", "slug": "mode-de-vie" } },
+    "food": { "fr": { "name": "alimentation", "slug": "alimentation" } },
+    "nutrition": { "fr": { "name": "nutrition", "slug": "nutrition" } },
+    "adult": { "fr": { "name": "adulte", "slug": "adulte" } },
+    "puppy": { "fr": { "name": "chiot", "slug": "chiot" } },
+    "health": { "fr": { "name": "santé", "slug": "sante" } },
+    "vet": { "fr": { "name": "vétérinaire", "slug": "veterinaire" } },
+    "boas": { "fr": { "name": "BOAS", "slug": "boas" } },
+    "allergies": { "fr": { "name": "allergies", "slug": "allergies" } },
+    "exercise": { "fr": { "name": "exercice", "slug": "exercice" } },
+    "walks": { "fr": { "name": "balades", "slug": "balades" } },
+    "training": { "fr": { "name": "dressage", "slug": "dressage" } },
+    "crate": { "fr": { "name": "caisse", "slug": "caisse" } },
+    "toys": { "fr": { "name": "jouets", "slug": "jouets" } },
+    "play": { "fr": { "name": "jeu", "slug": "jeu" } },
+    "chew": { "fr": { "name": "mastication", "slug": "mastication" } },
+    "summer": { "fr": { "name": "été", "slug": "ete" } },
+    "heat": { "fr": { "name": "chaleur", "slug": "chaleur" } },
+    "safety": { "fr": { "name": "sécurité", "slug": "securite" } },
+    "snoring": { "fr": { "name": "ronflement", "slug": "ronflement" } },
+    "sleep": { "fr": { "name": "sommeil", "slug": "sommeil" } },
+    "harness": { "fr": { "name": "harnais", "slug": "harnais" } },
+    "gear": { "fr": { "name": "équipement", "slug": "equipement" } }
+  }
+}

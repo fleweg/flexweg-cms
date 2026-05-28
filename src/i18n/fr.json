@@ -238,7 +238,17 @@
     "newTag": "Nouveau tag",
     "noCategories": "Aucune catégorie.",
     "noTags": "Aucun tag.",
-    "slugCollision": "Ce slug est déjà utilisé par « {{label}} »."
+    "slugCollision": "Ce slug est déjà utilisé par « {{label}} ».",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "Modifier les balises SEO",
+      "title": "Balises SEO",
+      "subtitle": "Titre et description personnalisés pour la page d'archive « {{name}} ».",
+      "metaTitle": "Titre meta",
+      "metaTitleHint": "Utilisé comme balise <title>. Valeur par défaut : le nom du terme.",
+      "metaDescription": "Description meta",
+      "metaDescriptionHint": "Utilisée comme méta-description de la page. Valeur par défaut : la description du terme."
+    }
   },
   "media": {
     "title": "Médiathèque",
@@ -338,6 +348,7 @@
     "title": "Menus",
     "header": "Menu d'en-tête",
     "footer": "Menu de pied de page",
+    "label": "Libellé",
     "saveAndPublish": "Enregistrer & générer",
     "discard": "Annuler",
     "saved": "Menus enregistrés et publiés.",
@@ -361,7 +372,10 @@
       "homeMode": "Contenu de la page d'accueil",
       "homeLatest": "Derniers articles",
       "homeStatic": "Page statique",
-      "homePage": "Page d'accueil"
+      "homePage": "Page d'accueil",
+      "discourageIndexing": "Décourager les moteurs de recherche d'indexer ce site",
+      "discourageIndexingHelp": "Si activé, chaque page publiée porte une balise meta noindex/nofollow et le robots.txt interdit tous les robots. Reproduit le comportement de WordPress — utile pour les sites de préproduction ou les revues avant lancement. Les moteurs qui respectent la directive n'indexeront pas le site.",
+      "discourageRegenerateHint": "Réglage d'indexation sauvegardé. Cliquez sur « Tout régénérer » dans Thèmes pour appliquer le changement à toutes les pages publiées et au robots.txt."
     },
     "flexweg": {
       "title": "API Flexweg",

@@ -114,10 +114,11 @@ export async function publishAuthorsJson(
   media: Map<string, Media> | Media[],
   posts: Post[],
   pages: Post[],
+  pathOverride?: string,
 ): Promise<void> {
   const blob = buildAuthorsJson(users, media, posts, pages);
   await uploadFile({
-    path: AUTHORS_JSON_PATH,
+    path: pathOverride ?? AUTHORS_JSON_PATH,
     content: JSON.stringify(blob),
     encoding: "utf-8",
   });

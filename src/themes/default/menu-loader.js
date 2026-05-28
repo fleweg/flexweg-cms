@@ -38,11 +38,32 @@
       });
   }
 
+  // Reads the active language from the <html lang="…"> attribute set
+  // by BaseLayout (multilang sets it per-locale page; mono-lingual
+  // sites get the global default). Picks `item.labels[lang]` over
+  // `item.label` when the admin entered a translation. Falls back to
+  // the language without region (e.g. "en-US" → "en") so admins can
+  // safely pin a regioned <html lang> without re-entering every
+  // translation.
+  function pickLabel(item) {
+    var lang = (document.documentElement.getAttribute("lang") || "").trim();
+    if (lang && item.labels && typeof item.labels[lang] === "string" && item.labels[lang]) {
+      return item.labels[lang];
+    }
+    if (lang && lang.indexOf("-") > 0) {
+      var base = lang.split("-")[0];
+      if (item.labels && typeof item.labels[base] === "string" && item.labels[base]) {
+        return item.labels[base];
+      }
+    }
+    return item.label || "";
+  }
+
   function renderItem(item) {
     var li = document.createElement("li");
     var a = document.createElement("a");
     a.href = item.href || "#";
-    a.textContent = item.label || "";
+    a.textContent = pickLabel(item);
     if (samePath(a.href)) {
       a.setAttribute("aria-current", "page");
     }

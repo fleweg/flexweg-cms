@@ -17,9 +17,14 @@ export function Footer({ site }: { site: SiteContext }) {
             <ul className="flex flex-wrap gap-stack-md text-sm text-on-surface-variant"></ul>
           </nav>
         </div>
-        <p className="mt-stack-md pt-stack-md border-t border-outline-variant text-xs text-on-surface-variant tracking-widest uppercase">
-          © {year} {settings.title}
-        </p>
+        <div className="mt-stack-md pt-stack-md border-t border-outline-variant flex flex-wrap items-center justify-between gap-stack-sm">
+          <p className="text-xs text-on-surface-variant tracking-widest uppercase">
+            © {year} {settings.title}
+          </p>
+          {/* Multilang plugin populates this when the footer-switcher
+              setting is on; stays empty + invisible otherwise. */}
+          <div data-cms-langswitch="footer" aria-hidden="true" />
+        </div>
       </div>
     </footer>
   );

@@ -64,6 +64,7 @@ export function Footer({ site }: { site: SiteContext }) {
           <p className="text-body-md text-on-surface-variant opacity-70">
             © {year} {settings.title}
           </p>
+          <div data-cms-langswitch="footer" aria-hidden="true" />
         </div>
       </div>
     </footer>

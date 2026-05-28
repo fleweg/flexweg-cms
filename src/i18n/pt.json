@@ -238,7 +238,17 @@
     "newTag": "Nova etiqueta",
     "noCategories": "Ainda não há categorias.",
     "noTags": "Ainda não há etiquetas.",
-    "slugCollision": "Este slug já é usado por \"{{label}}\"."
+    "slugCollision": "Este slug já é usado por \"{{label}}\".",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "Editar metatags SEO",
+      "title": "Metatags SEO",
+      "subtitle": "Título e descrição personalizados para a página de arquivo de \"{{name}}\".",
+      "metaTitle": "Meta título",
+      "metaTitleHint": "Usado como <title> da página. Padrão: o nome do termo.",
+      "metaDescription": "Meta descrição",
+      "metaDescriptionHint": "Usada como meta descrição da página. Padrão: a descrição do termo."
+    }
   },
   "media": {
     "title": "Biblioteca multimédia",
@@ -338,6 +348,7 @@
     "title": "Menus",
     "header": "Menu de cabeçalho",
     "footer": "Menu de rodapé",
+    "label": "Etiqueta",
     "saveAndPublish": "Guardar e gerar",
     "discard": "Descartar",
     "saved": "Menus guardados e publicados.",
