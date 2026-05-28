@@ -39,7 +39,7 @@ export function Header({ site }: { site: SiteContext }) {
             </button>
             <a
               className="text-h3 font-bold text-primary tracking-tight"
-              href="/index.html"
+              href={site.homePath ?? "/index.html"}
               data-cms-brand
             >
               {settings.title}
@@ -56,12 +56,17 @@ export function Header({ site }: { site: SiteContext }) {
             aria-label="Primary"
           />
 
-          <a
-            href="/contact.html"
-            className="bg-secondary text-on-secondary px-6 py-2 rounded-lg text-button font-semibold hover:opacity-90 active:opacity-80 transition-all"
-          >
-            {t("publicBaked.getStarted")}
-          </a>
+          <div className="flex items-center gap-4">
+            {/* Multilang plugin populates this when active; empty
+                otherwise (single-language sites unaffected). */}
+            <div data-cms-langswitch="header" aria-hidden="true" />
+            <a
+              href="/contact.html"
+              className="bg-secondary text-on-secondary px-6 py-2 rounded-lg text-button font-semibold hover:opacity-90 active:opacity-80 transition-all"
+            >
+              {t("publicBaked.getStarted")}
+            </a>
+          </div>
         </div>
       </header>
 

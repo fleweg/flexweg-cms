@@ -300,12 +300,44 @@
     else document.addEventListener("DOMContentLoaded", fn);
   }
 
+  // Multi-language helper — when the page's <html lang> attribute
+  // differs from a "primary" reference and a per-language data file
+  // exists, fetch it instead of the root one. Lets the multilang
+  // plugin ship `/<lang>/data/posts.json` so the sidebar widgets
+  // reflect translations on non-primary pages without us hardcoding
+  // anything per-language.
+  //
+  // The "primary" inference: the loader doesn't know the site's
+  // primary language directly. We deduce it from the URL — if the
+  // page lives under `/<2-letter>/...`, we treat the path's leading
+  // segment as the current locale. Otherwise we treat the page as
+  // primary and fetch the root files (existing behaviour).
+  function detectLocalePrefix() {
+    var path = window.location.pathname.replace(/^\/+/, "");
+    var first = path.split("/")[0];
+    if (!first) return null;
+    // Accept 2-letter codes or BCP-47-like (e.g. "fr-ca"). Anything
+    // longer than 5 chars isn't a locale prefix.
+    if (/^[a-z]{2}(-[a-z]{2})?$/.test(first.toLowerCase())) return first.toLowerCase();
+    return null;
+  }
+
+  function fetchWithLocaleFallback(filename) {
+    var locale = detectLocalePrefix();
+    if (!locale) return fetchJson("/data/" + filename);
+    // Try the localised file first; if it 404s, fall back to the root.
+    return fetchJson("/" + locale + "/data/" + filename).then(function (data) {
+      if (data) return data;
+      return fetchJson("/data/" + filename);
+    });
+  }
+
   ready(function () {
     // Parallel fetches — both files live at the same site root and
     // are independent. Each paint pass tolerates the other's failure.
     Promise.all([
-      fetchJson("/data/posts.json"),
-      fetchJson("/data/authors.json"),
+      fetchWithLocaleFallback("posts.json"),
+      fetchWithLocaleFallback("authors.json"),
     ]).then(
       function (results) {
         paintRelated(results[0]);

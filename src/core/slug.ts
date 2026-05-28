@@ -114,6 +114,29 @@ export function pathToPublicUrl(baseUrl: string, path: string): string {
   return `${cleanBase}/${cleanPath}`;
 }
 
+// Strips a trailing `index.html` segment so directory-style URLs
+// (home, category archives, locale roots) get a clean form ending in
+// `/`. Used when building canonical / hreflang / og:url tags so that
+// `<link rel="canonical" href="https://site.com/fr/">` is emitted
+// instead of `https://site.com/fr/index.html`. Both serve the same
+// file on every static host that resolves directory requests to
+// index.html, but the clean form is the SEO-preferred canonical.
+//
+// Non-directory pages (e.g. `news/post.html`) pass through untouched.
+export function canonicalPath(path: string): string {
+  return path.replace(/(^|\/)index\.html$/i, (_, sep: string) => sep);
+}
+
+// Convenience: builds a full canonical URL from a baseUrl + path,
+// applying canonicalPath() so the result is the clean form. Used by
+// theme BaseLayouts and the multilang plugin's hreflang generator.
+export function canonicalUrl(baseUrl: string, path: string): string {
+  if (!baseUrl) return "";
+  const cleanBase = baseUrl.replace(/\/+$/, "");
+  const cleanPath = canonicalPath(path.replace(/^\/+/, ""));
+  return `${cleanBase}/${cleanPath}`;
+}
+
 // Returns the lowest available slug given a base and a predicate. We try
 // the base verbatim first; if taken we increment a numeric suffix until
 // `isUsed` returns false. Used by the auto-slug code path on new posts /

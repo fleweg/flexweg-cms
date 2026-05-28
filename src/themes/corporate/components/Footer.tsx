@@ -31,9 +31,12 @@ export function Footer({ site }: { site: SiteContext }) {
         </nav>
       </div>
       <div className="max-w-container-max mx-auto px-gutter pb-8">
-        <p className="text-on-primary-container/60 text-label-caps font-semibold border-t border-on-primary-fixed-variant/10 pt-8 uppercase tracking-wider">
-          © {year} {settings.title}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-stack-sm border-t border-on-primary-fixed-variant/10 pt-8">
+          <p className="text-on-primary-container/60 text-label-caps font-semibold uppercase tracking-wider">
+            © {year} {settings.title}
+          </p>
+          <div data-cms-langswitch="footer" aria-hidden="true" />
+        </div>
       </div>
     </footer>
   );

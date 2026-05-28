@@ -45,6 +45,12 @@ function classifyFile(filename: string): "markdown" | "xml" | "image" | null {
   if (ext === "md") return "markdown";
   if (ext === "xml") return "xml";
   if (IMAGE_EXTS.has(ext)) return "image";
+  // Bundle metadata file declaring term translations. The importer
+  // recognises `_terms.json` at parse time and applies its entries
+  // to `Term.translations` after term creation. Treated as a
+  // markdown source so it flows through the same SourceFileInput
+  // pipeline — parseSources routes it via the underscore prefix.
+  if (/^_terms\.json$/i.test(filename)) return "markdown";
   return null;
 }
 

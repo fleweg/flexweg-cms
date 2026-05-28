@@ -44,6 +44,9 @@ import {
   type WeekPeriod,
   type YearPeriod,
   ARCHIVES_INDEX_PATH,
+  archivesIndexHrefFor,
+  archivesIndexPathFor,
+  archivesRootFor,
   comparePeriodsDesc,
   monthIndexPath,
   periodKey,
@@ -152,6 +155,10 @@ function renderArchivePage<TInner extends object>(
     pageTitle: string;
     pageDescription: string;
     currentPath: string;
+    // Set to the target language on localised renders so the theme
+    // emits `<html lang="fr">` for FR archive pages. Undefined falls
+    // back to `site.settings.language` per the theme convention.
+    currentLocale?: string;
   },
 ): string {
   const theme = getActiveTheme(args.data.settings.activeThemeId);
@@ -160,6 +167,7 @@ function renderArchivePage<TInner extends object>(
     pageTitle: args.pageTitle,
     pageDescription: args.pageDescription,
     currentPath: args.currentPath,
+    currentLocale: args.currentLocale,
   };
   return renderPageToHtml({
     base: theme.templates.base,
@@ -185,13 +193,166 @@ interface RegenerateResult {
 // Computes the periods affected by `post` and the periods that are
 // still populated after the change. Then uploads every affected
 // period's page (if non-empty) or deletes it (if empty), plus the
-// top-level index.
+// top-level index. Repeats per language when the multilang plugin is
+// active so localised archives stay in sync without a forced regen.
 export async function regenerateForPost(
   args: RegenerateForPostArgs,
 ): Promise<RegenerateResult> {
   const { post, ...data } = args;
   const config = readConfig(data.settings);
-  return regenerateAffected({ data, config, touchedPost: post });
+  const aggregate: RegenerateResult = { uploaded: [], deleted: [] };
+
+  for (const { language, isPrimary } of archiveLanguages(data)) {
+    const localData = buildLocalizedData(data, language, isPrimary);
+    if (!localData) continue;
+    const root = archivesRootFor(language, isPrimary ? language : "__primary__");
+    const indexPath = archivesIndexPathFor(language, isPrimary ? language : "__primary__");
+    const indexHref = archivesIndexHrefFor(language, isPrimary ? language : "__primary__");
+
+    // The touched post might exist in this locale only if a
+    // translation exists (for non-primary). When the localised data
+    // doesn't include the post at all, the localised archive's
+    // existing pages are still re-rendered (post counts change),
+    // but the touched post itself doesn't contribute. For incremental
+    // regen we pass the touched post as-is — its date is unchanged
+    // by locale anyway.
+    const result = await regenerateAffected({
+      data: localData,
+      config,
+      touchedPost: post,
+      root,
+      indexPath,
+      indexHref,
+      currentLocale: isPrimary ? undefined : language,
+    });
+    aggregate.uploaded.push(...result.uploaded);
+    aggregate.deleted.push(...result.deleted);
+  }
+
+  return aggregate;
+}
+
+// ─── Multi-language helpers ────────────────────────────────────────
+//
+// The flexweg-multilang plugin stores its config under
+// `settings.pluginConfigs["flexweg-multilang"]` with the shape
+// `{ primaryLanguage: string; enabledLanguages: string[] }`. We read
+// it generically here — no import dependency on the multilang
+// plugin's types, which would cross the in-tree / external boundary.
+//
+// `Post.translations` and `Term.translations` carry the localised
+// payloads as opaque `Record<string, unknown>` per the core types.
+// We narrow them inline below.
+
+interface MultilangConfigSlice {
+  primaryLanguage: string;
+  enabledLanguages: string[];
+}
+
+interface PostTranslationSlice {
+  title: string;
+  slug: string;
+}
+
+interface TermTranslationSlice {
+  name: string;
+  slug: string;
+}
+
+function readMultilangConfig(settings: SiteSettings): MultilangConfigSlice | null {
+  if (settings.enabledPlugins?.["flexweg-multilang"] === false) return null;
+  const raw = settings.pluginConfigs?.["flexweg-multilang"] as
+    | Partial<MultilangConfigSlice>
+    | undefined;
+  if (!raw) return null;
+  const primary = raw.primaryLanguage || (settings.language || "en").split("-")[0]!;
+  const enabled = Array.isArray(raw.enabledLanguages) ? raw.enabledLanguages : [];
+  if (enabled.length === 0) return null;
+  return { primaryLanguage: primary, enabledLanguages: enabled };
+}
+
+function getPostTranslation(post: Post, language: string): PostTranslationSlice | null {
+  const map = post.translations as Record<string, PostTranslationSlice> | undefined;
+  const t = map?.[language];
+  if (!t || !t.slug || !t.title) return null;
+  return t;
+}
+
+function getTermTranslation(term: Term, language: string): TermTranslationSlice | null {
+  const map = term.translations as Record<string, TermTranslationSlice> | undefined;
+  const t = map?.[language];
+  if (!t || !t.slug || !t.name) return null;
+  return t;
+}
+
+// Builds shadow data for a target language. Same trick as the
+// multilang plugin's `buildLocalizedShadowCtx`: pre-prefix the
+// category term slug with `<lang>/` so the standard `buildPostUrl`
+// produces correctly-prefixed post URLs in the archive listings.
+// Pages without a category get the prefix on their own slug.
+//
+// Returns null when no enabled-language translation exists at all
+// (the archive index for that language would be empty — skip it).
+function buildLocalizedData(
+  data: ArchiveData,
+  language: string,
+  isPrimary: boolean,
+): ArchiveData | null {
+  if (isPrimary) {
+    // Primary language uses the entity's native fields. Override
+    // settings.language to the target locale (which for primary
+    // matches `settings.language` already — but the importer may
+    // store something like "fr-CA" while the multilang plugin
+    // expects just "fr"; the override normalises).
+    return { ...data, settings: { ...data.settings, language } };
+  }
+
+  const langPrefix = `${language}/`;
+  const shadowTerms: Term[] = data.terms.map((term) => {
+    if (term.type !== "category") return term;
+    const trans = getTermTranslation(term, language);
+    if (!trans) return term;
+    return { ...term, name: trans.name, slug: `${langPrefix}${trans.slug}` };
+  });
+
+  const transformPost = (p: Post): Post | null => {
+    const trans = getPostTranslation(p, language);
+    if (!trans) return null;
+    const isUncategorized = p.type !== "post" || !p.primaryTermId;
+    return {
+      ...p,
+      title: trans.title,
+      slug: isUncategorized ? `${langPrefix}${trans.slug}` : trans.slug,
+    };
+  };
+
+  const shadowPosts = data.posts.map(transformPost).filter((p): p is Post => p !== null);
+  const shadowPages = data.pages.map(transformPost).filter((p): p is Post => p !== null);
+
+  if (shadowPosts.length === 0 && shadowPages.length === 0) return null;
+
+  return {
+    posts: shadowPosts,
+    pages: shadowPages,
+    terms: shadowTerms,
+    settings: { ...data.settings, language },
+  };
+}
+
+// Returns the list of languages to generate archives for. Always
+// includes the primary; extends with each enabled-language that has
+// at least one translated entry.
+function archiveLanguages(data: ArchiveData): { language: string; isPrimary: boolean }[] {
+  const config = readMultilangConfig(data.settings);
+  if (!config) return [{ language: data.settings.language || "en", isPrimary: true }];
+  const out: { language: string; isPrimary: boolean }[] = [
+    { language: config.primaryLanguage, isPrimary: true },
+  ];
+  for (const lang of config.enabledLanguages) {
+    if (lang === config.primaryLanguage) continue;
+    out.push({ language: lang, isPrimary: false });
+  }
+  return out;
 }
 
 // Force regenerate. Wipes the folder, then rebuilds every page from
@@ -199,46 +360,105 @@ export async function regenerateForPost(
 // between uploads to mirror the rest of the publisher's bulk pace.
 export async function forceRegenerate(args: ArchiveData): Promise<RegenerateResult> {
   const config = readConfig(args.settings);
+  const aggregate: RegenerateResult = { uploaded: [], deleted: [] };
+
+  const langs = archiveLanguages(args);
+  for (const { language, isPrimary } of langs) {
+    const localData = buildLocalizedData(args, language, isPrimary);
+    if (!localData) continue;
+    const root = archivesRootFor(language, isPrimary ? language : "__primary__");
+    const indexPath = archivesIndexPathFor(language, isPrimary ? language : "__primary__");
+    const indexHref = archivesIndexHrefFor(language, isPrimary ? language : "__primary__");
+
+    // Wipe the per-language root. For the primary that's `archives/`;
+    // for FR it's `fr/archives/`. Best-effort — 404 is swallowed
+    // inside deleteFolder.
+    await deleteFolder(root);
+    aggregate.deleted.push(`${root}/`);
+
+    const result = await forceRegenerateOneLocale({
+      data: localData,
+      config,
+      root,
+      indexPath,
+      indexHref,
+      currentLocale: isPrimary ? undefined : language,
+    });
+    aggregate.uploaded.push(...result.uploaded);
+    aggregate.deleted.push(...result.deleted);
+  }
+
+  return aggregate;
+}
+
+// Per-language force regenerate. Same logic as the previous
+// monolithic implementation, scoped to a single root.
+async function forceRegenerateOneLocale(args: {
+  data: ArchiveData;
+  config: ArchivesConfig;
+  root: string;
+  indexPath: string;
+  indexHref: string;
+  currentLocale?: string;
+}): Promise<RegenerateResult> {
+  const { data, config, root, indexPath, indexHref, currentLocale } = args;
   const result: RegenerateResult = { uploaded: [], deleted: [] };
-
-  // Best-effort wipe. deleteFolder swallows 404 (already gone) and
-  // anything else surfaces as a thrown FlexwegApiError + toast via
-  // the SettingsPage caller.
-  await deleteFolder(ARCHIVES_ROOT);
-  result.deleted.push(`${ARCHIVES_ROOT}/`);
-
-  const entities = eligibleEntities(args, config);
-  const ctx = buildStubCtx(args);
-  const site = buildSiteContext(ctx);
+  const entities = eligibleEntities(data, config);
+  const ctx = buildStubCtx(data);
+  const site = buildSiteContextWithHome(ctx, currentLocale);
   const allPeriods = computePopulatedPeriods(entities, config.drillDown);
 
-  // Upload every period's page in priority order: years first
-  // (visible from the index), then drill-downs.
   const ordered: ArchivePeriod[] = [];
   for (const p of allPeriods.years) ordered.push(p);
   for (const p of allPeriods.drills) ordered.push(p);
   for (const period of ordered) {
-    const path = pathFor(period);
-    const html = renderPeriodHtml({ data: args, config, site, period, entities });
+    const path = pathFor(period, root);
+    const html = renderPeriodHtml({
+      data,
+      config,
+      site,
+      period,
+      entities,
+      root,
+      indexHref,
+      currentLocale,
+    });
     await uploadFile({ path, content: html });
     result.uploaded.push(path);
     await sleep(75);
   }
 
   // Index goes last so it always reflects the freshly-uploaded set.
-  const indexHtml = renderIndexHtml({ data: args, config, site, entities });
-  await uploadFile({ path: ARCHIVES_INDEX_PATH, content: indexHtml });
-  result.uploaded.push(ARCHIVES_INDEX_PATH);
+  const indexHtml = renderIndexHtml({
+    data,
+    config,
+    site,
+    entities,
+    root,
+    indexPath,
+    currentLocale,
+  });
+  await uploadFile({ path: indexPath, content: indexHtml });
+  result.uploaded.push(indexPath);
 
   return result;
 }
 
+// Wraps `buildSiteContext` so the resulting SiteContext also carries
+// the `homePath` override for localised renders. The base helper
+// doesn't know about multilang, so we patch it post-call.
+function buildSiteContextWithHome(ctx: PublishContext, currentLocale: string | undefined): SiteContext {
+  const site = buildSiteContext(ctx);
+  if (!currentLocale) return site;
+  return { ...site, homePath: `/${currentLocale}/index.html` };
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────
 
-function pathFor(period: ArchivePeriod): string {
-  if (period.kind === "year") return yearIndexPath(period);
-  if (period.kind === "month") return monthIndexPath(period);
-  return weekIndexPath(period);
+function pathFor(period: ArchivePeriod, root: string = ARCHIVES_ROOT): string {
+  if (period.kind === "year") return yearIndexPath(period, root);
+  if (period.kind === "month") return monthIndexPath(period, root);
+  return weekIndexPath(period, root);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -301,6 +521,11 @@ function renderPeriodHtml(args: {
   site: SiteContext;
   period: ArchivePeriod;
   entities: Post[];
+  // Locale-specific overrides — all default to the primary tree
+  // behaviour when undefined.
+  root?: string;
+  indexHref?: string;
+  currentLocale?: string;
 }): string {
   const t = i18nInstance.getFixedT(
     pickPublicLocale(args.data.settings.language),
@@ -308,6 +533,7 @@ function renderPeriodHtml(args: {
   );
   const periodPosts = entitiesForPeriod(args.entities, args.period, args.config.drillDown);
   const meta = buildArchivePageMeta(args.period, periodPosts.length, t);
+  const root = args.root ?? ARCHIVES_ROOT;
   return renderArchivePage({
     data: args.data,
     config: args.config,
@@ -321,19 +547,25 @@ function renderPeriodHtml(args: {
       language: args.data.settings.language,
       t,
       terms: termsForLinks(args.data),
+      root,
+      indexHref: args.indexHref,
     },
     pageTitle: meta.pageTitle,
     pageDescription: meta.pageDescription,
-    currentPath: pathFor(args.period),
+    currentPath: pathFor(args.period, root),
+    currentLocale: args.currentLocale,
   });
 }
 
-// Renders the top-level /archives/index.html.
+// Renders the top-level /archives/index.html (or /<lang>/archives/index.html).
 function renderIndexHtml(args: {
   data: ArchiveData;
   config: ArchivesConfig;
   site: SiteContext;
   entities: Post[];
+  root?: string;
+  indexPath?: string;
+  currentLocale?: string;
 }): string {
   const t = i18nInstance.getFixedT(
     pickPublicLocale(args.data.settings.language),
@@ -350,10 +582,12 @@ function renderIndexHtml(args: {
       drillDown: args.config.drillDown,
       showCounts: args.config.showCounts,
       t,
+      root: args.root ?? ARCHIVES_ROOT,
     },
     pageTitle: meta.pageTitle,
     pageDescription: meta.pageDescription,
-    currentPath: ARCHIVES_INDEX_PATH,
+    currentPath: args.indexPath ?? ARCHIVES_INDEX_PATH,
+    currentLocale: args.currentLocale,
   });
 }
 
@@ -363,6 +597,12 @@ interface AffectedRegenerationArgs {
   data: ArchiveData;
   config: ArchivesConfig;
   touchedPost: Post;
+  // Locale-specific overrides — see forceRegenerateOneLocale for
+  // the rationale. Default to the primary tree behaviour.
+  root?: string;
+  indexPath?: string;
+  indexHref?: string;
+  currentLocale?: string;
 }
 
 // Workhorse called from regenerateForPost. Strategy:
@@ -383,11 +623,14 @@ interface AffectedRegenerationArgs {
 async function regenerateAffected(
   args: AffectedRegenerationArgs,
 ): Promise<RegenerateResult> {
-  const { data, config, touchedPost } = args;
+  const { data, config, touchedPost, currentLocale } = args;
+  const root = args.root ?? ARCHIVES_ROOT;
+  const indexPath = args.indexPath ?? ARCHIVES_INDEX_PATH;
+  const indexHref = args.indexHref;
   const result: RegenerateResult = { uploaded: [], deleted: [] };
   const entities = eligibleEntities(data, config);
   const ctx = buildStubCtx(data);
-  const site = buildSiteContext(ctx);
+  const site = buildSiteContextWithHome(ctx, currentLocale);
 
   // Periods the touched post is/was in (from its date — unchanged).
   const touchedPeriods = postPeriods(touchedPost, config.drillDown);
@@ -400,7 +643,7 @@ async function regenerateAffected(
   // For each affected period: render or delete.
   for (const period of periodsToCheck) {
     const periodPosts = entitiesForPeriod(entities, period, config.drillDown);
-    const path = pathFor(period);
+    const path = pathFor(period, root);
     if (periodPosts.length === 0) {
       try {
         await deleteFile(path);
@@ -410,15 +653,32 @@ async function regenerateAffected(
       }
       continue;
     }
-    const html = renderPeriodHtml({ data, config, site, period, entities });
+    const html = renderPeriodHtml({
+      data,
+      config,
+      site,
+      period,
+      entities,
+      root,
+      indexHref,
+      currentLocale,
+    });
     await uploadFile({ path, content: html });
     result.uploaded.push(path);
   }
 
   // Index always re-rendered; cheap and keeps counts honest.
-  const indexHtml = renderIndexHtml({ data, config, site, entities });
-  await uploadFile({ path: ARCHIVES_INDEX_PATH, content: indexHtml });
-  result.uploaded.push(ARCHIVES_INDEX_PATH);
+  const indexHtml = renderIndexHtml({
+    data,
+    config,
+    site,
+    entities,
+    root,
+    indexPath,
+    currentLocale,
+  });
+  await uploadFile({ path: indexPath, content: indexHtml });
+  result.uploaded.push(indexPath);
 
   return result;
 }
@@ -448,9 +708,21 @@ export function resolveArchivesLink(
   const hasPosts = posts.some((p) => p.status === "online");
   if (!hasPosts) return undefined;
 
+  // When multilang is active and `settings.language` here represents
+  // a non-primary locale (the publisher overrides it in the shadow
+  // ctx before rendering localised home / category pages), point at
+  // the matching archive tree. The link otherwise targets the
+  // primary `/archives/` as before.
+  const multilang = readMultilangConfig(settings);
+  const lang = (settings.language || "").split("-")[0];
+  const href =
+    multilang && lang && lang !== multilang.primaryLanguage
+      ? archivesIndexHrefFor(lang, multilang.primaryLanguage)
+      : "/archives/";
+
   const t = i18nInstance.getFixedT(pickPublicLocale(settings.language), PLUGIN_ID);
   return {
-    href: "/archives/",
+    href,
     label: t("page.seeFullArchives"),
   };
 }

@@ -238,7 +238,17 @@
     "newTag": "새 태그",
     "noCategories": "아직 카테고리가 없습니다.",
     "noTags": "아직 태그가 없습니다.",
-    "slugCollision": "이 슬러그는 이미 \"{{label}}\"에서 사용 중입니다."
+    "slugCollision": "이 슬러그는 이미 \"{{label}}\"에서 사용 중입니다.",
+    "seo": {
+      "button": "SEO",
+      "buttonTitle": "SEO 메타 태그 편집",
+      "title": "SEO 메타 태그",
+      "subtitle": "\"{{name}}\" 아카이브 페이지의 사용자 지정 제목과 설명입니다.",
+      "metaTitle": "메타 제목",
+      "metaTitleHint": "페이지 <title>로 사용됩니다. 기본값: 용어 이름.",
+      "metaDescription": "메타 설명",
+      "metaDescriptionHint": "페이지 메타 설명으로 사용됩니다. 기본값: 용어 설명."
+    }
   },
   "media": {
     "title": "미디어 라이브러리",
@@ -338,6 +348,7 @@
     "title": "메뉴",
     "header": "헤더 메뉴",
     "footer": "푸터 메뉴",
+    "label": "레이블",
     "saveAndPublish": "저장 및 생성",
     "discard": "변경 취소",
     "saved": "메뉴가 저장되어 게시되었습니다.",

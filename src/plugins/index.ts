@@ -19,6 +19,9 @@ import type { AdminLocale } from "../core/types";
 import { pluginApi, resetRegistry } from "../core/pluginRegistry";
 import { resetBlocks } from "../core/blockRegistry";
 import { resetDashboardCards } from "../core/dashboardCardRegistry";
+import { resetInspectorTabs } from "../core/inspectorTabRegistry";
+import { resetTermEditorSections } from "../core/termEditorSectionRegistry";
+import { resetEditorVariantProviders } from "../core/editorVariantRegistry";
 import { resetRegenerationTargets } from "../core/regenerationTargetRegistry";
 import { MU_PLUGINS } from "../mu-plugins";
 import { listExternalPlugins } from "../services/externalRegistry";
@@ -152,6 +155,9 @@ export function applyPluginRegistration(enabled: Record<string, boolean>): void 
   resetBlocks();
   resetDashboardCards();
   resetRegenerationTargets();
+  resetInspectorTabs();
+  resetTermEditorSections();
+  resetEditorVariantProviders();
   // MU plugins always register, regardless of `enabled`. They run
   // first so their filters / actions sit at the bottom of priority
   // chains — regular plugins added on top can override or layer on

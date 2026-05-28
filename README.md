@@ -435,6 +435,38 @@ Plugins / mu-plugins / themes ship their own bundled translations alongside thei
 
 The site language for the public output is configured separately in **Settings → Site → Site language** (BCP-47), and is injected as `<html lang="…">` on every published page. The bundled `flexweg-sitemaps` plugin also localises the styled sitemap-viewer (the HTML rendering of the XML sitemaps in a browser) for the same seven languages — pick the right one when you upload the XSL stylesheets.
 
+### Multi-language public sites (`flexweg-multilang`)
+
+For sites that publish content in more than one language, install the bundled `flexweg-multilang` plugin (shipped under `external/plugins/flexweg-multilang/`, pre-installed on a fresh deployment via `external.default.json`). It turns Flexweg into a fully multilingual CMS while keeping the static-publishing model:
+
+- **Per-language URL layout** — primary language at root (`/news/hello.html`), secondary languages prefixed (`/fr/actualites/bonjour.html`). Configure the primary language and the list of secondary languages under **Settings → Multi-language**.
+- **Per-post / per-page editor** — when at least one secondary language is enabled, the post editor grows a language tab strip above the canvas. Switching tabs swaps the full editor state (title, slug, body, blocks, excerpt, SEO) for the selected language while keeping the same Tiptap instance alive (so blocks and drag-and-drop survive language switches).
+- **Per-term name + slug + description + SEO** — categories and tags expose the per-language fields inline on the Categories & Tags page (chevron to expand). Empty fields fall back to the primary language.
+- **Per-language menu labels** — the Menus page renders one extra input per secondary language under each item's primary label. Filled-in values get projected into `/menu.json` as a `labels` map; the runtime menu loader picks the right one based on `<html lang>`.
+- **SEO** — every localised page emits its own `<title>`, `<meta name="description">`, `og:locale` + alternates, and a clean canonical (no `/index.html` suffix). Reciprocal `<link rel="alternate" hreflang="…">` tags are emitted in the head of every variant (including the primary). The sitemap entries carry `<xhtml:link rel="alternate" hreflang="…">` alternates, and `flexweg-rss` emits one feed per locale.
+- **Per-locale homes + category archives + author archives** — each locale gets its own `/<lang>/index.html`, `/<lang>/<category>/index.html`, etc. The publisher resolves them through a "shadow context" pass so themes don't need any multilang-specific code — they just render whatever props the publisher hands them.
+
+The plugin is backend-agnostic (works on both Firebase and Flexweg SQLite). Configure it under **Plugins → Multi-language → Settings**.
+
+### Per-term SEO meta tags
+
+Every category and tag carries an optional `Term.seo = { title?, description?, ogImage? }` block, edited via the **SEO** button on each row of the Categories & Tags page (between the slug input and Save). On the category archive page:
+
+- `term.seo.title` (or the term name as fallback) drives the `<title>` element
+- `term.seo.description` (or the term description as fallback) drives `<meta name="description">`
+- `term.seo.ogImage` drives `<meta property="og:image">`
+
+When `flexweg-multilang` is enabled, the per-language SEO overrides live inside the expanded translations section on each row (one collapsible block per secondary language carries the localized `seoTitle` + `seoDescription`).
+
+### Discourage search engines from indexing
+
+A WordPress-style toggle lives under **Settings → Site → Search-engine indexing → Discourage search engines from indexing this site**. When enabled:
+
+- Every published HTML page receives `<meta name="robots" content="noindex,nofollow">`
+- The bundled `flexweg-sitemaps` plugin forces `robots.txt` to `User-agent: *\nDisallow: /`, overriding any user-supplied robots content
+
+Use it during the staging phase of a new site so search engines don't index draft URLs. Toggle it off (and click **Regenerate ▾ → Everything**) before going live.
+
 ### Updating Firestore security rules
 
 The example Firestore rules above lock the `preferences.adminLocale` field to a closed list:
@@ -524,6 +556,18 @@ The header / footer menus configured under **Menus** in the admin are loaded **a
 1. Saving in `MenusPage` (or any publish/unpublish that may have moved a referenced post / term) triggers `publishMenuJson`, which writes a small `/menu.json` file to the public site root with the resolved menu structure.
 2. The active theme's `BaseLayout` ships a `<script src="/theme-assets/<id>-menu.js" defer>`. That loader fetches `/menu.json` on `DOMContentLoaded` and populates every `[data-cms-menu="header|footer"]` container present on the page.
 3. The default theme's loader also wires the burger toggle (`aria-expanded` flip + class toggle for the off-canvas overlay) and sets `aria-current="page"` on the link whose href matches the current URL (so themes can style the active item via CSS).
+
+### Per-language menu labels
+
+Each menu item carries an optional `translations: Record<<lang>, { label? }>` map (edited inline in `MenusPage` when at least one secondary language is enabled in `flexweg-multilang`). The resolver projects non-empty entries into a `labels` map on each resolved item in `/menu.json`:
+
+```json
+{ "id": "…", "label": "Care", "href": "/care/", "labels": { "fr": "Soins" } }
+```
+
+Every theme's runtime menu loader reads `document.documentElement.lang` (set per-page by `BaseLayout` based on `currentLocale`), looks up `item.labels[lang]`, and falls back to `item.label` for any locale without an override. A region-stripped fallback handles `<html lang="en-US">` → `en`. On mono-lingual sites the `labels` field is omitted entirely to keep `menu.json` small.
+
+After adding labels: click **Save & generate** on the Menus page (writes the new `menu.json`), then **Regenerate ▾ → Sync theme assets** if the per-language loader code is newer than what's currently on the public site.
 
 ### DOM contract for new themes
 
@@ -988,6 +1032,7 @@ Authoring docs and ready-to-build scaffolds:
 - [docs/creating-a-theme.md](docs/creating-a-theme.md) — full guide for external theme authoring.
 - [docs/runtime-api-reference.md](docs/runtime-api-reference.md) — public API surface (`@flexweg/cms-runtime` exports, hook list, manifest shapes).
 - [external/plugins/hello-plugin/](external/plugins/hello-plugin/) — minimal plugin scaffold (head meta tag + dashboard card).
+- [external/plugins/flexweg-multilang/](external/plugins/flexweg-multilang/) — reference multi-language plugin. Per-locale URLs, per-language editor tabs (post title / slug / body / SEO), per-term name + slug + description + SEO, per-language menu labels, hreflang + canonical reciprocity, sitemap `<xhtml:link>` alternates, per-language RSS feeds. Built and bundled into `dist/admin/plugins/flexweg-multilang/` by `npm run build`; pre-installed on fresh deployments via `external.default.json`. See the [authoring guide](docs/creating-a-plugin.md) for the variant-provider pattern used here.
 - [external/themes/minimal-theme/](external/themes/minimal-theme/) — minimal theme scaffold (six templates + hand-written CSS).
 - [external/themes/marketplace-core/](external/themes/marketplace-core/) — full marketplace theme (custom blocks, settings page, palette + font overrides).
 

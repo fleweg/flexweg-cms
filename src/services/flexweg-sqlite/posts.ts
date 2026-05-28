@@ -34,6 +34,8 @@ interface PostRow {
   previous_published_paths: string | null;
   last_published_hash: string | null;
   legacy_url: string | null;
+  translations: string | null;
+  last_published_paths_by_locale: string | null;
 }
 
 function parseJsonArray<T>(s: string | null | undefined): T[] {
@@ -80,6 +82,14 @@ function rowToPost(r: PostRow): Post {
   if (previousPublishedPaths.length > 0) post.previousPublishedPaths = previousPublishedPaths;
   if (r.last_published_hash) post.lastPublishedHash = r.last_published_hash;
   if (r.legacy_url) post.legacyUrl = r.legacy_url;
+  const translations = parseJsonObject<Record<string, unknown>>(r.translations);
+  if (translations && Object.keys(translations).length > 0) post.translations = translations;
+  const lastPublishedPathsByLocale = parseJsonObject<Record<string, string>>(
+    r.last_published_paths_by_locale,
+  );
+  if (lastPublishedPathsByLocale && Object.keys(lastPublishedPathsByLocale).length > 0) {
+    post.lastPublishedPathsByLocale = lastPublishedPathsByLocale;
+  }
   return post;
 }
 
@@ -125,6 +135,7 @@ export interface CreatePostInput {
   seo?: SeoMeta;
   createdAt?: Date;
   publishedAt?: Date;
+  translations?: Record<string, unknown>;
 }
 
 export async function createPost(input: CreatePostInput): Promise<string> {
@@ -136,8 +147,9 @@ export async function createPost(input: CreatePostInput): Promise<string> {
       id, type, title, slug, content_markdown,
       excerpt, hero_media_id, author_id, term_ids, primary_term_id,
       status, seo, created_at, updated_at, published_at,
-      last_published_path, previous_published_paths, last_published_hash, legacy_url
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      last_published_path, previous_published_paths, last_published_hash, legacy_url,
+      translations, last_published_paths_by_locale
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.type,
@@ -158,6 +170,10 @@ export async function createPost(input: CreatePostInput): Promise<string> {
       null,
       null,
       null,
+      input.translations && Object.keys(input.translations).length > 0
+        ? JSON.stringify(input.translations)
+        : null,
+      null,
     ],
   );
   invalidateAllPostsCache();
@@ -176,6 +192,8 @@ export interface UpdatePostInput {
   seo?: SeoMeta;
   createdAt?: Date;
   publishedAt?: Date;
+  translations?: Record<string, unknown> | null;
+  lastPublishedPathsByLocale?: Record<string, string> | null;
 }
 
 // Map domain field → SQL column + value transformer. Used to build a
@@ -199,6 +217,14 @@ const POST_FIELD_MAP: Record<
   publishedAt: {
     col: "published_at",
     transform: (v) => (v instanceof Date ? v.getTime() : v),
+  },
+  translations: {
+    col: "translations",
+    transform: (v) => (v && Object.keys(v as object).length > 0 ? JSON.stringify(v) : null),
+  },
+  lastPublishedPathsByLocale: {
+    col: "last_published_paths_by_locale",
+    transform: (v) => (v && Object.keys(v as object).length > 0 ? JSON.stringify(v) : null),
   },
 };
 

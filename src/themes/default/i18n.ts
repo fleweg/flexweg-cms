@@ -12,6 +12,14 @@ export const en = {
     style: "Style",
   },
 
+  // ─── Public-side strings baked into the rendered HTML ──────────
+  // These are picked up via `i18n.getFixedT(pickPublicLocale(...))`
+  // inside templates that need a translated label. Add a key here
+  // when you find a hardcoded English string in the theme.
+  breadcrumb: {
+    home: "Home",
+  },
+
   // ─── General tab ───────────────────────────────────────────────
   logo: {
     title: "Logo",
@@ -208,6 +216,10 @@ export const fr: typeof en = {
     style: "Style",
   },
 
+  breadcrumb: {
+    home: "Accueil",
+  },
+
   logo: {
     title: "Logo",
     help:
@@ -392,6 +404,9 @@ export const de: typeof en = {
     general: "Allgemein",
     style: "Stil",
   },
+  breadcrumb: {
+    home: "Startseite",
+  },
   logo: {
     title: "Logo",
     help:
@@ -574,6 +589,9 @@ export const es: typeof en = {
   tabs: {
     general: "General",
     style: "Estilo",
+  },
+  breadcrumb: {
+    home: "Inicio",
   },
   logo: {
     title: "Logotipo",
@@ -758,6 +776,9 @@ export const nl: typeof en = {
     general: "Algemeen",
     style: "Stijl",
   },
+  breadcrumb: {
+    home: "Home",
+  },
   logo: {
     title: "Logo",
     help:
@@ -941,6 +962,9 @@ export const pt: typeof en = {
     general: "Geral",
     style: "Estilo",
   },
+  breadcrumb: {
+    home: "Início",
+  },
   logo: {
     title: "Logótipo",
     help:
@@ -1123,6 +1147,9 @@ export const ko: typeof en = {
   tabs: {
     general: "일반",
     style: "스타일",
+  },
+  breadcrumb: {
+    home: "홈",
   },
   logo: {
     title: "로고",

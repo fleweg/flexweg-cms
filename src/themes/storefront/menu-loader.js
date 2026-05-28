@@ -38,11 +38,29 @@
     }
   }
 
+  // Picks the per-language label from item.labels (set by the admin
+  // in the menu builder) based on <html lang>, with a region-stripped
+  // fallback so "en-US" matches "en". Mono-lingual sites just return
+  // item.label.
+  function pickLabel(item) {
+    var lang = (document.documentElement.getAttribute("lang") || "").trim();
+    if (lang && item.labels && typeof item.labels[lang] === "string" && item.labels[lang]) {
+      return item.labels[lang];
+    }
+    if (lang && lang.indexOf("-") > 0) {
+      var base = lang.split("-")[0];
+      if (item.labels && typeof item.labels[base] === "string" && item.labels[base]) {
+        return item.labels[base];
+      }
+    }
+    return item.label || "";
+  }
+
   function renderBurgerItem(item) {
     var li = document.createElement("li");
     var a = document.createElement("a");
     a.href = item.href || "#";
-    a.textContent = item.label || "";
+    a.textContent = pickLabel(item);
     if (samePath(a.href)) a.setAttribute("aria-current", "page");
     li.appendChild(a);
     if (item.children && item.children.length) {
@@ -59,7 +77,7 @@
   function renderInlineItem(item) {
     var a = document.createElement("a");
     a.href = item.href || "#";
-    a.textContent = item.label || "";
+    a.textContent = pickLabel(item);
     var active = samePath(a.href);
     if (active) {
       a.setAttribute("aria-current", "page");

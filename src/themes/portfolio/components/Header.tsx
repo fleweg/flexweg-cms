@@ -34,7 +34,7 @@ export function Header({ site }: { site: SiteContext }) {
             </button>
             <a
               className="font-serif text-headline-md text-primary tracking-tight"
-              href="/index.html"
+              href={site.homePath ?? "/index.html"}
               data-cms-brand
             >
               {wordmark}
@@ -46,12 +46,15 @@ export function Header({ site }: { site: SiteContext }) {
             data-cms-menu-inline
             aria-label={t("publicBaked.primaryNavMobile")}
           />
-          <a
-            href="/contact.html"
-            className="hidden md:inline-flex portfolio-btn-outline"
-          >
-            {t("publicBaked.contact")}
-          </a>
+          <div className="flex items-center gap-4">
+            <div data-cms-langswitch="header" aria-hidden="true" />
+            <a
+              href="/contact.html"
+              className="hidden md:inline-flex portfolio-btn-outline"
+            >
+              {t("publicBaked.contact")}
+            </a>
+          </div>
         </div>
       </header>
 

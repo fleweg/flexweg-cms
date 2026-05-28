@@ -247,9 +247,44 @@ async function renderSingle(post: Post, ctx: PublishContext): Promise<string> {
   });
 }
 
-async function renderHome(ctx: PublishContext): Promise<string> {
+// Options accepted by `renderHome`. Used by plugins (e.g. multilang)
+// that need to render the home page through the active theme but
+// with a slightly different context — typically a per-locale URL
+// path + currentLocale for `<html lang>`. The default render path
+// passes no options, so this is a pure superset.
+export interface RenderHomeOptions {
+  // Overrides `currentPath` in the BaseLayout props. Use for
+  // per-locale homes (e.g. "fr/index.html").
+  homePath?: string;
+  // Sets `currentLocale` in the BaseLayout props so the rendered
+  // <html lang> reflects the right language. Defaults to
+  // `ctx.settings.language`.
+  currentLocale?: string;
+}
+
+export async function renderHome(
+  ctx: PublishContext,
+  options: RenderHomeOptions = {},
+): Promise<string> {
   const theme = getActiveTheme(ctx.settings.activeThemeId);
-  const site = buildSiteContext(ctx);
+  const baseSite = buildSiteContext(ctx);
+  // When the caller passed a `homePath` override (multilang plugin
+  // rendering a per-locale home), propagate it onto the SiteContext
+  // so theme Header/Footer can build the right "home" link without
+  // hardcoding "/index.html". `homePath` is documented as an href
+  // (leading slash convention) — normalise to ensure that, since
+  // the same `homePath` value also flows into `currentPath` (path
+  // convention, no leading slash) below. Without the normalisation,
+  // a relative href like "fr/index.html" gets appended to the
+  // current URL by the browser, producing `/fr/fr/index.html`.
+  const homeHref = options.homePath
+    ? options.homePath.startsWith("/")
+      ? options.homePath
+      : `/${options.homePath}`
+    : undefined;
+  const site: SiteContext = homeHref
+    ? { ...baseSite, homePath: homeHref }
+    : baseSite;
   const onlinePosts = ctx.posts
     .filter((p) => p.status === "online")
     .sort((a, b) => postSortMillis(b) - postSortMillis(a))
@@ -433,7 +468,8 @@ async function renderHome(ctx: PublishContext): Promise<string> {
     site,
     pageTitle: "",
     pageDescription: ctx.settings.description,
-    currentPath: HOME_PATH,
+    currentPath: options.homePath ?? HOME_PATH,
+    currentLocale: options.currentLocale,
   };
 
   return renderPageToHtml({
@@ -502,8 +538,9 @@ async function renderCategory(term: Term, ctx: PublishContext): Promise<string> 
   };
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
     site,
-    pageTitle: term.name,
-    pageDescription: term.description,
+    pageTitle: term.seo?.title || term.name,
+    pageDescription: term.seo?.description || term.description,
+    ogImage: term.seo?.ogImage,
     currentPath: buildTermUrl(term),
   };
 
@@ -599,6 +636,30 @@ async function uploadIfChanged(
   await uploadFile({ path, content: html });
   return { uploaded: true, hash };
 }
+
+// Payload returned by the `publish.additional` filter — one entry per
+// additional file the plugin wants the publisher to upload during this
+// `publishPost` call. Tracked together with the post's main file in
+// `previousPublishedPaths` so the standard cleanup retry logic also
+// covers them on the next publish.
+//
+// Used by the multilang plugin to publish translated variants of a
+// post (e.g. /fr/article.html) without duplicating upload + cleanup
+// bookkeeping. The plugin produces the HTML; the publisher handles
+// the I/O.
+export interface AdditionalRender {
+  // Absolute path on Flexweg, no leading slash (matches Post.lastPublishedPath).
+  path: string;
+  // Pre-rendered HTML ready to upload.
+  html: string;
+}
+
+// Same shape as AdditionalRender but for files attached to a listing
+// regeneration (home + category archives) rather than to a single
+// post. Returned by the `publish.extraListings` filter and uploaded
+// in `regenerateListings`. Used by multilang to write per-locale
+// homes and per-locale category archives.
+export type AdditionalListingRender = AdditionalRender;
 
 // Loads everything the publisher needs from the data context. Caller should
 // pass already-subscribed arrays so we avoid double fetching.
@@ -698,7 +759,14 @@ export async function publishPost(
   const post = ctx.posts.find((p) => p.id === postId) ?? ctx.pages.find((p) => p.id === postId);
   if (!post) throw new Error(`Post ${postId} not found.`);
 
-  await doAction("publish.before", post);
+  // Now fires with (post, ctx) — older handlers ignoring the second
+  // arg keep working. Plugins that need to refresh module-level
+  // caches before rendering (e.g. multilang's pathRegistry for
+  // hreflang injection) use this hook because it runs BEFORE
+  // renderSingle, which calls page.head.extra. The publish.complete
+  // action fires too late to seed the head filter for the same
+  // publish pass.
+  await doAction("publish.before", post, ctx);
 
   const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
   // Pages bound to the static home live at index.html only. The home
@@ -728,6 +796,42 @@ export async function publishPost(
     const html = await renderSingle(post, ctx);
     const result = await uploadIfChanged(newPath, html, post.lastPublishedHash, log);
     hash = result.hash;
+  }
+
+  // Plugin-driven additional renders (e.g. multilang translations). Each
+  // entry is uploaded to its own path and any path that used to be in
+  // the post's previously-known set but isn't in the new set gets pushed
+  // into `previousPublishedPaths` for the standard cleanup retry on the
+  // next publish.
+  const additional = await applyFilters<AdditionalRender[]>(
+    "publish.additional",
+    [],
+    post,
+    ctx,
+  );
+  const newAdditionalPaths: string[] = [];
+  for (const entry of additional) {
+    if (!entry.path || entry.path === newPath) continue;
+    log({ level: "info", message: `Uploading ${entry.path}…` });
+    await uploadFile({ path: entry.path, content: entry.html });
+    newAdditionalPaths.push(entry.path);
+  }
+  // Plugins that wrote additional paths last time but skipped them this
+  // time (e.g. user disabled a language) are detected by diffing
+  // `lastPublishedPathsByLocale` against the new set. Any orphan goes
+  // into `failedDeletions` so the publisher cleanup pipeline retries it
+  // on the next publish.
+  const previousByLocale = post.lastPublishedPathsByLocale ?? {};
+  for (const orphan of Object.values(previousByLocale)) {
+    if (!orphan || orphan === newPath) continue;
+    if (newAdditionalPaths.includes(orphan)) continue;
+    try {
+      await deleteFile(orphan);
+      log({ level: "info", message: `Deleted stale additional ${orphan}` });
+    } catch (err) {
+      log({ level: "warn", message: `Could not delete ${orphan}: ${(err as Error).message}` });
+      failedDeletions.push(orphan);
+    }
   }
 
   await markPostOnline(post.id, {
@@ -798,12 +902,32 @@ export async function unpublishPost(
 // individual posts. Called on every publish/unpublish so listings stay in
 // sync with the latest state.
 export async function regenerateListings(ctx: PublishContext, log: PublishLogger): Promise<void> {
+  // Fires BEFORE renderHome/renderCategory so plugins can refresh
+  // module-level caches (multilang's pathRegistry for hreflang on
+  // listing pages). Same pattern as publishPost's `publish.before`
+  // but scoped to the listing-only regeneration path — there's no
+  // single "post" to pass, just the live ctx.
+  await doAction("regenerate.listings.before", ctx);
   const homeHtml = await renderHome(ctx);
   await uploadIfChanged(HOME_PATH, homeHtml, undefined, log);
 
   for (const term of ctx.terms.filter((t) => t.type === "category")) {
     const html = await renderCategory(term, ctx);
     await uploadIfChanged(buildTermUrl(term), html, undefined, log);
+  }
+
+  // Plugin-driven additional listings (e.g. per-locale homes + per-locale
+  // category archives produced by flexweg-multilang). The plugin owns its
+  // own cleanup of stale paths because we don't track these across calls
+  // — they're regenerated wholesale on every listing pass.
+  const extras = await applyFilters<AdditionalListingRender[]>(
+    "publish.extraListings",
+    [],
+    ctx,
+  );
+  for (const entry of extras) {
+    if (!entry.path) continue;
+    await uploadIfChanged(entry.path, entry.html, undefined, log);
   }
 }
 
@@ -815,8 +939,25 @@ export async function regenerateHomeOnly(
   log: PublishLogger,
 ): Promise<void> {
   log({ level: "info", message: "Regenerating home page…" });
+  // Same pre-render hook as regenerateListings — gives plugins a
+  // chance to refresh their caches (e.g. multilang's pathRegistry).
+  await doAction("regenerate.listings.before", ctx);
   const homeHtml = await renderHome(ctx);
   await uploadIfChanged(HOME_PATH, homeHtml, undefined, log);
+  // Fire `publish.extraListings` so plugin-driven per-locale homes
+  // are also re-rendered. Without this, the multilang plugin's
+  // localised homes stay stale when the user clicks "Regenerate home".
+  // The filter signature is shared with regenerateListings so the
+  // same handlers fire here too.
+  const extras = await applyFilters<AdditionalListingRender[]>(
+    "publish.extraListings",
+    [],
+    ctx,
+  );
+  for (const entry of extras) {
+    if (!entry.path) continue;
+    await uploadIfChanged(entry.path, entry.html, undefined, log);
+  }
   log({ level: "success", message: "Home page regenerated." });
 }
 
@@ -895,6 +1036,10 @@ export async function repairPublishPaths(
     );
     let hash = "";
     if (!homeBound) {
+      // Fire publish.before for the same reason regenerateAll does —
+      // gives plugins (multilang's pathRegistry) a chance to seed
+      // their caches before renderSingle reads them.
+      await doAction("publish.before", post, ctx);
       const html = await renderSingle(post, ctx);
       const result = await uploadIfChanged(expectedPath, html, undefined, log);
       hash = result.hash;
@@ -932,6 +1077,14 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
   log({ level: "info", message: `Regenerating ${onlinePosts.length + ctx.terms.length + 2} files…` });
 
   for (const post of onlinePosts) {
+    // Mirror publishPost's pre-render lifecycle so plugin handlers
+    // that prep state for rendering (e.g. multilang refreshing its
+    // pathRegistry for hreflang injection) fire ahead of the
+    // primary renderSingle call. Without this, regenerate-all would
+    // emit primary pages without hreflang tags — breaking hreflang
+    // reciprocity since the localised variants below get the
+    // refresh through `publish.additional`.
+    await doAction("publish.before", post, ctx);
     const term = post.primaryTermId ? ctx.terms.find((t) => t.id === post.primaryTermId) : undefined;
     // Same home-binding short-circuit as publishPost: a page bound to
     // the static home lives at index.html only, written by the
@@ -951,6 +1104,22 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
       const html = await renderSingle(post, ctx);
       const result = await uploadIfChanged(path, html, undefined, log);
       hash = result.hash;
+    }
+    // Plugin-driven additional renders (multilang translations etc.) —
+    // same hook as publishPost so a full regeneration carries every
+    // language variant too. Without this, "Regenerate all" only
+    // refreshes primary-language pages and leaves localised variants
+    // pinned at their last manually-published state.
+    const additional = await applyFilters<AdditionalRender[]>(
+      "publish.additional",
+      [],
+      post,
+      ctx,
+    );
+    for (const entry of additional) {
+      if (!entry.path || entry.path === path) continue;
+      log({ level: "info", message: `Uploading ${entry.path}…` });
+      await uploadFile({ path: entry.path, content: entry.html });
     }
     await markPostOnline(post.id, {
       lastPublishedPath: path,

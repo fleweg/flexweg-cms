@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --no-install tsc --noEmit)",
+      "Bash(unzip -p dist/packs/plugins/flexweg-multilang.zip manifest.json)",
+      "Bash(unzip -p external/plugins/flexweg-multilang/flexweg-multilang.zip manifest.json)",
+      "Bash(unzip -p flexweg-multilang.zip manifest.json)",
+      "Edit(/.claude/skills/flexweg/**)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('_terms.json'\\)\\); print\\('\\\\n'.join\\(sorted\\(d['categories'].keys\\(\\)\\)\\)\\)\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('_terms.json'\\)\\); print\\('\\\\n'.join\\(sorted\\(d['tags'].keys\\(\\)\\)\\)\\)\")",
+      "Bash(node --experimental-vm-modules -e ' *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

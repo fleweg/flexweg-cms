@@ -1,0 +1,7 @@
+{
+  "id": "flexweg-multilang",
+  "name": "Multi-language",
+  "version": "1.5.1",
+  "apiVersion": "1.3.0",
+  "entry": "bundle.js"
+}

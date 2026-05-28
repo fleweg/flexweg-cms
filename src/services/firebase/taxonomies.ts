@@ -68,7 +68,7 @@ export async function createTerm(input: CreateTermInput): Promise<string> {
 
 export async function updateTerm(
   id: string,
-  patch: Partial<Pick<Term, "name" | "slug" | "description" | "parentId">>,
+  patch: Partial<Pick<Term, "name" | "slug" | "description" | "parentId" | "translations" | "seo">>,
 ): Promise<void> {
   const update: Record<string, unknown> = { updatedAt: serverTimestamp() };
   for (const [key, value] of Object.entries(patch)) {

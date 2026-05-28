@@ -148,16 +148,21 @@ export function buildPostsJson(
 // `publisher.republishPostsJson`. Best-effort: failures are swallowed
 // (the underlying flexwegApi call already toasts the user-facing
 // error) to avoid aborting the surrounding publish flow.
+//
+// `pathOverride` lets plugins (e.g. multilang) publish per-language
+// snapshots at `<lang>/data/posts.json` without duplicating the
+// shape-building logic. Defaults to the canonical root path.
 export async function publishPostsJson(
   settings: SiteSettings,
   posts: Post[],
   pages: Post[],
   terms: Term[],
   media: Map<string, Media> | Media[],
+  pathOverride?: string,
 ): Promise<void> {
   const blob = buildPostsJson(settings, posts, pages, terms, media);
   await uploadFile({
-    path: POSTS_JSON_PATH,
+    path: pathOverride ?? POSTS_JSON_PATH,
     content: JSON.stringify(blob),
     encoding: "utf-8",
   });

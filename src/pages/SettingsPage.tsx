@@ -51,6 +51,9 @@ export function SettingsPage() {
   const [postsPerPage, setPostsPerPage] = useState(settings.postsPerPage);
   const [homeMode, setHomeMode] = useState(settings.homeMode);
   const [homePageId, setHomePageId] = useState(settings.homePageId ?? "");
+  const [discourageIndexing, setDiscourageIndexing] = useState(
+    settings.discourageIndexing === true,
+  );
   const [savingSite, setSavingSite] = useState(false);
 
   // Sync local edits when the underlying doc changes (other admins editing,
@@ -63,10 +66,12 @@ export function SettingsPage() {
     setPostsPerPage(settings.postsPerPage);
     setHomeMode(settings.homeMode);
     setHomePageId(settings.homePageId ?? "");
+    setDiscourageIndexing(settings.discourageIndexing === true);
   }, [settings]);
 
   async function saveSite() {
     setSavingSite(true);
+    const indexingChanged = (settings.discourageIndexing === true) !== discourageIndexing;
     try {
       await updateSettings({
         title,
@@ -76,7 +81,18 @@ export function SettingsPage() {
         postsPerPage,
         homeMode,
         homePageId: homeMode === "static-page" ? homePageId || undefined : undefined,
+        discourageIndexing,
       });
+      // Toggling the indexing gate requires re-rendering every
+      // online page (the `<meta name="robots">` is baked at publish
+      // time) AND the robots.txt. Surface a strong call-to-action
+      // toast so the user knows to run "Regenerate all" in
+      // /admin/#/themes — auto-triggering it here would be a heavy
+      // side effect of a settings save and is undesirable on big
+      // sites without an explicit user click.
+      if (indexingChanged) {
+        toast.info(t("settings.site.discourageRegenerateHint"));
+      }
     } finally {
       setSavingSite(false);
     }
@@ -286,6 +302,24 @@ export function SettingsPage() {
             </select>
           </div>
         )}
+        <div className="border-t border-surface-200 dark:border-surface-700 pt-3 mt-2">
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={discourageIndexing}
+              onChange={(e) => setDiscourageIndexing(e.target.checked)}
+            />
+            <span>
+              <span className="font-medium">
+                {t("settings.site.discourageIndexing")}
+              </span>
+              <span className="block text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                {t("settings.site.discourageIndexingHelp")}
+              </span>
+            </span>
+          </label>
+        </div>
         <button type="button" className="btn-primary" onClick={saveSite} disabled={savingSite}>
           <span className="inline-flex items-center justify-center gap-1.5">
             <Loader2 className={"h-4 w-4 animate-spin " + (savingSite ? "" : "hidden")} />

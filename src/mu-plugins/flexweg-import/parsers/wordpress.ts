@@ -114,6 +114,7 @@ export function parseWordPressXml(xml: string, sourceName: string): ParseResult 
     return {
       entries: [],
       terms: [],
+      termTranslations: [],
       attachments: [],
       warnings: [
         {
@@ -343,5 +344,5 @@ export function parseWordPressXml(xml: string, sourceName: string): ParseResult 
     }
   }
 
-  return { entries, terms, attachments, warnings };
+  return { entries, terms, termTranslations: [], attachments, warnings };
 }

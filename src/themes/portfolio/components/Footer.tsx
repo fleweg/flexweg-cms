@@ -21,7 +21,7 @@ export function Footer({ site }: { site: SiteContext }) {
       <div className="max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-8 px-margin-edge-mobile md:px-margin-edge py-section-gap-mobile md:py-12">
         <a
           className="font-serif text-headline-md text-primary tracking-tight"
-          href="/index.html"
+          href={site.homePath ?? "/index.html"}
         >
           {wordmark}
         </a>
@@ -31,9 +31,12 @@ export function Footer({ site }: { site: SiteContext }) {
           data-cms-menu-inline
           aria-label="Footer"
         />
-        <p className="font-sans text-label-sm uppercase tracking-widest text-secondary text-center md:text-right">
-          {copyright}
-        </p>
+        <div className="flex flex-col items-center md:items-end gap-2">
+          <p className="font-sans text-label-sm uppercase tracking-widest text-secondary text-center md:text-right">
+            {copyright}
+          </p>
+          <div data-cms-langswitch="footer" aria-hidden="true" />
+        </div>
       </div>
     </footer>
   );

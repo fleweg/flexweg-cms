@@ -19,6 +19,10 @@ import type { SiteContext } from "../../types";
 // ABOVE the menu. Pulling the menu up to body level fixes that.
 export function Header({ site }: { site: SiteContext }) {
   const { settings } = site;
+  // SiteContext.homePath is plugin-provided (e.g. multilang sets it to
+  // "/fr/index.html" on FR pages). Defaults to the global home path
+  // so non-multilang sites keep working unchanged.
+  const homeHref = site.homePath ?? "/index.html";
   return (
     <>
       <header className="site-header">
@@ -37,9 +41,15 @@ export function Header({ site }: { site: SiteContext }) {
               has a logo configured (menu.branding.logoUrl). The static
               text stays as a graceful fallback when JS / menu.json
               fails or when no logo is set. */}
-          <a className="site-brand" href="/index.html" data-cms-brand>
+          <a className="site-brand" href={homeHref} data-cms-brand>
             {settings.title}
           </a>
+          {/* Language switcher mount point — opposite side from the
+              burger. The multilang plugin populates this at runtime
+              (or removes it from the DOM when the setting is off).
+              Starts empty + invisible so single-language sites and
+              plugin-free deploys don't see a ghost element. */}
+          <div className="site-langswitch" data-cms-langswitch="header" aria-hidden="true" />
         </div>
       </header>
       <nav

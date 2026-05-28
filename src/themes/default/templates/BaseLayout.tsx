@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from "../../types";
+import { canonicalUrl } from "../../../core/slug";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
@@ -13,6 +14,7 @@ export function BaseLayout({
   pageDescription,
   ogImage,
   currentPath,
+  currentLocale,
   children,
 }: BaseLayoutProps) {
   const cssHref = `/${site.themeCssPath}`;
@@ -25,16 +27,20 @@ export function BaseLayout({
   const themeId = site.themeCssPath.replace(/^theme-assets\//, "").replace(/\.css$/, "");
   const jsHref = `/theme-assets/${themeId}-menu.js`;
   const jsHrefPosts = `/theme-assets/${themeId}-posts.js`;
+  // canonicalUrl() strips the trailing `index.html` so directory
+  // landings (home, /<lang>/, category archives) get a clean canonical
+  // ending in `/` rather than `/index.html`. Both resolve to the same
+  // file on the host but the clean form is the SEO-preferred one.
   const canonical =
     site.settings.baseUrl && currentPath
-      ? `${site.settings.baseUrl.replace(/\/+$/, "")}/${currentPath.replace(/^\/+/, "")}`
+      ? canonicalUrl(site.settings.baseUrl, currentPath)
       : undefined;
   const fullTitle = pageTitle
     ? `${pageTitle} — ${site.settings.title}`
     : site.settings.title;
 
   return (
-    <html lang={site.settings.language || "en"}>
+    <html lang={currentLocale || site.settings.language || "en"}>
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

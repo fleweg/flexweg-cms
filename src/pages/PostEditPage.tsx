@@ -14,6 +14,15 @@ import { InlineTitle } from "../components/editor/InlineTitle";
 import { InlineSlug } from "../components/editor/InlineSlug";
 import { EditorInspector, InspectorSection } from "../components/editor/EditorInspector";
 import { PreviewModal } from "../components/editor/PreviewModal";
+import { VariantTabBar } from "../components/editor/VariantTabBar";
+import {
+  listEditorVariantProviders,
+  subscribeEditorVariantProviders,
+  type EditorVariant,
+  type EditorVariantProvider,
+  type VariantFields,
+} from "../core/editorVariantRegistry";
+import { useSyncExternalStore } from "react";
 import { useEditorStyleInjection } from "../hooks/useEditorStyleInjection";
 import { StatusBadge } from "../components/publishing/StatusBadge";
 import { PublishButton } from "../components/publishing/PublishButton";
@@ -160,6 +169,220 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   // null on close so a re-open kicks a new render.
   const [previewPromise, setPreviewPromise] = useState<Promise<string> | null>(null);
 
+  // ─── Editor variants (multilang etc.) ────────────────────────────
+  //
+  // The active variant provider is the first one that returns more
+  // than one variant for this entity. The host renders a tab strip
+  // above the editor and swaps the entire editor state when the user
+  // switches variants. The Tiptap editor instance is preserved across
+  // switches via `editor.commands.setContent()` so WYSIWYG + blocks +
+  // drag-and-drop are identical for every variant.
+  //
+  // For non-primary variants, save flows through `provider.saveFields`
+  // instead of the host's `updatePost`. The primary variant uses the
+  // entity's native fields (the existing handleSave path).
+  const variantProviders = useSyncExternalStore(
+    subscribeEditorVariantProviders,
+    listEditorVariantProviders,
+    listEditorVariantProviders,
+  );
+  // Stable ctx for variant providers — settings + terms come from the
+  // CmsDataContext subscription. Recomputed on relevant changes only.
+  const variantCtx = useMemo(
+    () => ({ settings, terms: [...categories, ...tags] }),
+    [settings, categories, tags],
+  );
+  const variants = useMemo<EditorVariant[]>(() => {
+    if (!existing) return [];
+    for (const p of variantProviders) {
+      const list = p.listVariants(existing, variantCtx);
+      if (list.length > 1) return list;
+    }
+    return [];
+  }, [existing, variantProviders, variantCtx]);
+  const activeProvider = useMemo<EditorVariantProvider | null>(() => {
+    if (!existing) return null;
+    for (const p of variantProviders) {
+      if (p.listVariants(existing, variantCtx).length > 1) return p;
+    }
+    return null;
+  }, [existing, variantProviders, variantCtx]);
+  const primaryVariantId = variants.find((v) => v.primary)?.id ?? "";
+  const [activeVariantId, setActiveVariantId] = useState<string>("");
+  // Re-sync the active variant id when the list changes. Falls back to
+  // primary if the previously active id disappears.
+  useEffect(() => {
+    if (variants.length === 0) {
+      setActiveVariantId("");
+      return;
+    }
+    if (!variants.some((v) => v.id === activeVariantId)) {
+      setActiveVariantId(primaryVariantId || variants[0]!.id);
+    }
+  }, [variants, primaryVariantId, activeVariantId]);
+  // Local draft cache for non-primary variants. Keyed by variant id.
+  // The primary variant's draft lives in the existing title / slug /
+  // contentMarkdown / excerpt / seo state directly.
+  const [variantDrafts, setVariantDrafts] = useState<Record<string, VariantFields>>({});
+  // Reset draft cache when the entity changes (different post = fresh
+  // drafts loaded from disk).
+  useEffect(() => {
+    setVariantDrafts({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing?.id]);
+
+  // True when the host is editing a non-primary variant. The save
+  // logic, slug-collision logic and publish button all branch on this.
+  const isOnPrimaryVariant =
+    !activeVariantId || activeVariantId === primaryVariantId || variants.length <= 1;
+
+  // Captures the current editor state into a VariantFields snapshot.
+  // Used when switching variants — we stash the outgoing draft before
+  // loading the incoming one.
+  const captureCurrentFields = useCallback((): VariantFields => {
+    const seo: { title?: string; description?: string; ogImage?: string } = {};
+    if (seoTitle.trim()) seo.title = seoTitle.trim();
+    if (seoDescription.trim()) seo.description = seoDescription.trim();
+    return {
+      title,
+      slug,
+      contentMarkdown,
+      excerpt: excerpt || undefined,
+      seo: Object.keys(seo).length > 0 ? seo : undefined,
+    };
+  }, [title, slug, contentMarkdown, excerpt, seoTitle, seoDescription]);
+
+  // Applies a VariantFields snapshot to the editor state. Also swaps
+  // the live Tiptap document via `editor.commands.setContent()` so the
+  // WYSIWYG reflects the new variant without remounting (preserves
+  // extensions, blocks, scroll, etc.).
+  //
+  // `slugAlreadySet` controls the auto-slug-from-title behaviour: pass
+  // true when the variant has a saved slug (existing primary variant
+  // or existing secondary translation), false when this is a fresh
+  // empty draft and the user should benefit from auto-generation.
+  const applyFieldsToEditor = useCallback(
+    (fields: VariantFields, slugAlreadySet: boolean) => {
+      setTitle(fields.title);
+      setSlug(fields.slug);
+      setSlugDirty(slugAlreadySet);
+      setContentMarkdown(fields.contentMarkdown);
+      setExcerpt(fields.excerpt ?? "");
+      setSeoTitle(fields.seo?.title ?? "");
+      setSeoDescription(fields.seo?.description ?? "");
+      // Tiptap holds its own state — push the new markdown so the
+      // visible document updates. tiptap-markdown's storage exposes a
+      // `setMarkdown` helper at runtime; we fall back to setContent
+      // on the chain when the helper is absent (older Tiptap).
+      if (editor) {
+        const md = (
+          editor.storage as {
+            markdown?: { setMarkdown?: (text: string) => void };
+          }
+        ).markdown;
+        if (md?.setMarkdown) {
+          md.setMarkdown(fields.contentMarkdown);
+        } else {
+          editor.commands.setContent(fields.contentMarkdown, false);
+        }
+      }
+    },
+    [editor],
+  );
+
+  // Switches the active variant. Stashes the current draft into the
+  // cache (keyed by the OLD variant id), loads the incoming variant's
+  // fields from the provider (or the cache), and applies them to the
+  // editor.
+  const handleVariantChange = useCallback(
+    (nextId: string) => {
+      if (!existing || !activeProvider) return;
+      if (nextId === activeVariantId) return;
+      void variantCtx; // referenced via closure in incoming resolution
+      // Stash the OLD variant's current draft.
+      const outgoing = activeVariantId;
+      const draft = captureCurrentFields();
+      setVariantDrafts((prev) => ({ ...prev, [outgoing]: draft }));
+      // Resolve the incoming variant's data — prefer the in-memory
+      // cache (the user already touched this tab), fall back to the
+      // provider (loads from `entity.translations[...]` etc.), fall
+      // back to an empty draft. Track whether the incoming variant
+      // has a saved slug so the auto-slug-from-title hook only fires
+      // for fresh / never-saved translations.
+      let incoming: VariantFields | null = variantDrafts[nextId] ?? null;
+      let hasSavedSlug = false;
+      if (incoming) {
+        hasSavedSlug = Boolean(incoming.slug);
+      } else {
+        if (nextId === primaryVariantId) {
+          incoming = {
+            title: existing.title,
+            slug: existing.slug,
+            contentMarkdown: existing.contentMarkdown,
+            excerpt: existing.excerpt,
+            seo: existing.seo,
+          };
+          hasSavedSlug = Boolean(existing.slug);
+        } else {
+          const loaded = activeProvider.loadFields(existing, nextId, variantCtx);
+          if (loaded) {
+            incoming = loaded;
+            hasSavedSlug = Boolean(loaded.slug);
+          }
+        }
+      }
+      if (!incoming) {
+        // Empty draft for this variant — start fresh. Auto-slug from
+        // title will kick in as the user types.
+        incoming = {
+          title: "",
+          slug: "",
+          contentMarkdown: "",
+          excerpt: "",
+          seo: {},
+        };
+        hasSavedSlug = false;
+      }
+      setActiveVariantId(nextId);
+      applyFieldsToEditor(incoming, hasSavedSlug);
+    },
+    [
+      existing,
+      activeProvider,
+      activeVariantId,
+      captureCurrentFields,
+      variantDrafts,
+      primaryVariantId,
+      applyFieldsToEditor,
+      variantCtx,
+    ],
+  );
+
+  // Per-variant "is filled" predicate for the tab strip dot.
+  const isVariantFilled = useCallback(
+    (variant: EditorVariant): boolean => {
+      if (!existing) return false;
+      if (variant.id === activeVariantId) {
+        // The active variant's "filled" status is whatever the user
+        // currently has typed — base it on title + slug presence.
+        return Boolean(title.trim() && slug.trim());
+      }
+      if (variantDrafts[variant.id]) {
+        const d = variantDrafts[variant.id];
+        return Boolean(d.title?.trim() && d.slug?.trim());
+      }
+      if (variant.primary) {
+        return Boolean(existing.title && existing.slug);
+      }
+      if (activeProvider) {
+        const f = activeProvider.loadFields(existing, variant.id, variantCtx);
+        return Boolean(f?.title && f?.slug);
+      }
+      return false;
+    },
+    [existing, activeVariantId, title, slug, variantDrafts, activeProvider, variantCtx],
+  );
+
   // Hydrate from Firestore record on first match. Only depend on the id +
   // existing.id to avoid resetting fields on every Firestore-driven re-render.
   useEffect(() => {
@@ -181,17 +404,33 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing?.id]);
 
-  // Keep the slug in sync with the title for new posts, until the user
-  // types into the slug field. Auto-generated slug is also deduplicated
-  // against existing posts / pages / categories — same WordPress-style
+  // Keep the slug in sync with the title until the user manually
+  // edits the slug field. Triggers for:
+  //   - new posts (no `existing` yet)
+  //   - existing posts on a variant that has no saved slug yet
+  //     (typically a freshly opened translation tab)
+  // `slugDirty` is the single source of truth: it's true whenever the
+  // current variant already has a saved slug OR the user manually
+  // typed into the slug input. False means "this slug is unmanaged —
+  // generate it from the title".
+  //
+  // Auto-generated slug is deduplicated against existing posts /
+  // pages / categories on the PRIMARY variant — same WordPress-style
   // "post-2", "post-3" suffixes that prevent silent overwrites on
-  // Flexweg.
+  // Flexweg. For non-primary variants we skip the dedup because
+  // collision detection is per-language (handled by the variant
+  // provider at save time).
   useEffect(() => {
-    if (!isNew) return;
     if (slugDirty) return;
     const base = slugify(title);
     if (!base) {
       setSlug("");
+      return;
+    }
+    if (!isOnPrimaryVariant) {
+      // Non-primary variant — let the language's own collision
+      // detection (provider.validate) handle uniqueness at save.
+      setSlug(base);
       return;
     }
     const primaryTerm = primaryTermId
@@ -205,7 +444,17 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       return detectPathCollision(path, posts, pages, [...categories, ...tags]) !== null;
     };
     setSlug(findAvailableSlug(base, isUsed));
-  }, [title, slugDirty, isNew, primaryTermId, type, posts, pages, categories, tags]);
+  }, [
+    title,
+    slugDirty,
+    isOnPrimaryVariant,
+    primaryTermId,
+    type,
+    posts,
+    pages,
+    categories,
+    tags,
+  ]);
 
   const slugValid = isValidSlug(slug);
   const heroMedia = heroMediaId ? media.find((m) => m.id === heroMediaId) : undefined;
@@ -214,7 +463,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   // page or category on its public URL. Computed live so the inline
   // validation message and the disabled state of the Save button stay
   // in sync with the form. Excludes the entity being edited via `id`.
+  //
+  // Non-primary variants skip core collision detection — the variant
+  // provider does its own (per-language uniqueness check etc.) and
+  // surfaces errors through its `validate` callback at save time.
   const collision = useMemo(() => {
+    if (!isOnPrimaryVariant) return null;
     if (!slugValid) return null;
     const primaryTerm = primaryTermId
       ? categories.find((c) => c.id === primaryTermId)
@@ -232,17 +486,52 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       [...categories, ...tags],
       existing?.id,
     );
-  }, [slugValid, slug, primaryTermId, type, posts, pages, categories, tags, existing?.id]);
+  }, [
+    isOnPrimaryVariant,
+    slugValid,
+    slug,
+    primaryTermId,
+    type,
+    posts,
+    pages,
+    categories,
+    tags,
+    existing?.id,
+  ]);
 
   // Visible URL prefix shown next to the editable slug in the inline
   // permalink strip. Categories live as URL segments only for posts;
   // pages always sit at the root regardless of taxonomy.
+  //
+  // When a non-primary variant is active, defer to the variant
+  // provider's `getSlugPathPrefix` so the user sees the right
+  // language-prefixed URL (e.g. "fr/actualites/" for the FR variant).
   const slugPathPrefix = useMemo(() => {
+    if (!isOnPrimaryVariant && activeProvider && existing) {
+      const fields = captureCurrentFields();
+      const customPrefix = activeProvider.getSlugPathPrefix?.(
+        existing,
+        activeVariantId,
+        fields,
+        variantCtx,
+      );
+      if (customPrefix !== undefined) return customPrefix;
+    }
     if (type !== "post") return "";
     if (!primaryTermId) return "";
     const term = categories.find((c) => c.id === primaryTermId);
     return term ? `${term.slug}/` : "";
-  }, [type, primaryTermId, categories]);
+  }, [
+    isOnPrimaryVariant,
+    activeProvider,
+    existing,
+    activeVariantId,
+    captureCurrentFields,
+    variantCtx,
+    type,
+    primaryTermId,
+    categories,
+  ]);
 
   const publishedUrl = useMemo(() => {
     if (!existing?.lastPublishedPath) return undefined;
@@ -266,6 +555,52 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     if (!user) return;
     if (!title.trim()) return;
     if (!slugValid) return;
+
+    // Non-primary variant branch — dispatch to the provider's
+    // saveFields. The primary variant continues through the standard
+    // updatePost path below.
+    if (!isOnPrimaryVariant && activeProvider && existing) {
+      setSaving(true);
+      setLogEntries([]);
+      try {
+        const fields = captureCurrentFields();
+        const validationError = activeProvider.validate?.(
+          existing,
+          activeVariantId,
+          fields,
+          variantCtx,
+        );
+        if (validationError) {
+          toast.error(validationError);
+          return;
+        }
+        await activeProvider.saveFields(existing, activeVariantId, fields, variantCtx);
+        // Cache the fresh draft so the host doesn't re-fetch from the
+        // entity on the next variant switch.
+        setVariantDrafts((prev) => ({ ...prev, [activeVariantId]: fields }));
+        // If the post is already online, also republish so the
+        // freshly-saved variant goes live alongside the others.
+        // Matches the "Save and republish" UX of the primary variant.
+        if (existing.status === "online") {
+          const ctx = await buildPublishContext({
+            terms: [...categories, ...tags],
+            settings,
+            users,
+            authorLookup: buildAuthorLookup(users, media),
+          });
+          await publishPost(existing.id, ctx, appendLog);
+          toast.success(t("posts.edit.savedAndRepublished"));
+        } else {
+          toast.success(t("posts.edit.saved"));
+        }
+      } catch (err) {
+        toast.error((err as Error).message || t("posts.edit.saveFailed"));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     setSaving(true);
     setLogEntries([]);
     try {
@@ -548,6 +883,13 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
 
       <div className="p-4 md:p-6 flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0 max-w-3xl mx-auto w-full lg:mx-0">
+          <VariantTabBar
+            variants={variants}
+            activeId={activeVariantId}
+            onSelect={handleVariantChange}
+            isFilled={isVariantFilled}
+          />
+
           <div className="space-y-3">
             <InlineTitle
               value={title}
@@ -586,6 +928,8 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
 
         <EditorInspector
           editor={editor}
+          entity={existing}
+          save={handleSave}
           documentPanel={
             <>
               <InspectorSection title={t("posts.edit.inspector.featured")}>

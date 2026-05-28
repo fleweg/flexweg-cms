@@ -24,7 +24,14 @@ function detectKind(item: MenuItem): MenuItemKind {
 // `externalUrl: undefined` on a post-kind item — Firestore rejects nested
 // `undefined` values and that used to silently drop the whole save.
 function buildItem(item: MenuItem, kind: MenuItemKind): MenuItem {
-  const base = { id: item.id, label: item.label };
+  const base: { id: string; label: string; translations?: MenuItem["translations"] } = {
+    id: item.id,
+    label: item.label,
+  };
+  // Preserve per-language translations across kind switches — the
+  // label override is independent of whether the link points at a
+  // post, term, or external URL.
+  if (item.translations) base.translations = item.translations;
   switch (kind) {
     case "external":
       return { ...base, externalUrl: item.externalUrl ?? "" };
@@ -41,6 +48,28 @@ function buildItem(item: MenuItem, kind: MenuItemKind): MenuItem {
         ref: item.ref?.kind === "term" ? { kind: "term", id: item.ref.id } : { kind: "term" },
       };
   }
+}
+
+// Reads enabled secondary languages from the multilang plugin's stored
+// config. Returns an empty array when the plugin isn't installed /
+// enabled / has no secondary languages — the MenusPage uses that to
+// hide the per-language label inputs entirely on mono-lingual sites.
+//
+// Plugins are enabled by default: PluginsPage's toggle stores `false`
+// only when the user explicitly disables one. A missing entry means
+// "active with defaults" — so we check `=== false`, not truthiness.
+//
+// We read the plugin config as an opaque blob rather than importing
+// the multilang types: the menu UI lives in core and can't take a
+// hard dependency on a plugin's TypeScript surface.
+function getEnabledLanguages(settings: SiteSettings): string[] {
+  if (settings.enabledPlugins?.["flexweg-multilang"] === false) return [];
+  const config = settings.pluginConfigs?.["flexweg-multilang"] as
+    | { enabledLanguages?: unknown }
+    | undefined;
+  const raw = config?.enabledLanguages;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((l): l is string => typeof l === "string" && l.length > 0);
 }
 
 // Cheap structural equality for the menu shape. Items are simple plain
@@ -60,6 +89,7 @@ export function MenusPage() {
   const { posts: pages } = useAllPosts("page");
   const savedHeader = settings.menus.header ?? [];
   const savedFooter = settings.menus.footer ?? [];
+  const enabledLanguages = getEnabledLanguages(settings);
 
   // Local drafts, edited freely by the UI. Saving pushes them to Firestore
   // and re-publishes the menu.json blob in a single explicit action; the
@@ -179,6 +209,7 @@ export function MenusPage() {
         onChange={setHeader}
         terms={terms}
         postOptions={postOptions}
+        enabledLanguages={enabledLanguages}
       />
       <MenuEditor
         labelKey="menus.footer"
@@ -186,6 +217,7 @@ export function MenusPage() {
         onChange={setFooter}
         terms={terms}
         postOptions={postOptions}
+        enabledLanguages={enabledLanguages}
       />
     </div>
   );
@@ -197,9 +229,10 @@ interface MenuEditorProps {
   onChange: (items: MenuItem[]) => void;
   terms: { id: string; type: string; name: string; slug: string }[];
   postOptions: ComboboxOption[];
+  enabledLanguages: string[];
 }
 
-function MenuEditor({ labelKey, items, onChange, terms, postOptions }: MenuEditorProps) {
+function MenuEditor({ labelKey, items, onChange, terms, postOptions, enabledLanguages }: MenuEditorProps) {
   const { t } = useTranslation();
 
   function move(idx: number, dir: -1 | 1) {
@@ -244,6 +277,24 @@ function MenuEditor({ labelKey, items, onChange, terms, postOptions }: MenuEdito
         <ul className="space-y-2">
           {items.map((item, idx) => {
             const kind = detectKind(item);
+            function patchLangLabel(lang: string, label: string): void {
+              const next = { ...(item.translations ?? {}) };
+              const trimmed = label.trim();
+              if (trimmed) {
+                next[lang] = { ...(next[lang] ?? {}), label: trimmed };
+              } else {
+                // Empty input clears the override — drop the entry
+                // entirely rather than persisting `{ label: "" }`
+                // which would pollute the menu.json with empty
+                // strings that the loader would still match against.
+                delete next[lang];
+              }
+              const hasAny = Object.keys(next).length > 0;
+              patch(idx, {
+                ...item,
+                translations: hasAny ? next : undefined,
+              });
+            }
             return (
               <li
                 key={item.id}
@@ -254,7 +305,7 @@ function MenuEditor({ labelKey, items, onChange, terms, postOptions }: MenuEdito
                     className="input flex-1"
                     value={item.label}
                     onChange={(e) => patch(idx, { ...item, label: e.target.value })}
-                    placeholder="Label"
+                    placeholder={t("menus.label") as string}
                   />
                   <button type="button" className="btn-ghost" onClick={() => move(idx, -1)}>
                     <ArrowUp className="h-4 w-4" />
@@ -266,6 +317,23 @@ function MenuEditor({ labelKey, items, onChange, terms, postOptions }: MenuEdito
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
+                {enabledLanguages.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {enabledLanguages.map((lang) => (
+                      <label key={lang} className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase font-semibold w-8 text-surface-500">
+                          {lang}
+                        </span>
+                        <input
+                          className="input flex-1"
+                          value={item.translations?.[lang]?.label ?? ""}
+                          onChange={(e) => patchLangLabel(lang, e.target.value)}
+                          placeholder={item.label}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2 items-start">
                   <select
                     className="input w-44"

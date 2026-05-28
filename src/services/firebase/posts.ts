@@ -74,6 +74,10 @@ export interface CreatePostInput {
   // When omitted, Firestore stamps the current server time.
   createdAt?: Date;
   publishedAt?: Date;
+  // Optional per-locale extras (plugin-managed; see Post.translations).
+  // Used by the importer when a markdown bundle ships `<name>.<lang>.md`
+  // sidecar files that resolve to multilang translations.
+  translations?: Record<string, unknown>;
 }
 
 export async function createPost(input: CreatePostInput): Promise<string> {
@@ -94,6 +98,9 @@ export async function createPost(input: CreatePostInput): Promise<string> {
   if (input.primaryTermId) data.primaryTermId = input.primaryTermId;
   if (input.seo) data.seo = input.seo;
   if (input.publishedAt) data.publishedAt = input.publishedAt;
+  if (input.translations && Object.keys(input.translations).length > 0) {
+    data.translations = input.translations;
+  }
   await setDoc(postDoc(id), data);
   invalidateAllPostsCache();
   return id;
@@ -113,6 +120,10 @@ export interface UpdatePostInput {
   // existing value remains untouched.
   createdAt?: Date;
   publishedAt?: Date;
+  // Plugin-managed per-locale extras (see Post.translations). Passed
+  // through as-is — Firestore serializes nested maps natively.
+  translations?: Record<string, unknown> | null;
+  lastPublishedPathsByLocale?: Record<string, string> | null;
 }
 
 export async function updatePost(id: string, patch: UpdatePostInput): Promise<void> {

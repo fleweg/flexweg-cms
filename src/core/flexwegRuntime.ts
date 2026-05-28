@@ -69,8 +69,29 @@ export type { PluginApi } from "./pluginRegistry";
 export type { RegenerationTarget } from "./regenerationTargetRegistry";
 export type { BlockManifest } from "./blockRegistry";
 export type { DashboardCardManifest } from "./dashboardCardRegistry";
+export type {
+  InspectorTabManifest,
+  InspectorTabProps,
+} from "./inspectorTabRegistry";
+export type {
+  TermEditorSectionManifest,
+  TermEditorSectionProps,
+} from "./termEditorSectionRegistry";
+export type {
+  EditorVariantProvider,
+  EditorVariant,
+  VariantFields,
+} from "./editorVariantRegistry";
 export type { ResolvedMenuItem } from "./menuResolver";
-export type { PublishContext, PublishLogger, PublishLogEntry } from "../services/publisher";
+export type {
+  PublishContext,
+  PublishLogger,
+  PublishLogEntry,
+  AdditionalRender,
+  AdditionalListingRender,
+  RenderHomeOptions,
+} from "../services/publisher";
+export type { RssChannel, RssItem, RssEnclosure } from "./rss";
 export type { MenuFilterContext, MenuJson } from "../services/menuPublisher";
 export type { ListItem, ListResponse, UploadFileOptions, StorageLimitsResponse } from "../services/flexwegApi";
 
@@ -79,13 +100,22 @@ import * as ReactJsxRuntime from "react/jsx-runtime";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as ReactI18next from "react-i18next";
-import { pluginApi } from "./pluginRegistry";
+import {
+  pluginApi,
+  applyFilters,
+  applyFiltersSync,
+  doAction,
+} from "./pluginRegistry";
 import { registerBlock } from "./blockRegistry";
 import { registerDashboardCard } from "./dashboardCardRegistry";
+import { registerInspectorTab } from "./inspectorTabRegistry";
+import { registerTermEditorSection } from "./termEditorSectionRegistry";
+import { registerEditorVariantProvider } from "./editorVariantRegistry";
 import {
   registerExternalPlugin,
   registerExternalTheme,
 } from "../services/externalRegistry";
+import { buildRssFeedXml } from "./rss";
 
 // core/slug — URL building + slug validation
 import {
@@ -95,6 +125,8 @@ import {
   buildPostUrl,
   buildTermUrl,
   pathToPublicUrl,
+  canonicalPath,
+  canonicalUrl,
   detectPathCollision,
   detectTermSlugCollision,
   normalizeMediaSlug,
@@ -138,7 +170,7 @@ import { fetchAllPosts, createPost, updatePost } from "../services/posts";
 import { uploadMedia } from "../services/media";
 
 // services/taxonomies — term CRUD
-import { createTerm } from "../services/taxonomies";
+import { createTerm, updateTerm, deleteTerm } from "../services/taxonomies";
 
 // services/users — author resolution
 import { buildAuthorLookup } from "../services/users";
@@ -148,10 +180,17 @@ import {
   publishPost,
   buildPublishContext,
   buildSiteContext,
+  renderHome,
 } from "../services/publisher";
 
 // services/menuPublisher — /menu.json upload
 import { publishMenuJson } from "../services/menuPublisher";
+
+// services/postsJsonPublisher — /data/posts.json upload (sidebar widgets)
+import { publishPostsJson } from "../services/postsJsonPublisher";
+
+// services/authorsJsonPublisher — /data/authors.json upload (author bio widget)
+import { publishAuthorsJson } from "../services/authorsJsonPublisher";
 
 // services/catalogPublisher — /data/products.json upload (storefront theme)
 import { publishProductsJson, deleteProductsJson } from "../services/catalogPublisher";
@@ -221,7 +260,22 @@ declare global {
 // is what every in-tree plugin/theme has historically used; exposing
 // it formally lets them all be packaged as external bundles at build
 // time. Backwards compatible — 1.0.0 bundles still load.
-export const FLEXWEG_API_VERSION = "1.1.0";
+// 1.2.0 — multilang-enablement: filter/action invocation helpers
+// (applyFilters, applyFiltersSync, doAction), updateTerm/deleteTerm
+// dispatchers, registerInspectorTab + registerTermEditorSection
+// (extensible editor + taxonomies UI), Post.translations +
+// lastPublishedPathsByLocale, Term.translations, publisher
+// `publish.additional` + `publish.extraListings` filters, sitemap
+// `sitemap.url.entry` / `sitemap.urls.extra` / `sitemap.urlset.namespaces`
+// / `sitemap.index.extra` filters, BaseLayoutProps.currentLocale for
+// per-page <html lang>, buildRssFeedXml shared helper. Backwards
+// compatible — every 1.1.x bundle still loads.
+// 1.3.0 — editor variant API: registerEditorVariantProvider lets
+// plugins contribute draft variants (multilang, A/B, drafts) that
+// render as a tab strip above the main editor. The WYSIWYG, blocks
+// and drag-and-drop stay identical across variants. Backwards
+// compatible — every 1.2.x bundle still loads.
+export const FLEXWEG_API_VERSION = "1.3.0";
 export const FLEXWEG_API_MIN_VERSION = "1.0.0";
 
 // Snapshot of the public runtime API. Each named property is
@@ -239,8 +293,14 @@ export interface FlexwegRuntime {
   reactI18next: typeof ReactI18next;
   // CMS plugin API
   pluginApi: typeof pluginApi;
+  applyFilters: typeof applyFilters;
+  applyFiltersSync: typeof applyFiltersSync;
+  doAction: typeof doAction;
   registerBlock: typeof registerBlock;
   registerDashboardCard: typeof registerDashboardCard;
+  registerInspectorTab: typeof registerInspectorTab;
+  registerTermEditorSection: typeof registerTermEditorSection;
+  registerEditorVariantProvider: typeof registerEditorVariantProvider;
   registerExternalPlugin: typeof registerExternalPlugin;
   registerExternalTheme: typeof registerExternalTheme;
   // core/slug
@@ -250,6 +310,8 @@ export interface FlexwegRuntime {
   buildPostUrl: typeof buildPostUrl;
   buildTermUrl: typeof buildTermUrl;
   pathToPublicUrl: typeof pathToPublicUrl;
+  canonicalPath: typeof canonicalPath;
+  canonicalUrl: typeof canonicalUrl;
   detectPathCollision: typeof detectPathCollision;
   detectTermSlugCollision: typeof detectTermSlugCollision;
   normalizeMediaSlug: typeof normalizeMediaSlug;
@@ -288,14 +350,23 @@ export interface FlexwegRuntime {
   uploadMedia: typeof uploadMedia;
   // services/taxonomies
   createTerm: typeof createTerm;
+  updateTerm: typeof updateTerm;
+  deleteTerm: typeof deleteTerm;
+  // core/rss
+  buildRssFeedXml: typeof buildRssFeedXml;
   // services/users
   buildAuthorLookup: typeof buildAuthorLookup;
   // services/publisher
   publishPost: typeof publishPost;
   buildPublishContext: typeof buildPublishContext;
   buildSiteContext: typeof buildSiteContext;
+  renderHome: typeof renderHome;
   // services/menuPublisher
   publishMenuJson: typeof publishMenuJson;
+  // services/postsJsonPublisher — exposed so plugins (multilang) can
+  // generate per-language data/posts.json snapshots at custom paths.
+  publishPostsJson: typeof publishPostsJson;
+  publishAuthorsJson: typeof publishAuthorsJson;
   // services/catalogPublisher
   publishProductsJson: typeof publishProductsJson;
   deleteProductsJson: typeof deleteProductsJson;
@@ -339,8 +410,14 @@ const runtime: FlexwegRuntime = {
   reactDomClient: ReactDOMClient,
   reactI18next: ReactI18next,
   pluginApi,
+  applyFilters,
+  applyFiltersSync,
+  doAction,
   registerBlock,
   registerDashboardCard,
+  registerInspectorTab,
+  registerTermEditorSection,
+  registerEditorVariantProvider,
   registerExternalPlugin,
   registerExternalTheme,
   slugify,
@@ -349,6 +426,8 @@ const runtime: FlexwegRuntime = {
   buildPostUrl,
   buildTermUrl,
   pathToPublicUrl,
+  canonicalPath,
+  canonicalUrl,
   detectPathCollision,
   detectTermSlugCollision,
   normalizeMediaSlug,
@@ -378,11 +457,17 @@ const runtime: FlexwegRuntime = {
   updatePost,
   uploadMedia,
   createTerm,
+  updateTerm,
+  deleteTerm,
+  buildRssFeedXml,
   buildAuthorLookup,
   publishPost,
   buildPublishContext,
   buildSiteContext,
+  renderHome,
   publishMenuJson,
+  publishPostsJson,
+  publishAuthorsJson,
   publishProductsJson,
   deleteProductsJson,
   updatePluginConfig,
@@ -416,8 +501,14 @@ if (typeof window !== "undefined") {
 // like `import { uploadFile, slugify } from "@flexweg/cms-runtime"`.
 export {
   pluginApi,
+  applyFilters,
+  applyFiltersSync,
+  doAction,
   registerBlock,
   registerDashboardCard,
+  registerInspectorTab,
+  registerTermEditorSection,
+  registerEditorVariantProvider,
   registerExternalPlugin,
   registerExternalTheme,
   slugify,
@@ -426,6 +517,8 @@ export {
   buildPostUrl,
   buildTermUrl,
   pathToPublicUrl,
+  canonicalPath,
+  canonicalUrl,
   detectPathCollision,
   detectTermSlugCollision,
   normalizeMediaSlug,
@@ -455,11 +548,17 @@ export {
   updatePost,
   uploadMedia,
   createTerm,
+  updateTerm,
+  deleteTerm,
+  buildRssFeedXml,
   buildAuthorLookup,
   publishPost,
   buildPublishContext,
   buildSiteContext,
+  renderHome,
   publishMenuJson,
+  publishPostsJson,
+  publishAuthorsJson,
   publishProductsJson,
   deleteProductsJson,
   updatePluginConfig,

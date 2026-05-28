@@ -28,8 +28,15 @@ export function SingleTemplate({
   // supported locales via prefix match, fallback EN).
   const publicT = i18n.getFixedT(pickPublicLocale(site.settings.language), "theme-default");
 
+  // `site.homePath` (set by plugins like multilang) wins over the
+  // hardcoded "/index.html" so a FR page's breadcrumb points at
+  // /fr/index.html instead of /index.html. Same fallback as the
+  // Header brand link.
   const breadcrumbs: { label: string; href?: string }[] = [
-    { label: "Home", href: "/index.html" },
+    {
+      label: publicT("breadcrumb.home", { defaultValue: "Home" }),
+      href: site.homePath ?? "/index.html",
+    },
   ];
   if (primaryTerm && primaryTerm.type === "category") {
     breadcrumbs.push({

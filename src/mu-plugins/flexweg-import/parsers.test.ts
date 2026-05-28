@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { splitFrontmatter, parseMarkdownFile } from "./parsers/markdown";
 import { parseWordPressXml } from "./parsers/wordpress";
+import { parseSources } from "./parsers";
 import { scanBundle, DEFAULT_IMPORT_OPTIONS, type ImportBundle } from "./importer";
 
 describe("markdown frontmatter parser", () => {
@@ -322,5 +323,128 @@ describe("scanBundle slug resolution", () => {
     );
     expect(summary.entries[0].finalSlug).toBe("hello-world-2");
     expect(summary.entries[0].slugWasModified).toBe(true);
+  });
+});
+
+describe("multilingual import (sidecars + _terms.json)", () => {
+  it("attaches a `.fr.md` sidecar to the primary entry's translations", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "welcome.md",
+        content:
+          "---\ntitle: Welcome\nslug: welcome\ncategory: Lifestyle\n---\nHello world.",
+      },
+      {
+        kind: "markdown",
+        name: "welcome.fr.md",
+        content:
+          "---\ntitle: Bienvenue\nslug: bienvenue\nexcerpt: Salut\n---\nBonjour le monde.",
+      },
+    ]);
+    expect(result.entries).toHaveLength(1);
+    const entry = result.entries[0]!;
+    expect(entry.title).toBe("Welcome");
+    expect(entry.translations).toBeDefined();
+    expect(entry.translations!.fr).toEqual({
+      title: "Bienvenue",
+      slug: "bienvenue",
+      contentBody: "Bonjour le monde.",
+      excerpt: "Salut",
+      seoTitle: undefined,
+      seoDescription: undefined,
+    });
+  });
+
+  it("warns when a sidecar has no matching primary", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "lost.fr.md",
+        content: "---\ntitle: Perdu\nslug: perdu\n---\nOrphelin.",
+      },
+    ]);
+    expect(result.entries).toHaveLength(0);
+    const warnings = result.warnings.filter((w) =>
+      w.message.includes("no matching primary"),
+    );
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]!.source).toBe("lost.fr.md");
+  });
+
+  it("loads term translations from `_terms.json` at the bundle root", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "_terms.json",
+        content: JSON.stringify({
+          categories: {
+            Care: { fr: { name: "Soins", slug: "soins" } },
+            Health: { fr: { name: "Santé", slug: "sante" } },
+          },
+          tags: {
+            food: { fr: { name: "alimentation", slug: "alimentation" } },
+          },
+        }),
+      },
+    ]);
+    expect(result.termTranslations).toHaveLength(3);
+    const care = result.termTranslations.find((t) => t.name === "Care");
+    expect(care?.type).toBe("category");
+    expect(care?.translations.fr).toEqual({
+      name: "Soins",
+      slug: "soins",
+      description: undefined,
+    });
+    const food = result.termTranslations.find((t) => t.name === "food");
+    expect(food?.type).toBe("tag");
+    expect(food?.translations.fr.name).toBe("alimentation");
+  });
+
+  it("omits `description` from term translations when not provided (Firestore safety)", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "_terms.json",
+        content: JSON.stringify({
+          categories: {
+            Care: { fr: { name: "Soins", slug: "soins" } },
+          },
+        }),
+      },
+    ]);
+    const care = result.termTranslations.find((t) => t.name === "Care");
+    expect(care?.translations.fr).toEqual({ name: "Soins", slug: "soins" });
+    expect("description" in care!.translations.fr).toBe(false);
+  });
+
+  it("keeps `description` when explicitly provided", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "_terms.json",
+        content: JSON.stringify({
+          categories: {
+            Care: { fr: { name: "Soins", slug: "soins", description: "Notre rubrique soins" } },
+          },
+        }),
+      },
+    ]);
+    const care = result.termTranslations.find((t) => t.name === "Care");
+    expect(care?.translations.fr.description).toBe("Notre rubrique soins");
+  });
+
+  it("ignores malformed `_terms.json` with a warning instead of throwing", () => {
+    const result = parseSources([
+      {
+        kind: "markdown",
+        name: "_terms.json",
+        content: "{ this is not valid JSON",
+      },
+    ]);
+    expect(result.termTranslations).toHaveLength(0);
+    expect(
+      result.warnings.some((w) => w.source === "_terms.json"),
+    ).toBe(true);
   });
 });

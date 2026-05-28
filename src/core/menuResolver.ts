@@ -9,6 +9,13 @@ export interface ResolvedMenuItem {
   label: string;
   href: string;
   children?: ResolvedMenuItem[];
+  // Per-language label map projected from `MenuItem.translations`.
+  // Public-side menu-loader.js reads it and picks the entry matching
+  // `document.documentElement.lang`, falling back to `label` for any
+  // locale without an override. Absent on mono-lingual sites (the
+  // resolver omits it when the source item has no translations) so
+  // the published menu.json stays small.
+  labels?: Record<string, string>;
 }
 
 // Minimal "context" the resolver needs. Not the full PublishContext so
@@ -29,12 +36,34 @@ export function resolveMenuItems(
   items: MenuItem[],
   ctx: MenuResolveContext,
 ): ResolvedMenuItem[] {
-  return items.map((item) => ({
-    id: item.id,
-    label: item.label,
-    href: resolveMenuHref(item, ctx),
-    children: item.children ? resolveMenuItems(item.children, ctx) : undefined,
-  }));
+  return items.map((item) => {
+    const resolved: ResolvedMenuItem = {
+      id: item.id,
+      label: item.label,
+      href: resolveMenuHref(item, ctx),
+    };
+    if (item.children) resolved.children = resolveMenuItems(item.children, ctx);
+    const labels = pickLabelOverrides(item.translations);
+    if (labels) resolved.labels = labels;
+    return resolved;
+  });
+}
+
+// Squashes `MenuItem.translations` to a plain `{ <lang>: <label> }`
+// map, dropping languages with empty / missing labels. Returns
+// undefined when nothing survives so the resolver can leave the
+// field off the resolved item (keeps menu.json small on mono-lingual
+// sites).
+function pickLabelOverrides(
+  translations: MenuItem["translations"],
+): Record<string, string> | undefined {
+  if (!translations) return undefined;
+  const out: Record<string, string> = {};
+  for (const [lang, entry] of Object.entries(translations)) {
+    const label = entry?.label?.trim();
+    if (label) out[lang] = label;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function resolveMenuHref(item: MenuItem, ctx: MenuResolveContext): string {

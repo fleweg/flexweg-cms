@@ -108,34 +108,54 @@ export function postPeriods(post: Post, drillDown: DrillDown): {
 export const ARCHIVES_ROOT = "archives";
 export const ARCHIVES_INDEX_PATH = `${ARCHIVES_ROOT}/index.html`;
 
-export function yearIndexPath(p: YearPeriod): string {
-  return `${ARCHIVES_ROOT}/${p.year}/index.html`;
+// All path / href helpers accept an optional `root` so the multilang
+// generator can produce `<lang>/archives/...` URLs without rewriting
+// the formatting logic. Defaults to the canonical `archives` root so
+// non-multilang sites stay unchanged.
+export function yearIndexPath(p: YearPeriod, root: string = ARCHIVES_ROOT): string {
+  return `${root}/${p.year}/index.html`;
 }
 
-export function monthIndexPath(p: MonthPeriod): string {
+export function monthIndexPath(p: MonthPeriod, root: string = ARCHIVES_ROOT): string {
   const m = String(p.month).padStart(2, "0");
-  return `${ARCHIVES_ROOT}/${p.year}/${m}/index.html`;
+  return `${root}/${p.year}/${m}/index.html`;
 }
 
-export function weekIndexPath(p: WeekPeriod): string {
+export function weekIndexPath(p: WeekPeriod, root: string = ARCHIVES_ROOT): string {
   const w = String(p.week).padStart(2, "0");
-  return `${ARCHIVES_ROOT}/${p.year}/W${w}/index.html`;
+  return `${root}/${p.year}/W${w}/index.html`;
 }
 
-export function periodIndexPath(p: ArchivePeriod): string {
-  if (p.kind === "year") return yearIndexPath(p);
-  if (p.kind === "month") return monthIndexPath(p);
-  return weekIndexPath(p);
+export function periodIndexPath(p: ArchivePeriod, root: string = ARCHIVES_ROOT): string {
+  if (p.kind === "year") return yearIndexPath(p, root);
+  if (p.kind === "month") return monthIndexPath(p, root);
+  return weekIndexPath(p, root);
 }
 
 // HREFs used inside the rendered HTML — relative root paths so the
 // site works regardless of `baseUrl` being set.
-export function periodHref(p: ArchivePeriod): string {
-  const path = periodIndexPath(p).replace(/index\.html$/, "");
+export function periodHref(p: ArchivePeriod, root: string = ARCHIVES_ROOT): string {
+  const path = periodIndexPath(p, root).replace(/index\.html$/, "");
   return `/${path}`;
 }
 
 export const ARCHIVES_INDEX_HREF = `/${ARCHIVES_ROOT}/`;
+
+// Returns the root for a given locale: `<lang>/archives` for non-
+// primary languages, `archives` for the primary. Used by the
+// multilang generator pass.
+export function archivesRootFor(language: string | undefined, primaryLanguage: string): string {
+  if (!language || language === primaryLanguage) return ARCHIVES_ROOT;
+  return `${language}/${ARCHIVES_ROOT}`;
+}
+
+export function archivesIndexPathFor(language: string | undefined, primaryLanguage: string): string {
+  return `${archivesRootFor(language, primaryLanguage)}/index.html`;
+}
+
+export function archivesIndexHrefFor(language: string | undefined, primaryLanguage: string): string {
+  return `/${archivesRootFor(language, primaryLanguage)}/`;
+}
 
 // Stable string key used as a Map key (e.g. group posts by period).
 export function periodKey(p: ArchivePeriod): string {

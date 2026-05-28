@@ -13,6 +13,7 @@
 // (and sitemap-news.xml if News is enabled).
 
 import {
+  applyFiltersSync,
   buildPostUrl,
   pathToPublicUrl,
   deleteFile,
@@ -98,6 +99,31 @@ interface SitemapEntity {
   createdAtMs: number;
   updatedAtMs: number;
   title: string;
+  // Optional reference back to the source post so plugin filters that
+  // augment <url> entries can look up extra data (e.g. multilang
+  // alternate URLs from `post.translations`). Undefined for "extra"
+  // entries contributed by `sitemap.urls.extra` that don't map to a
+  // single core entity.
+  sourcePost?: Post;
+}
+
+// Extra <url> entry contributed by a plugin via the `sitemap.urls.extra`
+// filter. Used to add translation paths, custom landing pages, etc. to
+// the yearly sitemap.
+export interface SitemapExtraUrl {
+  path: string;
+  // Defaults to "now" when omitted.
+  lastmodMs?: number;
+  // Optional inner XML appended inside <url>...</url> (used by
+  // multilang to inject <xhtml:link rel="alternate" ...> tags).
+  extraInnerXml?: string;
+}
+
+// Extra <sitemap> reference in the sitemap-index. Used by multilang to
+// add per-language news sitemaps, etc.
+export interface SitemapIndexExtraEntry {
+  path: string;
+  lastmodMs?: number;
 }
 
 function entityFromPost(post: Post, terms: Term[]): SitemapEntity | null {
@@ -115,6 +141,7 @@ function entityFromPost(post: Post, terms: Term[]): SitemapEntity | null {
     createdAtMs: created,
     updatedAtMs: updated,
     title: post.title || post.slug,
+    sourcePost: post,
   };
 }
 
@@ -191,15 +218,44 @@ function buildYearSitemap(
   entities: SitemapEntity[],
   baseUrl: string,
   xslHref: string,
+  extraUrls: SitemapExtraUrl[],
 ): string {
+  // Plugin-driven extra namespaces (e.g. multilang's xmlns:xhtml).
+  // Filter runs once per yearly sitemap so plugins can decide based
+  // on the URL set; consumers typically return a stable map.
+  const extraNamespaces = applyFiltersSync<Record<string, string>>(
+    "sitemap.urlset.namespaces",
+    {},
+    { kind: "year", baseUrl },
+  );
+  const nsAttrs = Object.entries(extraNamespaces)
+    .map(([k, v]) => ` ${escapeXml(k)}="${escapeXml(v)}"`)
+    .join("");
   const lines = [
     preamble(xslHref),
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${nsAttrs}>`,
   ];
   for (const e of entities) {
+    // Plugin-driven extra inner XML for this URL (e.g. multilang's
+    // <xhtml:link rel="alternate" ...> entries). Returned as a string
+    // already escaped + indented by the plugin.
+    const extraInner = applyFiltersSync<string>(
+      "sitemap.url.entry",
+      "",
+      { entity: e.sourcePost, baseUrl, path: e.path, lastmodMs: e.updatedAtMs },
+    );
     lines.push("  <url>");
     lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, e.path))}</loc>`);
     lines.push(`    <lastmod>${isoDateOnly(e.updatedAtMs)}</lastmod>`);
+    if (extraInner) lines.push(extraInner);
+    lines.push("  </url>");
+  }
+  for (const extra of extraUrls) {
+    const lastmod = extra.lastmodMs ?? Date.now();
+    lines.push("  <url>");
+    lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, extra.path))}</loc>`);
+    lines.push(`    <lastmod>${isoDateOnly(lastmod)}</lastmod>`);
+    if (extra.extraInnerXml) lines.push(extra.extraInnerXml);
     lines.push("  </url>");
   }
   lines.push("</urlset>");
@@ -212,6 +268,7 @@ function buildSitemapIndex(
   baseUrl: string,
   lastmodMs: number,
   xslHref: string,
+  extraEntries: SitemapIndexExtraEntry[],
 ): string {
   const lines = [
     preamble(xslHref),
@@ -228,6 +285,13 @@ function buildSitemapIndex(
     lines.push("  <sitemap>");
     lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, SITEMAP_NEWS_PATH))}</loc>`);
     lines.push(`    <lastmod>${date}</lastmod>`);
+    lines.push("  </sitemap>");
+  }
+  for (const extra of extraEntries) {
+    const lastmod = extra.lastmodMs ?? lastmodMs;
+    lines.push("  <sitemap>");
+    lines.push(`    <loc>${escapeXml(pathToPublicUrl(baseUrl, extra.path))}</loc>`);
+    lines.push(`    <lastmod>${isoDateOnly(lastmod)}</lastmod>`);
     lines.push("  </sitemap>");
   }
   lines.push("</sitemapindex>");
@@ -337,8 +401,17 @@ export async function regenerateSitemaps(args: {
   // don't leave a stale sitemap pointing at nothing.
   for (const year of targetYears) {
     const list = yearMap.get(year) ?? [];
+    // Plugin-driven extra URLs for this year. Even years with zero
+    // core entities can still receive plugin URLs (e.g. multilang
+    // translated archives) so we always ask before deciding to
+    // delete.
+    const extraUrls = applyFiltersSync<SitemapExtraUrl[]>(
+      "sitemap.urls.extra",
+      [],
+      { posts, pages, terms, settings, year, scope: "year" },
+    );
     const path = yearlySitemapPath(year);
-    if (list.length === 0) {
+    if (list.length === 0 && extraUrls.length === 0) {
       try {
         await deleteFile(path);
         deleted.push(path);
@@ -348,7 +421,7 @@ export async function regenerateSitemaps(args: {
       }
       continue;
     }
-    const xml = buildYearSitemap(list, baseUrl, xslHref);
+    const xml = buildYearSitemap(list, baseUrl, xslHref, extraUrls);
     await uploadFile({ path, content: xml });
     uploaded.push(path);
   }
@@ -360,12 +433,18 @@ export async function regenerateSitemaps(args: {
     const livingYears = [...yearMap.entries()]
       .filter(([, list]) => list.length > 0)
       .map(([year]) => year);
+    const extraIndexEntries = applyFiltersSync<SitemapIndexExtraEntry[]>(
+      "sitemap.index.extra",
+      [],
+      { settings },
+    );
     const xml = buildSitemapIndex(
       livingYears,
       config.newsEnabled,
       baseUrl,
       Date.now(),
       xslHref,
+      extraIndexEntries,
     );
     await uploadFile({ path: SITEMAP_INDEX_PATH, content: xml });
     uploaded.push(SITEMAP_INDEX_PATH);
@@ -400,12 +479,25 @@ export async function regenerateSitemaps(args: {
 export async function regenerateRobotsTxt(args: {
   config: SitemapsConfig;
   baseUrl: string;
+  // When true (mirrors `SiteSettings.discourageIndexing` — passed in
+  // by the caller so this generator stays settings-agnostic),
+  // robots.txt is forced to a global Disallow regardless of the
+  // user's custom robots content. Mirrors WordPress' "Discourage
+  // search engines from indexing this site" behaviour: the discourage
+  // flag wins over any per-site customisation, because mixing
+  // crawler-allow rules with a sitewide noindex meta would be
+  // contradictory.
+  discourageIndexing?: boolean;
 }): Promise<void> {
   const baseUrl = (args.baseUrl || "").replace(/\/+$/, "");
-  const content =
-    args.config.robotsTxt && args.config.robotsTxt.trim().length > 0
-      ? args.config.robotsTxt
-      : defaultRobotsTxt(baseUrl, args.config.newsEnabled);
+  let content: string;
+  if (args.discourageIndexing) {
+    content = "User-agent: *\nDisallow: /\n";
+  } else if (args.config.robotsTxt && args.config.robotsTxt.trim().length > 0) {
+    content = args.config.robotsTxt;
+  } else {
+    content = defaultRobotsTxt(baseUrl, args.config.newsEnabled);
+  }
   await uploadFile({ path: ROBOTS_PATH, content });
 }
 

@@ -39,7 +39,7 @@ export function CategoryTemplate({
   return (
     <main className="max-w-container-max mx-auto px-gutter md:px-gutter-desktop py-stack-lg md:py-stack-lg pb-section-gap-desktop">
       <nav className="flex items-center gap-2 mb-stack-lg text-on-surface-variant text-label-caps font-semibold uppercase tracking-widest">
-        <a className="hover:text-primary transition-colors" href="/index.html">
+        <a className="hover:text-primary transition-colors" href={site.homePath ?? "/index.html"}>
           {t("publicBaked.home")}
         </a>
         <span className="material-symbols-outlined text-[14px]">chevron_right</span>

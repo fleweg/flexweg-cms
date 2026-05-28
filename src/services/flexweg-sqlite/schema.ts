@@ -57,7 +57,9 @@ export const SCHEMA_STATEMENTS: Array<{ sql: string; params?: unknown[] }> = [
       last_published_path TEXT,
       previous_published_paths TEXT,
       last_published_hash TEXT,
-      legacy_url TEXT
+      legacy_url TEXT,
+      translations TEXT,
+      last_published_paths_by_locale TEXT
     )`,
   },
   { sql: `CREATE INDEX IF NOT EXISTS idx_posts_type ON posts(type)` },
@@ -77,7 +79,9 @@ export const SCHEMA_STATEMENTS: Array<{ sql: string; params?: unknown[] }> = [
       parent_id TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      last_published_path TEXT
+      last_published_path TEXT,
+      translations TEXT,
+      seo TEXT
     )`,
   },
   { sql: `CREATE INDEX IF NOT EXISTS idx_terms_type ON terms(type)` },
@@ -125,7 +129,47 @@ export const SCHEMA_STATEMENTS: Array<{ sql: string; params?: unknown[] }> = [
 // every boot to handle schema additions.
 export async function ensureSchema(): Promise<void> {
   await sqlBatch(SCHEMA_STATEMENTS);
+  await migrateSchema();
   await seedDefaultSettingsIfMissing();
+}
+
+// Column-level migrations. `CREATE TABLE IF NOT EXISTS` only fires for
+// fresh databases; an existing DB whose `posts` table was created
+// before a new column was added is missed entirely. We probe the
+// schema with PRAGMA table_info and ALTER TABLE for any column that's
+// declared above but absent on disk. SQLite's ALTER TABLE ADD COLUMN
+// only supports adding nullable / DEFAULT columns at the end (which is
+// what we do — every addition is a nullable TEXT JSON column), and
+// runs in constant time regardless of row count.
+async function migrateSchema(): Promise<void> {
+  await ensureColumns("posts", [
+    { name: "translations", ddl: "TEXT" },
+    { name: "last_published_paths_by_locale", ddl: "TEXT" },
+  ]);
+  await ensureColumns("terms", [
+    { name: "translations", ddl: "TEXT" },
+    { name: "seo", ddl: "TEXT" },
+  ]);
+}
+
+interface ColumnSpec {
+  name: string;
+  // SQL type + constraints emitted after `ADD COLUMN <name>`. Keep it
+  // nullable + without DEFAULT to satisfy SQLite's ALTER TABLE rules
+  // on every release branch.
+  ddl: string;
+}
+
+async function ensureColumns(table: string, columns: ColumnSpec[]): Promise<void> {
+  const { rows } = await sqlQuery<{ name: string }>(
+    `PRAGMA table_info(${table})`,
+    [],
+  );
+  const present = new Set(rows.map((r) => r.name));
+  for (const col of columns) {
+    if (present.has(col.name)) continue;
+    await sqlExec(`ALTER TABLE ${table} ADD COLUMN ${col.name} ${col.ddl}`, []);
+  }
 }
 
 async function seedDefaultSettingsIfMissing(): Promise<void> {
