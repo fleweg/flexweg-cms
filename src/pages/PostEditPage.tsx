@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Eye, ExternalLink, ImageIcon, Loader2, Save, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Eye,
+  ExternalLink,
+  ImageIcon,
+  Loader2,
+  Save,
+  Trash2,
+} from "lucide-react";
 import type { Editor } from "@tiptap/core";
 import { Timestamp as TimestampImpl, type Timestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
@@ -33,6 +42,7 @@ import {
   findAvailableSlug,
   isValidSlug,
   slugify,
+  type PathOwner,
 } from "../core/slug";
 import { pickMediaUrl } from "../core/media";
 import { ADMIN_PREVIEW_KEY } from "../services/imageFormats";
@@ -383,6 +393,16 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     [existing, activeVariantId, title, slug, variantDrafts, activeProvider, variantCtx],
   );
 
+  // One-shot guard read by the slug auto-gen effect below. React 18
+  // batches state updates from sibling effects in the same render, so
+  // when `existing` first resolves the auto-gen effect runs ALONGSIDE
+  // the hydrate effect and sees the pre-hydrate `title=""` /
+  // `slugDirty=false`. Without this guard it would call setSlug("")
+  // after the hydrate's setSlug(existing.slug), and the hydrated slug
+  // would disappear on the primary variant until the user manually
+  // swaps tabs (which forces a fresh applyFieldsToEditor pass).
+  const justHydratedRef = useRef(false);
+
   // Hydrate from Firestore record on first match. Only depend on the id +
   // existing.id to avoid resetting fields on every Firestore-driven re-render.
   useEffect(() => {
@@ -399,6 +419,10 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     setSeoDescription(existing.seo?.description ?? "");
     setCreatedAtInput(timestampToInputValue(existing.createdAt));
     setPublishedAtInput(timestampToInputValue(existing.publishedAt));
+    // Tell the auto-slug-from-title effect that runs later in this
+    // same render cycle to skip its run — see the ref's declaration
+    // above for the race details.
+    justHydratedRef.current = true;
     // tags is intentionally outside the deps: we re-derive tagIds when the
     // list of available tags changes (rare) but not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -420,30 +444,62 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
   // Flexweg. For non-primary variants we skip the dedup because
   // collision detection is per-language (handled by the variant
   // provider at save time).
+  // When auto-gen produces a suffixed slug (`my-post-2` because
+  // `my-post` was already taken), this carries the owner of the base
+  // collision so InlineSlug can show "Suggested X-2 because 'X' is
+  // already used by post: Y". Without this, the suffix is silent and
+  // the user is left guessing why their slug isn't what they typed.
+  const [autoSlugCollisionOwner, setAutoSlugCollisionOwner] =
+    useState<PathOwner | null>(null);
+
   useEffect(() => {
     if (slugDirty) return;
+    // Skip exactly one cycle after the hydrate effect committed —
+    // sibling effects don't see each other's pending state updates,
+    // so the freshly-hydrated `slugDirty=true` isn't visible yet.
+    // Without this guard the next two lines would overwrite the
+    // hydrated slug with a slugified empty title.
+    if (justHydratedRef.current) {
+      justHydratedRef.current = false;
+      return;
+    }
     const base = slugify(title);
     if (!base) {
       setSlug("");
+      setAutoSlugCollisionOwner(null);
       return;
     }
     if (!isOnPrimaryVariant) {
       // Non-primary variant — let the language's own collision
       // detection (provider.validate) handle uniqueness at save.
       setSlug(base);
+      setAutoSlugCollisionOwner(null);
       return;
     }
     const primaryTerm = primaryTermId
       ? categories.find((c) => c.id === primaryTermId)
       : undefined;
+    // Check the BASE path explicitly so we can tell the user which
+    // entity owns the conflicting URL. Exclude the entity being
+    // edited so an existing post doesn't appear to collide with
+    // itself once its slug-from-title gets recomputed.
+    const allTerms = [...categories, ...tags];
+    const basePath = buildPostUrl({ post: { type, slug: base }, primaryTerm });
+    const baseOwner = detectPathCollision(basePath, posts, pages, allTerms, existing?.id);
+    if (!baseOwner) {
+      setSlug(base);
+      setAutoSlugCollisionOwner(null);
+      return;
+    }
     const isUsed = (candidate: string): boolean => {
       const path = buildPostUrl({
         post: { type, slug: candidate },
         primaryTerm,
       });
-      return detectPathCollision(path, posts, pages, [...categories, ...tags]) !== null;
+      return detectPathCollision(path, posts, pages, allTerms, existing?.id) !== null;
     };
     setSlug(findAvailableSlug(base, isUsed));
+    setAutoSlugCollisionOwner(baseOwner);
   }, [
     title,
     slugDirty,
@@ -454,6 +510,7 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     pages,
     categories,
     tags,
+    existing?.id,
   ]);
 
   const slugValid = isValidSlug(slug);
@@ -555,6 +612,16 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     if (!user) return;
     if (!title.trim()) return;
     if (!slugValid) return;
+
+    // Lock the slug for the rest of the save flow. The user committed
+    // to it by clicking Save; the auto-gen has no business second-
+    // guessing it. Specifically this defends against an intermediate
+    // render between `addOptimisticPost` (which adds the new post to
+    // the in-memory list) and the URL change (which lands `existing`)
+    // — in that brief window, the auto-gen would otherwise see the
+    // freshly-added optimistic post as a collision and bump the slug
+    // to `-2`, then optimistic & DB both stick at `-2`.
+    if (!slugDirty) setSlugDirty(true);
 
     // Non-primary variant branch — dispatch to the provider's
     // saveFields. The primary variant continues through the standard
@@ -702,10 +769,13 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
     }
   }
 
+  const [deleting, setDeleting] = useState(false);
+
   async function handleDelete() {
     if (!existing) return;
     if (!window.confirm(t("posts.edit.confirmDelete"))) return;
     setLogEntries([]);
+    setDeleting(true);
     const log = (entry: PublishLogEntry) => setLogEntries((prev) => [...prev, entry]);
     try {
       const ctx = await buildPublishContext({
@@ -719,6 +789,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       navigate(`/${type === "post" ? "posts" : "pages"}`);
     } catch (err) {
       log({ level: "error", message: (err as Error).message });
+      // Only clear the loader on failure — on success we navigate
+      // away and unmount, so the spinner stays until the route
+      // change. Without that, the trash icon would re-appear for one
+      // render between the await chain finishing and the navigate
+      // committing, looking like a no-op click.
+      setDeleting(false);
     }
   }
 
@@ -801,10 +877,34 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
       ? t("posts.edit.editTitle")
       : t("pages.title");
 
+  // Suppress collision messaging while a save is mid-flight. After
+  // `addOptimisticPost` lands but before the navigation commits, the
+  // optimistic copy of the post being saved briefly appears as a
+  // collision against itself (existing?.id isn't `newId` yet, so
+  // detectPathCollision doesn't exclude it). Showing the red error
+  // for those few frames looks like an actual save failure even
+  // though everything is on track — confusing UX. We hide the
+  // collision string entirely while `saving` is true and re-check
+  // once it lands.
   const collisionMessage =
-    slugValid && collision
+    !saving && slugValid && collision
       ? t(`posts.edit.slugCollision.${collision.kind}`, { label: collision.label })
       : undefined;
+
+  // One-line reason the Save button is disabled. Surfaced both as a
+  // hover tooltip on the button itself and as an inline message under
+  // the slug input — so the user never has to wonder why nothing
+  // happens when they click Save. `undefined` means the button is
+  // ready to fire.
+  const saveBlockedReason: string | undefined = !title.trim()
+    ? t("posts.edit.saveBlocked.titleRequired")
+    : !slug
+      ? t("posts.edit.saveBlocked.slugRequired")
+      : !slugValid
+        ? t("posts.edit.saveBlocked.slugInvalid")
+        : collisionMessage
+          ? t("posts.edit.saveBlocked.slugCollision")
+          : undefined;
 
   return (
     <>
@@ -854,10 +954,21 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
               type="button"
               className="btn-secondary"
               onClick={handleSave}
-              disabled={saving || !slugValid || !!collision}
+              disabled={saving || !!saveBlockedReason}
+              title={saveBlockedReason}
+              aria-disabled={saving || !!saveBlockedReason}
             >
               <Loader2 className={saving ? "h-4 w-4 animate-spin" : "hidden"} />
-              <Save className={saving ? "hidden" : "h-4 w-4"} />
+              <AlertCircle
+                className={
+                  !saving && saveBlockedReason
+                    ? "h-4 w-4 text-amber-500"
+                    : "hidden"
+                }
+              />
+              <Save
+                className={saving || saveBlockedReason ? "hidden" : "h-4 w-4"}
+              />
               <span className="hidden sm:inline">
                 {saving
                   ? t("common.saving")
@@ -872,9 +983,12 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
                 type="button"
                 className="btn-ghost"
                 onClick={handleDelete}
+                disabled={deleting}
                 aria-label={t("common.delete")}
+                title={deleting ? (t("common.deleting") as string) : undefined}
               >
-                <Trash2 className="h-4 w-4" />
+                <Loader2 className={deleting ? "h-4 w-4 animate-spin" : "hidden"} />
+                <Trash2 className={deleting ? "hidden" : "h-4 w-4"} />
               </button>
             )}
           </>
@@ -907,6 +1021,18 @@ export function PostOrPageEditPage({ type }: PostOrPageEditPageProps) {
               invalid={!slugValid && !!slug}
               invalidMessage={t("posts.edit.slugFormatHint")}
               collisionMessage={collisionMessage}
+              requiredHint={t("posts.edit.saveBlocked.slugRequired")}
+              autoSuggestMessage={
+                autoSlugCollisionOwner && !slugDirty && isOnPrimaryVariant
+                  ? t("posts.edit.slugAutoSuffixed", {
+                      base: slugify(title),
+                      owner: t(
+                        `posts.edit.slugAutoSuffixedOwner.${autoSlugCollisionOwner.kind}`,
+                        { label: autoSlugCollisionOwner.label },
+                      ),
+                    })
+                  : undefined
+              }
             />
           </div>
 

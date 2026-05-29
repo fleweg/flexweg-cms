@@ -1,4 +1,4 @@
-import { Link as LinkIcon } from "lucide-react";
+import { AlertCircle, Info, Link as LinkIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface InlineSlugProps {
@@ -13,6 +13,17 @@ interface InlineSlugProps {
   invalid?: boolean;
   invalidMessage?: string;
   collisionMessage?: string;
+  // True when the slug is the empty string AND would block save. Shows
+  // an amber "Slug required" hint instead of the red invalid-format
+  // message — empty isn't a *wrong* value, just an incomplete one, so
+  // the affordance should feel like guidance, not a validation error.
+  requiredHint?: string;
+  // Friendly informational message shown when the auto-slug machinery
+  // had to suffix the user's intended slug (e.g. "my-post-2" because
+  // "my-post" was already taken). Surfacing the collision owner lets
+  // the user understand WHY the suffix was added instead of guessing.
+  // Rendered in blue (informational), not red (error).
+  autoSuggestMessage?: string;
 }
 
 // Permalink strip rendered just under the inline title. Matches
@@ -26,8 +37,15 @@ export function InlineSlug({
   invalid,
   invalidMessage,
   collisionMessage,
+  requiredHint,
+  autoSuggestMessage,
 }: InlineSlugProps) {
   const { t } = useTranslation();
+  // When the slug is empty AND the parent passed a `requiredHint`, the
+  // Save button will be disabled. Show the hint in amber to communicate
+  // "needed to save" without the red "you typed something wrong"
+  // connotation of `invalid`.
+  const showRequired = !slug && !!requiredHint;
 
   return (
     <div className="text-xs text-surface-500 dark:text-surface-400">
@@ -46,10 +64,28 @@ export function InlineSlug({
         {pathSuffix && <span>{pathSuffix}</span>}
       </div>
       {invalid && invalidMessage && (
-        <p className="mt-1 text-red-600 font-sans">{invalidMessage}</p>
+        <p className="mt-1 flex items-center gap-1 text-red-600 font-sans">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          <span>{invalidMessage}</span>
+        </p>
       )}
       {!invalid && collisionMessage && (
-        <p className="mt-1 text-red-600 font-sans">{collisionMessage}</p>
+        <p className="mt-1 flex items-center gap-1 text-red-600 font-sans">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          <span>{collisionMessage}</span>
+        </p>
+      )}
+      {!invalid && !collisionMessage && showRequired && (
+        <p className="mt-1 flex items-center gap-1 text-amber-600 dark:text-amber-400 font-sans">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          <span>{requiredHint}</span>
+        </p>
+      )}
+      {!invalid && !collisionMessage && !showRequired && autoSuggestMessage && (
+        <p className="mt-1 flex items-center gap-1 text-sky-600 dark:text-sky-400 font-sans">
+          <Info className="h-3 w-3 shrink-0" />
+          <span>{autoSuggestMessage}</span>
+        </p>
       )}
     </div>
   );
