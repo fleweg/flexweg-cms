@@ -5,6 +5,7 @@
     "saved": "Guardado",
     "cancel": "Cancelar",
     "delete": "Eliminar",
+    "deleting": "A eliminar…",
     "edit": "Editar",
     "create": "Criar",
     "search": "Pesquisar",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Adicionar título",
       "permalink": "Ligação permanente",
       "slugFormatHint": "Apenas minúsculas, ASCII, separadas por hífens.",
+      "slugAutoSuffixed": "Sufixo adicionado porque \"{{base}}\" já é usado por {{owner}}.",
+      "slugAutoSuffixedOwner": {
+        "post": "publicação: \"{{label}}\"",
+        "page": "página: \"{{label}}\"",
+        "category": "categoria: \"{{label}}\""
+      },
+      "saveBlocked": {
+        "titleRequired": "Adicione um título antes de guardar.",
+        "slugRequired": "São necessários um título e um slug de URL para guardar.",
+        "slugInvalid": "Formato de slug inválido (ASCII minúsculo + hífens).",
+        "slugCollision": "Resolva o conflito de URL antes de guardar."
+      },
       "viewPublished": "Ver",
       "confirmDelete": "Eliminar este registo?",
       "inspector": {

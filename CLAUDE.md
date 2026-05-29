@@ -175,7 +175,17 @@ Hooks, components, contexts and the publish pipeline import from the top-level d
 
 Two pieces work in concert to keep the public site coherent under edits:
 
-1. **Slug uniqueness** — `core/slug.ts` exposes `detectPathCollision` (cross-checks a candidate path against every post / page / category) and `findAvailableSlug` (appends `-2`, `-3`, … until free). Auto-slug for new entities deduplicates silently; user-edited slugs surface an inline error and disable the Save button. Always compare on the **final URL path**, never the raw slug — two slugs may match without colliding (a post slug and a category slug can be identical because their URLs differ).
+1. **Slug uniqueness** — `core/slug.ts` exposes `detectPathCollision` (cross-checks a candidate path against every post / page / category) and `findAvailableSlug` (appends `-2`, `-3`, … until free). Auto-slug for new entities deduplicates silently; user-edited slugs surface an inline error and disable the Save button. Always compare on the **final URL path**, never the raw slug — two slugs may match without colliding (a post slug and a category slug can be identical because their URLs differ). When calling `detectPathCollision` from inside PostEditPage / the variant provider, **always pass `existing?.id` as `ignoreId`** so an entity doesn't collide with itself — most relevant on regen / re-save paths where the entity's optimistic copy is already in `posts`.
+
+   **PostEditPage slug auto-gen invariants** (touch carefully — the bug surface is real and the fixes are easy to lose):
+
+   - The slug auto-gen `useEffect` and the `existing`-hydrate `useEffect` BOTH fire in the same render cycle when an existing post first resolves. Sibling effects don't see each other's `setState` updates; auto-gen would otherwise read stale `title=""` / `slugDirty=false` and overwrite the hydrated slug with the slugified empty title. A `justHydratedRef` set by the hydrate effect and consumed once by the auto-gen guards this exact cycle.
+
+   - `handleSave` immediately sets `setSlugDirty(true)` before any `addOptimisticPost` call. After the optimistic add but before the navigation lands, `posts` carries the freshly-added entry while `existing?.id` is still `undefined` — the collision check sees the new post as a collision against the slug we just saved and `findAvailableSlug` bumps to `-2`. Locking `slugDirty=true` at the top of `handleSave` short-circuits the auto-gen for the rest of the save flow. Forgetting this lets the user's typed slug silently mutate into `-2` between Save and Done.
+
+   - The same race surfaces in the `collision` `useMemo` UI path. Hide its `collisionMessage` while `saving === true` — the red flash between `addOptimisticPost` and navigation otherwise looks like a save failure even though everything is on track.
+
+   - `InlineSlug` carries three message tiers (red `invalid`/`collisionMessage`, amber `requiredHint`, sky-blue `autoSuggestMessage` naming the colliding entity when a suffix WAS added). Empty slug isn't a wrong value — it's an incomplete one — so it should ride the amber rail, not the red one. The Save button mirrors the same reason via a `title=` tooltip + an inline `AlertCircle` icon swap, so the disabled state is never silent.
 
 2. **Stale path cleanup** (`cleanupStalePaths` in `publisher.ts`) — before uploading the new file, the publisher iterates `[lastPublishedPath, ...previousPublishedPaths]`, attempts `deleteFile` on each that isn't the new path (404 silent), and persists any non-404 failures back into `previousPublishedPaths` so the next publish retries them. `unpublishPost` uses the same helper with `keepPath: ""` to wipe everything.
 

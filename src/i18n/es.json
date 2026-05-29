@@ -5,6 +5,7 @@
     "saved": "Guardado",
     "cancel": "Cancelar",
     "delete": "Eliminar",
+    "deleting": "Eliminando…",
     "edit": "Editar",
     "create": "Crear",
     "search": "Buscar",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Añadir título",
       "permalink": "Enlace permanente",
       "slugFormatHint": "Solo minúsculas, ASCII, separadas por guiones.",
+      "slugAutoSuffixed": "Se añadió un sufijo porque \"{{base}}\" ya lo usa {{owner}}.",
+      "slugAutoSuffixedOwner": {
+        "post": "publicación: \"{{label}}\"",
+        "page": "página: \"{{label}}\"",
+        "category": "categoría: \"{{label}}\""
+      },
+      "saveBlocked": {
+        "titleRequired": "Añade un título antes de guardar.",
+        "slugRequired": "Se requieren un título y un slug de URL para guardar.",
+        "slugInvalid": "Formato de slug inválido (ASCII en minúsculas + guiones).",
+        "slugCollision": "Resuelve el conflicto de URL antes de guardar."
+      },
       "viewPublished": "Ver",
       "confirmDelete": "¿Eliminar esta entrada?",
       "inspector": {

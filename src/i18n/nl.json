@@ -5,6 +5,7 @@
     "saved": "Opgeslagen",
     "cancel": "Annuleren",
     "delete": "Verwijderen",
+    "deleting": "Verwijderen…",
     "edit": "Bewerken",
     "create": "Aanmaken",
     "search": "Zoeken",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Titel toevoegen",
       "permalink": "Permalink",
       "slugFormatHint": "Alleen kleine letters, ASCII, gescheiden door streepjes.",
+      "slugAutoSuffixed": "Suffix toegevoegd omdat \"{{base}}\" al wordt gebruikt door {{owner}}.",
+      "slugAutoSuffixedOwner": {
+        "post": "bericht: \"{{label}}\"",
+        "page": "pagina: \"{{label}}\"",
+        "category": "categorie: \"{{label}}\""
+      },
+      "saveBlocked": {
+        "titleRequired": "Voeg een titel toe voordat u opslaat.",
+        "slugRequired": "Een titel en URL-slug zijn vereist om op te slaan.",
+        "slugInvalid": "Ongeldig slug-formaat (ASCII in kleine letters + streepjes).",
+        "slugCollision": "Los het URL-conflict op voordat u opslaat."
+      },
       "viewPublished": "Bekijken",
       "confirmDelete": "Dit item verwijderen?",
       "inspector": {

@@ -5,6 +5,7 @@
     "saved": "Gespeichert",
     "cancel": "Abbrechen",
     "delete": "Löschen",
+    "deleting": "Wird gelöscht…",
     "edit": "Bearbeiten",
     "create": "Erstellen",
     "search": "Suchen",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Titel hinzufügen",
       "permalink": "Permalink",
       "slugFormatHint": "Nur Kleinbuchstaben, ASCII, Bindestriche.",
+      "slugAutoSuffixed": "Suffix hinzugefügt, da \"{{base}}\" bereits von {{owner}} verwendet wird.",
+      "slugAutoSuffixedOwner": {
+        "post": "Beitrag: \"{{label}}\"",
+        "page": "Seite: \"{{label}}\"",
+        "category": "Kategorie: \"{{label}}\""
+      },
+      "saveBlocked": {
+        "titleRequired": "Fügen Sie vor dem Speichern einen Titel hinzu.",
+        "slugRequired": "Ein Titel und ein URL-Slug sind zum Speichern erforderlich.",
+        "slugInvalid": "Ungültiges Slug-Format (Kleinbuchstaben ASCII + Bindestriche).",
+        "slugCollision": "Lösen Sie den URL-Konflikt vor dem Speichern."
+      },
       "viewPublished": "Ansehen",
       "confirmDelete": "Diesen Eintrag löschen?",
       "inspector": {

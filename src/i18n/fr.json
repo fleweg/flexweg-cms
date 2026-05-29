@@ -5,6 +5,7 @@
     "saved": "Enregistré",
     "cancel": "Annuler",
     "delete": "Supprimer",
+    "deleting": "Suppression…",
     "edit": "Modifier",
     "create": "Créer",
     "search": "Rechercher",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Ajouter un titre",
       "permalink": "Permalien",
       "slugFormatHint": "Minuscules ASCII séparées par des tirets uniquement.",
+      "slugAutoSuffixed": "Suffixe ajouté car « {{base}} » est déjà utilisé par {{owner}}.",
+      "slugAutoSuffixedOwner": {
+        "post": "le post : « {{label}} »",
+        "page": "la page : « {{label}} »",
+        "category": "la catégorie : « {{label}} »"
+      },
+      "saveBlocked": {
+        "titleRequired": "Ajoutez un titre avant d'enregistrer.",
+        "slugRequired": "Un titre et un slug d'URL sont requis pour enregistrer.",
+        "slugInvalid": "Format de slug invalide (minuscules ASCII + tirets).",
+        "slugCollision": "Résolvez le conflit d'URL avant d'enregistrer."
+      },
       "viewPublished": "Voir",
       "confirmDelete": "Supprimer cet élément ?",
       "inspector": {

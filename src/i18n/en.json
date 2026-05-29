@@ -5,6 +5,7 @@
     "saved": "Saved",
     "cancel": "Cancel",
     "delete": "Delete",
+    "deleting": "Deleting…",
     "edit": "Edit",
     "create": "Create",
     "search": "Search",
@@ -164,6 +165,18 @@
       "titlePlaceholder": "Add title",
       "permalink": "Permalink",
       "slugFormatHint": "Lower-case, ASCII, dash-separated only.",
+      "slugAutoSuffixed": "Auto-suffixed because \"{{base}}\" is already used by {{owner}}.",
+      "slugAutoSuffixedOwner": {
+        "post": "post: \"{{label}}\"",
+        "page": "page: \"{{label}}\"",
+        "category": "category: \"{{label}}\""
+      },
+      "saveBlocked": {
+        "titleRequired": "Add a title before saving.",
+        "slugRequired": "A title and URL slug are required to save.",
+        "slugInvalid": "Slug format is invalid (lower-case ASCII + dashes).",
+        "slugCollision": "Fix the URL conflict before saving."
+      },
       "viewPublished": "View",
       "confirmDelete": "Delete this entry?",
       "inspector": {

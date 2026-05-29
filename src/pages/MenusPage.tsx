@@ -290,10 +290,14 @@ function MenuEditor({ labelKey, items, onChange, terms, postOptions, enabledLang
                 delete next[lang];
               }
               const hasAny = Object.keys(next).length > 0;
-              patch(idx, {
-                ...item,
-                translations: hasAny ? next : undefined,
-              });
+              // Drop the `translations` key entirely when no language
+              // is left, instead of setting it to `undefined`. Firestore
+              // rejects nested undefined values, so a save with
+              // `translations: undefined` deep inside `settings.menus`
+              // would fail with `Unsupported field value: undefined`.
+              const { translations: _drop, ...rest } = item;
+              void _drop;
+              patch(idx, hasAny ? { ...rest, translations: next } : rest);
             }
             return (
               <li
