@@ -19,6 +19,7 @@
 // orphans on the very next post publish.
 
 import {
+  applyFilters,
   buildPostUrl,
   buildTermUrl,
   buildRssFeedXml,
@@ -58,6 +59,27 @@ export interface SiteFeedConfig {
   // Same role as on category feeds: track the previously uploaded path so
   // we can clean it up when the feed is disabled.
   lastPublishedPath?: string;
+  // Paths of per-language feed files written via the `rss.site.locales`
+  // filter (e.g. multilang's `/<lang>/rss.xml`). Tracked separately so
+  // toggling the site feed off — or removing a language — can delete the
+  // orphan files even though they weren't uploaded by this plugin's own
+  // code paths.
+  lastLocalePaths?: string[];
+}
+
+// Payload type for the async `rss.site.locales` filter. Plugins return
+// one entry per non-primary locale describing where to upload an
+// additional feed and which items it should contain (already filtered to
+// posts that have a translation in that language, with localised URLs).
+// The flexweg-rss plugin handles channel metadata + XML serialization +
+// upload so plugins don't have to import buildRssFeedXml themselves.
+export interface RssLocaleEntry {
+  language: string;
+  path: string;
+  channelTitle: string;
+  channelDescription: string;
+  channelLink: string;
+  items: RssItem[];
 }
 
 export interface RssConfig {
@@ -253,8 +275,10 @@ function buildRegenerateContext(args: {
   };
 }
 
-// Regenerates the site-wide /rss.xml. Returns the new site config (with
-// lastPublishedPath updated) so the caller can persist.
+// Regenerates the site-wide /rss.xml plus any per-locale feeds returned
+// by the `rss.site.locales` filter (multilang's `/<lang>/rss.xml` etc.).
+// Returns the new site config (with lastPublishedPath + lastLocalePaths
+// updated) so the caller can persist.
 async function regenerateSiteFeed(
   ctx: RegenerateContext,
   config: RssConfig,
@@ -263,20 +287,29 @@ async function regenerateSiteFeed(
   const deleted: string[] = [];
 
   if (!config.site.enabled) {
-    // Disabled: clean up any previously uploaded file.
+    // Disabled: clean up the primary file + every previously-written
+    // per-locale variant (multilang etc.). 404s are silent inside
+    // flexwegApi so the sweep is safe to run on every disabled call.
     if (config.site.lastPublishedPath) {
       try {
         await deleteFile(config.site.lastPublishedPath);
         deleted.push(config.site.lastPublishedPath);
       } catch {
-        // 404 is silent inside flexwegApi already; non-404 surfaces a
-        // toast — either way disabling shouldn't fail loudly.
+        // ignore
+      }
+    }
+    for (const localePath of config.site.lastLocalePaths ?? []) {
+      try {
+        await deleteFile(localePath);
+        deleted.push(localePath);
+      } catch {
+        // ignore
       }
     }
     return {
       uploaded,
       deleted,
-      nextSite: { ...config.site, lastPublishedPath: undefined },
+      nextSite: { ...config.site, lastPublishedPath: undefined, lastLocalePaths: [] },
     };
   }
 
@@ -292,10 +325,61 @@ async function regenerateSiteFeed(
   });
   await uploadFile({ path: SITE_RSS_PATH, content: xml });
   uploaded.push(SITE_RSS_PATH);
+
+  // Per-locale feeds via the `rss.site.locales` async filter. Plugins
+  // (e.g. flexweg-multilang) return one entry per non-primary language.
+  // We upload each, diff against the previous write to detect orphans
+  // (a language disabled / removed from multilang), and delete those.
+  const localeEntries = await applyFilters<RssLocaleEntry[]>(
+    "rss.site.locales",
+    [],
+    {
+      posts: ctx.posts,
+      terms: ctx.terms,
+      mediaMap: ctx.mediaMap,
+      settings: ctx.settings,
+      config,
+      baseUrl: ctx.baseUrl,
+      xslHref: ctx.xslHref,
+    },
+  );
+  const nextLocalePaths: string[] = [];
+  for (const entry of localeEntries) {
+    if (!entry.path || !entry.language) continue;
+    const localeXml = buildRssFeedXml({
+      title: entry.channelTitle,
+      link: entry.channelLink,
+      description: entry.channelDescription,
+      feedUrl: pathToPublicUrl(ctx.baseUrl, entry.path),
+      language: entry.language,
+      items: entry.items,
+      xslHref: ctx.xslHref,
+    });
+    await uploadFile({ path: entry.path, content: localeXml });
+    uploaded.push(entry.path);
+    nextLocalePaths.push(entry.path);
+  }
+  // Orphan cleanup — paths in the previous bookkeeping but not in the
+  // current set (e.g. user disabled French in multilang).
+  const nextSet = new Set(nextLocalePaths);
+  for (const stale of config.site.lastLocalePaths ?? []) {
+    if (nextSet.has(stale)) continue;
+    try {
+      await deleteFile(stale);
+      deleted.push(stale);
+    } catch {
+      // ignore
+    }
+  }
+
   return {
     uploaded,
     deleted,
-    nextSite: { ...config.site, lastPublishedPath: SITE_RSS_PATH },
+    nextSite: {
+      ...config.site,
+      lastPublishedPath: SITE_RSS_PATH,
+      lastLocalePaths: nextLocalePaths,
+    },
   };
 }
 
@@ -456,9 +540,15 @@ export async function cleanupRemovedFeeds(args: {
   const deleted: string[] = [];
   let nextSite = args.nextConfig.site;
 
-  // Site RSS toggled off (or already off but lastPublishedPath leftover
-  // from a previous on-state — best-effort delete in that case too).
-  if (args.prevConfig.site.enabled && !args.nextConfig.site.enabled) {
+  // Site RSS disabled in the new config: attempt to delete the file
+  // unconditionally (idempotent — 404 is silent). Covers two cases:
+  //   1. Toggle from enabled → disabled (the original use-case).
+  //   2. Stale `/rss.xml` left over from a previous admin install / old
+  //      default config / manual upload, where the user's current config
+  //      already shows enabled=false but the file is still on disk. The
+  //      old `prev.enabled && !next.enabled` gate skipped this case so
+  //      the orphan persisted forever.
+  if (!args.nextConfig.site.enabled) {
     const stale = args.prevConfig.site.lastPublishedPath ?? SITE_RSS_PATH;
     try {
       await deleteFile(stale);

@@ -37,12 +37,26 @@ const en = {
     notFound: "Page not found",
     backHome: "Back to home",
     home: "Home",
+    docPager: {
+      aria: "Documentation navigation",
+      prev: "Previous",
+      next: "Next",
+    },
+    codeBlock: {
+      copy: "Copy",
+      copied: "Copied",
+    },
   },
   blocks: {
     headerButtons: { title: "Download / Preview buttons", untitled: "(no URLs)" },
     gallery: { title: "Screenshot gallery", count: "{{n}} images" },
     specs: { title: "Specifications table", untitled: "Empty specs" },
     features: { title: "Key features bento", count: "{{n}} features" },
+    landingHero: { title: "Landing hero", empty: "(no headline)" },
+    featureGrid: { title: "Feature grid", count: "{{n}} items" },
+    featureRow: { title: "Feature row", empty: "(no headline)" },
+    statsBar: { title: "Stats bar", count: "{{n}} stats" },
+    ctaBanner: { title: "CTA banner", empty: "(no headline)" },
   },
 };
 
@@ -82,12 +96,26 @@ const fr = {
     notFound: "Page introuvable",
     backHome: "Retour à l'accueil",
     home: "Accueil",
+    docPager: {
+      aria: "Navigation dans la documentation",
+      prev: "Précédent",
+      next: "Suivant",
+    },
+    codeBlock: {
+      copy: "Copier",
+      copied: "Copié",
+    },
   },
   blocks: {
     headerButtons: { title: "Boutons Télécharger / Démo", untitled: "(aucune URL)" },
     gallery: { title: "Galerie captures d'écran", count: "{{n}} images" },
     specs: { title: "Tableau de spécifications", untitled: "Vide" },
     features: { title: "Fonctionnalités clés", count: "{{n}} fonctionnalités" },
+    landingHero: { title: "Hero landing", empty: "(aucun titre)" },
+    featureGrid: { title: "Grille de fonctionnalités", count: "{{n}} éléments" },
+    featureRow: { title: "Bandeau fonctionnalité", empty: "(aucun titre)" },
+    statsBar: { title: "Barre de stats", count: "{{n}} stats" },
+    ctaBanner: { title: "Bandeau CTA", empty: "(aucun titre)" },
   },
 };
 

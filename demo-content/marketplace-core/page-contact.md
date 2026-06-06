@@ -4,24 +4,23 @@ slug: contact
 type: page
 status: draft
 seoTitle: Contact — Flexweg CMS Marketplace
-seoDescription: Get in touch with the Flexweg team.
-excerpt: "Get in touch with the Flexweg team."
+seoDescription: How to reach the Flexweg team about marketplace listings and submissions.
+excerpt: "How to reach the Flexweg team about marketplace listings and submissions."
 ---
 
 # Contact
 
-All Flexweg themes and plugins are maintained by the Flexweg team on a single repository: [github.com/fleweg/flexweg-cms](https://github.com/fleweg/flexweg-cms).
+The fastest way to reach the Flexweg team is through the main repository on GitHub.
 
-## The fastest paths
+## Channels
 
-- **Bug reports** — open an issue on [github.com/fleweg/flexweg-cms/issues](https://github.com/fleweg/flexweg-cms/issues) with the affected theme or plugin id in the title (e.g. `[storefront]` or `[flexweg-search]`)
-- **Feature requests** — open a discussion thread on [github.com/fleweg/flexweg-cms/discussions](https://github.com/fleweg/flexweg-cms/discussions)
-- **General inquiries** — `team@flexweg.com`
+- **Bugs + feature requests**: open an issue on [github.com/fleweg/flexweg-cms/issues](https://github.com/fleweg/flexweg-cms/issues). Please include reproduction steps + your admin version (visible in *Settings → About*).
+- **Marketplace submissions**: open a pull request adding your bundle's manifest entry — see the [Submission Guidelines](/guidelines.html) for the required fields.
+- **Security disclosures**: email `security@flexweg.com` (PGP key on the repo README).
 
-## Security disclosures
+## What we won't do
 
-Please **do not** open public issues for security vulnerabilities. Email `security@flexweg.com` with the details and we'll respond within 48 hours. We coordinate disclosure timelines once we've validated the report.
+- Reply to support email for free hosting — Flexweg is self-hosted by design.
+- Accept paid placements in the marketplace — this is a first-party directory only.
 
-## Press
-
-`press@flexweg.com` — slow to answer but we read everything.
+The team is small. Allow 3–5 business days for a response to an issue or pull request.

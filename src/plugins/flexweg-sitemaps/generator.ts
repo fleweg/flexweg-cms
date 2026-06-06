@@ -13,6 +13,7 @@
 // (and sitemap-news.xml if News is enabled).
 
 import {
+  applyFilters,
   applyFiltersSync,
   buildPostUrl,
   pathToPublicUrl,
@@ -94,7 +95,12 @@ export function defaultRobotsTxt(baseUrl: string, newsEnabled: boolean): string 
 // Internal flat shape: a single online post or page projected into the
 // fields the XML builder needs. Cuts out the rest of the Post type so the
 // builders are easy to read and unit-test in isolation.
-interface SitemapEntity {
+//
+// Exported so the multilang plugin can build its own
+// `NewsLocaleEntry` payloads with the same shape (each per-locale
+// news sitemap is a list of these — see the `sitemap.news.locales`
+// filter doc below).
+export interface SitemapEntity {
   path: string;
   createdAtMs: number;
   updatedAtMs: number;
@@ -124,6 +130,29 @@ export interface SitemapExtraUrl {
 export interface SitemapIndexExtraEntry {
   path: string;
   lastmodMs?: number;
+}
+
+// Per-locale news sitemap descriptor returned by the
+// `sitemap.news.locales` filter — the multilang plugin uses this to
+// declare that a translated news sitemap should be produced for a
+// secondary language (one file per language). The plugin computes:
+//   - `language`: BCP-47 code, drives the `<news:language>` field
+//   - `path`: target Flexweg path, conventionally
+//             `sitemaps/sitemap-news-<lang>.xml`
+//   - `entities`: already-filtered list of `SitemapEntity` (within
+//             the configured News window) carrying the localized URL
+//             + title for each post that has a translation.
+//
+// flexweg-sitemaps' `regenerateSitemaps` applies this filter when
+// `newsEnabled === true`, builds one `<urlset>` per entry using
+// `buildNewsSitemap`, and uploads each to `entry.path`. The
+// per-locale paths are also added to `sitemap-index.xml` by the
+// multilang's `sitemap.index.extra` handler (which independently
+// gates on the same `newsEnabled` flag so the two stay in lock-step).
+export interface NewsLocaleEntry {
+  language: string;
+  path: string;
+  entities: SitemapEntity[];
 }
 
 function entityFromPost(post: Post, terms: Term[]): SitemapEntity | null {
@@ -452,6 +481,7 @@ export async function regenerateSitemaps(args: {
 
   if (scope?.news !== false) {
     if (config.newsEnabled) {
+      // Primary-language news sitemap — always built when News is on.
       const xml = buildNewsSitemap(
         entities,
         settings.title,
@@ -462,8 +492,42 @@ export async function regenerateSitemaps(args: {
       );
       await uploadFile({ path: SITEMAP_NEWS_PATH, content: xml });
       uploaded.push(SITEMAP_NEWS_PATH);
+
+      // Per-locale news sitemaps via the `sitemap.news.locales`
+      // filter. The multilang plugin returns one entry per enabled
+      // secondary language carrying the localized URLs + titles of
+      // recent posts that have a translation. Each entry becomes
+      // its own `sitemap-news-<lang>.xml` file referenced in the
+      // index by the multilang's `sitemap.index.extra` handler.
+      //
+      // When the filter returns nothing (no multilang installed, or
+      // no enabled secondary language), we just write the primary
+      // file and move on — keeps mono-lingual sites untouched.
+      const localeEntries = await applyFilters<NewsLocaleEntry[]>(
+        "sitemap.news.locales",
+        [],
+        { posts, pages, terms, settings, config },
+      );
+      for (const entry of localeEntries) {
+        if (!entry.path || !entry.language) continue;
+        const localeXml = buildNewsSitemap(
+          entry.entities,
+          settings.title,
+          entry.language,
+          baseUrl,
+          config.newsWindowDays,
+          newsXslHref,
+        );
+        await uploadFile({ path: entry.path, content: localeXml });
+        uploaded.push(entry.path);
+      }
     } else {
       // News disabled: delete any leftover file from a previous run.
+      // Per-locale variants left behind by a previous newsEnabled
+      // session aren't tracked here — they get cleaned up the next
+      // time News is re-enabled (the locale loop overwrites the
+      // current set; orphans persist until a Force Regenerate is
+      // run AFTER removing the locale from multilang's config).
       try {
         await deleteFile(SITEMAP_NEWS_PATH);
         deleted.push(SITEMAP_NEWS_PATH);

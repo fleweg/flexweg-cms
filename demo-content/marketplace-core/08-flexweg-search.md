@@ -4,20 +4,22 @@ slug: flexweg-search-plugin
 type: post
 status: draft
 category: Plugins
-tags: [plugin, search, client-side, static]
+tags: [plugin, search, client-side, modal, ux]
 heroImage: 08-search.jpg
 author: team@flexweg.com
-excerpt: "Generates a static search index + a 5 KB runtime that opens a search modal anywhere your theme exposes a [data-cms-search] trigger. No backend."
+excerpt: "Client-side fuzzy search. Pre-builds an index at publish time, opens a Cmd/Ctrl-K modal on click, results jump to the matching post — no backend, no API key, no external service."
 ---
-<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6Imh0dHBzOi8vZ2l0aHViLmNvbS9mbGV3ZWcvZmxleHdlZy1jbXMvcmVsZWFzZXMvZG93bmxvYWQvZmxleHdlZy1zZWFyY2gtdjEuMC4wL2ZsZXh3ZWctc2VhcmNoLnppcCIsInByZXZpZXdVcmwiOiJodHRwczovL3NlYXJjaC5kZW1vLmZsZXh3ZWcuY29tIiwiZG93bmxvYWRMYWJlbCI6IkRvd25sb2FkIiwicHJldmlld0xhYmVsIjoiTGl2ZSBQcmV2aWV3IiwiZnJlZUxhYmVsIjoiRnJlZSIsImNyZWF0b3IiOiJGbGV4d2VnIiwiY3JlYXRvclByZWZpeCI6ImJ5In0="></div>
-<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOlt7InVybCI6IjA4LXNlYXJjaC5qcGciLCJhbHQiOiJGbGV4d2VnIFNlYXJjaCJ9XX0="></div>
+<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6ICJodHRwczovL2dpdGh1Yi5jb20vZmxld2VnL2ZsZXh3ZWctY21zL3JlbGVhc2VzL2Rvd25sb2FkL2ZsZXh3ZWctc2VhcmNoLXYxLjAuMC9mbGV4d2VnLXNlYXJjaC56aXAiLCAicHJldmlld1VybCI6ICJodHRwczovL3NlYXJjaC5kZW1vLmZsZXh3ZWcuY29tIiwgImRvd25sb2FkTGFiZWwiOiAiRG93bmxvYWQiLCAicHJldmlld0xhYmVsIjogIkxpdmUgUHJldmlldyIsICJmcmVlTGFiZWwiOiAiRnJlZSIsICJjcmVhdG9yIjogIkZsZXh3ZWciLCAiY3JlYXRvclByZWZpeCI6ICJieSJ9"></div>
+<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOiBbeyJ1cmwiOiAiMDgtc2VhcmNoLmpwZyIsICJhbHQiOiAiRmxleHdlZyBTZWFyY2gifV19"></div>
 
 ## Description
 
-Search without a server. The plugin builds `/search-index.json` over your published content (title always; excerpt / category / tags opt-in) and ships a tiny runtime (`/search.js`, ~5 KB) that opens a modal when a user clicks any `[data-cms-search]` element.
+**Flexweg Search** ships a complete search experience that runs entirely in the visitor's browser. At publish time the plugin builds a compact JSON index at `/search-index.json` containing every post's title, excerpt, and category. Any element on the page with `data-cms-search` (every theme's search input qualifies) attaches a click handler that opens a centered modal — Cmd/Ctrl + K also triggers it from anywhere on the site.
 
-Pure client-side substring matching with multi-token weighting (title hits rank higher). The index is regenerated on every publish; the runtime is only re-uploaded when its bundle hash changes — so subsequent publishes only rewrite the JSON.
+The modal does fuzzy matching against the index with sensible defaults: matches on title weighted higher than excerpt, primary term shown next to each result, keyboard nav (↑/↓ + Enter) wired up. Clicking a result navigates to the post.
 
-<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjoiU3BlY2lmaWNhdGlvbnMiLCJyb3dzIjpbeyJsYWJlbCI6IlZlcnNpb24iLCJ2YWx1ZSI6IjEuMC4wIn0seyJsYWJlbCI6IkxpY2Vuc2UiLCJ2YWx1ZSI6Ik1JVCJ9LHsibGFiZWwiOiJMYXN0IFVwZGF0ZWQiLCJ2YWx1ZSI6IlRoaXMgd2VlayJ9LHsibGFiZWwiOiJSZXF1aXJlcyBGbGV4d2VnIiwidmFsdWUiOiLiiaUgMS4wLjAifV19"></div>
+Because the index is fetched once and cached, search stays instant even on slow connections. The plugin never phones home, never embeds a third-party widget, and never needs an API key — perfect for sites that care about privacy and self-hosting.
 
-<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjoiS2V5IEZlYXR1cmVzIiwiaXRlbXMiOlt7Imljb24iOiJzZWFyY2giLCJ0aXRsZSI6IkNsaWVudC1zaWRlIHNlYXJjaCJ9LHsiaWNvbiI6ImJvbHQiLCJ0aXRsZSI6IlN1Yi0xMDBtcyByZXN1bHRzIn0seyJpY29uIjoiZmluZF9pbl9wYWdlIiwidGl0bGUiOiJUaXRsZSArIGV4Y2VycHQgaW5kZXgifSx7Imljb24iOiJ2aWV3X2NvbXBhY3QiLCJ0aXRsZSI6Ik1vZGFsIFVJIn1dfQ=="></div>
+<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjogIlNwZWNpZmljYXRpb25zIiwgInJvd3MiOiBbeyJsYWJlbCI6ICJWZXJzaW9uIiwgInZhbHVlIjogIjEuMC4wIn0sIHsibGFiZWwiOiAiTGljZW5zZSIsICJ2YWx1ZSI6ICJNSVQifSwgeyJsYWJlbCI6ICJMYXN0IFVwZGF0ZWQiLCAidmFsdWUiOiAiVGhpcyByZWxlYXNlIn0sIHsibGFiZWwiOiAiUmVxdWlyZXMgRmxleHdlZyIsICJ2YWx1ZSI6ICJcdTIyNjUgMS4wLjAifV19"></div>
+
+<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjogIktleSBGZWF0dXJlcyIsICJpdGVtcyI6IFt7Imljb24iOiAic2VhcmNoIiwgInRpdGxlIjogIkNtZC9DdHJsLUsgbW9kYWwifSwgeyJpY29uIjogImJvbHQiLCAidGl0bGUiOiAiUHJlLWJ1aWx0IHN0YXRpYyBpbmRleCJ9LCB7Imljb24iOiAia2V5Ym9hcmQiLCAidGl0bGUiOiAiRnVsbCBrZXlib2FyZCBuYXZpZ2F0aW9uIn0sIHsiaWNvbiI6ICJsb2NrIiwgInRpdGxlIjogIlByaXZhY3ktZnJpZW5kbHkgKG5vIEFQSSkifV19"></div>

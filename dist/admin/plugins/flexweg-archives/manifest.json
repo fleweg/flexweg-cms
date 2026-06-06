@@ -1,0 +1,7 @@
+{
+  "id": "flexweg-archives",
+  "name": "Flexweg Archives",
+  "version": "1.0.0",
+  "apiVersion": "1.3.0",
+  "entry": "bundle.js"
+}

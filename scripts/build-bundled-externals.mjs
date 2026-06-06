@@ -67,7 +67,7 @@ const PLUGINS = [
   {
     id: "flexweg-multilang",
     name: "Multi-language",
-    version: "1.5.1",
+    version: "1.6.2",
     srcDir: "external/plugins/flexweg-multilang/src",
   },
 ];
@@ -77,6 +77,16 @@ const THEMES = [
   { id: "corporate", name: "Corporate", version: "1.0.0" },
   { id: "storefront", name: "Storefront", version: "0.1.0" },
   { id: "portfolio", name: "Portfolio", version: "0.1.0" },
+  // External-source theme — bundled into the admin distribution so a
+  // fresh install ships with it pre-installed. Same convention as
+  // `flexweg-multilang` above: `srcDir` is resolved relative to the
+  // repo root.
+  {
+    id: "marketplace-core",
+    name: "Marketplace Core",
+    version: "1.7.0",
+    srcDir: "external/themes/marketplace-core/src",
+  },
 ];
 
 // Picks the manifest entry file name for a given plugin/theme. Most
@@ -166,15 +176,25 @@ async function buildOneEntry(kind, meta, srcDir, distOutDir) {
   // Themes also ship their compiled CSS as a sibling file so
   // user-installed external themes (which we scaffold this way in
   // external/themes/minimal-theme/) keep parity with build-time externals.
-  // The CSS comes from src/themes/<id>/theme.compiled.css when the
-  // theme uses Tailwind (already produced by build-theme-tailwind.mjs
-  // at prebuild) or from theme.scss compiled output otherwise.
+  // Three sources, checked in order:
+  //   1. Tailwind: <srcDir>/theme.compiled.css (produced by
+  //      build-theme-tailwind.mjs at prebuild for in-tree themes).
+  //   2. SCSS / build-themes.mjs output: dist/theme-assets/<id>.css.
+  //   3. Hand-written plain CSS: <srcDir>/theme.css. Used by external
+  //      themes that don't run their own preprocessor (e.g.
+  //      marketplace-core, the minimal-theme scaffold). This is what
+  //      the theme's manifest imports via `?raw` — copying it next to
+  //      bundle.js means the resulting ZIP carries the same CSS the
+  //      runtime would upload via theme assets, and pack-bundled-zips
+  //      bundles it into the installable ZIP.
   if (kind === "themes") {
     const tailwindCss = resolve(srcDir, "theme.compiled.css");
     const scssCss = resolve(distAdmin, `../theme-assets/${meta.id}.css`);
+    const plainCss = resolve(srcDir, "theme.css");
     let cssSource = null;
     if (existsSync(tailwindCss)) cssSource = tailwindCss;
     else if (existsSync(scssCss)) cssSource = scssCss;
+    else if (existsSync(plainCss)) cssSource = plainCss;
     if (cssSource) {
       copyFileSync(cssSource, resolve(outDir, "theme.css"));
     }
@@ -229,7 +249,9 @@ async function main() {
     await buildOneEntry("plugins", meta, srcDir, pluginsDist);
   }
   for (const meta of THEMES) {
-    const srcDir = resolve(root, "src/themes", meta.id);
+    const srcDir = meta.srcDir
+      ? resolve(root, meta.srcDir)
+      : resolve(root, "src/themes", meta.id);
     await buildOneEntry("themes", meta, srcDir, themesDist);
   }
 

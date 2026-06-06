@@ -1,7 +1,7 @@
 {
   "name": "flexweg-cms-multilang",
   "private": true,
-  "version": "1.5.1",
+  "version": "1.6.2",
   "description": "Multi-language support for Flexweg CMS — translated posts/pages/terms, hreflang SEO, per-language sitemap entries, per-language RSS feeds.",
   "type": "module",
   "scripts": {

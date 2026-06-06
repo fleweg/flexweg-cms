@@ -7,17 +7,19 @@ category: Themes
 tags: [theme, magazine, editorial, long-form, tailwind]
 heroImage: 02-magazine.jpg
 author: team@flexweg.com
-excerpt: "Editorial magazine theme inspired by long-form journalism. Newsreader + Work Sans typography, Material 3 palette, sidebar widgets for most-read and promo cards."
+excerpt: "Editorial magazine theme for long-form journalism. Newsreader serif + Work Sans, Material 3 palette, hero overlay, sidebar widgets for most-read and promo cards."
 ---
-<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6Imh0dHBzOi8vZ2l0aHViLmNvbS9mbGV3ZWcvZmxleHdlZy1jbXMvcmVsZWFzZXMvZG93bmxvYWQvbWFnYXppbmUtdjEuMC4wL21hZ2F6aW5lLnppcCIsInByZXZpZXdVcmwiOiJodHRwczovL21hZ2F6aW5lLmRlbW8uZmxleHdlZy5jb20iLCJkb3dubG9hZExhYmVsIjoiRG93bmxvYWQiLCJwcmV2aWV3TGFiZWwiOiJMaXZlIFByZXZpZXciLCJmcmVlTGFiZWwiOiJGcmVlIiwiY3JlYXRvciI6IkZsZXh3ZWciLCJjcmVhdG9yUHJlZml4IjoiYnkifQ=="></div>
-<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOlt7InVybCI6IjAyLW1hZ2F6aW5lLmpwZyIsImFsdCI6Ik1hZ2F6aW5lIn1dfQ=="></div>
+<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6ICJodHRwczovL2dpdGh1Yi5jb20vZmxld2VnL2ZsZXh3ZWctY21zL3JlbGVhc2VzL2Rvd25sb2FkL21hZ2F6aW5lLXYxLjAuMC9tYWdhemluZS56aXAiLCAicHJldmlld1VybCI6ICJodHRwczovL21hZ2F6aW5lLmRlbW8uZmxleHdlZy5jb20iLCAiZG93bmxvYWRMYWJlbCI6ICJEb3dubG9hZCIsICJwcmV2aWV3TGFiZWwiOiAiTGl2ZSBQcmV2aWV3IiwgImZyZWVMYWJlbCI6ICJGcmVlIiwgImNyZWF0b3IiOiAiRmxleHdlZyIsICJjcmVhdG9yUHJlZml4IjogImJ5In0="></div>
+<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOiBbeyJ1cmwiOiAiMDItbWFnYXppbmUuanBnIiwgImFsdCI6ICJNYWdhemluZSJ9XX0="></div>
 
 ## Description
 
-Magazine treats every post like a feature story. The home layout combines a hero split block, a latest list, and two sidebar widgets (most-read + promo card) that you can wire from the **Theme settings → Home** tab without writing code.
+**Magazine** is built for publishers who care about reading rhythm. The hero overlay block headlines featured stories with a layered visual treatment; the sidebar offers most-read, promo cards, and author bios; the typography pair (Newsreader serif + Work Sans sans) reads cleanly at any size.
 
-Three custom blocks (`magazine/hero-split`, `magazine/most-read`, `magazine/promo-card`) live in your editor and render server-side at publish — no runtime JavaScript needed except a tiny menu loader.
+The single-article template features a top-of-page hero, in-article pull quotes, and a sticky sidebar with author + related posts widgets. The widgets are runtime-loaded from `/data/posts.json` + `/data/authors.json`, so they refresh on every publish without re-rendering every article.
 
-<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjoiU3BlY2lmaWNhdGlvbnMiLCJyb3dzIjpbeyJsYWJlbCI6IlZlcnNpb24iLCJ2YWx1ZSI6IjAuMS4wIn0seyJsYWJlbCI6IkxpY2Vuc2UiLCJ2YWx1ZSI6Ik1JVCJ9LHsibGFiZWwiOiJMYXN0IFVwZGF0ZWQiLCJ2YWx1ZSI6IlRoaXMgd2VlayJ9LHsibGFiZWwiOiJSZXF1aXJlcyBGbGV4d2VnIiwidmFsdWUiOiLiiaUgMS4wLjAifV19"></div>
+Best fit: news sites, blogs, content marketing surfaces, and any publication where the article IS the product.
 
-<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjoiS2V5IEZlYXR1cmVzIiwiaXRlbXMiOlt7Imljb24iOiJuZXdzcGFwZXIiLCJ0aXRsZSI6IkxvbmctZm9ybSBsYXlvdXRzIn0seyJpY29uIjoidmlld19jYXJvdXNlbCIsInRpdGxlIjoiSGVybyBzcGxpdCBibG9jayJ9LHsiaWNvbiI6ImJvb2ttYXJrIiwidGl0bGUiOiJNb3N0LXJlYWQgd2lkZ2V0In0seyJpY29uIjoiZm9ybWF0X3NpemUiLCJ0aXRsZSI6IkVkaXRhYmxlIHR5cG9ncmFwaHkifV19"></div>
+<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjogIlNwZWNpZmljYXRpb25zIiwgInJvd3MiOiBbeyJsYWJlbCI6ICJWZXJzaW9uIiwgInZhbHVlIjogIjEuMC4wIn0sIHsibGFiZWwiOiAiTGljZW5zZSIsICJ2YWx1ZSI6ICJNSVQifSwgeyJsYWJlbCI6ICJMYXN0IFVwZGF0ZWQiLCAidmFsdWUiOiAiVGhpcyByZWxlYXNlIn0sIHsibGFiZWwiOiAiUmVxdWlyZXMgRmxleHdlZyIsICJ2YWx1ZSI6ICJcdTIyNjUgMS4wLjAifV19"></div>
+
+<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjogIktleSBGZWF0dXJlcyIsICJpdGVtcyI6IFt7Imljb24iOiAibmV3c3BhcGVyIiwgInRpdGxlIjogIkVkaXRvcmlhbCBoZXJvIG92ZXJsYXkifSwgeyJpY29uIjogInZpZXdfc2lkZWJhciIsICJ0aXRsZSI6ICJNb3N0LXJlYWQgKyBwcm9tbyBzaWRlYmFyIn0sIHsiaWNvbiI6ICJmb3JtYXRfcXVvdGUiLCAidGl0bGUiOiAiUHVsbCBxdW90ZXMgKyBieWxpbmVzIn0sIHsiaWNvbiI6ICJncm91cHMiLCAidGl0bGUiOiAiQXV0aG9yIGJpb3MgKyByZWxhdGVkIHBvc3RzIn1dfQ=="></div>

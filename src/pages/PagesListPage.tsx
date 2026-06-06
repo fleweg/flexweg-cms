@@ -23,9 +23,11 @@ import { toast } from "../lib/toast";
 import {
   buildPublishContext,
   deletePostAndUnpublish,
+  flushBulkRegeneration,
   publishPost,
   unpublishPost,
 } from "../services/publisher";
+import { listRegenerationTargets } from "../core/regenerationTargetRegistry";
 import { deletePost, fetchAllPosts } from "../services/posts";
 import { buildAuthorLookup } from "../services/users";
 import type { Post, PostStatus } from "../core/types";
@@ -248,6 +250,8 @@ export function PagesListPage() {
     let failed = 0;
     try {
       const ctx = await buildCtx();
+      // Bulk mode — see PostsListPage.tsx for the same pattern.
+      ctx.bulkMode = true;
       for (const target of targets) {
         try {
           if (action === "publish") {
@@ -272,6 +276,11 @@ export function PagesListPage() {
           failed++;
           console.error(`[bulk-${action}] failed on "${target.title}":`, err);
         }
+      }
+      try {
+        await flushBulkRegeneration(ctx, () => {}, listRegenerationTargets());
+      } catch (err) {
+        console.error("[bulk-flush] partial failure:", err);
       }
       const msgKey =
         action === "publish"

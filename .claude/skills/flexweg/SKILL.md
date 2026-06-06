@@ -404,6 +404,24 @@ export function BaseLayout({
 
 Replace `"my-theme"` with your actual theme id (or read it from props if you want it dynamic).
 
+### Optional BaseLayout polish patterns
+
+Two small UX patterns that meaningfully improve a theme without compromising the static-publishing model — both implemented in `marketplace-core` v1.3.x as reference:
+
+**Brand-suffix dedup** — when an author bakes the site name into `seo.title` (e.g. "Brand — descriptor" or "descriptor — Brand"), the default `${pageTitle} — ${site.settings.title}` pattern produces a duplicate. Guard with a simple `includes()` check before appending:
+
+```tsx
+const siteTitle = site.settings.title || "";
+const alreadyBranded =
+  !!pageTitle && !!siteTitle && pageTitle.includes(siteTitle);
+const fullTitle = pageTitle
+  ? alreadyBranded ? pageTitle : `${pageTitle} — ${siteTitle}`
+  : siteTitle;
+```
+
+**Hide-on-scroll header (+ mobile bottom-nav)** — slide the header up when the user scrolls down, slide it back when they reverse or land near the top. Implementation: CSS `transition: transform 0.28s` + `will-change: transform` on the header; an inline `<script>` near the body-end sentinel toggles a `.is-hidden` class via rAF-throttled scroll listener. Threshold ~6px (avoid jitter), always-show region ~80px (so it doesn't disappear at the top of the page). Same script pattern works for a fixed-position bottom-nav with the inverse `translateY(100%)`. Reference: marketplace-core's BaseLayout.tsx + theme.css.
+
+
 ### Templates receive serializable props only
 
 Theme components must be **pure / serializable-prop consumers** — no Firestore hooks, no admin context. The publisher resolves URLs, MediaView shapes, ResolvedMenuItems, etc. before rendering. Copy the canonical types from the in-tree `src/themes/types.ts` into your own `src/types/cms-runtime.d.ts` so the bundle is self-contained.
@@ -483,6 +501,20 @@ api.addFilter<string>("post.html.body", (html) => {
 ```
 
 Where `decodeAttrs` is `JSON.parse(atob(encoded))` with a fallback to defaults.
+
+### Composing landing pages with blocks
+
+For marketing surfaces (home, about, lead-gen pages), don't try to express the layout in plain Markdown — author it as a stack of theme block markers. `marketplace-core` v1.3.0 added five landing blocks designed to be combined in any order:
+
+- `marketplace-core/landing-hero` — eyebrow + headline + subhead + 2 CTAs + product visual
+- `marketplace-core/stats-bar` — 4-cell numerical strip (e.g. "1-click · 10+ · MIT · 0 servers")
+- `marketplace-core/feature-grid` — 3-column card grid with Material Symbol icons
+- `marketplace-core/feature-row` — alternating image/text section with bullets + CTA
+- `marketplace-core/cta-banner` — full-width final-push banner
+
+Pattern: one `data-cms-block` marker per section, blank line between markers, importer rewrites image filenames inside the base64 attrs through `rewriteBlockMarkerImages` (so frontmatter-less paths like `home-hero.jpg` resolve to the media variant URL after import). See `external/themes/marketplace-core/src/blocks/` for the canonical implementations and `demo-content/marketplace-core/_generate.py`'s `HOME_LANDING` for a composed example.
+
+Each block is rendered server-side at publish time via `transformBodyHtml` (registered on `post.html.body`) — the marker becomes the section's HTML in place. Themes that want their own landing blocks should follow the same pattern: per-block `render.ts` (interface + DEFAULT + render + transform-marker), per-block `manifest.tsx` (Tiptap node + inspector), all `transform<Block>` calls funneled through one `transformBodyHtml` registered as `post.html.body`.
 
 ---
 
@@ -706,6 +738,39 @@ Cause: the theme's `BaseLayout` emits one (always), and a multilang plugin earli
 
 Fix: upgrade multilang to ≥ 1.3.2 — it no longer emits a canonical. The theme's canonical is the single source of truth and already points at the localised path because the publisher passes a localised `currentPath`.
 
+### Localised single posts render raw `<div data-cms-block="…">` markers (block transforms don't fire)
+
+Symptom: on `/fr/<post>.html` the body shows literal HTML markers like `<div data-cms-block="marketplace-core/header-buttons" data-attrs="…"></div>` while the same post at `/<slug>.html` renders the expanded buttons / specs / features. Theme-side block transforms (the `post.html.body` filter chain) are skipped on localised variants.
+
+Cause: a plugin's `renderLocalizedSingle` calls `renderMarkdown(trans.contentMarkdown)` directly and forgets to apply the `post.html.body` filter chain — that's where every theme's `transformBodyHtml` runs to swap `data-cms-block` markers for rendered HTML.
+
+Fix: mirror the core publisher's `renderSingle` body pipeline exactly:
+
+```ts
+import { applyFilters, renderMarkdown } from "@flexweg/cms-runtime";
+
+let bodyHtml = renderMarkdown(trans.contentMarkdown);
+bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, post);
+```
+
+Make the render function `async` since `applyFilters` is awaitable. The function's caller (typically a `publish.additional` handler) already awaits async filters so propagating `Promise<string>` is free. Reference: flexweg-multilang v1.5.2 fixed this exact bug.
+
+### Home `<title>` ignores `page.seo.title` when the home is a wired static page
+
+Symptom: a static page with explicit `seoTitle` / `seoDescription` is set as the home (Settings → General → Home → Static page), but the published `/index.html` shows just `<site title>` with no meta description.
+
+Cause: pre-fix versions of `renderHome` hard-coded `pageTitle: ""` + `pageDescription: ctx.settings.description` regardless of what the wired page carried. The fix flows `page.seo?.title || page.title`, `page.seo?.description || page.excerpt || ctx.settings.description`, and `page.seo?.ogImage` into baseProps. Automatic on every static-page home + every locale rendered via multilang's shadow ctx (which delegates to the same `renderHome`).
+
+Theme-side concern: if the user bakes the site name into `page.seo.title` (common: "Brand — descriptor"), BaseLayout's default `${pageTitle} — ${site.title}` produces a duplicate brand suffix. Add a small "includes-brand" check before appending — `marketplace-core` v1.3.2's BaseLayout shows the canonical guard:
+
+```tsx
+const alreadyBranded =
+  !!pageTitle && !!siteTitle && pageTitle.includes(siteTitle);
+const fullTitle = pageTitle
+  ? alreadyBranded ? pageTitle : `${pageTitle} — ${siteTitle}`
+  : siteTitle;
+```
+
 ### "Continue reading" sidebar shows EN content on FR pages
 
 Cause: the default theme's `posts-loader.js` fetches `/data/posts.json` (primary content). Localised pages need `/<lang>/data/posts.json` with translated entries.
@@ -868,11 +933,14 @@ Rules: symmetric (each page lists ALL alternates including itself); `x-default` 
 
 ### Sitemap with hreflang alternates
 
-Hook the four sitemap filters in `flexweg-sitemaps`:
+Hook the five sitemap filters in `flexweg-sitemaps`:
 - `sitemap.urlset.namespaces` → add `xmlns:xhtml="http://www.w3.org/1999/xhtml"`
 - `sitemap.url.entry` → inject `<xhtml:link rel="alternate" hreflang="..." href="..."/>` for each language inside every `<url>`
 - `sitemap.urls.extra` → add `<url>` entries for translated paths (each with its own `<xhtml:link>` block)
-- `sitemap.index.extra` → add per-language news sitemap references (Google News doesn't support xhtml:link in news sitemaps, so the pattern is one news sitemap per language)
+- `sitemap.index.extra` → add per-language news sitemap references (Google News doesn't support xhtml:link in news sitemaps, so the pattern is one news sitemap per language). **MUST gate on `settings.pluginConfigs["flexweg-sitemaps"]?.newsEnabled === true`** — referencing files that aren't generated produces 404s in the index. flexweg-multilang's handler shows the canonical guard.
+- `sitemap.news.locales` (async, API ≥ 1.3.5) → return one `NewsLocaleEntry { language, path, entities: SitemapEntity[] }` per enabled secondary language. `flexweg-sitemaps` applies this when `newsEnabled === true`, builds + uploads each as `sitemap-news-<lang>.xml`. The plugin handles the actual XML — your handler just computes the per-locale entity list (filter posts to the News window, pick the localized URL via `buildLocalizedPostUrl`, skip posts without a translation in the target locale). Pair it with `sitemap.index.extra` so the file references and the file payloads stay in lock-step.
+
+**Per-locale news sitemap caveat — orphan cleanup**: when a user removes a secondary locale from your plugin's config while News stays enabled, the previously-uploaded `sitemap-news-<oldlang>.xml` stays on Flexweg (no longer referenced in the index, no longer regenerated). The current implementation is stateless and doesn't track per-locale paths in plugin config — accept this corner case or persist a `lastNewsLocalePaths: string[]` state field and diff on each regen.
 
 ### RSS per language
 
@@ -988,7 +1056,8 @@ Copy these patterns when you build per-locale or per-variant features.
 | `sitemap.urlset.namespaces` | sync (API ≥ 1.2) | `(ns: Record<string,string>, ctx) => Record<string,string>` — add XML namespace attrs to the `<urlset>` element (e.g. `xmlns:xhtml`). |
 | `sitemap.url.entry` | sync (API ≥ 1.2) | `(innerXml: string, ctx: { entity, baseUrl, path, lastmodMs }) => string` — return extra XML to inject INSIDE each `<url>` (e.g. `<xhtml:link rel="alternate" hreflang="...">` blocks). |
 | `sitemap.urls.extra` | sync (API ≥ 1.2) | `(extra: SitemapExtraUrl[], ctx: { posts, pages, terms, settings, year, scope }) => SitemapExtraUrl[]` — add extra `<url>` entries to the yearly sitemap (e.g. translated paths). |
-| `sitemap.index.extra` | sync (API ≥ 1.2) | `(extra: SitemapIndexExtraEntry[], ctx: { settings }) => SitemapIndexExtraEntry[]` — add extra `<sitemap>` references to sitemap-index.xml (e.g. per-language news sitemaps). |
+| `sitemap.index.extra` | sync (API ≥ 1.2) | `(extra: SitemapIndexExtraEntry[], ctx: { settings }) => SitemapIndexExtraEntry[]` — add extra `<sitemap>` references to sitemap-index.xml (e.g. per-language news sitemaps). Gate per-locale news refs on `settings.pluginConfigs["flexweg-sitemaps"]?.newsEnabled === true` so the index never advertises files that won't be generated. |
+| `sitemap.news.locales` | async (API ≥ 1.3.5) | `(extra: NewsLocaleEntry[], ctx: { posts, pages, terms, settings, config: SitemapsConfig }) => NewsLocaleEntry[]` — return one `{ language, path: "sitemaps/sitemap-news-<lang>.xml", entities: SitemapEntity[] }` per enabled secondary language. flexweg-sitemaps applies this when `newsEnabled === true` and uploads one news sitemap per entry. Pair with `sitemap.index.extra` so file payloads + index refs stay in lock-step. |
 
 ### Actions (side effects, fire-and-forget)
 

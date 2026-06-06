@@ -62,7 +62,7 @@ export async function computeAdditional(
       language,
       config,
     });
-    const html = renderLocalizedSingle({
+    const html = await renderLocalizedSingle({
       post,
       trans,
       termTrans: termTrans ?? undefined,

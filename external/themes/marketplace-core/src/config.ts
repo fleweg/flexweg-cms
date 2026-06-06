@@ -67,6 +67,19 @@ export interface MarketplaceSidebarItem {
   icon: string;
   label: string;
   href: string;
+  // Optional per-language overrides. Keys are 2-letter ISO codes
+  // matching `flexweg-multilang`'s `enabledLanguages` entries (e.g.
+  // "fr", "de"). When the current rendering locale matches a key,
+  // the override label and/or href take over before the locale-prefix
+  // step. Missing entries fall back to the primary `label` / `href`.
+  //
+  // Why we need this for href too (not just label): docs categories
+  // have DIFFERENT slugs per language (`/get-started/` ↔ `/demarrer/`,
+  // `/install/` ↔ `/installer/`, …). Without the override, the FR
+  // sidebar would point at `/fr/get-started/` which 404s. Categories
+  // whose slug is identical across languages (e.g. Themes / Plugins)
+  // can omit the `href` override and only carry a translated `label`.
+  translations?: Record<string, { label?: string; href?: string }>;
 }
 
 export interface MarketplaceSidebarConfig {
@@ -76,10 +89,28 @@ export interface MarketplaceSidebarConfig {
   // Categories section heading + items.
   categoriesHeading: string;
   categoriesItems: MarketplaceSidebarItem[];
+  // Documentation section heading + items. Optional — leave the items
+  // array empty to hide the group entirely.
+  docsHeading: string;
+  docsItems: MarketplaceSidebarItem[];
+  // Per-language overrides for the three group headings. Same shape
+  // as MarketplaceSidebarItem.translations but only carrying labels
+  // (no href on a heading).
+  headingTranslations?: Record<
+    string,
+    { heading?: string; categoriesHeading?: string; docsHeading?: string }
+  >;
 }
 
 export const DEFAULT_MARKETPLACE_SIDEBAR: MarketplaceSidebarConfig = {
   heading: "Discover",
+  headingTranslations: {
+    fr: {
+      heading: "Découvrir",
+      categoriesHeading: "Catégories",
+      docsHeading: "Documentation",
+    },
+  },
   topItems: [
     { icon: "auto_awesome", label: "Featured", href: "/index.html" },
     { icon: "fiber_new", label: "New", href: "/new.html" },
@@ -87,11 +118,49 @@ export const DEFAULT_MARKETPLACE_SIDEBAR: MarketplaceSidebarConfig = {
   ],
   categoriesHeading: "Categories",
   categoriesItems: [
-    { icon: "palette", label: "Themes", href: "/themes/index.html" },
+    {
+      icon: "palette",
+      label: "Themes",
+      href: "/themes/index.html",
+      translations: { fr: { label: "Thèmes" } },
+    },
     { icon: "extension", label: "Plugins", href: "/plugins/index.html" },
     { icon: "shopping_bag", label: "E-commerce", href: "/e-commerce/index.html" },
     { icon: "analytics", label: "Analytics", href: "/analytics/index.html" },
     { icon: "lock", label: "Authentication", href: "/authentication/index.html" },
+  ],
+  docsHeading: "Documentation",
+  docsItems: [
+    {
+      icon: "rocket_launch",
+      label: "Get Started",
+      href: "/get-started/index.html",
+      translations: { fr: { label: "Démarrer", href: "/demarrer/index.html" } },
+    },
+    {
+      icon: "download",
+      label: "Install",
+      href: "/install/index.html",
+      translations: { fr: { label: "Installer", href: "/installer/index.html" } },
+    },
+    {
+      icon: "edit_note",
+      label: "Use",
+      href: "/use/index.html",
+      translations: { fr: { label: "Utiliser", href: "/utiliser/index.html" } },
+    },
+    {
+      icon: "code",
+      label: "Develop",
+      href: "/develop/index.html",
+      translations: { fr: { label: "Développer", href: "/developper/index.html" } },
+    },
+    {
+      icon: "extension",
+      label: "Extend",
+      href: "/extend/index.html",
+      translations: { fr: { label: "Étendre", href: "/etendre/index.html" } },
+    },
   ],
 };
 

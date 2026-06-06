@@ -1,53 +1,34 @@
 ---
-title: Compatibility & Versioning
+title: Submission Guidelines
 slug: guidelines
 type: page
 status: draft
-seoTitle: Compatibility & Versioning — Flexweg CMS Marketplace
-seoDescription: How Flexweg's first-party themes and plugins are versioned and kept compatible with the CMS.
-excerpt: "How Flexweg's themes and plugins are versioned and kept compatible with the CMS."
+seoTitle: Guidelines — Flexweg CMS Marketplace
+seoDescription: How to package a theme or plugin for the official Flexweg CMS marketplace.
+excerpt: "How to package a theme or plugin for the official Flexweg CMS marketplace."
 ---
 
-# Compatibility & versioning
+# Submission Guidelines
 
-Everything in this marketplace is shipped by Flexweg and lives in the same repository as the CMS itself: [github.com/fleweg/flexweg-cms](https://github.com/fleweg/flexweg-cms). This page covers how versions, compatibility windows, and upgrades are handled.
+This page documents the contract every theme and plugin in this marketplace agrees to follow. It's not a barrier — it's a small set of practices that keep installs predictable and uninstalls clean.
 
-## API contract
+## Plugin checklist
 
-Each theme and plugin declares an `apiVersion` in its `manifest.json`. The admin validates it against `[FLEXWEG_API_MIN_VERSION, FLEXWEG_API_VERSION]` at install time AND on every boot — incompatible bundles are skipped with a console warning instead of crashing the admin.
+- A valid `manifest.json` with `id`, `name`, `version`, `apiVersion`, and `entry` fields.
+- The bundle must externalize `react`, `react-dom`, `react-i18next`, and `@flexweg/cms-runtime` — never duplicate React in your build.
+- Settings page registered via `manifest.settings`; the page is mounted at `/admin/#/settings/plugin/<id>`.
+- i18n bundles via `manifest.i18n = { en, fr, … }`. English is required; other locales are encouraged.
+- If the plugin uploads to Flexweg, route every write through the dispatcher exports (`uploadFile`, `deleteFile`, …) so the standard error toasts apply.
 
-## Versioning scheme
+## Theme checklist
 
-We follow semver:
+- Six templates exported from the manifest: `base`, `home`, `single`, `category`, `author`, `notFound`.
+- `BaseLayout` MUST emit both sentinels: `<meta name="x-cms-head-extra" />` in `<head>` and `<script type="application/x-cms-body-end" />` before `</body>`. Plugins inject head + body content through these.
+- Templates accept serializable props only — no Firestore reads, no admin context.
+- Multi-language support: read `currentLocale` in `BaseLayout`, use `site.homePath` for the brand link, prefix internal hard-coded URLs with the locale, and pick per-language menu labels from `ResolvedMenuItem.labels`.
 
-- **Major** — breaking API change (e.g. a hook signature removed); listings ship a new major when migrating
-- **Minor** — additive features (new blocks, new settings tabs)
-- **Patch** — bug fixes only
+## Naming + licensing
 
-The current Flexweg CMS API range is exposed at runtime via the `FLEXWEG_API_VERSION` and `FLEXWEG_API_MIN_VERSION` constants — see [docs/runtime-api-reference.md](https://github.com/fleweg/flexweg-cms/blob/master/docs/runtime-api-reference.md).
-
-## Release artifacts
-
-Each release on the main repository tags a version-specific asset:
-
-- Plugins: `https://github.com/fleweg/flexweg-cms/releases/download/<plugin-id>-vX.Y.Z/<plugin-id>.zip`
-- Themes: `https://github.com/fleweg/flexweg-cms/releases/download/<theme-id>-vX.Y.Z/<theme-id>.zip`
-
-The **Download** button on every listing points at the latest tag. Pin a specific version by replacing the tag in the URL.
-
-## Upgrade flow
-
-1. Download the new `.zip` from the listing
-2. Drag it into the admin's **Install** modal — the in-place upgrade flow auto-detects the existing install, replaces the bundle, and preserves your settings
-3. Click **Sync theme assets** on themes (themes ship their CSS separately at `/theme-assets/<id>.css`)
-4. Republish affected posts if the upgrade includes template changes
-
-## Maintenance commitment
-
-The Flexweg team maintains every listing in this marketplace. We:
-
-- Update themes/plugins within 30 days of a CMS API bump
-- Respond to issues on the main repository within 5 working days
-- Honor a 60-day deprecation window before removing any public API
-
-Major version bumps are communicated through the [releases page](https://github.com/fleweg/flexweg-cms/releases) and the changelog post on this marketplace.
+- Use a unique kebab-case id (e.g. `acme-newsletter`) — the id is immutable after install.
+- License under MIT (or any OSI-approved permissive license).
+- Add a `README.md` to the bundle with install + configuration notes — admins read it from the Plugins page.

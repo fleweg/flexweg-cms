@@ -40,13 +40,21 @@ function loadExternalsManifest() {
   return JSON.parse(readFileSync(path, "utf-8"));
 }
 
-// Locates a README.md for the source-side <id> folder. Plugins live
-// under src/plugins/<id>; themes under src/themes/<id>. Returns the
-// path or null when none exists.
+// Locates a README.md for the source-side <id> folder. Tries in-tree
+// first (src/plugins/<id> or src/themes/<id>), then external/ — so
+// entries pulled in via `srcDir` in build-bundled-externals.mjs
+// (currently `flexweg-multilang` and `marketplace-core`) have their
+// README packed without a separate config entry. Returns the first
+// match or null.
 function findSourceReadme(kind, id) {
-  const folder = kind === "plugins" ? "src/plugins" : "src/themes";
-  const candidate = resolve(root, folder, id, "README.md");
-  return existsSync(candidate) ? candidate : null;
+  const candidates = [
+    resolve(root, kind === "plugins" ? "src/plugins" : "src/themes", id, "README.md"),
+    resolve(root, kind === "plugins" ? "external/plugins" : "external/themes", id, "README.md"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  return null;
 }
 
 // Zips one entry into <outDir>/<id>.zip. Mirrors the file layout the

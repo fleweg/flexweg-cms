@@ -12,6 +12,7 @@ import { CategoryTemplate } from "./templates/CategoryTemplate";
 import { AuthorTemplate } from "./templates/AuthorTemplate";
 import { NotFoundTemplate } from "./templates/NotFoundTemplate";
 import { en, fr, de, es, nl, pt, ko } from "./i18n";
+import { i18n as runtimeI18n } from "@flexweg/cms-runtime";
 import { transformBodyHtml } from "./blocks/transforms";
 import { encodeAttrs } from "./blocks/util";
 import type { MarketplaceThemeConfig } from "./config";
@@ -26,6 +27,11 @@ import { specsBlock } from "./blocks/specs/manifest";
 import { DEFAULT_SPECS } from "./blocks/specs/render";
 import { featuresBlock } from "./blocks/features/manifest";
 import { DEFAULT_FEATURES } from "./blocks/features/render";
+import { landingHeroBlock } from "./blocks/landingHero/manifest";
+import { featureGridBlock } from "./blocks/featureGrid/manifest";
+import { featureRowBlock } from "./blocks/featureRow/manifest";
+import { statsBarBlock } from "./blocks/statsBar/manifest";
+import { ctaBannerBlock } from "./blocks/ctaBanner/manifest";
 import type { ThemeManifest } from "@flexweg/cms-runtime";
 
 // Seed markdown auto-inserted at the top of every new POST (not
@@ -54,7 +60,7 @@ type ManifestWithSeed = ThemeManifest<MarketplaceThemeConfig> & {
 const manifest: ManifestWithSeed = {
   id: "marketplace-core",
   name: "Marketplace Core",
-  version: "1.1.1",
+  version: "1.3.2",
   description:
     "App-store style theme for listing themes / plugins. Modern Corporate aesthetic with ambient shadows and rounded XL corners.",
   scssEntry: "theme.css",
@@ -86,12 +92,125 @@ const manifest: ManifestWithSeed = {
     author: AuthorTemplate,
     notFound: NotFoundTemplate,
   },
-  blocks: [headerButtonsBlock, galleryBlock, specsBlock, featuresBlock],
+  blocks: [
+    // Product blocks — used on single product pages.
+    headerButtonsBlock,
+    galleryBlock,
+    specsBlock,
+    featuresBlock,
+    // Landing blocks — used on home / about / marketing pages
+    // (added in v1.3.0).
+    landingHeroBlock,
+    featureGridBlock,
+    featureRowBlock,
+    statsBarBlock,
+    ctaBannerBlock,
+  ],
   register(api) {
     // Transform marketplace-core/* block markers into rich HTML at
     // publish time. Other themes' markers pass through untouched.
-    api.addFilter<string>("post.html.body", (html) => transformBodyHtml(html));
+    // The (post, ctx) tail args carry the current locale via
+    // ctx.settings.language — multilang's shadow ctx swaps it to "fr"
+    // for FR renders, so the code-block "Copy" / "Copier" label
+    // ships per-locale in the published HTML.
+    api.addFilter<string>("post.html.body", (html, _post, ctxRaw) => {
+      const ctx = ctxRaw as { settings?: { language?: string } } | undefined;
+      const lang = (ctx?.settings?.language || "en").toLowerCase().split("-")[0];
+      const copyLabel =
+        (runtimeI18n.getResource(lang, "theme-marketplace-core", "publicBaked.codeBlock.copy") as
+          | string
+          | undefined) ?? "Copy";
+      const copiedLabel =
+        (runtimeI18n.getResource(lang, "theme-marketplace-core", "publicBaked.codeBlock.copied") as
+          | string
+          | undefined) ?? "Copied";
+      return transformBodyHtml(html, copyLabel, copiedLabel);
+    });
+    // Resolve doc-page siblings (prev/next pager) on the publisher
+    // side so the DocSingle template doesn't have to call
+    // `getCurrentPublishContext()` — which the in-tree publisher
+    // clears BEFORE renderPageToHtml runs, leaving template code
+    // looking at a null context. The `post.template.props` filter
+    // receives the live ctx as third arg and runs while it's still
+    // valid, so this is the right place to enrich props.
+    api.addFilter<unknown>("post.template.props", (props, _post, ctxRaw) => {
+      const ctx = ctxRaw as TemplatePropsCtx;
+      const post = _post as TemplatePropsPost;
+      // Doc layout is only triggered when the post has no hero — skip
+      // the work for product posts that won't use siblings. The check
+      // matches the dispatch logic in SingleTemplate.tsx.
+      if (post.heroMediaId || !post.primaryTermId) return props;
+      const siblings = resolveDocSiblings(ctx, post.id, post.primaryTermId);
+      return {
+        ...(props as Record<string, unknown>),
+        docSiblings: siblings,
+      };
+    });
   },
 };
+
+// Local minimal shape of the filter arguments. We avoid importing
+// PublishContext / Post types from the runtime because the
+// `post.template.props` filter signature in the runtime stubs is
+// already (props, post, ...) and the third arg is loose `unknown[]`.
+// The narrower interfaces below capture exactly what resolveDocSiblings
+// needs — defensive against shadow ctxs (multilang) that may carry
+// fewer fields.
+interface TemplatePropsCtx {
+  posts: Array<{
+    id: string;
+    type: "post" | "page";
+    title: string;
+    slug: string;
+    status: "draft" | "online";
+    primaryTermId?: string;
+    createdAt?: { toMillis?: () => number };
+  }>;
+  terms: Array<{ id: string; slug: string; type: "category" | "tag" }>;
+}
+interface TemplatePropsPost {
+  id: string;
+  heroMediaId?: string;
+  primaryTermId?: string;
+}
+
+function resolveDocSiblings(
+  ctx: TemplatePropsCtx,
+  currentPostId: string,
+  primaryTermId: string,
+): Array<{ id: string; title: string; url: string }> {
+  if (!ctx?.posts) return [];
+  const primaryTerm = ctx.terms.find((t) => t.id === primaryTermId);
+  if (!primaryTerm) return [];
+  // Include the current post even if its status is still "draft" —
+  // covers first-publish renders where markPostOnline runs after the
+  // template render. All other siblings must be online so drafts
+  // don't surface as prev/next.
+  return ctx.posts
+    .filter(
+      (p) =>
+        p.type === "post" &&
+        p.primaryTermId === primaryTermId &&
+        (p.id === currentPostId || p.status === "online"),
+    )
+    .sort((a, b) => {
+      const ams = a.createdAt?.toMillis?.() ?? 0;
+      const bms = b.createdAt?.toMillis?.() ?? 0;
+      return ams - bms;
+    })
+    .map((p) => {
+      // Posts without a category live at the site root
+      // (`<slug>.html`); doc posts always have a primary category,
+      // hence the `<term.slug>/<post.slug>.html` join. Multilang's
+      // shadow ctx already carries localized term + post slugs, so
+      // FR pages produce `/fr/demarrer/welcome.html` via the same
+      // logic.
+      return {
+        id: p.id,
+        title: p.title,
+        url: `${primaryTerm.slug}/${p.slug}.html`,
+      };
+    });
+}
 
 export default manifest;

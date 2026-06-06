@@ -69,6 +69,17 @@ export interface PublishContext {
   // avatar). Used by templates rendered at publish time and (via the
   // resolved values) by authors.json on every publish.
   authorLookup: (id: string) => AuthorView | undefined;
+  // When set, `publishPost`, `unpublishPost` and `deletePostAndUnpublish`
+  // do the minimum per-entity work (render + upload + bookkeeping +
+  // in-memory ctx mutation) but SKIP the cascade (listings, author
+  // archives, menus, JSON snapshots) and SKIP the heavyweight lifecycle
+  // actions (`publish.after` / `publish.complete` / `post.unpublished`
+  // / `post.deleted`). The caller is responsible for running
+  // `flushBulkRegeneration(ctx, log)` once after the bulk loop to do
+  // the cascade + plugin regeneration targets a single time instead of
+  // N times. Pre-render hooks (`publish.before`) still fire — multilang
+  // needs them to seed hreflang state before renderSingle.
+  bulkMode?: boolean;
 }
 
 // THEME CSS PATH on Flexweg, mirrors what the build script produces.
@@ -420,9 +431,20 @@ export async function renderHome(
   }
 
   let templateProps: HomeTemplateProps & { site: SiteContext };
+  // When a static page drives the home, surface its title + SEO meta
+  // through baseProps so the rendered <title>, <meta description> and
+  // og:image reflect what the admin set on that page — without this,
+  // the home was stuck on `pageTitle: ""` + the site-wide description,
+  // even if the wired page had explicit `seo.title` / `seo.description`.
+  // The multilang plugin's per-locale home (`renderLocalizedHome`)
+  // delegates to this same function, so this fix also flows through
+  // the localised variants automatically (the page object in
+  // `ctx.pages` is already the translated view in that case).
+  let staticHomePage: Post | undefined;
   if (ctx.settings.homeMode === "static-page" && ctx.settings.homePageId) {
     const page = ctx.pages.find((p) => p.id === ctx.settings.homePageId && p.status === "online");
     if (page) {
+      staticHomePage = page;
       // Same publish-context exposure as renderSingle so home-bound
       // pages can use theme blocks (Hero, Posts list, …) too. The
       // home page is the most likely place to use them.
@@ -464,10 +486,22 @@ export async function renderHome(
     };
   }
 
+  // Resolve the home's SEO meta from the wired static page first, then
+  // fall back to the page's title / excerpt and finally to the site-
+  // wide settings. The category-grid home (no static page) still gets
+  // `pageTitle: ""` so BaseLayout falls back to the site title alone —
+  // matches the pre-fix behaviour.
+  const homePageTitle = staticHomePage?.seo?.title || staticHomePage?.title || "";
+  const homePageDescription =
+    staticHomePage?.seo?.description ||
+    staticHomePage?.excerpt ||
+    ctx.settings.description;
+  const homeOgImage = staticHomePage?.seo?.ogImage;
   const baseProps: Omit<BaseLayoutProps, "children" | "extraHead"> = {
     site,
-    pageTitle: "",
-    pageDescription: ctx.settings.description,
+    pageTitle: homePageTitle,
+    pageDescription: homePageDescription,
+    ogImage: homeOgImage,
     currentPath: options.homePath ?? HOME_PATH,
     currentLocale: options.currentLocale,
   };
@@ -850,19 +884,27 @@ export async function publishPost(
     previousPublishedPaths: failedDeletions,
   });
 
-  log({ level: "info", message: "Regenerating listings…" });
-  await regenerateListings(ctx, log);
-  // Refresh the author's archive so it lists this post (or doesn't,
-  // when it just transitioned in/out of online). Other authors are
-  // unaffected — only re-render the one we touched.
-  if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
-  await republishMenu(ctx, log);
-  await republishPostsJson(ctx, log);
-  await republishAuthorsJson(ctx, log);
+  if (!ctx.bulkMode) {
+    log({ level: "info", message: "Regenerating listings…" });
+    await regenerateListings(ctx, log);
+    // Refresh the author's archive so it lists this post (or doesn't,
+    // when it just transitioned in/out of online). Other authors are
+    // unaffected — only re-render the one we touched.
+    if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
+    await republishMenu(ctx, log);
+    await republishPostsJson(ctx, log);
+    await republishAuthorsJson(ctx, log);
+  }
 
   log({ level: "success", message: `Published to /${newPath}` });
-  await doAction("publish.after", post, ctx);
-  await doAction("publish.complete", post, ctx);
+  if (!ctx.bulkMode) {
+    // Bulk callers run a single flushBulkRegeneration() at the end
+    // instead of letting each post trigger sitemaps / RSS / search
+    // regenerations individually. publish.before still fires above
+    // because per-render state (multilang hreflang cache) needs it.
+    await doAction("publish.after", post, ctx);
+    await doAction("publish.complete", post, ctx);
+  }
 }
 
 export async function unpublishPost(
@@ -889,13 +931,17 @@ export async function unpublishPost(
     lastPublishedPath: undefined,
     lastPublishedHash: undefined,
   });
-  await regenerateListings(ctx, log);
-  if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
-  await republishMenu(ctx, log);
-  await republishPostsJson(ctx, log);
-  await republishAuthorsJson(ctx, log);
+  if (!ctx.bulkMode) {
+    await regenerateListings(ctx, log);
+    if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
+    await republishMenu(ctx, log);
+    await republishPostsJson(ctx, log);
+    await republishAuthorsJson(ctx, log);
+  }
   log({ level: "success", message: "Unpublished." });
-  await doAction("post.unpublished", post, ctx);
+  if (!ctx.bulkMode) {
+    await doAction("post.unpublished", post, ctx);
+  }
 }
 
 // Regenerates the home page and every category archive. Doesn't touch
@@ -1150,6 +1196,66 @@ export async function regenerateAll(ctx: PublishContext, log: PublishLogger): Pr
   log({ level: "success", message: "Regeneration complete." });
 }
 
+// Called once at the end of a bulk operation (import, multi-publish,
+// multi-delete) to do the cascade work that was deferred by setting
+// `ctx.bulkMode = true` on every per-entity call. Re-renders the home
+// + every category archive + every touched author archive, refreshes
+// the menu / posts / authors JSON snapshots, and runs every registered
+// plugin regeneration target (sitemaps, RSS, search, archives, …) so
+// the public site reflects the bulk changes as cheaply as possible.
+//
+// `regenerationTargets` is supplied by the caller (typically loaded
+// via `listRegenerationTargets()` from the in-tree registry) so this
+// module doesn't take a dependency on the registry directly — keeps
+// the publisher importable without pulling the plugin-side glue.
+export async function flushBulkRegeneration(
+  ctx: PublishContext,
+  log: PublishLogger,
+  regenerationTargets: Array<{
+    id: string;
+    run: (ctx: PublishContext, log: PublishLogger) => Promise<void>;
+  }>,
+): Promise<void> {
+  // Clear bulkMode so the cascade helpers below run their inner
+  // pre-render hooks (publish.before, regenerate.listings.before)
+  // and any `doAction` calls they make fire normally.
+  ctx.bulkMode = false;
+
+  log({ level: "info", message: "Flushing bulk regeneration — listings…" });
+  await regenerateListings(ctx, log);
+
+  // One author archive per author with at least one post — collected
+  // from the live ctx so deletes don't leak archives for now-empty
+  // authors (their archive is overwritten or left in place, callers
+  // can delete it explicitly via the Users page).
+  const onlinePosts = [...ctx.posts, ...ctx.pages].filter((p) => p.status === "online");
+  const authorIds = new Set<string>();
+  for (const p of onlinePosts) if (p.authorId) authorIds.add(p.authorId);
+  for (const id of authorIds) {
+    await publishAuthorArchive(id, ctx, log);
+  }
+
+  await republishMenu(ctx, log);
+  await republishPostsJson(ctx, log);
+  await republishAuthorsJson(ctx, log);
+
+  // Plugin regeneration targets — sitemaps, RSS, search, archives, …
+  // Each target does a FULL rebuild (not incremental), which is the
+  // correct shape after a bulk operation touched many posts.
+  for (const target of regenerationTargets) {
+    try {
+      await target.run(ctx, log);
+    } catch (err) {
+      log({
+        level: "error",
+        message: `Plugin "${target.id}" regen failed: ${(err as Error).message}`,
+      });
+    }
+  }
+
+  log({ level: "success", message: "Bulk regeneration complete." });
+}
+
 export async function deletePostAndUnpublish(
   postId: string,
   ctx: PublishContext,
@@ -1170,7 +1276,7 @@ export async function deletePostAndUnpublish(
   // afterwards (services/posts.ts).
   ctx.posts = ctx.posts.filter((p) => p.id !== postId);
   ctx.pages = ctx.pages.filter((p) => p.id !== postId);
-  if (post.status === "online") {
+  if (post.status === "online" && !ctx.bulkMode) {
     log({ level: "info", message: "Regenerating listings…" });
     await regenerateListings(ctx, log);
     if (post.authorId) await publishAuthorArchive(post.authorId, ctx, log);
@@ -1178,5 +1284,7 @@ export async function deletePostAndUnpublish(
     await republishPostsJson(ctx, log);
     await republishAuthorsJson(ctx, log);
   }
-  await doAction("post.deleted", post, ctx);
+  if (!ctx.bulkMode) {
+    await doAction("post.deleted", post, ctx);
+  }
 }

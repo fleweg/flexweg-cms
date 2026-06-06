@@ -76,6 +76,7 @@ declare module "@flexweg/cms-runtime" {
     label: string;
     href: string;
     children?: ResolvedMenuItem[];
+    labels?: Record<string, string>;
   }
   export interface SiteContext {
     settings: SiteSettings;
@@ -85,6 +86,7 @@ declare module "@flexweg/cms-runtime" {
     };
     themeCssPath: string;
     themeConfig?: unknown;
+    homePath?: string;
   }
 
   // ───── Template props ─────
@@ -94,9 +96,14 @@ declare module "@flexweg/cms-runtime" {
     pageDescription?: string;
     ogImage?: string;
     currentPath?: string;
+    currentLocale?: string;
     children?: ReactNode;
     extraHead?: ReactNode;
   }
+
+  // ───── Slug / URL helpers ─────
+  export function canonicalPath(path: string): string;
+  export function canonicalUrl(baseUrl: string, path: string): string;
   export interface HomeTemplateProps {
     posts: CardPost[];
     staticPage?: { post: Post; bodyHtml: string };

@@ -7,17 +7,19 @@ category: Plugins
 tags: [plugin, archives, navigation, static]
 heroImage: 06-archives.jpg
 author: team@flexweg.com
-excerpt: "Generates static archive pages grouped by year, month, or ISO week. Adds a 'See full archives' link to home and category listings — a static-friendly alternative to pagination."
+excerpt: "Generates static archive pages grouped by year, month, or ISO week. Adds a 'See full archives' link to the home and category listings — a static-friendly alternative to infinite scroll."
 ---
-<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6Imh0dHBzOi8vZ2l0aHViLmNvbS9mbGV3ZWcvZmxleHdlZy1jbXMvcmVsZWFzZXMvZG93bmxvYWQvZmxleHdlZy1hcmNoaXZlcy12MS4wLjAvZmxleHdlZy1hcmNoaXZlcy56aXAiLCJwcmV2aWV3VXJsIjoiaHR0cHM6Ly9hcmNoaXZlcy5kZW1vLmZsZXh3ZWcuY29tIiwiZG93bmxvYWRMYWJlbCI6IkRvd25sb2FkIiwicHJldmlld0xhYmVsIjoiTGl2ZSBQcmV2aWV3IiwiZnJlZUxhYmVsIjoiRnJlZSIsImNyZWF0b3IiOiJGbGV4d2VnIiwiY3JlYXRvclByZWZpeCI6ImJ5In0="></div>
-<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOlt7InVybCI6IjA2LWFyY2hpdmVzLmpwZyIsImFsdCI6IkZsZXh3ZWcgQXJjaGl2ZXMifV19"></div>
+<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6ICJodHRwczovL2dpdGh1Yi5jb20vZmxld2VnL2ZsZXh3ZWctY21zL3JlbGVhc2VzL2Rvd25sb2FkL2ZsZXh3ZWctYXJjaGl2ZXMtdjEuMC4wL2ZsZXh3ZWctYXJjaGl2ZXMuemlwIiwgInByZXZpZXdVcmwiOiAiaHR0cHM6Ly9hcmNoaXZlcy5kZW1vLmZsZXh3ZWcuY29tIiwgImRvd25sb2FkTGFiZWwiOiAiRG93bmxvYWQiLCAicHJldmlld0xhYmVsIjogIkxpdmUgUHJldmlldyIsICJmcmVlTGFiZWwiOiAiRnJlZSIsICJjcmVhdG9yIjogIkZsZXh3ZWciLCAiY3JlYXRvclByZWZpeCI6ICJieSJ9"></div>
+<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOiBbeyJ1cmwiOiAiMDYtYXJjaGl2ZXMuanBnIiwgImFsdCI6ICJGbGV4d2VnIEFyY2hpdmVzIn1dfQ=="></div>
 
 ## Description
 
-Pagination doesn't play well with static hosting — every page change means a re-render of every listing. Archives takes a different approach: it groups your posts into archive pages by period (year by default, or month / ISO week if you prefer) and adds a single "See full archives" link to your home + category listings.
+**Flexweg Archives** rebuilds the WordPress archive widget on top of static publishing. Choose a granularity (year, month, ISO week) and the plugin generates `/archives/<period>/index.html` pages listing every post that falls in that window. The pages are linked from a sticky "Archives" hub at `/archives/index.html` and surfaced via a "See full archives" CTA on the home + every category archive.
 
-The result: a static-friendly browsing experience that scales to thousands of posts without exploding your build time or breaking your URLs.
+Multilang-aware: when the flexweg-multilang plugin is enabled, each archive page is rendered per locale under `/<lang>/archives/…`, with localized period labels (e.g. "May 2026" vs "mai 2026") sourced from each theme's i18n bundle.
 
-<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjoiU3BlY2lmaWNhdGlvbnMiLCJyb3dzIjpbeyJsYWJlbCI6IlZlcnNpb24iLCJ2YWx1ZSI6IjEuMC4wIn0seyJsYWJlbCI6IkxpY2Vuc2UiLCJ2YWx1ZSI6Ik1JVCJ9LHsibGFiZWwiOiJMYXN0IFVwZGF0ZWQiLCJ2YWx1ZSI6Ikxhc3Qgd2VlayJ9LHsibGFiZWwiOiJSZXF1aXJlcyBGbGV4d2VnIiwidmFsdWUiOiLiiaUgMS4wLjAifV19"></div>
+Why use it: large blogs and publications need a navigable history that doesn't depend on JavaScript scroll or expensive search. Static archive pages get indexed by Google, deep-link cleanly, and survive any host.
 
-<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjoiS2V5IEZlYXR1cmVzIiwiaXRlbXMiOlt7Imljb24iOiJjYWxlbmRhcl90b2RheSIsInRpdGxlIjoiWWVhciBhcmNoaXZlcyJ9LHsiaWNvbiI6ImRhdGVfcmFuZ2UiLCJ0aXRsZSI6Ik1vbnRoIC8gd2VlayBhcmNoaXZlcyJ9LHsiaWNvbiI6InZpc2liaWxpdHkiLCJ0aXRsZSI6IkF1dG8gaG9tZSAvIGNhdGVnb3J5IGxpbmsifSx7Imljb24iOiJib2x0IiwidGl0bGUiOiJTdGF0aWMtZnJpZW5kbHkifV19"></div>
+<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjogIlNwZWNpZmljYXRpb25zIiwgInJvd3MiOiBbeyJsYWJlbCI6ICJWZXJzaW9uIiwgInZhbHVlIjogIjEuMC4wIn0sIHsibGFiZWwiOiAiTGljZW5zZSIsICJ2YWx1ZSI6ICJNSVQifSwgeyJsYWJlbCI6ICJMYXN0IFVwZGF0ZWQiLCAidmFsdWUiOiAiVGhpcyByZWxlYXNlIn0sIHsibGFiZWwiOiAiUmVxdWlyZXMgRmxleHdlZyIsICJ2YWx1ZSI6ICJcdTIyNjUgMS4wLjAifV19"></div>
+
+<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjogIktleSBGZWF0dXJlcyIsICJpdGVtcyI6IFt7Imljb24iOiAiY2FsZW5kYXJfbW9udGgiLCAidGl0bGUiOiAiWWVhciAvIG1vbnRoIC8gd2VlayBncmFudWxhcml0eSJ9LCB7Imljb24iOiAiaGlzdG9yeSIsICJ0aXRsZSI6ICJTdGF0aWMsIGluZGV4YWJsZSBwYWdlcyJ9LCB7Imljb24iOiAidHJhbnNsYXRlIiwgInRpdGxlIjogIk11bHRpbGFuZy1hd2FyZSJ9LCB7Imljb24iOiAibGluayIsICJ0aXRsZSI6ICJBdXRvLWxpbmtlZCBmcm9tIGhvbWUgKyBjYXRlZ29yaWVzIn1dfQ=="></div>
