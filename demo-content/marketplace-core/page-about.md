@@ -1,5 +1,5 @@
 ---
-title: About the Marketplace
+title: About this marketplace
 slug: about
 type: page
 status: draft

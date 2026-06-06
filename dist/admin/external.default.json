@@ -1,0 +1,72 @@
+{
+  "plugins": [
+    {
+      "id": "core-seo",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/core-seo/bundle.js"
+    },
+    {
+      "id": "flexweg-sitemaps",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/flexweg-sitemaps/bundle.js"
+    },
+    {
+      "id": "flexweg-rss",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/flexweg-rss/bundle.js"
+    },
+    {
+      "id": "flexweg-archives",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/flexweg-archives/bundle.js"
+    },
+    {
+      "id": "flexweg-search",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/flexweg-search/bundle.js"
+    },
+    {
+      "id": "flexweg-multilang",
+      "version": "1.6.2",
+      "apiVersion": "1.3.0",
+      "entryPath": "plugins/flexweg-multilang/bundle.js"
+    }
+  ],
+  "themes": [
+    {
+      "id": "magazine",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "themes/magazine/bundle.js"
+    },
+    {
+      "id": "corporate",
+      "version": "1.0.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "themes/corporate/bundle.js"
+    },
+    {
+      "id": "storefront",
+      "version": "0.1.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "themes/storefront/bundle.js"
+    },
+    {
+      "id": "portfolio",
+      "version": "0.1.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "themes/portfolio/bundle.js"
+    },
+    {
+      "id": "marketplace-core",
+      "version": "1.7.0",
+      "apiVersion": "1.3.0",
+      "entryPath": "themes/marketplace-core/bundle.js"
+    }
+  ]
+}

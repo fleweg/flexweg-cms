@@ -1,4 +1,5 @@
 import {
+  applyFilters,
   getActiveTheme,
   renderHome,
   renderMarkdown,
@@ -20,6 +21,22 @@ import {
   termToPrimaryTranslation,
 } from "../core/urls";
 import { isPrimaryLanguage } from "../core/config";
+
+// Resolves the active theme's settings the same way the core publisher's
+// buildSiteContext does — defaults merged with whatever the user saved.
+// Without this, manually-built site objects in renderLocalizedSingle /
+// renderLocalizedCategory pass `themeConfig: undefined`, so themes that
+// read site.themeConfig (e.g. marketplace-core's Sidebar) fall back to
+// hardcoded defaults on localised pages while EN reflects user edits.
+function resolveThemeConfig(ctx: PublishContext): unknown {
+  const theme = getActiveTheme(ctx.settings.activeThemeId);
+  if (!theme.settings) return undefined;
+  const stored = (ctx.settings.themeConfigs as Record<string, unknown> | undefined)?.[theme.id];
+  return {
+    ...(theme.settings.defaultConfig as object),
+    ...((stored as object) ?? {}),
+  };
+}
 
 // Builds a SHADOW PublishContext for a given language. Each post + term
 // is replaced with a "translated view" whose title / slug / content
@@ -131,14 +148,14 @@ export async function renderLocalizedHome(args: {
 // Renders a localised single-post page. Each post variant is published
 // independently (cleanup + bookkeeping handled by the publisher's
 // `publish.additional` hook), so this only renders ONE post at a time.
-export function renderLocalizedSingle(args: {
+export async function renderLocalizedSingle(args: {
   post: Post;
   trans: PostTranslation;
   termTrans: TermTranslation | undefined;
   language: string;
   ctx: PublishContext;
   config: MultilangConfig;
-}): string {
+}): Promise<string> {
   const { post, trans, termTrans, language, ctx, config } = args;
   const theme = getActiveTheme(ctx.settings.activeThemeId);
 
@@ -151,13 +168,22 @@ export function renderLocalizedSingle(args: {
     settings: { ...ctx.settings, language },
     resolvedMenus: { header: [], footer: [] },
     themeCssPath: `theme-assets/${ctx.settings.activeThemeId}.css`,
-    themeConfig: undefined,
+    themeConfig: resolveThemeConfig(ctx),
     homePath: isPrimaryLanguage(config, language)
       ? "/index.html"
       : `/${language}/index.html`,
   };
 
-  const bodyHtml = renderMarkdown(trans.contentMarkdown);
+  // Run the SAME `post.html.body` filter chain the core publisher's
+  // renderSingle applies — that's where theme block markers (e.g.
+  // marketplace-core/header-buttons → CTA template islands +
+  // hydration script, magazine/hero-split → hero markup, etc.) get
+  // expanded, plus any user-installed plugin body augmentations.
+  // Without this, the localized HTML ships with the raw
+  // `<div data-cms-block="…">` markers unrendered and the theme
+  // surfaces (Download / Preview buttons, byline slot, …) stay empty.
+  let bodyHtml = renderMarkdown(trans.contentMarkdown);
+  bodyHtml = await applyFilters<string>("post.html.body", bodyHtml, post);
   const tags = ctx.terms.filter((t) => post.termIds.includes(t.id) && t.type === "tag");
   const primaryTerm = post.primaryTermId
     ? ctx.terms.find((t) => t.id === post.primaryTermId && t.type === "category")
@@ -250,7 +276,7 @@ export function renderLocalizedCategory(args: {
     settings: { ...ctx.settings, language },
     resolvedMenus: { header: [], footer: [] },
     themeCssPath: `theme-assets/${ctx.settings.activeThemeId}.css`,
-    themeConfig: undefined,
+    themeConfig: resolveThemeConfig(ctx),
     homePath: isPrimaryLanguage(config, language)
       ? "/index.html"
       : `/${language}/index.html`,

@@ -7,17 +7,19 @@ category: Themes
 tags: [theme, corporate, saas, lead-gen, tailwind]
 heroImage: 01-corporate.jpg
 author: team@flexweg.com
-excerpt: "Modern corporate / SaaS theme for vitrine + lead-gen sites. Navy + indigo Material 3 palette, Inter typography, 10 ready-to-use content blocks."
+excerpt: "Modern corporate theme for vitrine and lead-generation sites. Material 3 navy palette, Inter typography, ten ready-to-use content blocks."
 ---
-<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6Imh0dHBzOi8vZ2l0aHViLmNvbS9mbGV3ZWcvZmxleHdlZy1jbXMvcmVsZWFzZXMvZG93bmxvYWQvY29ycG9yYXRlLXYxLjAuMC9jb3Jwb3JhdGUuemlwIiwicHJldmlld1VybCI6Imh0dHBzOi8vY29ycG9yYXRlLmRlbW8uZmxleHdlZy5jb20iLCJkb3dubG9hZExhYmVsIjoiRG93bmxvYWQiLCJwcmV2aWV3TGFiZWwiOiJMaXZlIFByZXZpZXciLCJmcmVlTGFiZWwiOiJGcmVlIiwiY3JlYXRvciI6IkZsZXh3ZWciLCJjcmVhdG9yUHJlZml4IjoiYnkifQ=="></div>
-<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOlt7InVybCI6IjAxLWNvcnBvcmF0ZS5qcGciLCJhbHQiOiJDb3Jwb3JhdGUifV19"></div>
+<div data-cms-block="marketplace-core/header-buttons" data-attrs="eyJkb3dubG9hZFVybCI6ICJodHRwczovL2dpdGh1Yi5jb20vZmxld2VnL2ZsZXh3ZWctY21zL3JlbGVhc2VzL2Rvd25sb2FkL2NvcnBvcmF0ZS12MS4wLjAvY29ycG9yYXRlLnppcCIsICJwcmV2aWV3VXJsIjogImh0dHBzOi8vY29ycG9yYXRlLmRlbW8uZmxleHdlZy5jb20iLCAiZG93bmxvYWRMYWJlbCI6ICJEb3dubG9hZCIsICJwcmV2aWV3TGFiZWwiOiAiTGl2ZSBQcmV2aWV3IiwgImZyZWVMYWJlbCI6ICJGcmVlIiwgImNyZWF0b3IiOiAiRmxleHdlZyIsICJjcmVhdG9yUHJlZml4IjogImJ5In0="></div>
+<div data-cms-block="marketplace-core/gallery" data-attrs="eyJpbWFnZXMiOiBbeyJ1cmwiOiAiMDEtY29ycG9yYXRlLmpwZyIsICJhbHQiOiAiQ29ycG9yYXRlIn1dfQ=="></div>
 
 ## Description
 
-Built for vitrine sites, lead-generation pages, and content marketing — Corporate ships with 10 pre-styled blocks (Hero overlay, Services grid, CTA banner, Testimonials, Trust bar, Stats grid, Feature stack, Contact form, etc.) so a fresh product page can be assembled directly in the editor with zero CSS.
+**Corporate** is the go-to theme when you need to publish a clean, conversion-focused vitrine site: SaaS landing pages, agency sites, B2B services, fundraising campaigns. It ships with a navy + indigo Material 3 palette, Inter typography, and a tight set of content blocks designed for trust + conversion.
 
-The Tailwind pipeline + Material 3 token system means every color and font is editable from the **Theme settings → Style** tab without touching code. A built-in contact form posts to a configurable endpoint (Formspree-compatible) or falls back to `mailto:`.
+The theme renders everything server-side at publish time — no JavaScript needed for navigation, hero animations, or layout. Pages stay fast, accessible by default, and crawler-friendly out of the box.
 
-<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjoiU3BlY2lmaWNhdGlvbnMiLCJyb3dzIjpbeyJsYWJlbCI6IlZlcnNpb24iLCJ2YWx1ZSI6IjAuMS4wIn0seyJsYWJlbCI6IkxpY2Vuc2UiLCJ2YWx1ZSI6Ik1JVCJ9LHsibGFiZWwiOiJMYXN0IFVwZGF0ZWQiLCJ2YWx1ZSI6IlRoaXMgd2VlayJ9LHsibGFiZWwiOiJSZXF1aXJlcyBGbGV4d2VnIiwidmFsdWUiOiLiiaUgMS4wLjAifV19"></div>
+A floating contact form (Formspree-compatible or `mailto:` fallback) handles inbound leads without needing a backend. The header sports an inline desktop nav AND a burger overlay so it works from a 320 px phone to a 4K monitor without compromise.
 
-<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjoiS2V5IEZlYXR1cmVzIiwiaXRlbXMiOlt7Imljb24iOiJhcGFydG1lbnQiLCJ0aXRsZSI6IjEwIExlYWQtZ2VuIGJsb2NrcyJ9LHsiaWNvbiI6ImJvbHQiLCJ0aXRsZSI6IlRhaWx3aW5kIHBvd2VyZWQifSx7Imljb24iOiJzZW5kIiwidGl0bGUiOiJCdWlsdC1pbiBjb250YWN0IGZvcm0ifSx7Imljb24iOiJjb250cmFzdCIsInRpdGxlIjoiTWF0ZXJpYWwgMyB0b2tlbnMifV19"></div>
+<div data-cms-block="marketplace-core/specs" data-attrs="eyJoZWFkaW5nIjogIlNwZWNpZmljYXRpb25zIiwgInJvd3MiOiBbeyJsYWJlbCI6ICJWZXJzaW9uIiwgInZhbHVlIjogIjEuMC4wIn0sIHsibGFiZWwiOiAiTGljZW5zZSIsICJ2YWx1ZSI6ICJNSVQifSwgeyJsYWJlbCI6ICJMYXN0IFVwZGF0ZWQiLCAidmFsdWUiOiAiVGhpcyByZWxlYXNlIn0sIHsibGFiZWwiOiAiUmVxdWlyZXMgRmxleHdlZyIsICJ2YWx1ZSI6ICJcdTIyNjUgMS4wLjAifV19"></div>
+
+<div data-cms-block="marketplace-core/features" data-attrs="eyJoZWFkaW5nIjogIktleSBGZWF0dXJlcyIsICJpdGVtcyI6IFt7Imljb24iOiAidmlld19xdWlsdCIsICJ0aXRsZSI6ICIxMCBjb250ZW50IGJsb2NrcyJ9LCB7Imljb24iOiAiY29udGFjdF9tYWlsIiwgInRpdGxlIjogIkNvbnRhY3QgZm9ybSAoRm9ybXNwcmVlKSJ9LCB7Imljb24iOiAic3BlZWQiLCAidGl0bGUiOiAiU2VydmVyLXJlbmRlcmVkLCBKUy1mcmVlIn0sIHsiaWNvbiI6ICJwYWxldHRlIiwgInRpdGxlIjogIk1hdGVyaWFsIDMgcGFsZXR0ZSJ9XX0="></div>

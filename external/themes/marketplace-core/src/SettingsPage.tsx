@@ -377,6 +377,20 @@ function SidebarTab({
           onChange={(items) => onChange({ ...sidebar, categoriesItems: items })}
         />
       </Section>
+
+      <Section title="Documentation">
+        <Field label="Heading">
+          <input
+            className="input"
+            value={sidebar.docsHeading ?? ""}
+            onChange={(e) => onChange({ ...sidebar, docsHeading: e.target.value })}
+          />
+        </Field>
+        <ItemList
+          items={sidebar.docsItems ?? []}
+          onChange={(items) => onChange({ ...sidebar, docsItems: items })}
+        />
+      </Section>
     </div>
   );
 }
@@ -615,16 +629,63 @@ function ItemList({
   items: MarketplaceSidebarItem[];
   onChange: (items: MarketplaceSidebarItem[]) => void;
 }) {
+  const [expandedI18n, setExpandedI18n] = useState<Set<number>>(new Set());
+
   function update(i: number, patch: Partial<MarketplaceSidebarItem>) {
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     onChange(next);
   }
+  function updateTranslation(
+    i: number,
+    lang: string,
+    patch: Partial<{ label: string; href: string }>,
+  ) {
+    const item = items[i];
+    const existing = item.translations?.[lang] ?? {};
+    const merged = { ...existing, ...patch };
+    // Strip empty values so the picker falls back to the primary label
+    // / href instead of showing an empty string. Keeps stored configs
+    // minimal — entries with no overrides at all get pruned to keep
+    // `translations` from polluting Firestore / SQLite blobs.
+    const cleaned: { label?: string; href?: string } = {};
+    if (merged.label && merged.label.trim() !== "") cleaned.label = merged.label;
+    if (merged.href && merged.href.trim() !== "") cleaned.href = merged.href;
+    const nextTranslations = { ...(item.translations ?? {}) };
+    if (Object.keys(cleaned).length === 0) {
+      delete nextTranslations[lang];
+    } else {
+      nextTranslations[lang] = cleaned;
+    }
+    const next = [...items];
+    next[i] = {
+      ...item,
+      translations:
+        Object.keys(nextTranslations).length === 0 ? undefined : nextTranslations,
+    };
+    onChange(next);
+  }
   function remove(i: number) {
     onChange(items.filter((_, idx) => idx !== i));
+    setExpandedI18n((prev) => {
+      const next = new Set<number>();
+      for (const idx of prev) {
+        if (idx < i) next.add(idx);
+        else if (idx > i) next.add(idx - 1);
+      }
+      return next;
+    });
   }
   function add() {
     onChange([...items, { icon: "", label: "", href: "" }]);
+  }
+  function toggleI18n(i: number) {
+    setExpandedI18n((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
   }
 
   return (
@@ -632,40 +693,87 @@ function ItemList({
       {items.length === 0 && (
         <p className="text-xs text-surface-500">No items yet.</p>
       )}
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_3fr_auto] gap-2 items-center p-2 rounded border border-surface-200 dark:border-surface-800"
-        >
-          <input
-            className="input text-xs"
-            placeholder="Icon"
-            value={item.icon}
-            onChange={(e) => update(i, { icon: e.target.value })}
-          />
-          <input
-            className="input text-xs"
-            placeholder="Label"
-            value={item.label}
-            onChange={(e) => update(i, { label: e.target.value })}
-          />
-          <input
-            className="input text-xs"
-            placeholder="/path/to/page.html"
-            value={item.href}
-            onChange={(e) => update(i, { href: e.target.value })}
-          />
-          <button
-            type="button"
-            onClick={() => remove(i)}
-            className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-            aria-label="Remove item"
-            title="Remove item"
+      {items.map((item, i) => {
+        const isOpen = expandedI18n.has(i);
+        const frTr = item.translations?.fr;
+        const hasFr = Boolean(frTr?.label || frTr?.href);
+        return (
+          <div
+            key={i}
+            className="p-2 rounded border border-surface-200 dark:border-surface-800 space-y-2"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_3fr_auto_auto] gap-2 items-center">
+              <input
+                className="input text-xs"
+                placeholder="Icon"
+                value={item.icon}
+                onChange={(e) => update(i, { icon: e.target.value })}
+              />
+              <input
+                className="input text-xs"
+                placeholder="Label"
+                value={item.label}
+                onChange={(e) => update(i, { label: e.target.value })}
+              />
+              <input
+                className="input text-xs"
+                placeholder="/path/to/page.html"
+                value={item.href}
+                onChange={(e) => update(i, { href: e.target.value })}
+              />
+              {/* FR toggle. Shows a filled badge when overrides exist so
+                  the editor can see at a glance which items have
+                  translations without expanding them all. */}
+              <button
+                type="button"
+                onClick={() => toggleI18n(i)}
+                className={
+                  "px-2 py-1 rounded text-[10px] font-semibold tracking-wider uppercase border " +
+                  (hasFr
+                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                    : "border-surface-300 text-surface-500 dark:border-surface-700 dark:text-surface-400")
+                }
+                aria-label={hasFr ? "Edit FR translation" : "Add FR translation"}
+                title={hasFr ? "FR translation present — click to edit" : "Add FR translation"}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="p-1.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                aria-label="Remove item"
+                title="Remove item"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {isOpen && (
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr_3fr] gap-2 pt-2 border-t border-surface-200 dark:border-surface-800">
+                <span className="text-[10px] font-semibold tracking-wider uppercase text-surface-500 self-center">
+                  FR
+                </span>
+                <input
+                  className="input text-xs"
+                  placeholder={`Label FR (default: ${item.label || "—"})`}
+                  value={frTr?.label ?? ""}
+                  onChange={(e) =>
+                    updateTranslation(i, "fr", { label: e.target.value })
+                  }
+                />
+                <input
+                  className="input text-xs"
+                  placeholder={`Href FR (default: ${item.href || "—"})`}
+                  value={frTr?.href ?? ""}
+                  onChange={(e) =>
+                    updateTranslation(i, "fr", { href: e.target.value })
+                  }
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
       <button
         type="button"
         onClick={add}

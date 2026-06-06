@@ -32,6 +32,7 @@ import { computeAdditional } from "./publisher/computeAdditional";
 import { computeExtraListings } from "./publisher/computeExtraListings";
 import {
   indexExtra,
+  newsLocales,
   setLatestConfig,
   setLatestTerms,
   urlEntry,
@@ -39,8 +40,8 @@ import {
   urlsExtra,
 } from "./publisher/sitemap";
 import {
-  cleanupLocalizedFeeds,
-  regenerateLocalizedFeeds,
+  buildLocalizedSiteEntries,
+  cleanupLegacyLocalizedFeeds,
 } from "./publisher/feeds";
 import { publishLocalizedDataJson } from "./publisher/localizedJson";
 import { SettingsPage } from "./settings/SettingsPage";
@@ -50,8 +51,11 @@ import { buildSwitcherScript } from "./core/switcher";
 
 // `publish.complete` handler. Refreshes the hreflang cache + the
 // alternates cache so the next page render picks up any changes
-// (e.g. a translation was added/removed). Also regenerates the
-// per-language feeds.
+// (e.g. a translation was added/removed). Per-language RSS feeds are
+// no longer written standalone here — they ride on the `rss.site.locales`
+// filter so flexweg-rss's enable toggle (and orphan cleanup) controls
+// them. We still sweep the ≤ 1.6.1 legacy paths once per publish so an
+// upgrading deployment can clean up its old `/<lang>/feed.xml` files.
 async function onPublishComplete(_post: Post, ctx: PublishContext): Promise<void> {
   const config = getMultilangConfig(ctx.settings);
   // Keep sitemap module-level state hot for filters that don't
@@ -60,7 +64,7 @@ async function onPublishComplete(_post: Post, ctx: PublishContext): Promise<void
   setLatestTerms(ctx.terms);
   refreshPathRegistry(ctx.posts, ctx.pages, ctx.terms, ctx.settings, config);
   refreshAlternatesCache(ctx.posts, ctx.pages, ctx.terms, config);
-  await regenerateLocalizedFeeds(ctx);
+  await cleanupLegacyLocalizedFeeds(ctx);
   await publishLocalizedDataJson(ctx);
 }
 
@@ -70,7 +74,7 @@ async function onPostUnpublishedOrDeleted(_post: Post, ctx: PublishContext): Pro
   setLatestTerms(ctx.terms);
   refreshPathRegistry(ctx.posts, ctx.pages, ctx.terms, ctx.settings, config);
   refreshAlternatesCache(ctx.posts, ctx.pages, ctx.terms, config);
-  await regenerateLocalizedFeeds(ctx);
+  await cleanupLegacyLocalizedFeeds(ctx);
   await publishLocalizedDataJson(ctx);
 }
 
@@ -217,6 +221,29 @@ const manifest: PluginManifest<MultilangConfig> = {
         args,
       );
     });
+    // Per-locale news sitemap generation — paired with the
+    // `sitemap.index.extra` handler above so the file references
+    // and the actual file payloads stay in lock-step.
+    api.addFilter<unknown[]>("sitemap.news.locales", (existing, ...rest) => {
+      const args = rest[0] as Parameters<typeof newsLocales>[1];
+      return newsLocales(
+        existing as Parameters<typeof newsLocales>[0],
+        args,
+      );
+    });
+    // Per-locale RSS feeds — fired by flexweg-rss inside
+    // regenerateSiteFeed when `site.enabled === true`. Each returned
+    // entry is uploaded as `<lang>/rss.xml`; flexweg-rss tracks the
+    // paths in `pluginConfigs["flexweg-rss"].site.lastLocalePaths` so a
+    // later disable or language removal cleans the files up.
+    api.addFilter<unknown[]>("rss.site.locales", (existing, ...rest) => {
+      const args = rest[0] as Parameters<typeof buildLocalizedSiteEntries>[0];
+      if (!args) return existing;
+      return [
+        ...(existing as Array<ReturnType<typeof buildLocalizedSiteEntries>[number]>),
+        ...buildLocalizedSiteEntries(args),
+      ];
+    });
 
     // ── Editor extensibility ─────────────────────────────────────
     // Variant provider — renders language tabs above the main editor.
@@ -236,10 +263,6 @@ const manifest: PluginManifest<MultilangConfig> = {
     // ── Best-effort warm-up so hreflang appears on the first render
     //    after admin boot (before any publish fires). ──────────────
     void warmRegistry();
-
-    // Touch import so dead-code elimination doesn't strip helpers
-    // we expose via the manifest itself.
-    void cleanupLocalizedFeeds;
   },
 };
 

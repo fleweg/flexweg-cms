@@ -11,13 +11,15 @@ import {
   type SourceFile,
   type WordPressAttachment,
 } from "./parsers";
+import { Timestamp } from "firebase/firestore";
 import { slugify, isValidSlug, findAvailableSlug } from "../../core/slug";
 import type { Media, Post, SiteSettings, Term, UserRecord } from "../../core/types";
 import { uploadMedia } from "../../services/media";
 import { createPost } from "../../services/posts";
 import { createTerm, updateTerm } from "../../services/taxonomies";
-import { publishPost, buildPublishContext } from "../../services/publisher";
+import { publishPost, buildPublishContext, flushBulkRegeneration } from "../../services/publisher";
 import { buildAuthorLookup } from "../../services/users";
+import { listRegenerationTargets } from "../../core/regenerationTargetRegistry";
 import {
   deleteFile,
   getFile,
@@ -694,6 +696,30 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
   }
 
   // ─── 3. Create posts ────────────────────────────────────────────
+  //
+  // Bulk-mode publish ctx: when the user chose `online` or
+  // `from-source`, we build the publish context ONCE before the loop
+  // (with refreshTerms so the just-created categories/tags are
+  // visible) instead of rebuilding it per post. publishPost is then
+  // called with `ctx.bulkMode = true` so each entry skips the
+  // listings / author / menu / JSON cascade AND the heavyweight
+  // `publish.after` / `publish.complete` lifecycle actions
+  // (sitemaps / RSS / search / archives regenerations). After the
+  // loop, `flushBulkRegeneration` runs the cascade + every plugin
+  // regeneration target ONCE — turning what used to be O(N) plugin
+  // work into O(N + 1).
+  const willPublishAny = options.statusMode !== "draft";
+  const bulkCtx = willPublishAny
+    ? await buildPublishContext({
+        terms: ctx.terms,
+        users: ctx.users,
+        settings,
+        authorLookup: buildAuthorLookup(ctx.users, ctx.media),
+        refreshTerms: true,
+      })
+    : null;
+  if (bulkCtx) bulkCtx.bulkMode = true;
+
   for (const resolved of summary.entries) {
     const entry = resolved.source;
     log(`Creating ${entry.type}: ${entry.title}`);
@@ -792,24 +818,38 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
     const shouldPublish =
       options.statusMode === "online" ||
       (options.statusMode === "from-source" && entry.status === "online");
-    if (shouldPublish) {
+    if (shouldPublish && bulkCtx) {
+      // Construct the live Post locally from the createPost input so
+      // publishPost can find it in the shared bulk ctx — avoids a
+      // full re-fetch per iteration (which was the per-post call to
+      // buildPublishContext in the pre-bulk path).
+      const livePost: Post = {
+        id: postId,
+        type: entry.type,
+        title: entry.title,
+        slug: resolved.finalSlug,
+        contentMarkdown: body,
+        excerpt: entry.excerpt,
+        heroMediaId,
+        authorId: authorId ?? "",
+        termIds,
+        primaryTermId,
+        status: "draft",
+        seo:
+          entry.seoTitle || entry.seoDescription
+            ? { title: entry.seoTitle, description: entry.seoDescription }
+            : undefined,
+        createdAt: Timestamp.fromDate(entry.publishedAt ?? new Date()),
+        updatedAt: Timestamp.fromDate(entry.publishedAt ?? new Date()),
+        publishedAt: entry.publishedAt ? Timestamp.fromDate(entry.publishedAt) : undefined,
+        translations,
+      };
+      if (entry.type === "page") bulkCtx.pages.push(livePost);
+      else bulkCtx.posts.push(livePost);
+
       try {
         log(`Publishing: ${entry.title}`);
-        // createPost above invalidated the fetchAllPosts cache;
-        // buildPublishContext picks up the freshly-created post from
-        // Firestore (read-your-writes consistency) and — critically —
-        // we pass `refreshTerms: true` so the just-created categories
-        // are visible to buildPostUrl. Otherwise term-resolution for
-        // primaryTermId would miss and the post would publish at the
-        // root path instead of <category>/<slug>.html.
-        const publishCtx = await buildPublishContext({
-          terms: ctx.terms,
-          users: ctx.users,
-          settings,
-          authorLookup: buildAuthorLookup(ctx.users, ctx.media),
-          refreshTerms: true,
-        });
-        await publishPost(postId, publishCtx, () => {}, {
+        await publishPost(postId, bulkCtx, () => {}, {
           publishedAt: entry.publishedAt,
         });
         result.publishedPostIds.push(postId);
@@ -822,6 +862,28 @@ export async function runImport(deps: RunDeps): Promise<RunResult> {
       }
     }
     await sleep(75);
+  }
+
+  // ─── 3b. Bulk-mode flush ────────────────────────────────────────
+  // After the per-post loop, do the cascade work that each publishPost
+  // skipped: listings, author archives, menu/posts/authors JSON, plus
+  // every registered plugin regeneration target (sitemaps, RSS,
+  // search, archives, …). This is the O(1) replacement for the per-
+  // post O(N) cascade that would otherwise turn a 96-post import into
+  // ~10 plugin regenerations × 96 = ~1000 redundant API calls.
+  if (bulkCtx && result.publishedPostIds.length > 0) {
+    log(
+      `Bulk flush: regenerating listings + ${listRegenerationTargets().length} plugin target(s)…`,
+    );
+    try {
+      await flushBulkRegeneration(bulkCtx, () => {}, listRegenerationTargets());
+    } catch (err) {
+      result.warnings.push({
+        level: "warning",
+        source: "(bulk flush)",
+        message: `Bulk regeneration partially failed: ${(err as Error).message}`,
+      });
+    }
   }
 
   // ─── 4. Move processed files (folder mode only) ─────────────────

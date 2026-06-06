@@ -5,17 +5,27 @@ import { ProductCard } from "../components/ProductCard";
 // Category archive — breadcrumb + category title/description + 3-col
 // grid of cards. The mockup category page doesn't have filter tabs
 // (that's the author template). Pagination is left to the publisher.
+//
+// `site.settings.language` is the active locale on per-locale renders
+// (the multilang plugin swaps it into a shadow ctx for renderLocalizedCategory),
+// so the i18n bundle picks the right "Home" label. The breadcrumb
+// "Home" link uses `site.homePath` so it resolves to `/<lang>/index.html`
+// on localized archives.
 export function CategoryTemplate({
   term,
   posts,
   site,
 }: CategoryTemplateProps & { site: SiteContext }) {
-  const t = i18n.getFixedT(pickPublicLocale(site.settings.language), "theme-marketplace-core");
+  const t = i18n.getFixedT(
+    pickPublicLocale(site.settings.language),
+    "theme-marketplace-core",
+  );
+  const homeHref = site.homePath ?? "/index.html";
 
   return (
     <article>
       <nav className="mp-breadcrumb" aria-label="Breadcrumb">
-        <a href="/index.html">{t("publicBaked.home")}</a>
+        <a href={homeHref}>{t("publicBaked.home")}</a>
         <span className="mp-breadcrumb__sep">/</span>
         <span>{term.name}</span>
       </nav>

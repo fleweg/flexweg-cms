@@ -386,6 +386,11 @@ declare module "@flexweg/cms-runtime" {
       author: ComponentType<unknown>;
       notFound: ComponentType<unknown>;
     };
+    settings?: {
+      navLabelKey: string;
+      defaultConfig: unknown;
+      component: ComponentType<unknown>;
+    };
   }
 
   export interface RenderPageOptions<TInner extends object> {
@@ -471,5 +476,31 @@ declare module "@flexweg/cms-runtime" {
   export interface SitemapIndexExtraEntry {
     path: string;
     lastmodMs?: number;
+  }
+  export interface SitemapEntity {
+    path: string;
+    createdAtMs: number;
+    updatedAtMs: number;
+    title: string;
+    sourcePost?: Post;
+  }
+  export interface NewsLocaleEntry {
+    language: string;
+    path: string;
+    entities: SitemapEntity[];
+  }
+  export interface RssLocaleEntry {
+    language: string;
+    path: string;
+    channelTitle: string;
+    channelLink: string;
+    channelDescription: string;
+    items: RssItem[];
+  }
+  export interface SitemapsConfig {
+    contentTypes: "posts" | "posts-pages";
+    newsEnabled: boolean;
+    newsWindowDays: number;
+    robotsTxt: string;
   }
 }

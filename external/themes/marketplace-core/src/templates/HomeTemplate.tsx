@@ -3,6 +3,7 @@ import { i18n, pickPublicLocale } from "@flexweg/cms-runtime";
 import { ProductCard } from "../components/ProductCard";
 import type { MarketplaceThemeConfig } from "../config";
 import { DEFAULT_MARKETPLACE_HOME } from "../config";
+import { localePrefix } from "../lib/locale";
 
 // Home — hero banner + Featured Plugins (2-wide cards) + New Themes
 // (3-col grid) + optional Recently Updated section. Posts are
@@ -17,9 +18,17 @@ export function HomeTemplate({
   staticPage,
   site,
 }: HomeTemplateProps & { site: SiteContext }) {
-  const t = i18n.getFixedT(pickPublicLocale(site.settings.language), "theme-marketplace-core");
+  // `site.settings.language` IS the active locale here — the
+  // multilang plugin's `renderLocalizedHome` swaps it into a shadow
+  // ctx before invoking this template, so the i18n bundle and the
+  // "See all" link prefix stay aligned with the page being rendered.
+  const t = i18n.getFixedT(
+    pickPublicLocale(site.settings.language),
+    "theme-marketplace-core",
+  );
   const themeConfig = site.themeConfig as MarketplaceThemeConfig | undefined;
   const home = { ...DEFAULT_MARKETPLACE_HOME, ...(themeConfig?.home ?? {}) };
+  const prefix = localePrefix(site.homePath);
 
   if (staticPage) {
     return (
@@ -66,7 +75,7 @@ export function HomeTemplate({
             {home.featuredCategorySlug && (
               <a
                 className="mp-section__see-all"
-                href={`/${home.featuredCategorySlug}/index.html`}
+                href={`${prefix}/${home.featuredCategorySlug}/index.html`}
               >
                 {t("publicBaked.seeAll")} →
               </a>
@@ -87,7 +96,7 @@ export function HomeTemplate({
             {home.newCategorySlug && (
               <a
                 className="mp-section__see-all"
-                href={`/${home.newCategorySlug}/index.html`}
+                href={`${prefix}/${home.newCategorySlug}/index.html`}
               >
                 {t("publicBaked.seeAll")} →
               </a>

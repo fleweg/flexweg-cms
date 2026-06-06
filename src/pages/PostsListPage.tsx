@@ -22,9 +22,11 @@ import { toast } from "../lib/toast";
 import {
   buildPublishContext,
   deletePostAndUnpublish,
+  flushBulkRegeneration,
   publishPost,
   unpublishPost,
 } from "../services/publisher";
+import { listRegenerationTargets } from "../core/regenerationTargetRegistry";
 import { deletePost, fetchAllPosts } from "../services/posts";
 import { buildAuthorLookup } from "../services/users";
 import type { Post, PostStatus } from "../core/types";
@@ -285,6 +287,14 @@ export function PostsListPage() {
     let failed = 0;
     try {
       const ctx = await buildCtx();
+      // Bulk mode: each per-post call skips the cascade (listings,
+      // author archives, menu/JSON snapshots) AND the heavyweight
+      // plugin lifecycle actions (publish.complete / post.unpublished
+      // / post.deleted → sitemaps, RSS, search, archives). After the
+      // loop, `flushBulkRegeneration` runs the cascade + every plugin
+      // regeneration target ONCE — turning per-post O(plugins) work
+      // into O(1) at the end.
+      ctx.bulkMode = true;
       for (const target of targets) {
         try {
           if (action === "publish") {
@@ -309,6 +319,17 @@ export function PostsListPage() {
           failed++;
           console.error(`[bulk-${action}] failed on "${target.title}":`, err);
         }
+      }
+      // Flush the deferred cascade once, regardless of partial failures —
+      // we want the public site to reflect whatever state the bulk
+      // operation left in the backend. flushBulkRegeneration clears
+      // bulkMode before delegating to the cascade helpers so their
+      // own inner doAction calls (regenerate.listings.before, etc.)
+      // fire normally.
+      try {
+        await flushBulkRegeneration(ctx, () => {}, listRegenerationTargets());
+      } catch (err) {
+        console.error("[bulk-flush] partial failure:", err);
       }
       const msgKey =
         action === "publish"
