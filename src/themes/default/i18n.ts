@@ -48,6 +48,30 @@ export const en = {
     reset: "Reset to defaults",
     resetting: "Resetting…",
   },
+  presets: {
+    title: "Style preset",
+    help: "Pick a graphic preset to fill every field below. You can fine-tune individual values afterwards.",
+    classic: {
+      label: "Classic",
+      description: "Original editorial baseline — Newsreader over Inter, warm beige surfaces.",
+    },
+    modern: {
+      label: "Modern",
+      description: "Crisp slate palette and roomy spacing, paired with Space Grotesk and Source Serif.",
+    },
+    editorial: {
+      label: "Editorial",
+      description: "Ivory cream surfaces, bordeaux accents, Playfair Display headlines.",
+    },
+    bold: {
+      label: "Bold",
+      description: "High-contrast magazine look — coral primary, indigo secondary, sharp display type.",
+    },
+    minimal: {
+      label: "Minimal",
+      description: "Quiet monochrome palette, sharp corners, Source Serif and Inter.",
+    },
+  },
   groups: {
     surfaces: "Surfaces",
     foreground: "Foreground (text)",
@@ -246,6 +270,30 @@ export const fr: typeof en = {
     reset: "Réinitialiser",
     resetting: "Réinitialisation…",
   },
+  presets: {
+    title: "Préréglage de style",
+    help: "Choisissez un préréglage graphique pour pré-remplir tous les champs ci-dessous. Vous pourrez ensuite affiner valeur par valeur.",
+    classic: {
+      label: "Classique",
+      description: "Look éditorial d'origine — Newsreader sur Inter, surfaces beige chaud.",
+    },
+    modern: {
+      label: "Moderne",
+      description: "Palette ardoise nette et espace généreux, avec Space Grotesk et Source Serif.",
+    },
+    editorial: {
+      label: "Éditorial",
+      description: "Surfaces crème ivoire, accents bordeaux, titres en Playfair Display.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Magazine très contrasté — primaire corail, secondaire indigo, display marqué.",
+    },
+    minimal: {
+      label: "Minimal",
+      description: "Palette monochrome discrète, angles vifs, Source Serif et Inter.",
+    },
+  },
   groups: {
     surfaces: "Surfaces",
     foreground: "Texte",
@@ -431,6 +479,30 @@ export const de: typeof en = {
     failed: "Stil-Aktualisierung fehlgeschlagen.",
     reset: "Auf Standard zurücksetzen",
     resetting: "Zurücksetzen…",
+  },
+  presets: {
+    title: "Stil-Voreinstellung",
+    help: "Wählen Sie eine grafische Voreinstellung, um alle Felder unten zu befüllen. Sie können Werte danach einzeln feinjustieren.",
+    classic: {
+      label: "Klassisch",
+      description: "Originale Editorial-Basis — Newsreader auf Inter, warme Beige-Flächen.",
+    },
+    modern: {
+      label: "Modern",
+      description: "Knackige Slate-Palette und großzügige Abstände mit Space Grotesk und Source Serif.",
+    },
+    editorial: {
+      label: "Editorial",
+      description: "Elfenbein-Cremeflächen, Bordeaux-Akzente, Playfair-Display-Überschriften.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Kontrastreicher Magazin-Look — Korall primär, Indigo sekundär, markante Display-Schrift.",
+    },
+    minimal: {
+      label: "Minimal",
+      description: "Ruhige monochrome Palette, scharfe Kanten, Source Serif und Inter.",
+    },
   },
   groups: {
     surfaces: "Flächen",
@@ -618,6 +690,30 @@ export const es: typeof en = {
     reset: "Restablecer valores predeterminados",
     resetting: "Restableciendo…",
   },
+  presets: {
+    title: "Preset de estilo",
+    help: "Elige un preset gráfico para rellenar todos los campos. Puedes ajustar valor por valor después.",
+    classic: {
+      label: "Clásico",
+      description: "Look editorial original — Newsreader sobre Inter, superficies beige cálido.",
+    },
+    modern: {
+      label: "Moderno",
+      description: "Paleta pizarra nítida y espaciado amplio, con Space Grotesk y Source Serif.",
+    },
+    editorial: {
+      label: "Editorial",
+      description: "Superficies crema marfil, acentos burdeos, titulares en Playfair Display.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Look de revista de alto contraste — primario coral, secundario índigo, display marcado.",
+    },
+    minimal: {
+      label: "Minimal",
+      description: "Paleta monocromática discreta, esquinas afiladas, Source Serif e Inter.",
+    },
+  },
   groups: {
     surfaces: "Superficies",
     foreground: "Primer plano (texto)",
@@ -803,6 +899,30 @@ export const nl: typeof en = {
     failed: "Stijlupdate mislukt.",
     reset: "Terugzetten naar standaard",
     resetting: "Resetten…",
+  },
+  presets: {
+    title: "Stijl-preset",
+    help: "Kies een grafische preset om alle velden hieronder in te vullen. Je kunt waarden daarna individueel verfijnen.",
+    classic: {
+      label: "Klassiek",
+      description: "Originele editorial baseline — Newsreader op Inter, warme beige oppervlakken.",
+    },
+    modern: {
+      label: "Modern",
+      description: "Krachtig slate-palet en ruime spacing, met Space Grotesk en Source Serif.",
+    },
+    editorial: {
+      label: "Editorial",
+      description: "Ivoor-crème oppervlakken, bordeauxrode accenten, Playfair Display koppen.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Hoog-contrast magazine-look — koraal primair, indigo secundair, scherpe display.",
+    },
+    minimal: {
+      label: "Minimaal",
+      description: "Rustig monochroom palet, scherpe hoeken, Source Serif en Inter.",
+    },
   },
   groups: {
     surfaces: "Oppervlakken",
@@ -990,6 +1110,30 @@ export const pt: typeof en = {
     reset: "Repor predefinições",
     resetting: "A repor…",
   },
+  presets: {
+    title: "Predefinição de estilo",
+    help: "Escolhe uma predefinição gráfica para preencher todos os campos abaixo. Podes ajustar valor a valor depois.",
+    classic: {
+      label: "Clássico",
+      description: "Look editorial original — Newsreader sobre Inter, superfícies bege quente.",
+    },
+    modern: {
+      label: "Moderno",
+      description: "Paleta ardósia nítida e espaçamento generoso, com Space Grotesk e Source Serif.",
+    },
+    editorial: {
+      label: "Editorial",
+      description: "Superfícies creme-marfim, acentos bordô, títulos em Playfair Display.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Look de revista de alto contraste — primária coral, secundária índigo, display marcado.",
+    },
+    minimal: {
+      label: "Mínimo",
+      description: "Paleta monocromática discreta, cantos vivos, Source Serif e Inter.",
+    },
+  },
   groups: {
     surfaces: "Superfícies",
     foreground: "Primeiro plano (texto)",
@@ -1175,6 +1319,30 @@ export const ko: typeof en = {
     failed: "스타일 업데이트에 실패했습니다.",
     reset: "기본값으로 재설정",
     resetting: "재설정 중…",
+  },
+  presets: {
+    title: "스타일 프리셋",
+    help: "그래픽 프리셋을 선택하면 아래 모든 필드가 자동으로 채워집니다. 이후에 값을 개별적으로 조정할 수 있습니다.",
+    classic: {
+      label: "클래식",
+      description: "원본 에디토리얼 기본 — Inter 위 Newsreader, 따뜻한 베이지 표면.",
+    },
+    modern: {
+      label: "모던",
+      description: "선명한 슬레이트 팔레트와 넉넉한 간격, Space Grotesk와 Source Serif 조합.",
+    },
+    editorial: {
+      label: "에디토리얼",
+      description: "아이보리 크림 표면, 보르도 강조색, Playfair Display 헤드라인.",
+    },
+    bold: {
+      label: "볼드",
+      description: "고대비 매거진 룩 — 코랄 프라이머리, 인디고 세컨더리, 강렬한 디스플레이.",
+    },
+    minimal: {
+      label: "미니멀",
+      description: "차분한 모노크롬 팔레트, 날카로운 모서리, Source Serif와 Inter.",
+    },
   },
   groups: {
     surfaces: "표면",

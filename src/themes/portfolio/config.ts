@@ -103,6 +103,10 @@ export interface PortfolioThemeConfig {
   footer: PortfolioFooterConfig;
   brand: PortfolioBrandConfig;
   style: StyleOverrides;
+  // Milliseconds since epoch of the last theme CSS upload. Baked into
+  // the public-page `<link href="...?v=<n>">` so a style change busts
+  // the browser cache on the next publish.
+  cssUpdatedAt: number;
 }
 
 export const DEFAULT_PORTFOLIO_CONFIG: PortfolioThemeConfig = {
@@ -112,4 +116,5 @@ export const DEFAULT_PORTFOLIO_CONFIG: PortfolioThemeConfig = {
   footer: DEFAULT_PORTFOLIO_FOOTER,
   brand: DEFAULT_PORTFOLIO_BRAND,
   style: DEFAULT_STYLE,
+  cssUpdatedAt: 0,
 };

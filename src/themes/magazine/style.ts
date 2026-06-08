@@ -93,6 +93,142 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Curated graphic presets — pick one to fill every Style field in a
+// single action; the admin can then fine-tune individual fields. The
+// `vars` map can be partial: missing keys fall back to the spec
+// defaults via `resolveVar`. "editorial" is the baseline (matches
+// DEFAULT_STYLE exactly with empty vars).
+export interface StylePreset {
+  id: string;
+  swatch: [string, string, string, string];
+  vars: Record<string, string>;
+  fontSerif: string;
+  fontSans: string;
+}
+
+export const STYLE_PRESETS: StylePreset[] = [
+  {
+    id: "editorial",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {},
+    fontSerif: DEFAULT_FONT_SERIF,
+    fontSans: DEFAULT_FONT_SANS,
+  },
+  {
+    id: "news",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#fafaf7",
+      "--color-surface": "#fafaf7",
+      "--color-surface-container-low": "#f0efe9",
+      "--color-surface-container": "#e6e4dd",
+      "--color-surface-container-high": "#dcd9d1",
+      "--color-on-surface": "#0a0a0a",
+      "--color-on-surface-variant": "#2c2c2c",
+      "--color-outline": "#6b6b6b",
+      "--color-outline-variant": "#c4c4c4",
+      "--color-primary": "#8b0000",
+      "--color-on-primary": "#ffffff",
+      "--color-primary-container": "#4a0000",
+      "--color-on-primary-container": "#d4a8a8",
+      "--color-secondary": "#6b0000",
+    },
+    fontSerif: "Playfair Display",
+    fontSans: "IBM Plex Sans",
+  },
+  {
+    id: "literary",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#faf8f3",
+      "--color-surface": "#faf8f3",
+      "--color-surface-container-low": "#f0eee8",
+      "--color-surface-container": "#e6e3da",
+      "--color-surface-container-high": "#dcd8cd",
+      "--color-on-surface": "#2a2520",
+      "--color-on-surface-variant": "#5a5046",
+      "--color-outline": "#8c8276",
+      "--color-outline-variant": "#cfc8bd",
+      "--color-primary": "#5a3a2a",
+      "--color-on-primary": "#faf8f3",
+      "--color-primary-container": "#3a2418",
+      "--color-on-primary-container": "#a8907c",
+      "--color-secondary": "#7a4d36",
+    },
+    fontSerif: "EB Garamond",
+    fontSans: "Manrope",
+  },
+  {
+    id: "modernist",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#f7f7fa",
+      "--color-surface": "#f7f7fa",
+      "--color-surface-container-low": "#eeeef2",
+      "--color-surface-container": "#e3e3eb",
+      "--color-surface-container-high": "#d8d8e3",
+      "--color-on-surface": "#14152b",
+      "--color-on-surface-variant": "#3a3b50",
+      "--color-outline": "#6c6d80",
+      "--color-outline-variant": "#b8b9c8",
+      "--color-primary": "#2929d1",
+      "--color-on-primary": "#ffffff",
+      "--color-primary-container": "#1a1aa8",
+      "--color-on-primary-container": "#9494d4",
+      "--color-secondary": "#4b41e1",
+    },
+    fontSerif: "Spectral",
+    fontSans: "Outfit",
+  },
+  {
+    id: "boutique",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#fcfaf4",
+      "--color-surface": "#fcfaf4",
+      "--color-surface-container-low": "#f3f0e8",
+      "--color-surface-container": "#ebe6d9",
+      "--color-surface-container-high": "#e0d9c8",
+      "--color-on-surface": "#1a1612",
+      "--color-on-surface-variant": "#46403a",
+      "--color-outline": "#8a8478",
+      "--color-outline-variant": "#cfc8b8",
+      "--color-primary": "#1a1612",
+      "--color-on-primary": "#fcfaf4",
+      "--color-primary-container": "#332b22",
+      "--color-on-primary-container": "#a8a094",
+      "--color-secondary": "#b8581d",
+    },
+    fontSerif: "Lora",
+    fontSans: "Plus Jakarta Sans",
+  },
+];
+
+export function resolveVar(style: StyleOverrides, name: string): string {
+  const v = style.vars?.[name];
+  if (v && v.trim()) return v.trim();
+  const spec = THEME_VAR_SPECS.find((s) => s.name === name);
+  return spec ? spec.defaultValue : "";
+}
+
+export function detectActivePreset(style: StyleOverrides): string | null {
+  for (const preset of STYLE_PRESETS) {
+    if (preset.fontSerif !== style.fontSerif) continue;
+    if (preset.fontSans !== style.fontSans) continue;
+    let allMatch = true;
+    for (const spec of THEME_VAR_SPECS) {
+      const presetEffective = preset.vars[spec.name]?.trim() || spec.defaultValue;
+      const styleEffective = resolveVar(style, spec.name);
+      if (presetEffective !== styleEffective) {
+        allMatch = false;
+        break;
+      }
+    }
+    if (allMatch) return preset.id;
+  }
+  return null;
+}
+
 // Builds the Google Fonts URL used at the top of theme.css. Order:
 // serif first (matches the bundled stylesheet's @import line), then
 // sans. compileCss feeds the result back into the CSS as a single

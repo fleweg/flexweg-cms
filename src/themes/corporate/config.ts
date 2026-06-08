@@ -183,6 +183,10 @@ export interface CorporateThemeConfig {
   // regenerated `theme-assets/corporate.css` with an override `:root`
   // block appended and the right Google Fonts URL imported.
   style: StyleOverrides;
+  // Milliseconds since epoch of the last theme CSS upload. Baked into
+  // the public-page `<link href="...?v=<n>">` so a style change busts
+  // the browser cache on the next publish.
+  cssUpdatedAt: number;
   // Out-of-the-box home configuration. Consumed by HomeTemplate when
   // no static page is wired (the canonical mode). When the user
   // switches to homeMode === "static-page" the home config is
@@ -214,6 +218,7 @@ export const DEFAULT_CORPORATE_CONFIG: CorporateThemeConfig = {
   logoEnabled: false,
   logoUpdatedAt: 0,
   style: DEFAULT_STYLE,
+  cssUpdatedAt: 0,
   home: DEFAULT_CORPORATE_HOME,
   single: DEFAULT_CORPORATE_SINGLE,
 };

@@ -31,6 +31,30 @@ export const settingsEn = {
     reset: "Reset to defaults",
     resetting: "Resetting…",
   },
+  presets: {
+    title: "Style preset",
+    help: "Pick a graphic preset to fill every field below. You can fine-tune individual values afterwards.",
+    editorial: {
+      label: "Editorial",
+      description: "Original editorial baseline — Newsreader over Work Sans, neutral surfaces.",
+    },
+    news: {
+      label: "News",
+      description: "High-contrast newspaper look — Playfair Display + IBM Plex Sans on cream, deep red accent.",
+    },
+    literary: {
+      label: "Literary",
+      description: "Warm cream surfaces and rich brown — EB Garamond + Manrope for longform reading.",
+    },
+    modernist: {
+      label: "Modernist",
+      description: "Cool grays with indigo accent — Spectral + Outfit, contemporary editorial feel.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Cream surfaces with terracotta accent — Lora + Plus Jakarta Sans, refined boutique vibe.",
+    },
+  },
   groups: {
     surfaces: "Surfaces",
     foreground: "Foreground",
@@ -122,6 +146,30 @@ export const settingsFr: typeof settingsEn = {
     failed: "Échec de la mise à jour du style.",
     reset: "Réinitialiser aux valeurs par défaut",
     resetting: "Réinitialisation…",
+  },
+  presets: {
+    title: "Préréglage de style",
+    help: "Choisissez un préréglage graphique pour pré-remplir tous les champs ci-dessous. Vous pourrez ensuite affiner valeur par valeur.",
+    editorial: {
+      label: "Éditorial",
+      description: "Look éditorial d'origine — Newsreader sur Work Sans, surfaces neutres.",
+    },
+    news: {
+      label: "Journal",
+      description: "Look journal très contrasté — Playfair Display + IBM Plex Sans sur crème, accent rouge profond.",
+    },
+    literary: {
+      label: "Littéraire",
+      description: "Surfaces crème chaudes et bruns profonds — EB Garamond + Manrope pour la lecture longue.",
+    },
+    modernist: {
+      label: "Moderniste",
+      description: "Gris froids et accent indigo — Spectral + Outfit, look éditorial contemporain.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Surfaces crème et accent terracotta — Lora + Plus Jakarta Sans, look boutique raffiné.",
+    },
   },
   groups: {
     surfaces: "Surfaces",
@@ -215,6 +263,30 @@ export const settingsDe: typeof settingsEn = {
     reset: "Auf Standard zurücksetzen",
     resetting: "Zurücksetzen…",
   },
+  presets: {
+    title: "Stil-Voreinstellung",
+    help: "Wählen Sie eine grafische Voreinstellung, um alle Felder unten zu befüllen. Sie können Werte danach einzeln feinjustieren.",
+    editorial: {
+      label: "Editorial",
+      description: "Originale Editorial-Basis — Newsreader auf Work Sans, neutrale Flächen.",
+    },
+    news: {
+      label: "News",
+      description: "Kontrastreicher Zeitungs-Look — Playfair Display + IBM Plex Sans auf Creme, tiefroter Akzent.",
+    },
+    literary: {
+      label: "Literarisch",
+      description: "Warme Creme-Flächen und satte Brauntöne — EB Garamond + Manrope für Longform-Lektüre.",
+    },
+    modernist: {
+      label: "Modernist",
+      description: "Kühle Grautöne mit Indigo-Akzent — Spectral + Outfit, zeitgenössisches Editorial-Gefühl.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Creme-Flächen mit Terrakotta-Akzent — Lora + Plus Jakarta Sans, raffinierter Boutique-Vibe.",
+    },
+  },
   groups: {
     surfaces: "Flächen",
     foreground: "Text",
@@ -306,6 +378,30 @@ export const settingsEs: typeof settingsEn = {
     failed: "Error al actualizar el estilo.",
     reset: "Restablecer valores por defecto",
     resetting: "Restableciendo…",
+  },
+  presets: {
+    title: "Preset de estilo",
+    help: "Elige un preset gráfico para rellenar todos los campos. Puedes ajustar valor por valor después.",
+    editorial: {
+      label: "Editorial",
+      description: "Look editorial original — Newsreader sobre Work Sans, superficies neutras.",
+    },
+    news: {
+      label: "Periódico",
+      description: "Look de periódico de alto contraste — Playfair Display + IBM Plex Sans sobre crema, acento rojo profundo.",
+    },
+    literary: {
+      label: "Literario",
+      description: "Superficies crema cálidas y marrones intensos — EB Garamond + Manrope para lectura larga.",
+    },
+    modernist: {
+      label: "Modernista",
+      description: "Grises fríos con acento índigo — Spectral + Outfit, sensación editorial contemporánea.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Superficies crema con acento terracota — Lora + Plus Jakarta Sans, look boutique refinado.",
+    },
   },
   groups: {
     surfaces: "Superficies",
@@ -399,6 +495,30 @@ export const settingsNl: typeof settingsEn = {
     reset: "Standaardwaarden herstellen",
     resetting: "Herstellen…",
   },
+  presets: {
+    title: "Stijl-preset",
+    help: "Kies een grafische preset om alle velden hieronder in te vullen. Je kunt waarden daarna individueel verfijnen.",
+    editorial: {
+      label: "Editorial",
+      description: "Originele editorial baseline — Newsreader op Work Sans, neutrale vlakken.",
+    },
+    news: {
+      label: "Krant",
+      description: "Krant-look met hoog contrast — Playfair Display + IBM Plex Sans op crème, dieprode accent.",
+    },
+    literary: {
+      label: "Literair",
+      description: "Warme crème vlakken en rijke bruintinten — EB Garamond + Manrope voor longform lezen.",
+    },
+    modernist: {
+      label: "Modernistisch",
+      description: "Koele grijzen met indigo-accent — Spectral + Outfit, hedendaags editorial gevoel.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Crème vlakken met terracotta-accent — Lora + Plus Jakarta Sans, verfijnde boutique vibe.",
+    },
+  },
   groups: {
     surfaces: "Vlakken",
     foreground: "Tekst",
@@ -491,6 +611,30 @@ export const settingsPt: typeof settingsEn = {
     reset: "Restaurar valores padrão",
     resetting: "Restaurando…",
   },
+  presets: {
+    title: "Predefinição de estilo",
+    help: "Escolha uma predefinição gráfica para preencher todos os campos abaixo. Pode ajustar valor a valor depois.",
+    editorial: {
+      label: "Editorial",
+      description: "Look editorial original — Newsreader sobre Work Sans, superfícies neutras.",
+    },
+    news: {
+      label: "Jornal",
+      description: "Look de jornal de alto contraste — Playfair Display + IBM Plex Sans sobre creme, acento vermelho profundo.",
+    },
+    literary: {
+      label: "Literário",
+      description: "Superfícies creme quentes e castanhos ricos — EB Garamond + Manrope para leitura longa.",
+    },
+    modernist: {
+      label: "Modernista",
+      description: "Cinzas frios com acento índigo — Spectral + Outfit, sensação editorial contemporânea.",
+    },
+    boutique: {
+      label: "Boutique",
+      description: "Superfícies creme com acento terracota — Lora + Plus Jakarta Sans, look boutique refinado.",
+    },
+  },
   groups: {
     surfaces: "Superfícies",
     foreground: "Texto",
@@ -582,6 +726,30 @@ export const settingsKo: typeof settingsEn = {
     failed: "스타일 업데이트에 실패했습니다.",
     reset: "기본값으로 재설정",
     resetting: "재설정 중…",
+  },
+  presets: {
+    title: "스타일 프리셋",
+    help: "그래픽 프리셋을 선택하면 아래 모든 필드가 자동으로 채워집니다. 이후에 값을 개별적으로 조정할 수 있습니다.",
+    editorial: {
+      label: "에디토리얼",
+      description: "원본 에디토리얼 기본 — Newsreader와 Work Sans, 중성 표면.",
+    },
+    news: {
+      label: "신문",
+      description: "고대비 신문 룩 — 크림 위 Playfair Display와 IBM Plex Sans, 진한 빨강 강조색.",
+    },
+    literary: {
+      label: "문학",
+      description: "따뜻한 크림 표면과 풍부한 갈색 — EB Garamond와 Manrope, 롱폼 독서에 어울립니다.",
+    },
+    modernist: {
+      label: "모더니스트",
+      description: "차가운 회색과 인디고 강조색 — Spectral와 Outfit, 현대적 에디토리얼 감성.",
+    },
+    boutique: {
+      label: "부티크",
+      description: "크림 표면과 테라코타 강조색 — Lora와 Plus Jakarta Sans, 세련된 부티크 분위기.",
+    },
   },
   groups: {
     surfaces: "표면",

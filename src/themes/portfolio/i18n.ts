@@ -65,6 +65,30 @@ const settingsEn = {
     resetting: "Resetting…",
     saved: "Saved",
   },
+  presets: {
+    title: "Style preset",
+    help: "Pick a graphic preset to fill every field below. You can fine-tune individual values afterwards.",
+    minimal: {
+      label: "Minimal",
+      description: "Original portfolio baseline — Playfair Display + Inter, pure neutral surfaces.",
+    },
+    earth: {
+      label: "Warm Earth",
+      description: "Terracotta on cream — Cormorant Garamond + Work Sans, organic feel.",
+    },
+    electric: {
+      label: "Electric",
+      description: "Pure white with sharp red accent — DM Serif Display + Space Grotesk, gallery-fresh.",
+    },
+    museum: {
+      label: "Museum",
+      description: "Cream surfaces with sage primary — Newsreader + Inter, refined and quiet.",
+    },
+    midnight: {
+      label: "Midnight",
+      description: "Soft blue surfaces and deep navy — Spectral + Bricolage Grotesque, with gold accent.",
+    },
+  },
   vars: {
     background: "Background",
     surface: "Surface",
@@ -188,6 +212,30 @@ const settingsFr = {
     reset: "Réinitialiser",
     resetting: "Réinitialisation…",
     saved: "Enregistré",
+  },
+  presets: {
+    title: "Préréglage de style",
+    help: "Choisissez un préréglage graphique pour pré-remplir tous les champs ci-dessous. Vous pourrez ensuite affiner valeur par valeur.",
+    minimal: {
+      label: "Minimal",
+      description: "Look portfolio d'origine — Playfair Display + Inter, surfaces neutres pures.",
+    },
+    earth: {
+      label: "Terre chaude",
+      description: "Terracotta sur crème — Cormorant Garamond + Work Sans, ressenti organique.",
+    },
+    electric: {
+      label: "Électrique",
+      description: "Blanc pur et accent rouge vif — DM Serif Display + Space Grotesk, fraîcheur galerie.",
+    },
+    museum: {
+      label: "Musée",
+      description: "Surfaces crème, primaire sauge — Newsreader + Inter, raffiné et calme.",
+    },
+    midnight: {
+      label: "Minuit",
+      description: "Surfaces bleu doux et navy profond — Spectral + Bricolage Grotesque, accent or.",
+    },
   },
   vars: {
     background: "Arrière-plan",

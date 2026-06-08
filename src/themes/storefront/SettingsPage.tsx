@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Loader2, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
+import { Image as ImageIcon, Loader2, Palette, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   buildAuthorLookup,
@@ -23,10 +23,14 @@ import {
   DEFAULT_FONT_SANS,
   DEFAULT_FONT_SERIF,
   DEFAULT_STYLE,
+  detectActivePreset,
   FONT_PRESETS,
+  resolveVar,
+  STYLE_PRESETS,
   THEME_VAR_GROUPS,
   THEME_VAR_SPECS,
   type StyleOverrides,
+  type StylePreset,
   type ThemeVarSpec,
 } from "./style";
 import { manifest } from "./manifest";
@@ -983,7 +987,9 @@ function StyleTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig
   async function handleSave() {
     setSaving(true);
     try {
-      await save({ ...config, style: draft });
+      // Bump cssUpdatedAt so the public-page `<link href=...?v=N>`
+      // changes and visitors' browsers refetch the CSS on next load.
+      await save({ ...config, style: draft, cssUpdatedAt: Date.now() });
       await applyAndUploadCustomCss({
         baseCssText: manifest.cssText ?? "",
         style: draft,
@@ -1027,6 +1033,8 @@ function StyleTab({ config, save }: ThemeSettingsPageProps<StorefrontThemeConfig
 
   return (
     <div className="space-y-6">
+      <PresetPicker draft={draft} setDraft={setDraft} />
+
       <Section title={t("settings.tabs.style")}>
         <link rel="stylesheet" href={buildAllFontsPreviewUrl()} />
         <div className="grid grid-cols-2 gap-3">
@@ -1235,5 +1243,83 @@ function SaveBar({ onSave, saving }: { onSave: () => void; saving: boolean }) {
         <span>{saving ? t("settings.buttons.saving") : t("settings.buttons.save")}</span>
       </button>
     </div>
+  );
+}
+
+// Preset picker — fills draft.vars / fontSerif / fontSans from a
+// curated preset in one click. Active preset is derived from the
+// current draft; fine-tuning any field drops back to "custom"
+// automatically. Selection doesn't save — the user still clicks
+// "Save" to commit + upload the regenerated CSS.
+function PresetPicker({
+  draft,
+  setDraft,
+}: {
+  draft: StyleOverrides;
+  setDraft: (next: StyleOverrides) => void;
+}) {
+  const { t } = useTranslation("theme-storefront");
+  const activeId = detectActivePreset(draft);
+
+  function applyPreset(preset: StylePreset) {
+    setDraft({
+      vars: { ...preset.vars },
+      fontSerif: preset.fontSerif,
+      fontSans: preset.fontSans,
+    });
+  }
+
+  return (
+    <Section title={t("settings.presets.title")}>
+      <p className="text-xs text-surface-500 dark:text-surface-400 mb-3">
+        {t("settings.presets.help")}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {STYLE_PRESETS.map((preset) => {
+          const active = preset.id === activeId;
+          const presetStyle: StyleOverrides = {
+            vars: preset.vars,
+            fontSerif: preset.fontSerif,
+            fontSans: preset.fontSans,
+          };
+          const swatchColors = preset.swatch.map((v) =>
+            resolveVar(presetStyle, v),
+          );
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => applyPreset(preset)}
+              className={
+                "text-left p-3 rounded border transition focus:outline-none focus:ring-2 focus:ring-blue-500 " +
+                (active
+                  ? "border-blue-600 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+                  : "border-surface-200 hover:border-surface-400 dark:border-surface-700 dark:hover:border-surface-500")
+              }
+              aria-pressed={active}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <Palette className="h-3.5 w-3.5 text-surface-400" />
+                  {t(`settings.presets.${preset.id}.label`)}
+                </span>
+                <div className="flex -space-x-1" aria-hidden="true">
+                  {swatchColors.map((color, i) => (
+                    <span
+                      key={i}
+                      className="h-4 w-4 rounded-full ring-1 ring-surface-200 dark:ring-surface-700"
+                      style={{ background: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">
+                {t(`settings.presets.${preset.id}.description`)}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </Section>
   );
 }

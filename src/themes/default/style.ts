@@ -185,6 +185,192 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Curated graphic presets. Selecting one fills the whole Style tab
+// (vars + fontSerif + fontSans) in a single action; the user can then
+// fine-tune individual fields. The `vars` field of "classic" is empty
+// by design — it represents the baseline look (matches DEFAULT_STYLE
+// exactly), so `buildCustomCss` returns the bundled CSS untouched.
+//
+// Adding a new preset = append an entry below + add a `presets.<id>`
+// pair in every locale of i18n.ts. No migration needed — presets are
+// matched by value, never persisted by id.
+export interface StylePreset {
+  id: string;
+  // Colors picked for the 4-dot swatch in the picker UI. Each one is
+  // a CSS variable name resolved against `vars` + the spec defaults.
+  // Order: bg, surface, primary, secondary.
+  swatch: [string, string, string, string];
+  vars: Record<string, string>;
+  fontSerif: string;
+  fontSans: string;
+}
+
+export const STYLE_PRESETS: StylePreset[] = [
+  {
+    id: "classic",
+    swatch: ["--color-bg", "--color-surface", "--color-primary", "--color-secondary"],
+    vars: {},
+    fontSerif: DEFAULT_FONT_SERIF,
+    fontSans: DEFAULT_FONT_SANS,
+  },
+  {
+    id: "modern",
+    swatch: ["--color-bg", "--color-surface", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-bg": "#fcfcfc",
+      "--color-surface": "#ffffff",
+      "--color-surface-low": "#f7f7f8",
+      "--color-surface-mid": "#efeff1",
+      "--color-surface-high": "#e7e7ea",
+      "--color-surface-highest": "#dfdfe3",
+      "--color-on-surface": "#0f172a",
+      "--color-on-surface-variant": "#475569",
+      "--color-on-surface-muted": "#94a3b8",
+      "--color-outline": "#94a3b8",
+      "--color-outline-variant": "#e2e8f0",
+      "--color-primary": "#0f172a",
+      "--color-on-primary": "#ffffff",
+      "--color-secondary": "#0d9488",
+      "--color-secondary-container": "#ccfbf1",
+      "--color-on-secondary-container": "#115e59",
+      "--container-max": "1200px",
+      "--gutter": "32px",
+      "--section-gap": "96px",
+      "--radius-sm": "0.375rem",
+      "--radius": "0.625rem",
+      "--radius-lg": "1rem",
+      "--radius-xl": "1.5rem",
+    },
+    fontSerif: "Source Serif 4",
+    fontSans: "Space Grotesk",
+  },
+  {
+    id: "editorial",
+    swatch: ["--color-bg", "--color-surface", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-bg": "#f9f6f1",
+      "--color-surface": "#ffffff",
+      "--color-surface-low": "#f3eee5",
+      "--color-surface-mid": "#ebe4d7",
+      "--color-surface-high": "#e2d9c8",
+      "--color-surface-highest": "#d9cfb9",
+      "--color-on-surface": "#2a1f17",
+      "--color-on-surface-variant": "#5c4a3a",
+      "--color-on-surface-muted": "#998774",
+      "--color-outline": "#998774",
+      "--color-outline-variant": "#d9cfb9",
+      "--color-primary": "#6b1f24",
+      "--color-on-primary": "#fff8ec",
+      "--color-secondary": "#8b0d23",
+      "--color-secondary-container": "#f4d5d8",
+      "--color-on-secondary-container": "#5a0e1a",
+      "--radius-sm": "0.0625rem",
+      "--radius": "0.125rem",
+      "--radius-lg": "0.25rem",
+      "--radius-xl": "0.375rem",
+    },
+    fontSerif: "Playfair Display",
+    fontSans: "Manrope",
+  },
+  {
+    id: "bold",
+    swatch: ["--color-bg", "--color-surface", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-bg": "#ffffff",
+      "--color-surface": "#ffffff",
+      "--color-surface-low": "#f5f4f3",
+      "--color-surface-mid": "#ebe9e7",
+      "--color-surface-high": "#dfdcd9",
+      "--color-surface-highest": "#d2cecb",
+      "--color-on-surface": "#0a0a0a",
+      "--color-on-surface-variant": "#383634",
+      "--color-on-surface-muted": "#7c7976",
+      "--color-outline": "#7c7976",
+      "--color-outline-variant": "#dfdcd9",
+      "--color-primary": "#e63946",
+      "--color-on-primary": "#ffffff",
+      "--color-secondary": "#3a3df3",
+      "--color-secondary-container": "#e0e1ff",
+      "--color-on-secondary-container": "#1a1d8a",
+      "--radius-sm": "0.5rem",
+      "--radius": "0.875rem",
+      "--radius-lg": "1.25rem",
+      "--radius-xl": "1.75rem",
+    },
+    fontSerif: "Bricolage Grotesque",
+    fontSans: "Outfit",
+  },
+  {
+    id: "minimal",
+    swatch: ["--color-bg", "--color-surface", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-bg": "#fafafa",
+      "--color-surface": "#ffffff",
+      "--color-surface-low": "#f4f4f5",
+      "--color-surface-mid": "#e4e4e7",
+      "--color-surface-high": "#d4d4d8",
+      "--color-surface-highest": "#a1a1aa",
+      "--color-on-surface": "#18181b",
+      "--color-on-surface-variant": "#52525b",
+      "--color-on-surface-muted": "#a1a1aa",
+      "--color-outline": "#a1a1aa",
+      "--color-outline-variant": "#e4e4e7",
+      "--color-primary": "#27272a",
+      "--color-on-primary": "#fafafa",
+      "--color-secondary": "#52525b",
+      "--color-secondary-container": "#e4e4e7",
+      "--color-on-secondary-container": "#27272a",
+      "--container-max": "960px",
+      "--gutter": "20px",
+      "--section-gap": "64px",
+      "--radius-sm": "0",
+      "--radius": "0",
+      "--radius-lg": "0.125rem",
+      "--radius-xl": "0.25rem",
+    },
+    fontSerif: "Source Serif 4",
+    fontSans: "Inter",
+  },
+];
+
+// Returns the resolved value of a CSS variable in a given style, falling
+// back to the spec default when the var isn't overridden. Used by the
+// swatch renderer (to show the right dot color for "classic" which has
+// empty vars) and by detectActivePreset (so an explicit override that
+// matches the default still counts as "no override").
+export function resolveVar(style: StyleOverrides, name: string): string {
+  const v = style.vars?.[name];
+  if (v && v.trim()) return v.trim();
+  const spec = THEME_VAR_SPECS.find((s) => s.name === name);
+  return spec ? spec.defaultValue : "";
+}
+
+// Returns the id of the preset whose effective values match `style`
+// exactly, or null when the style doesn't fully match any preset
+// (= the user has fine-tuned). Compares against EFFECTIVE values so a
+// var explicitly set to its default still matches a preset that omits
+// it.
+export function detectActivePreset(style: StyleOverrides): string | null {
+  for (const preset of STYLE_PRESETS) {
+    if (preset.fontSerif !== style.fontSerif) continue;
+    if (preset.fontSans !== style.fontSans) continue;
+    // Compare effective values for every spec — covers both the
+    // var-set-in-preset and var-set-in-style cases consistently.
+    let allMatch = true;
+    for (const spec of THEME_VAR_SPECS) {
+      const presetEffective =
+        preset.vars[spec.name]?.trim() || spec.defaultValue;
+      const styleEffective = resolveVar(style, spec.name);
+      if (presetEffective !== styleEffective) {
+        allMatch = false;
+        break;
+      }
+    }
+    if (allMatch) return preset.id;
+  }
+  return null;
+}
+
 // Looks up a font's Google Fonts CSS2 spec in BOTH FONT_PRESETS
 // buckets — the picker now allows any font in either slot, so the
 // URL builder can't constrain the lookup to one family bucket.

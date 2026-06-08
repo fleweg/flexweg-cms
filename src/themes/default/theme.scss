@@ -609,6 +609,17 @@ body.burger-open {
   }
 }
 
+// Blank-canvas page layout — used for entries with `type === "page"`.
+// Single column (no sidebar), no breadcrumb, no title chrome — the
+// body is rendered as-is so authors fully compose pages from blocks.
+.page-static {
+  padding-top: 48px;
+  padding-bottom: 96px;
+  @media (min-width: 1024px) {
+    padding-top: 80px;
+  }
+}
+
 .page-single__main {
   min-width: 0;
 }

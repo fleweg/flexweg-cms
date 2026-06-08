@@ -238,6 +238,10 @@ export interface StorefrontThemeConfig {
   logoEnabled: boolean;
   logoUpdatedAt: number;
   style: StyleOverrides;
+  // Milliseconds since epoch of the last theme CSS upload. Baked into
+  // the public-page `<link href="...?v=<n>">` so a style change busts
+  // the browser cache on the next publish.
+  cssUpdatedAt: number;
   home: StorefrontHomeConfig;
   single: StorefrontSingleConfig;
   productDefaults: StorefrontProductDefaults;
@@ -454,6 +458,7 @@ export const DEFAULT_STOREFRONT_CONFIG: StorefrontThemeConfig = {
   logoEnabled: false,
   logoUpdatedAt: 0,
   style: DEFAULT_STYLE,
+  cssUpdatedAt: 0,
   home: DEFAULT_STOREFRONT_HOME,
   single: DEFAULT_STOREFRONT_SINGLE,
   productDefaults: DEFAULT_STOREFRONT_PRODUCT_DEFAULTS,

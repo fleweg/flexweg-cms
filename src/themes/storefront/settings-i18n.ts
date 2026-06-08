@@ -24,6 +24,30 @@ export const settingsEn = {
     forceRegenerate: "Force regenerate",
     regenerating: "Regenerating…",
   },
+  presets: {
+    title: "Style preset",
+    help: "Pick a graphic preset to fill every field below. You can fine-tune individual values afterwards.",
+    botanical: {
+      label: "Botanical",
+      description: "Original storefront baseline — sage primary + terracotta accent, Playfair Display + Inter.",
+    },
+    monochrome: {
+      label: "Monochrome",
+      description: "Pure white and graphite — Source Serif 4 + Inter, luxury minimal.",
+    },
+    clay: {
+      label: "Warm Clay",
+      description: "Peach surfaces and brick primary — Cormorant Garamond + Plus Jakarta Sans, artisan vibe.",
+    },
+    pastel: {
+      label: "Pastel",
+      description: "Lavender surfaces and soft pink — Lora + DM Sans, romantic boutique.",
+    },
+    bold: {
+      label: "Bold",
+      description: "Cream surfaces with deep navy and gold accents — EB Garamond + Outfit, confident retail.",
+    },
+  },
   vars: {
     background: "Background",
     surface: "Surface",
