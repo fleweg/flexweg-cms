@@ -1,6 +1,7 @@
 import { canonicalUrl, type BaseLayoutProps } from "@flexweg/cms-runtime";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import type { PortfolioThemeConfig } from "../config";
 
 // Portfolio shell. Material 3 palette + Playfair Display + Inter
 // loaded inside theme.css so regenerated CSS pushed by Theme Settings
@@ -19,7 +20,13 @@ export function BaseLayout({
   currentLocale,
   children,
 }: BaseLayoutProps) {
-  const cssHref = `/${site.themeCssPath}`;
+  // Cache-bust the theme CSS so style changes pushed via Theme Settings
+  // → Style are picked up by visitors on their next page load. Bumped
+  // on every Save & apply / Reset in the theme settings page.
+  const cssUpdatedAt = (site.themeConfig as PortfolioThemeConfig | undefined)?.cssUpdatedAt;
+  const cssHref = cssUpdatedAt
+    ? `/${site.themeCssPath}?v=${cssUpdatedAt}`
+    : `/${site.themeCssPath}`;
   const themeId = site.themeCssPath.replace(/^theme-assets\//, "").replace(/\.css$/, "");
   const jsHref = `/theme-assets/${themeId}-menu.js`;
   const jsHrefPosts = `/theme-assets/${themeId}-posts.js`;

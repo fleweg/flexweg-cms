@@ -112,6 +112,30 @@ export const settingsEn = {
     reset: "Reset to defaults",
     resetting: "Resetting…",
   },
+  presets: {
+    title: "Style preset",
+    help: "Pick a graphic preset to fill every field below. You can fine-tune individual values afterwards.",
+    classic: {
+      label: "Classic",
+      description: "Original corporate baseline — Inter on slate-blue surfaces, navy primary.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Crisp neutral surfaces with electric cyan accent — Plus Jakarta Sans, modern SaaS feel.",
+    },
+    trust: {
+      label: "Trust",
+      description: "Warm cream and deep navy with amber accent — IBM Plex Sans, banking / advisory vibe.",
+    },
+    vibrant: {
+      label: "Vibrant",
+      description: "Pink and orange punch — DM Sans, energetic startup feel.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Deep purple and gold on cream — Manrope, premium consulting / luxury services.",
+    },
+  },
   groups: {
     surfaces: "Surfaces",
     foreground: "Foreground",
@@ -252,6 +276,30 @@ export const settingsFr: typeof settingsEn = {
     failed: "Échec de la mise à jour du style.",
     reset: "Réinitialiser",
     resetting: "Réinitialisation…",
+  },
+  presets: {
+    title: "Préréglage de style",
+    help: "Choisissez un préréglage graphique pour pré-remplir tous les champs ci-dessous. Vous pourrez ensuite affiner valeur par valeur.",
+    classic: {
+      label: "Classique",
+      description: "Look corporate d'origine — Inter sur surfaces bleu ardoise, primaire navy.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Surfaces neutres nettes avec accent cyan électrique — Plus Jakarta Sans, look SaaS moderne.",
+    },
+    trust: {
+      label: "Confiance",
+      description: "Crème chaud et navy profond avec accent ambre — IBM Plex Sans, vibe banque / conseil.",
+    },
+    vibrant: {
+      label: "Vibrant",
+      description: "Punch rose et orange — DM Sans, look startup énergique.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Violet profond et or sur crème — Manrope, conseil premium / services de luxe.",
+    },
   },
   groups: {
     surfaces: "Surfaces",
@@ -394,6 +442,30 @@ export const settingsDe: typeof settingsEn = {
     reset: "Auf Standards zurücksetzen",
     resetting: "Wird zurückgesetzt…",
   },
+  presets: {
+    title: "Stil-Voreinstellung",
+    help: "Wählen Sie eine grafische Voreinstellung, um alle Felder unten zu befüllen. Sie können Werte danach einzeln feinjustieren.",
+    classic: {
+      label: "Klassisch",
+      description: "Originale Corporate-Basis — Inter auf schieferblauen Flächen, marineblaue Primärfarbe.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Knackige neutrale Flächen mit elektrischem Cyan-Akzent — Plus Jakarta Sans, moderner SaaS-Look.",
+    },
+    trust: {
+      label: "Vertrauen",
+      description: "Warmes Creme und tiefes Marineblau mit Amber-Akzent — IBM Plex Sans, Banking-/Beratungs-Vibe.",
+    },
+    vibrant: {
+      label: "Vibrant",
+      description: "Rosa und Orange mit Punch — DM Sans, energiegeladenes Startup-Gefühl.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Tiefes Lila und Gold auf Creme — Manrope, Premium-Consulting / Luxusdienstleistungen.",
+    },
+  },
   groups: {
     surfaces: "Oberflächen",
     foreground: "Vordergrund",
@@ -534,6 +606,30 @@ export const settingsEs: typeof settingsEn = {
     failed: "Error al actualizar el estilo.",
     reset: "Restablecer valores predeterminados",
     resetting: "Restableciendo…",
+  },
+  presets: {
+    title: "Preset de estilo",
+    help: "Elige un preset gráfico para rellenar todos los campos. Puedes ajustar valor por valor después.",
+    classic: {
+      label: "Clásico",
+      description: "Look corporate original — Inter sobre superficies azul pizarra, primario azul marino.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Superficies neutras nítidas con acento cian eléctrico — Plus Jakarta Sans, look SaaS moderno.",
+    },
+    trust: {
+      label: "Confianza",
+      description: "Crema cálido y azul marino profundo con acento ámbar — IBM Plex Sans, banca / asesoría.",
+    },
+    vibrant: {
+      label: "Vibrante",
+      description: "Toque rosa y naranja — DM Sans, look startup enérgico.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Púrpura profundo y oro sobre crema — Manrope, consultoría premium / servicios de lujo.",
+    },
   },
   groups: {
     surfaces: "Superficies",
@@ -676,6 +772,30 @@ export const settingsNl: typeof settingsEn = {
     reset: "Terug naar standaard",
     resetting: "Resetten…",
   },
+  presets: {
+    title: "Stijl-preset",
+    help: "Kies een grafische preset om alle velden hieronder in te vullen. Je kunt waarden daarna individueel verfijnen.",
+    classic: {
+      label: "Klassiek",
+      description: "Originele corporate baseline — Inter op leiblauwe oppervlakken, marineblauwe primaire.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Krachtige neutrale oppervlakken met elektrisch cyaan-accent — Plus Jakarta Sans, moderne SaaS-look.",
+    },
+    trust: {
+      label: "Vertrouwen",
+      description: "Warm crème en diep marineblauw met amber-accent — IBM Plex Sans, banking / advies vibe.",
+    },
+    vibrant: {
+      label: "Vibrant",
+      description: "Roze en oranje punch — DM Sans, energiek startup-gevoel.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Diep paars en goud op crème — Manrope, premium consulting / luxe diensten.",
+    },
+  },
   groups: {
     surfaces: "Oppervlakken",
     foreground: "Tekst",
@@ -817,6 +937,30 @@ export const settingsPt: typeof settingsEn = {
     reset: "Restaurar padrões",
     resetting: "Restaurando…",
   },
+  presets: {
+    title: "Predefinição de estilo",
+    help: "Escolha uma predefinição gráfica para preencher todos os campos abaixo. Pode ajustar valor a valor depois.",
+    classic: {
+      label: "Clássico",
+      description: "Look corporate original — Inter sobre superfícies azul-ardósia, primária navy.",
+    },
+    tech: {
+      label: "Tech",
+      description: "Superfícies neutras nítidas com acento ciano elétrico — Plus Jakarta Sans, look SaaS moderno.",
+    },
+    trust: {
+      label: "Confiança",
+      description: "Creme quente e navy profundo com acento âmbar — IBM Plex Sans, banca / consultoria.",
+    },
+    vibrant: {
+      label: "Vibrante",
+      description: "Toque rosa e laranja — DM Sans, look startup enérgico.",
+    },
+    executive: {
+      label: "Executive",
+      description: "Roxo profundo e ouro sobre creme — Manrope, consultoria premium / serviços de luxo.",
+    },
+  },
   groups: {
     surfaces: "Superfícies",
     foreground: "Texto",
@@ -957,6 +1101,30 @@ export const settingsKo: typeof settingsEn = {
     failed: "스타일 업데이트 실패.",
     reset: "기본값으로 재설정",
     resetting: "재설정 중…",
+  },
+  presets: {
+    title: "스타일 프리셋",
+    help: "그래픽 프리셋을 선택하면 아래 모든 필드가 자동으로 채워집니다. 이후에 값을 개별적으로 조정할 수 있습니다.",
+    classic: {
+      label: "클래식",
+      description: "원본 코퍼레이트 기본 — 슬레이트 블루 표면 위 Inter, 네이비 프라이머리.",
+    },
+    tech: {
+      label: "테크",
+      description: "선명한 중성 표면과 일렉트릭 시안 강조색 — Plus Jakarta Sans, 모던 SaaS 룩.",
+    },
+    trust: {
+      label: "신뢰",
+      description: "따뜻한 크림과 진한 네이비, 앰버 강조색 — IBM Plex Sans, 금융 / 컨설팅 분위기.",
+    },
+    vibrant: {
+      label: "비비드",
+      description: "핑크와 오렌지의 펀치 — DM Sans, 에너지 넘치는 스타트업 룩.",
+    },
+    executive: {
+      label: "이그제큐티브",
+      description: "딥 퍼플과 골드, 크림 베이스 — Manrope, 프리미엄 컨설팅 / 럭셔리 서비스.",
+    },
   },
   groups: {
     surfaces: "표면",

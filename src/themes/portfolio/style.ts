@@ -91,6 +91,138 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Curated graphic presets — pick one to fill every Style field in a
+// single action; the admin can then fine-tune individual fields. The
+// `vars` map can be partial: missing keys fall back to the spec
+// defaults via `resolveVar`. "minimal" is the baseline (matches
+// DEFAULT_STYLE with empty vars).
+export interface StylePreset {
+  id: string;
+  swatch: [string, string, string, string];
+  vars: Record<string, string>;
+  fontSerif: string;
+  fontSans: string;
+}
+
+export const STYLE_PRESETS: StylePreset[] = [
+  {
+    id: "minimal",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-error"],
+    vars: {},
+    fontSerif: DEFAULT_FONT_SERIF,
+    fontSans: DEFAULT_FONT_SANS,
+  },
+  {
+    id: "earth",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-error"],
+    vars: {
+      "--color-background": "#f9f3ec",
+      "--color-surface": "#f9f3ec",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f0e9de",
+      "--color-surface-container": "#e6ddcd",
+      "--color-on-surface": "#2a1f17",
+      "--color-on-surface-variant": "#5c4a3a",
+      "--color-outline": "#8c8276",
+      "--color-outline-variant": "#cfc8bd",
+      "--color-primary": "#6b3018",
+      "--color-on-primary": "#ffffff",
+      "--color-secondary": "#a86b3c",
+      "--color-error": "#d4691f",
+    },
+    fontSerif: "Cormorant Garamond",
+    fontSans: "Work Sans",
+  },
+  {
+    id: "electric",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-error"],
+    vars: {
+      "--color-background": "#ffffff",
+      "--color-surface": "#ffffff",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f5f5f5",
+      "--color-surface-container": "#ebebeb",
+      "--color-on-surface": "#0a0a0a",
+      "--color-on-surface-variant": "#2c2c2c",
+      "--color-outline": "#5a5a5a",
+      "--color-outline-variant": "#b8b8b8",
+      "--color-primary": "#0a0a0a",
+      "--color-on-primary": "#ffffff",
+      "--color-secondary": "#3a3a3a",
+      "--color-error": "#ff2d2d",
+    },
+    fontSerif: "DM Serif Display",
+    fontSans: "Space Grotesk",
+  },
+  {
+    id: "museum",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-error"],
+    vars: {
+      "--color-background": "#faf7f0",
+      "--color-surface": "#faf7f0",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f1ede2",
+      "--color-surface-container": "#e7e2d3",
+      "--color-on-surface": "#1a1f1a",
+      "--color-on-surface-variant": "#3a443a",
+      "--color-outline": "#7a857a",
+      "--color-outline-variant": "#c2cdc2",
+      "--color-primary": "#2d4030",
+      "--color-on-primary": "#faf7f0",
+      "--color-secondary": "#5a7a5d",
+      "--color-error": "#8a3a2a",
+    },
+    fontSerif: "Newsreader",
+    fontSans: "Inter",
+  },
+  {
+    id: "midnight",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-error"],
+    vars: {
+      "--color-background": "#f3f5fa",
+      "--color-surface": "#f3f5fa",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#e8ecf3",
+      "--color-surface-container": "#dce1ec",
+      "--color-on-surface": "#0a1428",
+      "--color-on-surface-variant": "#283045",
+      "--color-outline": "#5e6783",
+      "--color-outline-variant": "#b8bfd1",
+      "--color-primary": "#0f1f4a",
+      "--color-on-primary": "#ffffff",
+      "--color-secondary": "#3e5495",
+      "--color-error": "#d4a02a",
+    },
+    fontSerif: "Spectral",
+    fontSans: "Bricolage Grotesque",
+  },
+];
+
+export function resolveVar(style: StyleOverrides, name: string): string {
+  const v = style.vars?.[name];
+  if (v && v.trim()) return v.trim();
+  const spec = THEME_VAR_SPECS.find((s) => s.name === name);
+  return spec ? spec.defaultValue : "";
+}
+
+export function detectActivePreset(style: StyleOverrides): string | null {
+  for (const preset of STYLE_PRESETS) {
+    if (preset.fontSerif !== style.fontSerif) continue;
+    if (preset.fontSans !== style.fontSans) continue;
+    let allMatch = true;
+    for (const spec of THEME_VAR_SPECS) {
+      const presetEffective = preset.vars[spec.name]?.trim() || spec.defaultValue;
+      const styleEffective = resolveVar(style, spec.name);
+      if (presetEffective !== styleEffective) {
+        allMatch = false;
+        break;
+      }
+    }
+    if (allMatch) return preset.id;
+  }
+  return null;
+}
+
 // Looks up a font's Google Fonts CSS2 spec across BOTH FONT_PRESETS
 // buckets — users can put a sans face in the serif slot or vice versa.
 function fontSpec(name: string, fallback: string): string {

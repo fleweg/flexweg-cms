@@ -23,11 +23,15 @@ import {
   DEFAULT_FONT_SANS,
   DEFAULT_FONT_SERIF,
   DEFAULT_STYLE,
+  detectActivePreset,
   FONT_PRESETS,
   FONT_WEIGHT_STEPS,
+  resolveVar,
+  STYLE_PRESETS,
   THEME_VAR_GROUPS,
   THEME_VAR_SPECS,
   type StyleOverrides,
+  type StylePreset,
   type ThemeVarGroup,
   type ThemeVarSpec,
 } from "./style";
@@ -412,7 +416,15 @@ function StyleTab({
   async function handleSave() {
     setBusy(true);
     try {
-      const next: DefaultThemeConfig = { ...config, style: draft };
+      // Bump cssUpdatedAt so the public-page `<link href=...?v=N>`
+      // changes and visitors' browsers refetch the CSS on next load.
+      // Only affects newly-published / re-published pages — existing
+      // ones still link the old ?v until they're regenerated.
+      const next: DefaultThemeConfig = {
+        ...config,
+        style: draft,
+        cssUpdatedAt: Date.now(),
+      };
       await save(next);
       // Regenerate and upload the public CSS using the new overrides.
       // Path is the same as the baseline so every published page
@@ -434,7 +446,11 @@ function StyleTab({
   async function handleReset() {
     setResetting(true);
     try {
-      const next: DefaultThemeConfig = { ...config, style: DEFAULT_STYLE };
+      const next: DefaultThemeConfig = {
+        ...config,
+        style: DEFAULT_STYLE,
+        cssUpdatedAt: Date.now(),
+      };
       setDraft(DEFAULT_STYLE);
       await save(next);
       // Push the baseline CSS — buildCustomCss returns it untouched
@@ -458,6 +474,8 @@ function StyleTab({
       <p className="text-xs text-surface-500 dark:text-surface-400">
         {t("style.help")}
       </p>
+
+      <PresetPicker draft={draft} setDraft={setDraft} />
 
       {/* Section order: every `THEME_VAR_GROUPS` group renders in
           turn, with the Typography (FontGroup) section injected
@@ -672,6 +690,92 @@ function FontGroup({
         </div>
       </div>
       <p className="text-xs text-surface-500 dark:text-surface-400">{t("fonts.help")}</p>
+    </section>
+  );
+}
+
+// Preset picker — fills draft.vars / fontSerif / fontSans from a
+// curated preset in one click. Active preset is derived from the
+// current draft (no extra persisted state); fine-tuning any field
+// drops back to "custom" automatically. Selection doesn't save —
+// the user still clicks "Save & apply" to commit + upload CSS.
+function PresetPicker({
+  draft,
+  setDraft,
+}: {
+  draft: StyleOverrides;
+  setDraft: (next: StyleOverrides) => void;
+}) {
+  const { t } = useTranslation("theme-default");
+  const activeId = detectActivePreset(draft);
+
+  function applyPreset(preset: StylePreset) {
+    setDraft({
+      vars: { ...preset.vars },
+      fontSerif: preset.fontSerif,
+      fontSans: preset.fontSans,
+    });
+  }
+
+  return (
+    <section className="card p-4 space-y-3">
+      <header className="space-y-1">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Palette className="h-4 w-4 text-surface-400" />
+          {t("presets.title")}
+        </h3>
+        <p className="text-xs text-surface-500 dark:text-surface-400">
+          {t("presets.help")}
+        </p>
+      </header>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {STYLE_PRESETS.map((preset) => {
+          const active = preset.id === activeId;
+          // Resolve swatch colors against the preset's own values so
+          // each card always shows its own palette, regardless of the
+          // current draft.
+          const presetStyle: StyleOverrides = {
+            vars: preset.vars,
+            fontSerif: preset.fontSerif,
+            fontSans: preset.fontSans,
+          };
+          const swatchColors = preset.swatch.map((v) =>
+            resolveVar(presetStyle, v),
+          );
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => applyPreset(preset)}
+              className={
+                "text-left p-3 rounded border transition focus:outline-none focus:ring-2 focus:ring-blue-500 " +
+                (active
+                  ? "border-blue-600 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/30"
+                  : "border-surface-200 hover:border-surface-400 dark:border-surface-700 dark:hover:border-surface-500")
+              }
+              aria-pressed={active}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-sm font-medium">
+                  {t(`presets.${preset.id}.label`)}
+                </span>
+                <div className="flex -space-x-1" aria-hidden="true">
+                  {swatchColors.map((color, i) => (
+                    <span
+                      key={i}
+                      className="h-4 w-4 rounded-full ring-1 ring-surface-200 dark:ring-surface-700"
+                      style={{ background: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">
+                {t(`presets.${preset.id}.description`)}
+              </p>
+            </button>
+          );
+        })}
+      </div>
     </section>
   );
 }

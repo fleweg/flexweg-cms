@@ -67,7 +67,13 @@
       "Bash(grep -nB 2 -A 5 'srcDir\\\\|src/plugins\\\\|src/themes' /Users/fredleaux/Sites/flexweg/cms/scripts/build-bundled-externals.mjs)",
       "Bash(grep -nB 2 -A 5 'srcDir\\\\b' /Users/fredleaux/Sites/flexweg/cms/scripts/build-bundled-externals.mjs)",
       "Bash(unzip -l dist/packs/themes/marketplace-core.zip)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(grep -oE \"page-static[^\\\\\"']{0,80}\" /Users/fredleaux/Sites/static-host/flexweg-apps/flexweg-cms/files/admin/assets/index-BSsvYbXJ.js)",
+      "Bash(grep -oE \"post.type[^\\\\\"']{0,150}page-static\" /Users/fredleaux/Sites/static-host/flexweg-apps/flexweg-cms/files/admin/assets/index-BSsvYbXJ.js)",
+      "Bash(grep -oE \"[a-z]\\\\.type[^,;]{0,80}page-static\" /Users/fredleaux/Sites/static-host/flexweg-apps/flexweg-cms/files/admin/assets/index-BSsvYbXJ.js)",
+      "Bash(grep -oE \"\\(t\\\\.type===\\\\\"page\\\\\"|type===\\\\\"page\\\\\"\\)[^,;]{0,100}page-static\")",
+      "Bash(grep -oE \"\\\\.page-static[^}]{0,150}\" /tmp/deployed-theme.css)",
+      "Bash(awk '{print substr\\($0,1,3\\)}')"
     ]
   }
 }

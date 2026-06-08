@@ -22,6 +22,23 @@ export function SingleTemplate({
   tags,
   site,
 }: SingleTemplateProps & { site: SiteContext }) {
+  // Pages render as a blank canvas — no breadcrumb, no title chrome,
+  // no meta strip, no sidebar. Authors compose the entire page from
+  // blocks (or raw markdown) in the editor, which makes pages a fit
+  // for marketing / landing / "About" content where the editorial
+  // single-post silhouette would be in the way. Only posts get the
+  // full chrome below.
+  if (post.type === "page") {
+    return (
+      <div className="page-static container">
+        <div
+          className="page-body"
+          dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        />
+      </div>
+    );
+  }
+
   // Strings baked into the published HTML need to be in the public
   // site's language, not the admin's UI language. `getFixedT` pins the
   // lookup to the resolved public locale (see settings.language → 7

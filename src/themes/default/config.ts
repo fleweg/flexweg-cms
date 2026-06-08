@@ -40,6 +40,12 @@ export interface DefaultThemeConfig {
   // regenerated `theme-assets/default.css` with an override `:root`
   // block appended and the right Google Fonts URL imported.
   style: StyleOverrides;
+  // Milliseconds since epoch of the last theme CSS upload. Baked into
+  // the public-page `<link href="...?v=<n>">` so a style change busts
+  // the browser cache on the next publish. Existing pages keep the
+  // old `?v` until they're republished — run Regenerate everything
+  // after a big style change to refresh every page in one pass.
+  cssUpdatedAt: number;
   // Layout of the home page when not using a static page. Drives the
   // Hero variant for the featured slot and the PostsList variant for
   // the latest-articles grid below.
@@ -50,5 +56,6 @@ export const DEFAULT_THEME_CONFIG: DefaultThemeConfig = {
   logoEnabled: false,
   logoUpdatedAt: 0,
   style: DEFAULT_STYLE,
+  cssUpdatedAt: 0,
   home: DEFAULT_HOME_LAYOUT,
 };

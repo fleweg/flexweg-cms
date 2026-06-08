@@ -71,6 +71,10 @@ export interface MagazineThemeConfig {
   // regenerated `theme-assets/magazine.css` with an override `:root`
   // block appended and the right Google Fonts URL imported.
   style: StyleOverrides;
+  // Milliseconds since epoch of the last theme CSS upload. Baked into
+  // the public-page `<link href="...?v=<n>">` so a style change busts
+  // the browser cache on the next publish.
+  cssUpdatedAt: number;
   // Home page layout. Drives the publisher's per-theme home rendering
   // branch (services/publisher.ts).
   home: MagazineHomeLayoutConfig;
@@ -82,6 +86,7 @@ export const DEFAULT_MAGAZINE_CONFIG: MagazineThemeConfig = {
   logoEnabled: false,
   logoUpdatedAt: 0,
   style: DEFAULT_STYLE,
+  cssUpdatedAt: 0,
   home: DEFAULT_MAGAZINE_HOME_LAYOUT,
   header: DEFAULT_MAGAZINE_HEADER,
 };

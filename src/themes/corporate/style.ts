@@ -88,6 +88,152 @@ export const DEFAULT_STYLE: StyleOverrides = {
   fontSans: DEFAULT_FONT_SANS,
 };
 
+// Curated graphic presets — pick one to fill every Style field in a
+// single action; the admin can then fine-tune individual fields. The
+// `vars` map can be partial: missing keys fall back to the spec
+// defaults via `resolveVar`. "classic" is the baseline (matches
+// DEFAULT_STYLE with empty vars). Note: single-font system (Inter +
+// alternatives) — no fontSerif slot.
+export interface StylePreset {
+  id: string;
+  swatch: [string, string, string, string];
+  vars: Record<string, string>;
+  fontSans: string;
+}
+
+export const STYLE_PRESETS: StylePreset[] = [
+  {
+    id: "classic",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {},
+    fontSans: DEFAULT_FONT_SANS,
+  },
+  {
+    id: "tech",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#fafafa",
+      "--color-surface": "#fafafa",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f4f4f5",
+      "--color-surface-container": "#e9e9eb",
+      "--color-surface-container-high": "#dededf",
+      "--color-on-surface": "#0a0a0a",
+      "--color-on-surface-variant": "#3f3f46",
+      "--color-outline": "#71717a",
+      "--color-outline-variant": "#d4d4d8",
+      "--color-primary": "#0a0a0a",
+      "--color-on-primary": "#ffffff",
+      "--color-primary-container": "#262626",
+      "--color-on-primary-container": "#a1a1aa",
+      "--color-secondary": "#06b6d4",
+      "--color-on-secondary": "#ffffff",
+      "--color-tertiary": "#000000",
+      "--color-tertiary-container": "#1a1a1a",
+    },
+    fontSans: "Plus Jakarta Sans",
+  },
+  {
+    id: "trust",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#f7f4ed",
+      "--color-surface": "#f7f4ed",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#efebe1",
+      "--color-surface-container": "#e6e1d4",
+      "--color-surface-container-high": "#ddd7c8",
+      "--color-on-surface": "#1a1612",
+      "--color-on-surface-variant": "#46403a",
+      "--color-outline": "#8a8478",
+      "--color-outline-variant": "#cfc8b8",
+      "--color-primary": "#1e3a5f",
+      "--color-on-primary": "#ffffff",
+      "--color-primary-container": "#2d4d7a",
+      "--color-on-primary-container": "#a8bcd4",
+      "--color-secondary": "#c4882d",
+      "--color-on-secondary": "#ffffff",
+      "--color-tertiary": "#172a45",
+      "--color-tertiary-container": "#1e3a5f",
+    },
+    fontSans: "IBM Plex Sans",
+  },
+  {
+    id: "vibrant",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#fdfcfb",
+      "--color-surface": "#fdfcfb",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f7f3f1",
+      "--color-surface-container": "#f0eae7",
+      "--color-surface-container-high": "#e8e0dc",
+      "--color-on-surface": "#1a0a0a",
+      "--color-on-surface-variant": "#3a2828",
+      "--color-outline": "#7a5a5a",
+      "--color-outline-variant": "#cdb5b5",
+      "--color-primary": "#e91e63",
+      "--color-on-primary": "#ffffff",
+      "--color-primary-container": "#c2185b",
+      "--color-on-primary-container": "#ffd4e3",
+      "--color-secondary": "#f97316",
+      "--color-on-secondary": "#ffffff",
+      "--color-tertiary": "#9c1a4a",
+      "--color-tertiary-container": "#c2185b",
+    },
+    fontSans: "DM Sans",
+  },
+  {
+    id: "executive",
+    swatch: ["--color-background", "--color-surface-container", "--color-primary", "--color-secondary"],
+    vars: {
+      "--color-background": "#fbf9f6",
+      "--color-surface": "#fbf9f6",
+      "--color-surface-container-lowest": "#ffffff",
+      "--color-surface-container-low": "#f3f0ea",
+      "--color-surface-container": "#ebe7df",
+      "--color-surface-container-high": "#e3ddd3",
+      "--color-on-surface": "#1c1626",
+      "--color-on-surface-variant": "#3f3a4d",
+      "--color-outline": "#7c7790",
+      "--color-outline-variant": "#cac4d8",
+      "--color-primary": "#3b1f5b",
+      "--color-on-primary": "#fbf9f6",
+      "--color-primary-container": "#5a3b87",
+      "--color-on-primary-container": "#d4c4ec",
+      "--color-secondary": "#a87c2c",
+      "--color-on-secondary": "#ffffff",
+      "--color-tertiary": "#2a1846",
+      "--color-tertiary-container": "#3b1f5b",
+    },
+    fontSans: "Manrope",
+  },
+];
+
+export function resolveVar(style: StyleOverrides, name: string): string {
+  const v = style.vars?.[name];
+  if (v && v.trim()) return v.trim();
+  const spec = THEME_VAR_SPECS.find((s) => s.name === name);
+  return spec ? spec.defaultValue : "";
+}
+
+export function detectActivePreset(style: StyleOverrides): string | null {
+  for (const preset of STYLE_PRESETS) {
+    if (preset.fontSans !== style.fontSans) continue;
+    let allMatch = true;
+    for (const spec of THEME_VAR_SPECS) {
+      const presetEffective = preset.vars[spec.name]?.trim() || spec.defaultValue;
+      const styleEffective = resolveVar(style, spec.name);
+      if (presetEffective !== styleEffective) {
+        allMatch = false;
+        break;
+      }
+    }
+    if (allMatch) return preset.id;
+  }
+  return null;
+}
+
 // Builds the Google Fonts URL used at the top of theme.css.
 // `compileCss` feeds the result back into the CSS as a single
 // `@import url(...)`.
